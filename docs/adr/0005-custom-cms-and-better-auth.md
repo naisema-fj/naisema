@@ -6,3 +6,5 @@ We build the CMS ourselves on Cloudflare Workers rather than adopting Payload CM
 
 - The PRD's "editor-friendly CMS the founder can operate without developer assistance" (CMS-01, AC-08) becomes our own build scope: page/article editing, media library, revisions and rollback, redirects, navigation and exports are all ours to deliver and maintain.
 - This substantially enlarges pro bono Phase 1 scope under the Founding Developer Agreement.
+- Stack: one Worker using React Router v7 (framework mode) with server rendering for the public site and a separate admin hostname in the same codebase; Drizzle ORM on D1.
+- Better Auth owns identity only: sessions, email magic links, two-factor (TOTP) and coarse roles. All resource-level authorisation (Educator assignment, reviewer Review Type and variety scope, no self-approval, per-learner data) lives in one domain authorisation module called server-side on every read and write. There is one user table; a Learner is a user with no staff role, and a staff role is inactive until two-factor is enrolled.

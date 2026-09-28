@@ -16,6 +16,10 @@ _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.
 _Avoid_: Clip (when meaning a portion of a longer source)
 
+**Seed Collection**:
+The small, reviewed set of Learning Layers that must exist and pass acceptance before Phase 1a launches.
+_Avoid_: Pilot content, sample videos
+
 **Learning Unit**:
 An ordered step inside a later-phase bundle or Pathway; not a synonym for Learning Layer.
 _Avoid_: Lesson
@@ -25,6 +29,10 @@ A described route for a type of learner (heritage, beginner, parent-led) through
 _Avoid_: Programme (unqualified)
 
 ## Review and approval
+
+**Revision**:
+An immutable snapshot of a Content Item or Learning Layer at one save; approvals, publication and learner progress refer to a specific Revision.
+_Avoid_: Version (for content), draft (as a noun for a snapshot)
 
 **Review Type**:
 A kind of specialist sign-off (language, cultural, editorial, accessibility) that covers a defined set of fields on a revision.
