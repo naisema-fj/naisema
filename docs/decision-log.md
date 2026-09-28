@@ -23,6 +23,7 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 - **Consultation (GOV-01, GOV-02):** an approved external survey tool and an access-controlled NAISEMA-owned spreadsheet register in 1a; storage location and deletion documented under DATA-04.
 - **Reports and data requests (SAFE-03, DATA-03):** one in-app Case queue covering reports, rights concerns and data requests.
 - **Search (PUB-03):** D1 full-text search (FTS5) built from eligible Revisions.
+- **Rich text:** article and page bodies are stored as Tiptap/ProseMirror JSON with a small fixed block set (headings, lists, links, quotes, images with required alt text, embedded Content Items, callouts); exported as JSON and HTML.
 - **Analytics:** Cloudflare Web Analytics (cookieless) for traffic; Workers Analytics Engine for server-side product events carrying item/area IDs only, never learner IDs. Privacy adviser to confirm whether a consent banner is needed.
 
 ## Agreed amendments to the Founding Developer Agreement / MOU

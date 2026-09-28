@@ -48,6 +48,17 @@ _Avoid_: Sign-off, badge, verified (for content)
 **Carried-forward Approval**:
 A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
 
+**Rights Record**:
+The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses.
+_Avoid_: Licence (for the record), consent (for rights)
+
+**Permitted Use**:
+One specific use a Rights Record grants: publish, excerpt, translate, transcribe, educational adaptation, commercial or AI training. Each is granted separately; none implies another.
+
+**Review Link**:
+A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account.
+_Avoid_: Preview URL, share link
+
 **Knowledge Holder**:
 A person or authority with standing to permit use of culturally sensitive knowledge; permission from a Knowledge Holder is separate from legal rights and from founder approval.
 _Avoid_: Elder (as a role), cultural reviewer
@@ -56,6 +67,14 @@ _Avoid_: Elder (as a role), cultural reviewer
 A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions.
 
 ## People and roles
+
+**Contributor**:
+Anyone whose story, recording or knowledge appears in NAISEMA content; a rights and credit relationship, not necessarily an account.
+_Avoid_: Author (for non-staff), participant
+
+**Creator**:
+A Contributor with a public Creator Profile and their own channel of work.
+_Avoid_: Influencer, channel owner
 
 **Learner**:
 An adult (18+) using Learn; may browse and practise without an account.
