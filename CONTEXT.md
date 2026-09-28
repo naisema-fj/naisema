@@ -16,6 +16,10 @@ _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.
 _Avoid_: Clip (when meaning a portion of a longer source)
 
+**Language Variety**:
+A named form of Fijian (for example Standard Fijian) recorded on every Learning Layer and every language Review Approval.
+_Avoid_: Dialect, language (when the variety is meant)
+
 **Seed Collection**:
 The small, reviewed set of Learning Layers that must exist and pass acceptance before Phase 1a launches.
 _Avoid_: Pilot content, sample videos
@@ -67,6 +71,12 @@ _Avoid_: Tutor, teacher (for this role)
 **Verified Educator**:
 A person who has passed educator verification for a stated scope and may hold a public teaching profile or have learner contact.
 _Avoid_: Approved tutor
+
+## Operations
+
+**Case**:
+A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner.
+_Avoid_: Ticket, complaint (as the record)
 
 ## Discovery
 

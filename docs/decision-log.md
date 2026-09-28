@@ -15,6 +15,16 @@ Non-architectural decisions, agreed amendments and launch blockers from the PRD 
 
 No-self-approval is enforced in code from day one: nobody approves a Revision they authored or edited.
 
+## Phase 1a product scope
+
+- **Content types in 1a:** Page, Article (E-zine), Episode (Voices), Resource, Provider and Offering (plain listings), Creator Profile with one free sample, Topic, and video Content Items with Learning Layers.
+- **Deferred to 1b:** Radio Station and Radio Programme with timetables, Marketplace listing (MKT-01), E-zine Issue, featured slots, richer Offering filters.
+- **Language Variety for the Seed Collection:** Standard Fijian only. Variety is still recorded on every Learning Layer and language Review Approval.
+- **Consultation (GOV-01, GOV-02):** an approved external survey tool and an access-controlled NAISEMA-owned spreadsheet register in 1a; storage location and deletion documented under DATA-04.
+- **Reports and data requests (SAFE-03, DATA-03):** one in-app Case queue covering reports, rights concerns and data requests.
+- **Search (PUB-03):** D1 full-text search (FTS5) built from eligible Revisions.
+- **Analytics:** Cloudflare Web Analytics (cookieless) for traffic; Workers Analytics Engine for server-side product events carrying item/area IDs only, never learner IDs. Privacy adviser to confirm whether a consent banner is needed.
+
 ## Agreed amendments to the Founding Developer Agreement / MOU
 
 1. **§3 scope:** "NAISEMA Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.
