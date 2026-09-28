@@ -1,0 +1,3 @@
+# Approvals are scoped by Review Type and carried forward explicitly
+
+Every edit creates a new revision, and a Review Approval belongs to one exact revision. Each Review Type covers a defined set of fields (language: Fijian text, translations, meanings, grammar, pronunciation, activity answers; cultural: cultural notes, context, speaker/source labelling, segment selection). An edit invalidates only the Review Types whose fields changed; unaffected approvals are recorded as Carried-forward Approvals referencing the prior approval, never transferred silently. We rejected "any edit invalidates all approvals" (reviewers constantly redo work, including scarce Knowledge Holders) and "editor judges minor vs material" (a human judgement could bypass a cultural gate).
