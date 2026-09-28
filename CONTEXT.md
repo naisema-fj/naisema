@@ -12,9 +12,21 @@ _Avoid_: Cultural item, post, page (for content)
 An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
 _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 
+**Completion Rule**:
+The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
+_Avoid_: Finished, mastered, passed
+
 **Excerpt**:
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.
 _Avoid_: Clip (when meaning a portion of a longer source)
+
+**Language Variety**:
+A named form of Fijian (for example Standard Fijian) recorded on every Learning Layer and every language Review Approval.
+_Avoid_: Dialect, language (when the variety is meant)
+
+**Seed Collection**:
+The small, reviewed set of Learning Layers that must exist and pass acceptance before Phase 1a launches.
+_Avoid_: Pilot content, sample videos
 
 **Learning Unit**:
 An ordered step inside a later-phase bundle or Pathway; not a synonym for Learning Layer.
@@ -26,6 +38,10 @@ _Avoid_: Programme (unqualified)
 
 ## Review and approval
 
+**Revision**:
+An immutable snapshot of a Content Item or Learning Layer at one save; approvals, publication and learner progress refer to a specific Revision.
+_Avoid_: Version (for content), draft (as a noun for a snapshot)
+
 **Review Type**:
 A kind of specialist sign-off (language, cultural, editorial, accessibility) that covers a defined set of fields on a revision.
 
@@ -36,6 +52,17 @@ _Avoid_: Sign-off, badge, verified (for content)
 **Carried-forward Approval**:
 A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
 
+**Rights Record**:
+The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses.
+_Avoid_: Licence (for the record), consent (for rights)
+
+**Permitted Use**:
+One specific use a Rights Record grants: publish, excerpt, translate, transcribe, educational adaptation, commercial or AI training. Each is granted separately; none implies another.
+
+**Review Link**:
+A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account.
+_Avoid_: Preview URL, share link
+
 **Knowledge Holder**:
 A person or authority with standing to permit use of culturally sensitive knowledge; permission from a Knowledge Holder is separate from legal rights and from founder approval.
 _Avoid_: Elder (as a role), cultural reviewer
@@ -44,6 +71,14 @@ _Avoid_: Elder (as a role), cultural reviewer
 A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions.
 
 ## People and roles
+
+**Contributor**:
+Anyone whose story, recording or knowledge appears in NAISEMA content; a rights and credit relationship, not necessarily an account.
+_Avoid_: Author (for non-staff), participant
+
+**Creator**:
+A Contributor with a public Creator Profile and their own channel of work.
+_Avoid_: Influencer, channel owner
 
 **Learner**:
 An adult (18+) using Learn; may browse and practise without an account.
@@ -59,6 +94,12 @@ _Avoid_: Tutor, teacher (for this role)
 **Verified Educator**:
 A person who has passed educator verification for a stated scope and may hold a public teaching profile or have learner contact.
 _Avoid_: Approved tutor
+
+## Operations
+
+**Case**:
+A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner.
+_Avoid_: Ticket, complaint (as the record)
 
 ## Discovery
 
