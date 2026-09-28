@@ -12,6 +12,10 @@ _Avoid_: Cultural item, post, page (for content)
 An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
 _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 
+**Completion Rule**:
+The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
+_Avoid_: Finished, mastered, passed
+
 **Excerpt**:
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.
 _Avoid_: Clip (when meaning a portion of a longer source)

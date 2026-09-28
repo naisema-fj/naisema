@@ -26,6 +26,23 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 - **Rich text:** article and page bodies are stored as Tiptap/ProseMirror JSON with a small fixed block set (headings, lists, links, quotes, images with required alt text, embedded Content Items, callouts); exported as JSON and HTML.
 - **Analytics:** Cloudflare Web Analytics (cookieless) for traffic; Workers Analytics Engine for server-side product events carrying item/area IDs only, never learner IDs. Privacy adviser to confirm whether a consent banner is needed.
 
+## Data and age policy (PRD §34 decision 4)
+
+- **Accounts:** 18+ self-declared Learner Accounts only; no under-18 accounts.
+- **Hosting:** Cloudflare with Oceania location hints; overseas processing disclosed (ADR-0004).
+- **Learner data:** history clearing is immediate; account deletion removes live data immediately and leaves backups within 35 days; accounts inactive for 24 months are deleted after a 30-day warning email; self-service JSON export from the private learning page.
+- **Retention defaults:** PRD §11 defaults adopted (unsuccessful educator evidence 90 days; routine enquiries 12 months; identifiable consultation data 12 months after analysis). Closed Cases kept 2 years after closure, then reviewed for deletion or de-identification. Audit events kept for the life of their object plus 2 years. All subject to privacy adviser confirmation.
+- **Backups:** D1 Time Travel (30 days) plus nightly D1 export to a private R2 bucket kept 35 days; deletion ledger replayed after any restore (ADR-0009); restore drill on staging before launch.
+
+## Video implementation decisions (PRD §34 "Video implementation decisions")
+
+- **Seed Collection:** three clips of 30–120 seconds, at least one vertical and one landscape, across at least two everyday or cultural contexts; Standard Fijian.
+- **Upload limits:** 2 GB and 15 minutes per source master; MP4 and MOV only, validated at upload start. Longer sources are used through Excerpts.
+- **Caption authoring:** Segments are the source of truth; WebVTT import/export; machine transcripts only as unreviewed drafts (ADR-0008).
+- **Default Completion Rule:** every required activity attempted with feedback viewed, or its accessible equivalent; viewing alone never completes; real-world use is optional.
+- **Cost envelope:** about AUD 100/month ceiling for 1a, with Cloudflare billing alerts at 50% and 80% and media usage visible in the VAC-10 cost report.
+- **Test profile:** PRD profile (1.5 Mbps down, 150 ms latency, five cold runs, first frame within 5 s in at least 4) on one mid-range Android (Moto G / Samsung A class) and one older iPhone (SE class), plus Playwright with the same throttling in CI on player changes. Exact device models to be recorded here.
+
 ## Agreed amendments to the Founding Developer Agreement / MOU
 
 1. **§3 scope:** "NAISEMA Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.
@@ -41,3 +58,12 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 - [ ] At least one Educator other than the Language Reviewer named to author the Seed Collection (owner: Natasha Mar).
 - [ ] Written post-launch support agreement (MOU §10) (owners: Natasha Mar, Taia Tiniyara).
 - [ ] Privacy adviser sign-off on overseas-processing disclosure (ADR-0004).
+
+## Open, not blocking the build baseline
+
+- **Reason for the custom CMS (ADR-0005):** recorded as owning the review/Learning Layer model and avoiding a young Payload-on-Workers integration; founder and developer to confirm or correct.
+- **Content readiness (PRD §34 decision 6):** which items launch in each area and who holds permissions.
+- **Voices operations (PRD §34 decision 8):** confirm the intended interview lead's availability, permissions and responsibilities before any Episode is scheduled.
+- **Commercial model, growth and measurement (PRD §34 decisions 9–10):** out of 1a scope; decide before P2 and after beta baselines respectively.
+- **Phase 1b and P2–P4 modules:** not grilled in this session; each needs its own session before its change note.
+- **PRD housekeeping:** page headers read "PRD v2.0" while the title is Version 5.0; §15 refers to itself ("as specified in section 15").
