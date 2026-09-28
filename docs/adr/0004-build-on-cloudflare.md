@@ -1,0 +1,3 @@
+# Build the whole stack on Cloudflare
+
+The application runs on Cloudflare: Workers for compute, D1 for relational data, R2 for object storage (with public media and private evidence in separate buckets), and Cloudflare Stream for video upload, transcoding, adaptive delivery, signed playback and caption tracks. This was a founder/developer preference for a single vendor, account and bill that the small team can operate, and it fits NAISEMA-owned accounts (OWN-01). Consequences: the relational store is SQLite (D1) rather than Postgres, and Cloudflare offers no Australian data-residency jurisdiction, only best-effort location hints. Our player controls are built over Stream's HLS output so the video provider stays replaceable behind a small internal interface.

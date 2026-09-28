@@ -24,6 +24,25 @@ _Avoid_: Lesson
 A described route for a type of learner (heritage, beginner, parent-led) through existing resources and Learning Layers.
 _Avoid_: Programme (unqualified)
 
+## Review and approval
+
+**Review Type**:
+A kind of specialist sign-off (language, cultural, editorial, accessibility) that covers a defined set of fields on a revision.
+
+**Review Approval**:
+A recorded decision by a reviewer, for one Review Type, on one exact revision.
+_Avoid_: Sign-off, badge, verified (for content)
+
+**Carried-forward Approval**:
+A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
+
+**Knowledge Holder**:
+A person or authority with standing to permit use of culturally sensitive knowledge; permission from a Knowledge Holder is separate from legal rights and from founder approval.
+_Avoid_: Elder (as a role), cultural reviewer
+
+**Knowledge Holder Approval**:
+A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions.
+
 ## People and roles
 
 **Learner**:
