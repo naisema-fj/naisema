@@ -1,0 +1,3 @@
+# Learning Layers are one-to-many per Content Item
+
+A cultural Content Item stays canonical; language learning attaches as optional Learning Layers. We allow several Learning Layers per Content Item, each built on the whole video or on an Excerpt (source in/out times) and carrying its own level, review and completion rule, so that one long elder interview can support, say, a beginner layer on one excerpt and an intermediate layer on another. We chose this over a single layer per item because learner progress, saved vocabulary and approvals are keyed to the Learning Layer revision, making the cardinality expensive to change once learners have data.
