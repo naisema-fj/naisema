@@ -1,19 +1,11 @@
 import { Form } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { can, type StaffRole } from "~/lib/permissions";
+import { can } from "~/lib/permissions";
+import { describeRoleAssignment } from "~/lib/role-names";
 import { requireStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/home";
 
 export const handle = { hydrate: false };
-
-const ROLE_NAMES: Record<StaffRole, string> = {
-  administrator: "Administrator",
-  editor: "Editor",
-  educator: "Educator",
-  reviewer: "Reviewer",
-  safeguarding_lead: "Safeguarding lead",
-  privacy_contact: "Privacy contact",
-};
 
 export function meta() {
   return [{ title: "NAISEMA staff" }];
@@ -24,9 +16,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
-    roles: actor.roles.map((assignment) =>
-      [ROLE_NAMES[assignment.role], assignment.reviewType, assignment.languageVariety].filter(Boolean).join(" · "),
-    ),
+    roles: actor.roles.map(describeRoleAssignment),
   };
 }
 

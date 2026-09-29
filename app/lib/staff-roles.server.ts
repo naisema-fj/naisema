@@ -2,9 +2,22 @@ import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { roleAssignment, user } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
-import { REVIEW_TYPES, type ReviewType, STAFF_ROLES, type StaffRole } from "./permissions";
+import { REVIEW_TYPES, type ReviewType, type RoleAssignment, STAFF_ROLES, type StaffRole } from "./permissions";
 
-export type GrantRequest = { email: string; role: StaffRole; reviewType?: ReviewType; languageVariety?: string };
+export type GrantRequest = RoleAssignment & { email: string };
+
+/** Reads a role_assignment row as the domain's RoleAssignment. */
+export function toRoleAssignment(row: {
+  role: string;
+  reviewType: string | null;
+  languageVariety: string | null;
+}): RoleAssignment {
+  return {
+    role: row.role as StaffRole,
+    ...(row.reviewType ? { reviewType: row.reviewType as ReviewType } : {}),
+    ...(row.languageVariety ? { languageVariety: row.languageVariety } : {}),
+  };
+}
 
 export type GrantValidation = { ok: true; grant: GrantRequest } | { ok: false; error: string };
 
@@ -80,7 +93,7 @@ export async function revokeRole(db: Database, revokedBy: string, assignmentId: 
     .from(roleAssignment)
     .where(and(eq(roleAssignment.id, assignmentId), isNull(roleAssignment.revokedAt)))
     .get();
-  if (!assignment) return { ok: false, error: "That role has already been removed." };
+  if (!assignment) return { ok: false, error: "That role has already been revoked." };
 
   if (assignment.role === "administrator") {
     const others = await db
@@ -121,5 +134,9 @@ export async function listStaff(db: Database) {
     .innerJoin(user, eq(user.id, roleAssignment.userId))
     .where(isNull(roleAssignment.revokedAt))
     .orderBy(user.email, roleAssignment.role);
-  return rows;
+  return rows.map((row) => ({
+    assignmentId: row.assignmentId,
+    email: row.email,
+    assignment: toRoleAssignment(row),
+  }));
 }

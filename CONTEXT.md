@@ -59,7 +59,7 @@ An immutable snapshot of a Content Item or Learning Layer at one save; approvals
 _Avoid_: Version (for content), draft (as a noun for a snapshot)
 
 **Review Type**:
-A kind of specialist sign-off (language, cultural, editorial, accessibility) that covers a defined set of fields on a revision.
+A kind of specialist sign-off (language, cultural, editorial, accessibility, safeguarding) that covers a defined set of fields on a revision.
 
 **Review Approval**:
 A recorded decision by a reviewer, for one Review Type, on one exact revision.

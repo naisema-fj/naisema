@@ -40,6 +40,7 @@ type RevisionUnderReview = {
 };
 
 export type Check =
+  | { action: "staffArea.enter" }
   | { action: "account.manage" | "role.assign" | "settings.edit" }
   | { action: "content.edit" | "revision.publish" | "reviewLink.issue" }
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
@@ -53,25 +54,33 @@ export type Check =
     }
   | { action: "learnerData.process"; learnerRecord: { ownerId: string } };
 
-const SAFEGUARDING_CASES: CaseKind[] = ["report", "rights_concern"];
+/** Which staff role handles each kind of Case. */
+const CASE_HANDLER: Record<CaseKind, StaffRole> = {
+  report: "safeguarding_lead",
+  rights_concern: "safeguarding_lead",
+  data_request: "privacy_contact",
+};
 
 export function can(actor: Actor | null, check: Check): boolean {
   if (!actor) return false;
-  const has = (role: StaffRole) => actor.roles.some((assignment) => assignment.role === role);
+  const hasRole = (role: StaffRole) => actor.roles.some((assignment) => assignment.role === role);
 
   switch (check.action) {
+    case "staffArea.enter":
+      return actor.roles.length > 0;
+
     case "account.manage":
     case "role.assign":
     case "settings.edit":
-      return has("administrator");
+      return hasRole("administrator");
 
     case "content.edit":
     case "revision.publish":
     case "reviewLink.issue":
-      return has("editor");
+      return hasRole("editor");
 
     case "knowledgeHolderApproval.record":
-      return has("editor") && !check.revision.authorIds.includes(actor.userId);
+      return hasRole("editor") && !check.revision.authorIds.includes(actor.userId);
 
     case "revision.approve": {
       const { revision } = check;
@@ -86,17 +95,14 @@ export function can(actor: Actor | null, check: Check): boolean {
     }
 
     case "learningLayer.author":
-      return has("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId);
+      return hasRole("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId);
 
     case "case.read":
     case "case.act":
-      return SAFEGUARDING_CASES.includes(check.case.kind) ? has("safeguarding_lead") : has("privacy_contact");
+      return hasRole(CASE_HANDLER[check.case.kind]);
 
     case "case.decideAppeal":
-      return (
-        check.case.decidedBy !== actor.userId &&
-        (SAFEGUARDING_CASES.includes(check.case.kind) ? has("safeguarding_lead") : has("privacy_contact"))
-      );
+      return check.case.decidedBy !== actor.userId && hasRole(CASE_HANDLER[check.case.kind]);
 
     case "learnerRecord.read":
     case "learnerRecord.export":
@@ -104,6 +110,6 @@ export function can(actor: Actor | null, check: Check): boolean {
       return check.learnerRecord.ownerId === actor.userId;
 
     case "learnerData.process":
-      return has("privacy_contact");
+      return hasRole("privacy_contact");
   }
 }

@@ -2,9 +2,10 @@ import { and, eq, isNull, sql } from "drizzle-orm";
 import { redirect } from "react-router";
 import { roleAssignment, session as sessionTable, staffSession } from "~db/schema";
 import { recordAudit } from "./audit.server";
-import { type Auth, createAuth } from "./auth.server";
+import { type Auth, createAuth, sessionTokenFromSetCookie } from "./auth.server";
 import { type Database, getDb } from "./db.server";
-import type { Actor, RoleAssignment, StaffRole } from "./permissions";
+import { type Actor, can, type RoleAssignment } from "./permissions";
+import { toRoleAssignment } from "./staff-roles.server";
 
 export const ADMIN_PATHS = {
   home: "/admin",
@@ -29,8 +30,8 @@ export async function getSignedIn(env: Env, request: Request): Promise<SignedIn 
   const result = await auth.api.getSession({ headers: request.headers });
   if (!result) return null;
   const db = getDb(env.DB);
-  const state = await db.select().from(staffSession).where(eq(staffSession.sessionId, result.session.id)).get();
-  return { auth, db, user: result.user, sessionId: result.session.id, verified: Boolean(state?.verifiedAt) };
+  const staffState = await db.select().from(staffSession).where(eq(staffSession.sessionId, result.session.id)).get();
+  return { auth, db, user: result.user, sessionId: result.session.id, verified: Boolean(staffState?.verifiedAt) };
 }
 
 export async function activeRoles(db: Database, userId: string): Promise<RoleAssignment[]> {
@@ -38,11 +39,32 @@ export async function activeRoles(db: Database, userId: string): Promise<RoleAss
     .select()
     .from(roleAssignment)
     .where(and(eq(roleAssignment.userId, userId), isNull(roleAssignment.revokedAt)));
-  return rows.map((row) => ({
-    role: row.role as StaffRole,
-    ...(row.reviewType ? { reviewType: row.reviewType as RoleAssignment["reviewType"] } : {}),
-    ...(row.languageVariety ? { languageVariety: row.languageVariety } : {}),
-  }));
+  return rows.map(toRoleAssignment);
+}
+
+type StaffStep = "signIn" | "twoFactorSetup" | "twoFactor" | "done";
+
+/** Where a person is in the staff sign-in sequence: email link, then enrolment, then a code. */
+export function staffStep(signedIn: SignedIn | null): StaffStep {
+  if (!signedIn) return "signIn";
+  if (!signedIn.user.twoFactorEnabled) return "twoFactorSetup";
+  if (!signedIn.verified) return "twoFactor";
+  return "done";
+}
+
+const STEP_PATHS: Record<StaffStep, string> = {
+  signIn: ADMIN_PATHS.signIn,
+  twoFactorSetup: ADMIN_PATHS.twoFactorSetup,
+  twoFactor: ADMIN_PATHS.twoFactor,
+  done: ADMIN_PATHS.home,
+};
+
+/** For the sign-in step pages: continue only if this is the person's current step, else send them on. */
+export async function requireStaffStep(env: Env, request: Request, step: Exclude<StaffStep, "signIn" | "done">) {
+  const signedIn = await getSignedIn(env, request);
+  const current = staffStep(signedIn);
+  if (current !== step || !signedIn) throw redirect(STEP_PATHS[current]);
+  return signedIn;
 }
 
 /**
@@ -51,15 +73,13 @@ export async function activeRoles(db: Database, userId: string): Promise<RoleAss
  */
 export async function requireStaff(env: Env, request: Request) {
   const signedIn = await getSignedIn(env, request);
-  if (!signedIn) throw redirect(ADMIN_PATHS.signIn);
-  if (!signedIn.user.twoFactorEnabled) throw redirect(ADMIN_PATHS.twoFactorSetup);
-  if (!signedIn.verified) throw redirect(ADMIN_PATHS.twoFactor);
+  const current = staffStep(signedIn);
+  if (current !== "done" || !signedIn) throw redirect(STEP_PATHS[current]);
 
-  const roles = await activeRoles(signedIn.db, signedIn.user.id);
-  if (roles.length === 0) {
+  const actor: Actor = { userId: signedIn.user.id, roles: await activeRoles(signedIn.db, signedIn.user.id) };
+  if (!can(actor, { action: "staffArea.enter" })) {
     throw new Response("This account has no staff access.", { status: 403 });
   }
-  const actor: Actor = { userId: signedIn.user.id, roles };
   return { ...signedIn, actor };
 }
 
@@ -79,7 +99,7 @@ export async function checkStaffCode(signedIn: SignedIn, request: Request, code:
   try {
     ({ headers } = await auth.api.verifyTOTP({ headers: request.headers, body: { code }, returnHeaders: true }));
   } catch {
-    const state = await db
+    const staffState = await db
       .insert(staffSession)
       .values({ sessionId, userId: user.id, failedAttempts: 1 })
       .onConflictDoUpdate({
@@ -94,7 +114,7 @@ export async function checkStaffCode(signedIn: SignedIn, request: Request, code:
       objectType: "session",
       objectId: sessionId,
     });
-    if (state.failedAttempts >= MAX_TWO_FACTOR_ATTEMPTS) {
+    if (staffState.failedAttempts >= MAX_TWO_FACTOR_ATTEMPTS) {
       await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
       await recordAudit(db, {
         actorId: user.id,
@@ -104,10 +124,10 @@ export async function checkStaffCode(signedIn: SignedIn, request: Request, code:
       });
       return { ok: false, reason: "locked" };
     }
-    return { ok: false, reason: "invalid", attemptsLeft: MAX_TWO_FACTOR_ATTEMPTS - state.failedAttempts };
+    return { ok: false, reason: "invalid", attemptsLeft: MAX_TWO_FACTOR_ATTEMPTS - staffState.failedAttempts };
   }
 
-  const verifiedSessionId = (await sessionIdFromCookies(db, headers)) ?? sessionId;
+  const verifiedSessionId = (await sessionIdForToken(db, sessionTokenFromSetCookie(headers))) ?? sessionId;
   await db
     .insert(staffSession)
     .values({ sessionId: verifiedSessionId, userId: user.id, verifiedAt: new Date(), failedAttempts: 0 })
@@ -121,14 +141,15 @@ export async function checkStaffCode(signedIn: SignedIn, request: Request, code:
   return { ok: true, headers };
 }
 
-/** Finds the session named by a Set-Cookie header Better Auth returned, if it issued one. */
-async function sessionIdFromCookies(db: Database, headers: Headers): Promise<string | null> {
-  for (const cookie of headers.getSetCookie()) {
-    const match = cookie.match(/^(?:__Secure-)?naisema\.session_token=([^;]+)/);
-    if (!match) continue;
-    const token = decodeURIComponent(match[1]).split(".")[0];
-    const row = await db.select({ id: sessionTable.id }).from(sessionTable).where(eq(sessionTable.token, token)).get();
-    if (row) return row.id;
-  }
-  return null;
+async function sessionIdForToken(db: Database, token: string | null): Promise<string | null> {
+  if (!token) return null;
+  const row = await db.select({ id: sessionTable.id }).from(sessionTable).where(eq(sessionTable.token, token)).get();
+  return row?.id ?? null;
+}
+
+/** Turns a code check into the page's response: on to staff home, back to sign-in, or an error to show. */
+export function respondToCodeCheck(result: CodeCheck) {
+  if (result.ok) throw redirect(ADMIN_PATHS.home, { headers: result.headers });
+  if (result.reason === "locked") throw redirect(ADMIN_PATHS.signIn);
+  return `That code didn't match. ${result.attemptsLeft} attempts left.`;
 }

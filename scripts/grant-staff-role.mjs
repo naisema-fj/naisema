@@ -28,15 +28,24 @@ function fail(message) {
   process.exit(1);
 }
 
+// wrangler d1 execute cannot bind parameters, so every value that reaches the SQL below is
+// checked against a strict pattern first, whatever the role.
 const email = values.email?.trim().toLowerCase();
-if (!email || !/^[^\s@']+@[^\s@']+$/.test(email)) fail("Pass --email with a valid address.");
+if (!email || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) fail("Pass --email with a valid address.");
 if (!ROLES.includes(values.role)) fail(`Pass --role, one of: ${ROLES.join(", ")}.`);
 if (!values.local && !values.env) fail("Pass --env staging|production, or --local.");
+if (values.env && !["staging", "production"].includes(values.env)) fail("--env must be staging or production.");
 const reviewType = values["review-type"] ?? null;
 const variety = values["language-variety"] ?? null;
-if (values.role === "reviewer" && !REVIEW_TYPES.includes(reviewType))
-  fail(`Reviewers need --review-type (${REVIEW_TYPES.join(", ")}).`);
-if (reviewType === "language" && (!variety || /'/.test(variety))) fail("Language reviewers need --language-variety.");
+if (reviewType !== null && !REVIEW_TYPES.includes(reviewType))
+  fail(`--review-type must be one of: ${REVIEW_TYPES.join(", ")}.`);
+if (variety !== null && !/^[a-z0-9-]+$/.test(variety))
+  fail("--language-variety must be lower-case letters, digits and hyphens.");
+if (values.role !== "reviewer" && (reviewType || variety))
+  fail("Only reviewers take --review-type or --language-variety.");
+if (values.role === "reviewer" && !reviewType) fail(`Reviewers need --review-type (${REVIEW_TYPES.join(", ")}).`);
+if (reviewType === "language" && !variety) fail("Language reviewers need --language-variety.");
+if (reviewType !== "language" && variety) fail("Only language reviewers take --language-variety.");
 
 const sqlText = (value) => (value === null ? "NULL" : `'${value}'`);
 const now = Date.now();
@@ -50,7 +59,7 @@ const sql = [
      FROM user WHERE email = '${email}';`,
   `INSERT INTO audit_event (id, actor_id, action, object_type, object_id, details, created_at)
      VALUES ('${randomUUID()}', NULL, 'role.granted', 'role_assignment', '${assignmentId}',
-             '{"via":"cli","email":"${email}","role":"${values.role}"}', ${now});`,
+             '{"via":"cli","role":"${values.role}"}', ${now});`,
 ].join("\n");
 
 const target = values.local ? ["--local"] : ["--remote", "--env", values.env];

@@ -8,6 +8,7 @@ import { getDb } from "./db.server";
 import { sendEmail } from "./email.server";
 
 export const AUTH_BASE_PATH = "/api/auth";
+const COOKIE_PREFIX = "naisema";
 const MAGIC_LINK_MINUTES = 15;
 
 /**
@@ -29,7 +30,7 @@ export function createAuth(env: Env, request: Request) {
     session: { expiresIn: 60 * 60 * 12, updateAge: 60 * 60 },
     rateLimit: { enabled: true, storage: "database", window: 60, max: 30 },
     advanced: {
-      cookiePrefix: "naisema",
+      cookiePrefix: COOKIE_PREFIX,
       // Cloudflare sets CF-Connecting-IP at the edge; it is the client IP rate limits key on.
       ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
       useSecureCookies: origin.startsWith("https://"),
@@ -75,3 +76,14 @@ export function createAuth(env: Env, request: Request) {
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+/** The session token in a Set-Cookie header Better Auth issued, if it issued one. */
+export function sessionTokenFromSetCookie(headers: Headers): string | null {
+  const name = new RegExp(`^(?:__Secure-)?${COOKIE_PREFIX}\\.session_token=([^;]+)`);
+  for (const cookie of headers.getSetCookie()) {
+    const match = cookie.match(name);
+    // The cookie value is "<token>.<signature>".
+    if (match) return decodeURIComponent(match[1]).split(".")[0];
+  }
+  return null;
+}

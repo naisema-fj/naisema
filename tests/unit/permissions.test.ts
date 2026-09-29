@@ -35,6 +35,11 @@ const languageRevision = (overrides: Partial<{ authorIds: string[]; assignedRevi
   }) satisfies Check;
 
 const rows: [string, Actor | null, Check, boolean][] = [
+  // Entering the staff area at all
+  ["any staff role may enter the staff area", educator, { action: "staffArea.enter" }, true],
+  ["a signed-in person without a staff role may not", learner("me"), { action: "staffArea.enter" }, false],
+  ["an anonymous visitor may not", null, { action: "staffArea.enter" }, false],
+
   // Administrator
   ["administrator manages accounts", administrator, { action: "account.manage" }, true],
   ["administrator assigns roles", administrator, { action: "role.assign" }, true],
