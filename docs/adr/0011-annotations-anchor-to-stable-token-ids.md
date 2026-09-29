@@ -1,0 +1,3 @@
+# Annotations anchor to stable token IDs, not character offsets
+
+Fijian Segment text is split into tokens that carry stable IDs across Revisions, and an Annotation points at a start and end token within one Segment. Re-tokenising after an edit uses a diff so unchanged tokens keep their IDs; an Annotation whose tokens disappear is flagged for revalidation rather than silently re-pointed (VCMS-02, §15). Character offsets were rejected because any edit earlier in a Segment shifts every later anchor, breaking saved vocabulary and forcing needless language re-review. Annotations link to reusable Expressions so the same reviewed phrase is saved and deduplicated across Learning Layers.

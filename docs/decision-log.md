@@ -1,6 +1,6 @@
 # Decision log
 
-Non-architectural decisions, agreed amendments and launch blockers from the PRD v5.0 grilling session. Architectural decisions live in `docs/adr/`; vocabulary lives in `CONTEXT.md`.
+Non-architectural decisions, agreed amendments and launch blockers from the PRD v5.0 grilling session. Architectural decisions live in `docs/adr/`; vocabulary lives in `CONTEXT.md`; the working defaults adopted without grilling live in `docs/phase-1a-defaults.md`.
 
 ## Operational owners (PRD §34 decision 3)
 
@@ -52,7 +52,7 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 
 ## Phase 1a launch blockers
 
-- [ ] Backup Safeguarding Lead and independent appeal reviewer named (owner: Natasha Mar).
+- [ ] Backup Safeguarding Lead and independent appeal reviewer named, proposed from the initial Advisory Circle (owner: Natasha Mar).
 - [ ] Backup technical owner for alerts named (owner: Natasha Mar).
 - [ ] Qualified Language Reviewer confirmed, with qualification and language variety recorded (LEARN-01) (owner: Natasha Mar).
 - [ ] At least one Educator other than the Language Reviewer named to author the Seed Collection (owner: Natasha Mar).
@@ -61,9 +61,8 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 
 ## Open, not blocking the build baseline
 
-- **Reason for the custom CMS (ADR-0005):** recorded as owning the review/Learning Layer model and avoiding a young Payload-on-Workers integration; founder and developer to confirm or correct.
-- **Content readiness (PRD §34 decision 6):** which items launch in each area and who holds permissions.
-- **Voices operations (PRD §34 decision 8):** confirm the intended interview lead's availability, permissions and responsibilities before any Episode is scheduled.
+- **Content readiness and Voices operations (PRD §34 decisions 6 and 8):** process adopted in `docs/phase-1a-defaults.md` §13; the actual inventory and the interview lead's confirmation are still outstanding.
+- **MOU governing law (§14):** proposal in `docs/phase-1a-defaults.md` §12, pending cross-border legal advice.
 - **Commercial model, growth and measurement (PRD §34 decisions 9–10):** out of 1a scope; decide before P2 and after beta baselines respectively.
 - **Phase 1b and P2–P4 modules:** not grilled in this session; each needs its own session before its change note.
 - **PRD housekeeping:** page headers read "PRD v2.0" while the title is Version 5.0; §15 refers to itself ("as specified in section 15").

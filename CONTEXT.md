@@ -12,6 +12,22 @@ _Avoid_: Cultural item, post, page (for content)
 An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
 _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 
+**Segment**:
+A timed span of a Learning Layer's clip holding the Fijian text, English translation and optional speaker for that span.
+_Avoid_: Cue, caption line (for the record)
+
+**Expression**:
+A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save.
+_Avoid_: Vocab item, word (when a phrase or idiom is meant)
+
+**Annotation**:
+A link from a range of tokens in one Segment to an Expression, carrying the contextual meaning at that moment.
+_Avoid_: Tooltip, gloss
+
+**Activity**:
+A practice or comprehension task in a Learning Layer, with reviewed answers or a model response, feedback and an accessible alternative.
+_Avoid_: Quiz, exercise
+
 **Completion Rule**:
 The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
 _Avoid_: Finished, mastered, passed
@@ -48,6 +64,13 @@ A kind of specialist sign-off (language, cultural, editorial, accessibility) tha
 **Review Approval**:
 A recorded decision by a reviewer, for one Review Type, on one exact revision.
 _Avoid_: Sign-off, badge, verified (for content)
+
+**Content Flag**:
+An editor-set marker on a Revision (language instruction, sensitive cultural material, identifiable children, disability-specific advice, historical claims, opinion) that determines which Review Types are required.
+
+**Review Label**:
+The public statement of what a published item was actually reviewed for, generated from its Review Approvals.
+_Avoid_: Badge, verified
 
 **Carried-forward Approval**:
 A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
@@ -96,6 +119,13 @@ A person who has passed educator verification for a stated scope and may hold a 
 _Avoid_: Approved tutor
 
 ## Operations
+
+**Submission**:
+Anything a member of the public sends through a form (enquiry, contribution proposal, educator interest, consultation interest); never published automatically.
+_Avoid_: Post, entry
+
+**Consent Record**:
+The stored fact that a person agreed to one purpose under one notice version, with time, source and any withdrawal; kept apart from the Submission it came with.
 
 **Case**:
 A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner.
