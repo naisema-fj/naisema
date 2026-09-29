@@ -24,7 +24,7 @@ const editorAndReviewer = staff(
 
 const languageRevision = (overrides: Partial<{ authorIds: string[]; assignedReviewerIds: string[] }> = {}) =>
   ({
-    action: "revision.approve",
+    action: "revision.review",
     revision: {
       authorIds: ["editor"],
       assignedReviewerIds: ["lang-reviewer", "natasha"],
@@ -43,7 +43,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
   // Administrator
   ["administrator manages accounts", administrator, { action: "account.manage" }, true],
   ["administrator assigns roles", administrator, { action: "role.assign" }, true],
-  ["administrator edits site settings", administrator, { action: "settings.edit" }, true],
+  ["administrator edits site settings and feature flags", administrator, { action: "settings.edit" }, true],
   ["administrator cannot read report cases", administrator, { action: "case.read", case: { kind: "report" } }, false],
   [
     "administrator cannot read data-request cases",
@@ -90,6 +90,18 @@ const rows: [string, Actor | null, Check, boolean][] = [
     { action: "learningLayer.author", learningLayer: { assignedEducatorIds: ["someone-else"] } },
     false,
   ],
+  [
+    "educator submits an assigned learning layer for review",
+    educator,
+    { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: ["educator"] } },
+    true,
+  ],
+  [
+    "educator cannot submit an unassigned learning layer",
+    educator,
+    { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: ["someone-else"] } },
+    false,
+  ],
   ["educator cannot publish", educator, { action: "revision.publish" }, false],
   [
     "educator cannot read learner records",
@@ -99,7 +111,12 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ],
 
   // Reviewer
-  ["language reviewer approves an assigned revision in their variety", languageReviewer, languageRevision(), true],
+  [
+    "language reviewer approves or rejects an assigned revision in their variety",
+    languageReviewer,
+    languageRevision(),
+    true,
+  ],
   [
     "language reviewer cannot approve an unassigned revision",
     languageReviewer,
@@ -110,7 +127,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
     "language reviewer cannot approve another language variety",
     languageReviewer,
     {
-      action: "revision.approve",
+      action: "revision.review",
       revision: {
         authorIds: ["editor"],
         assignedReviewerIds: ["lang-reviewer"],
@@ -124,7 +141,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
     "language reviewer cannot approve a cultural review",
     languageReviewer,
     {
-      action: "revision.approve",
+      action: "revision.review",
       revision: { authorIds: ["editor"], assignedReviewerIds: ["lang-reviewer"], reviewType: "cultural" },
     },
     false,
@@ -133,7 +150,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
     "cultural reviewer approves an assigned cultural review",
     culturalReviewer,
     {
-      action: "revision.approve",
+      action: "revision.review",
       revision: { authorIds: ["editor"], assignedReviewerIds: ["cultural-reviewer"], reviewType: "cultural" },
     },
     true,
@@ -165,6 +182,8 @@ const rows: [string, Actor | null, Check, boolean][] = [
     { action: "case.act", case: { kind: "rights_concern" } },
     true,
   ],
+  ["safeguarding lead hides content pending review", safeguardingLead, { action: "content.hidePendingReview" }, true],
+  ["editor cannot hide content pending a safeguarding review", editor, { action: "content.hidePendingReview" }, false],
   [
     "safeguarding lead cannot read data-request cases",
     safeguardingLead,
@@ -221,6 +240,18 @@ const rows: [string, Actor | null, Check, boolean][] = [
     "learner cannot read someone else's records",
     learner("me"),
     { action: "learnerRecord.read", learnerRecord: { ownerId: "someone-else" } },
+    false,
+  ],
+  [
+    "learner deletes their own account",
+    learner("me"),
+    { action: "learnerRecord.delete", learnerRecord: { ownerId: "me" } },
+    true,
+  ],
+  [
+    "learner cannot delete someone else's records",
+    learner("me"),
+    { action: "learnerRecord.delete", learnerRecord: { ownerId: "someone-else" } },
     false,
   ],
   ["learner cannot edit content", learner("me"), { action: "content.edit" }, false],

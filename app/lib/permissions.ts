@@ -42,10 +42,16 @@ type RevisionUnderReview = {
 export type Check =
   | { action: "staffArea.enter" }
   | { action: "account.manage" | "role.assign" | "settings.edit" }
+  /**
+   * Who may publish. Whether a particular Revision may be published (approvals present, rights
+   * current) is the eligibility decision, not a permission (ADR-0007).
+   */
   | { action: "content.edit" | "revision.publish" | "reviewLink.issue" }
+  | { action: "content.hidePendingReview" }
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
-  | { action: "revision.approve"; revision: RevisionUnderReview }
-  | { action: "learningLayer.author"; learningLayer: { assignedEducatorIds: string[] } }
+  /** Approving or rejecting a Revision for one Review Type. */
+  | { action: "revision.review"; revision: RevisionUnderReview }
+  | { action: "learningLayer.author" | "learningLayer.submit"; learningLayer: { assignedEducatorIds: string[] } }
   | { action: "case.read" | "case.act"; case: { kind: CaseKind } }
   | { action: "case.decideAppeal"; case: { kind: CaseKind; decidedBy: string } }
   | {
@@ -82,7 +88,10 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "knowledgeHolderApproval.record":
       return hasRole("editor") && !check.revision.authorIds.includes(actor.userId);
 
-    case "revision.approve": {
+    case "content.hidePendingReview":
+      return hasRole("safeguarding_lead");
+
+    case "revision.review": {
       const { revision } = check;
       if (revision.authorIds.includes(actor.userId)) return false;
       if (!revision.assignedReviewerIds.includes(actor.userId)) return false;
@@ -95,6 +104,7 @@ export function can(actor: Actor | null, check: Check): boolean {
     }
 
     case "learningLayer.author":
+    case "learningLayer.submit":
       return hasRole("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId);
 
     case "case.read":

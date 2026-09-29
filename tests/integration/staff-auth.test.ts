@@ -2,6 +2,7 @@ import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import {
   auditActions,
+  auditActionsAbout,
   Browser,
   codeFor,
   emailsTo,
@@ -23,6 +24,12 @@ describe("staff admin host", () => {
   it("does not exist on the public site", async () => {
     expect((await SELF.fetch("https://naisema.test/admin")).status).toBe(404);
     expect((await SELF.fetch("https://naisema.test/api/auth/get-session")).status).toBe(404);
+  });
+
+  it("cannot be reached from the public site by changing case or percent-encoding the path", async () => {
+    for (const path of ["/Admin/sign-in", "/ADMIN", "/%61dmin/sign-in", "/admin%2Fsign-in", "/Api/Auth/get-session"]) {
+      expect((await SELF.fetch(`https://naisema.test${path}`)).status, path).toBe(404);
+    }
   });
 
   it("sends visitors without a session to sign in", async () => {
@@ -58,6 +65,30 @@ describe("staff sign-in", () => {
     const [email] = await emailsTo("editor@naisema.test");
     expect(email.text).toMatch(/http:\/\/admin\.localhost\/api\/auth\/magic-link\/verify\?token=/);
     expect(await emailsTo("nobody@naisema.test")).toEqual([]);
+  });
+
+  it("sends no link to an account whose roles have all been revoked", async () => {
+    const userId = await seedStaff("revoked@naisema.test", [{ role: "editor" }]);
+    await env.DB.prepare("UPDATE role_assignment SET revoked_at = 1 WHERE user_id = ?1").bind(userId).run();
+
+    const reply = await (
+      await new Browser().fetch("/admin/sign-in", { form: { email: "revoked@naisema.test" } })
+    ).text();
+
+    expect(reply).toContain("Check your email");
+    expect(await emailsTo("revoked@naisema.test")).toEqual([]);
+  });
+
+  it("sends at most three links to one address in fifteen minutes, without saying so", async () => {
+    const userId = await seedStaff("flooded@naisema.test", [{ role: "editor" }]);
+
+    for (let request = 0; request < 5; request++) {
+      const reply = await new Browser().fetch("/admin/sign-in", { form: { email: "flooded@naisema.test" } });
+      expect(await reply.text()).toContain("Check your email");
+    }
+
+    expect(await emailsTo("flooded@naisema.test")).toHaveLength(3);
+    expect((await auditActionsAbout(userId)).filter((action) => action === "magic_link.sent")).toHaveLength(3);
   });
 
   it("sets a session cookie that scripts cannot read and that only travels over HTTPS", async () => {
@@ -152,16 +183,13 @@ describe("staff sign-in", () => {
     expect(await auditActions(userId)).toContain("session.ended_after_failed_codes");
   });
 
-  it("refuses an account that holds no staff role", async () => {
-    const userId = await seedStaff("former-staff@naisema.test", []);
-    const browser = new Browser();
-    await signInWithMagicLink(browser, "former-staff@naisema.test");
-    const secret = await startTwoFactorSetup(browser);
-    await browser.fetch("/admin/two-factor/setup", { form: { intent: "verify", code: await codeFor(secret) } });
+  it("refuses, and audits, a signed-in session whose roles were all revoked", async () => {
+    const { userId, browser } = await enrolledAdministrator("demoted@naisema.test");
+    await env.DB.prepare("UPDATE role_assignment SET revoked_at = 1 WHERE user_id = ?1").bind(userId).run();
 
     const response = await browser.fetch("/admin");
 
-    expect(userId).toBeTruthy();
     expect(response.status).toBe(403);
+    expect(await auditActions(userId)).toContain("staff_area.refused");
   });
 });

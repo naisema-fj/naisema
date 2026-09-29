@@ -91,6 +91,13 @@ export async function auditActions(actorId: string) {
   return results.map((row) => row.action);
 }
 
+export async function auditActionsAbout(objectId: string) {
+  const { results } = await env.DB.prepare("SELECT action FROM audit_event WHERE object_id = ?1 ORDER BY created_at")
+    .bind(objectId)
+    .all<{ action: string }>();
+  return results.map((row) => row.action);
+}
+
 /** Seeds a staff member and returns a browser that has signed in and passed two-factor. */
 export async function signedInStaff(email: string, roles: RoleAssignment[]) {
   const userId = await seedStaff(email, roles);

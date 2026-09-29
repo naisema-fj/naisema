@@ -1,10 +1,6 @@
-import { eq } from "drizzle-orm";
 import { Form, redirect } from "react-router";
-import { createAuth } from "~/lib/auth.server";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { getDb } from "~/lib/db.server";
-import { ADMIN_PATHS, getSignedIn } from "~/lib/staff.server";
-import { user } from "~db/schema";
+import { ADMIN_PATHS, getSignedIn, requestStaffSignInLink } from "~/lib/staff.server";
 import type { Route } from "./+types/sign-in";
 
 export const handle = { hydrate: false };
@@ -28,14 +24,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     return { status: "invalid" as const };
   }
 
-  // Only existing staff accounts are sent a link; the reply never reveals whether one exists.
-  const existing = await getDb(env.DB).select({ id: user.id }).from(user).where(eq(user.email, email)).get();
-  if (existing) {
-    await createAuth(env, request).api.signInMagicLink({
-      body: { email, callbackURL: ADMIN_PATHS.home },
-      headers: request.headers,
-    });
-  }
+  await requestStaffSignInLink(env, request, email);
   return { status: "sent" as const, email };
 }
 

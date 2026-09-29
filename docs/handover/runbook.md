@@ -79,7 +79,7 @@ In the repository settings on GitHub:
 
 Staff tools live on their own hostname, served by the same Worker (ADR-0005): `admin.naisema.com` in production, `admin.staging.naisema.com` on staging, and `http://admin.localhost:5173` locally. The public site never answers `/admin` or `/api/auth`.
 
-Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in and code check is written to the `audit_event` table.
+Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Links go only to accounts that hold an active role, at most three per address every 15 minutes, and the sign-in page gives the same reply either way. A lost phone currently needs the technical owner to reset that person's two-factor in the database; an administrator reset is a follow-up. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in and code check is written to the `audit_event` table.
 
 ### Before the first deploy to an environment
 

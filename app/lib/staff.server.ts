@@ -1,6 +1,6 @@
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, gt, isNull, sql } from "drizzle-orm";
 import { redirect } from "react-router";
-import { roleAssignment, session as sessionTable, staffSession } from "~db/schema";
+import { auditEvent, roleAssignment, session as sessionTable, staffSession, user as userTable } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import { type Auth, createAuth, sessionTokenFromSetCookie } from "./auth.server";
 import { type Database, getDb } from "./db.server";
@@ -13,6 +13,10 @@ export const ADMIN_PATHS = {
   twoFactor: "/admin/two-factor",
   twoFactorSetup: "/admin/two-factor/setup",
 } as const;
+
+/** Sign-in links one address can be sent per window, so nobody can flood a staff inbox. */
+export const MAGIC_LINKS_PER_WINDOW = 3;
+const MAGIC_LINK_WINDOW_MS = 15 * 60 * 1000;
 
 /** Wrong codes allowed per session before the session is ended (ADR-0013). */
 export const MAX_TWO_FACTOR_ATTEMPTS = 5;
@@ -40,6 +44,36 @@ export async function activeRoles(db: Database, userId: string): Promise<RoleAss
     .from(roleAssignment)
     .where(and(eq(roleAssignment.userId, userId), isNull(roleAssignment.revokedAt)));
   return rows.map(toRoleAssignment);
+}
+
+/**
+ * Emails a sign-in link to a current staff member. Silently does nothing for unknown addresses,
+ * accounts with no active role, or addresses that have hit the throttle, so the reply never
+ * reveals which of those applied. Each link sent is audited, which is also the throttle's count.
+ */
+export async function requestStaffSignInLink(env: Env, request: Request, email: string): Promise<void> {
+  const db = getDb(env.DB);
+  const member = await db.select({ id: userTable.id }).from(userTable).where(eq(userTable.email, email)).get();
+  if (!member || (await activeRoles(db, member.id)).length === 0) return;
+
+  const recent = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(auditEvent)
+    .where(
+      and(
+        eq(auditEvent.action, "magic_link.sent"),
+        eq(auditEvent.objectId, member.id),
+        gt(auditEvent.createdAt, new Date(Date.now() - MAGIC_LINK_WINDOW_MS)),
+      ),
+    )
+    .get();
+  if ((recent?.count ?? 0) >= MAGIC_LINKS_PER_WINDOW) return;
+
+  await createAuth(env, request).api.signInMagicLink({
+    body: { email, callbackURL: ADMIN_PATHS.home },
+    headers: request.headers,
+  });
+  await recordAudit(db, { actorId: null, action: "magic_link.sent", objectType: "user", objectId: member.id });
 }
 
 type StaffStep = "signIn" | "twoFactorSetup" | "twoFactor" | "done";
@@ -78,6 +112,12 @@ export async function requireStaff(env: Env, request: Request) {
 
   const actor: Actor = { userId: signedIn.user.id, roles: await activeRoles(signedIn.db, signedIn.user.id) };
   if (!can(actor, { action: "staffArea.enter" })) {
+    await recordAudit(signedIn.db, {
+      actorId: signedIn.user.id,
+      action: "staff_area.refused",
+      objectType: "session",
+      objectId: signedIn.sessionId,
+    });
     throw new Response("This account has no staff access.", { status: 403 });
   }
   return { ...signedIn, actor };

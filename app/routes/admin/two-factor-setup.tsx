@@ -36,11 +36,13 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (form.get("intent") === "start") {
     const enabled = await signedIn.auth.api.enableTwoFactor({ headers: request.headers, body: {} });
     if (enabled.method !== "totp") throw new Error("Staff two-factor must use an authenticator app (TOTP)");
-    return { key: describeKey(enabled.totpURI), backupCodes: enabled.backupCodes, error: null };
+    // Better Auth also generates backup codes; they are not shown because nothing accepts them yet.
+    // A lost phone is recovered by an administrator resetting two-factor (follow-up issue).
+    return { key: describeKey(enabled.totpURI), error: null };
   }
 
   const error = respondToCodeCheck(await checkStaffCode(signedIn, request, String(form.get("code") ?? "").trim()));
-  return { key: null, backupCodes: null, error };
+  return { key: null, error };
 }
 
 export default function TwoFactorSetup({ loaderData, actionData }: Route.ComponentProps) {
@@ -68,21 +70,7 @@ export default function TwoFactorSetup({ loaderData, actionData }: Route.Compone
             Or type this key into the app instead: <code data-totp-secret={key.secret}>{key.secret}</code>
           </p>
 
-          {actionData?.backupCodes && (
-            <>
-              <h2>2. Keep these backup codes somewhere safe</h2>
-              <p>Each code works once if you lose your phone. They are shown only now.</p>
-              <ul>
-                {actionData.backupCodes.map((backupCode) => (
-                  <li key={backupCode}>
-                    <code>{backupCode}</code>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-
-          <h2>{actionData?.backupCodes ? "3." : "2."} Enter the code your app shows</h2>
+          <h2>2. Enter the code your app shows</h2>
           <Form method="post">
             <input type="hidden" name="intent" value="verify" />
             <CodeField label="6-digit code" error={actionData?.error} />
