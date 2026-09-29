@@ -12,7 +12,11 @@ export function createNonce() {
   return btoa(String.fromCharCode(...bytes));
 }
 
-export function applySecurityHeaders(headers: Headers, nonce: string) {
+/**
+ * Only an environment that sets ALLOW_INDEXING = "true" (production) may be indexed;
+ * staging, previews and local builds are always kept out of search engines.
+ */
+export function applySecurityHeaders(headers: Headers, nonce: string, { allowIndexing }: { allowIndexing: boolean }) {
   headers.set(
     "Content-Security-Policy",
     [
@@ -29,4 +33,7 @@ export function applySecurityHeaders(headers: Headers, nonce: string) {
   );
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (!allowIndexing) {
+    headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
 }

@@ -2,6 +2,7 @@ import { isbot } from "isbot";
 import { renderToReadableStream } from "react-dom/server";
 import type { EntryContext, RouterContextProvider } from "react-router";
 import { ServerRouter } from "react-router";
+import { cloudflareContext } from "~/lib/cloudflare";
 import { applySecurityHeaders, createNonce, NonceContext } from "~/lib/security-headers";
 
 export default async function handleRequest(
@@ -9,7 +10,7 @@ export default async function handleRequest(
   responseStatusCode: number,
   responseHeaders: Headers,
   routerContext: EntryContext,
-  _loadContext: RouterContextProvider,
+  loadContext: RouterContextProvider,
 ) {
   let shellRendered = false;
   const userAgent = request.headers.get("user-agent");
@@ -40,7 +41,8 @@ export default async function handleRequest(
   responseHeaders.set("Content-Type", "text/html");
   // Vite's dev server injects its own inline scripts, so the policy applies to builds only.
   if (!import.meta.env.DEV) {
-    applySecurityHeaders(responseHeaders, nonce);
+    const { env } = loadContext.get(cloudflareContext);
+    applySecurityHeaders(responseHeaders, nonce, { allowIndexing: env.ALLOW_INDEXING === "true" });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
 }

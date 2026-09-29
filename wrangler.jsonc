@@ -26,6 +26,9 @@
   "env": {
     "staging": {
       "name": "naisema-staging",
+      // Needs naisema.com as an active zone in this account and Zone › Workers Routes › Edit
+      // on the staging CI token (docs/handover/runbook.md, custom domains).
+      "routes": [{ "pattern": "staging.naisema.com", "custom_domain": true }],
       "d1_databases": [
         {
           "binding": "DB",
@@ -41,6 +44,7 @@
     },
     "production": {
       "name": "naisema-production",
+      "vars": { "ALLOW_INDEXING": "true" },
       "d1_databases": [
         {
           "binding": "DB",
