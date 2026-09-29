@@ -61,7 +61,8 @@ pnpm wrangler r2 bucket create naisema-staging-media --location oc
 pnpm wrangler r2 bucket create naisema-staging-evidence --location oc
 ```
 
-- Copy the D1 `database_id` printed by `d1 create` into the matching `env.<name>.d1_databases` entry in `wrangler.jsonc` (replacing the `REPLACE_WITH_…` placeholder) and commit it. Database IDs are not secrets.
+- When `d1 create` or `r2 bucket create` asks whether to add the resource to your Wrangler configuration, answer **No**. Wrangler would add it to the top level as a *remote* binding, which makes local development and tests talk to real staging or production data.
+- Instead, copy the D1 `database_id` printed by `d1 create` into the matching `env.<name>.d1_databases` entry in `wrangler.jsonc` and commit it. Database IDs and the account ID are not secrets. (Staging and production were provisioned on 29 September 2026; their IDs are already in `wrangler.jsonc`.)
 - Leave D1 read replication off (the default) per ADR-0004.
 - Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Account Settings: Read, limited to the NAISEMA account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
 - **Development** runs entirely in Miniflare on each developer's machine; there is no remote development Worker, database or bucket, and none is needed until a shared preview environment is wanted.
