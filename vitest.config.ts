@@ -9,6 +9,8 @@ export default defineConfig({
   plugins: [
     cloudflareTest(async () => ({
       wrangler: { configPath: "./build/server/wrangler.json" },
+      // Tests must never reach real Cloudflare resources, whatever the config says.
+      remoteBindings: false,
       miniflare: {
         bindings: { TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")) },
       },
