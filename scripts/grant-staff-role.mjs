@@ -7,6 +7,10 @@
 // Reviewers also need --review-type (and --language-variety for language reviewers).
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 
 const ROLES = ["administrator", "editor", "educator", "reviewer", "safeguarding_lead", "privacy_contact"];
@@ -62,8 +66,23 @@ const sql = [
              '{"via":"cli","role":"${values.role}"}', ${now});`,
 ].join("\n");
 
+// Run Wrangler's own entry file with this Node binary: no shell, so it works the same on
+// Windows (where `pnpm` is a .cmd wrapper) and the SQL travels in a file, not a long argument.
+const require = createRequire(import.meta.url);
+const wranglerPackage = require.resolve("wrangler/package.json");
+const wranglerBin = join(dirname(wranglerPackage), require(wranglerPackage).bin.wrangler);
+const workDir = mkdtempSync(join(tmpdir(), "naisema-grant-"));
+const sqlFile = join(workDir, "grant.sql");
+writeFileSync(sqlFile, sql);
+
 const target = values.local ? ["--local"] : ["--remote", "--env", values.env];
-execFileSync("pnpm", ["wrangler", "d1", "execute", "DB", ...target, "--config", "wrangler.jsonc", "--command", sql], {
-  stdio: "inherit",
-});
+try {
+  execFileSync(
+    process.execPath,
+    [wranglerBin, "d1", "execute", "DB", ...target, "--config", "wrangler.jsonc", "--file", sqlFile, "--yes"],
+    { stdio: "inherit" },
+  );
+} finally {
+  rmSync(workDir, { recursive: true, force: true });
+}
 console.log(`Granted ${values.role} to ${email}. They can now sign in at the admin site and set up two-factor.`);

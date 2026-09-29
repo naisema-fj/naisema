@@ -4,8 +4,8 @@ import { expect, test } from "@playwright/test";
 test("home page shows the stored welcome statement", async ({ page }) => {
   await page.goto("/");
 
-  await expect(page.getByRole("heading", { level: 1, name: "NAISEMA" })).toBeVisible();
-  await expect(page.getByText("Welcome to the NAISEMA test build.")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Na iSema" })).toBeVisible();
+  await expect(page.getByText("Welcome to the Na iSema test build.")).toBeVisible();
 });
 
 test("home page has no automatically detectable WCAG 2.2 AA violations", async ({ page }) => {

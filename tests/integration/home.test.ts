@@ -24,19 +24,19 @@ describe("public home page", () => {
   });
 
   it("uses the site name stored in the database as the heading and page title", async () => {
-    await setSiteSetting("site_name", "NAISEMA Staging");
+    await setSiteSetting("site_name", "Na iSema Staging");
 
     const html = await (await SELF.fetch("https://naisema.test/")).text();
 
-    expect(html).toContain("<title>NAISEMA Staging</title>");
-    expect(html).toContain("<h1>NAISEMA Staging</h1>");
+    expect(html).toContain("<title>Na iSema Staging</title>");
+    expect(html).toContain("<h1>Na iSema Staging</h1>");
   });
 
   it("still renders with the default name before any settings exist", async () => {
     const response = await SELF.fetch("https://naisema.test/");
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain("<h1>NAISEMA</h1>");
+    expect(await response.text()).toContain("<h1>Na iSema</h1>");
   });
 });
 

@@ -8,7 +8,7 @@ import type { Route } from "./+types/home";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "NAISEMA staff" }];
+  return [{ title: "Na iSema staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -23,7 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export default function AdminHome({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
-      <h1>NAISEMA staff</h1>
+      <h1>Na iSema staff</h1>
       <p>
         Signed in as <strong>{loaderData.email}</strong>.
       </p>

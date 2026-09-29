@@ -20,7 +20,7 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 - **Content types in 1a:** Page, Article (E-zine), Episode (Voices), Resource, Provider and Offering (plain listings), Creator Profile with one free sample, Topic, and video Content Items with Learning Layers.
 - **Deferred to 1b:** Radio Station and Radio Programme with timetables, Marketplace listing (MKT-01), E-zine Issue, featured slots, richer Offering filters.
 - **Language Variety for the Seed Collection:** Standard Fijian only. Variety is still recorded on every Learning Layer and language Review Approval.
-- **Consultation (GOV-01, GOV-02):** an approved external survey tool and an access-controlled NAISEMA-owned spreadsheet register in 1a; storage location and deletion documented under DATA-04.
+- **Consultation (GOV-01, GOV-02):** an approved external survey tool and an access-controlled Na iSema-owned spreadsheet register in 1a; storage location and deletion documented under DATA-04.
 - **Reports and data requests (SAFE-03, DATA-03):** one in-app Case queue covering reports, rights concerns and data requests.
 - **Search (PUB-03):** D1 full-text search (FTS5) built from eligible Revisions.
 - **Rich text:** article and page bodies are stored as Tiptap/ProseMirror JSON with a small fixed block set (headings, lists, links, quotes, images with required alt text, embedded Content Items, callouts); exported as JSON and HTML.
@@ -45,10 +45,10 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 
 ## Agreed amendments to the Founding Developer Agreement / MOU
 
-1. **§3 scope:** "NAISEMA Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.
+1. **§3 scope:** "Na iSema Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.
 2. **§1 purpose:** replace "a proposed digital platform for iTaukei identity, language and connection" with the PRD's purpose statement (designed especially for Fijians abroad and open to all).
 3. **§10 support:** agree a defined post-launch support period in writing before 1a launch (proposed: 3 months, best-effort, Fiji business hours) and amend PRD TECH-04 targets to what that support can deliver.
-4. **§4 assignment:** add "or a NAISEMA entity nominated by the Founder in writing" as assignee.
+4. **§4 assignment:** add "or a Na iSema entity nominated by the Founder in writing" as assignee.
 
 ## Phase 1a launch blockers
 

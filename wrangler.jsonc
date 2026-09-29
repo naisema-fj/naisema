@@ -1,6 +1,6 @@
 // Worker configuration. The top level is local development; `env.staging` and
 // `env.production` are selected at build time with CLOUDFLARE_ENV (see
-// docs/handover/runbook.md). All resources live in the one NAISEMA Cloudflare
+// docs/handover/runbook.md). All resources live in the one Na iSema Cloudflare
 // account (ADR-0004) and are created with the Oceania location hint.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -17,7 +17,7 @@
   "secrets": { "required": ["BETTER_AUTH_SECRET"] },
   "vars": {
     "ADMIN_HOSTNAME": "admin.localhost",
-    "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>",
+    "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
     "EMAIL_OUTBOX": "true"
   },
   "d1_databases": [
@@ -43,7 +43,7 @@
       ],
       "vars": {
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
-        "EMAIL_FROM": "NAISEMA Staging <no-reply@naisema.com>"
+        "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>"
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": { "required": ["BETTER_AUTH_SECRET"] },
@@ -65,7 +65,7 @@
       "vars": {
         "ALLOW_INDEXING": "true",
         "ADMIN_HOSTNAME": "admin.naisema.com",
-        "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>"
+        "EMAIL_FROM": "Na iSema <no-reply@naisema.com>"
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": { "required": ["BETTER_AUTH_SECRET"] },

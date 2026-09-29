@@ -1,6 +1,9 @@
-# NAISEMA
+# Na iSema
 
 A digital connection and learning platform for Fijians abroad, open to all. It connects people with cultural stories, media, existing learning providers, creators and optional video-based language learning.
+
+The product name is written **Na iSema**. Lower-case `naisema` appears only in technical identifiers (domains, repository, Worker, database and bucket names), which cannot contain spaces.
+_Avoid_: NAISEMA, Naisema, NaiSema
 
 ## Content and learning
 
@@ -96,7 +99,7 @@ A cultural Review Approval given by a Knowledge Holder and recorded by an editor
 ## People and roles
 
 **Contributor**:
-Anyone whose story, recording or knowledge appears in NAISEMA content; a rights and credit relationship, not necessarily an account.
+Anyone whose story, recording or knowledge appears in Na iSema content; a rights and credit relationship, not necessarily an account.
 _Avoid_: Author (for non-staff), participant
 
 **Creator**:
@@ -138,7 +141,7 @@ _Avoid_: Ticket, complaint (as the record)
 ## Discovery
 
 **Provider**:
-Any organisation or person whose learning Offering is listed on NAISEMA. Listing implies no endorsement or partnership.
+Any organisation or person whose learning Offering is listed on Na iSema. Listing implies no endorsement or partnership.
 _Avoid_: Partner (unless an agreement exists)
 
 **Partner**:

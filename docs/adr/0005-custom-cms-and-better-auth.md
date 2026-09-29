@@ -1,6 +1,6 @@
 # Build a custom CMS on Workers, with Better Auth for identity
 
-We build the CMS ourselves on Cloudflare Workers rather than adopting Payload CMS on Workers (the official D1/R2 template) or a hosted headless CMS. The core of NAISEMA is not generic publishing but exact-revision review gates (ADR-0003), rights records, Learning Layer authoring (timeline, segments, annotations, activities) and private learner data; owning that model end to end was preferred over bending a CMS's revision and access-control model to fit it, and over depending on a young Payload-on-Workers integration. Authentication, sessions and roles use Better Auth on D1.
+We build the CMS ourselves on Cloudflare Workers rather than adopting Payload CMS on Workers (the official D1/R2 template) or a hosted headless CMS. The core of Na iSema is not generic publishing but exact-revision review gates (ADR-0003), rights records, Learning Layer authoring (timeline, segments, annotations, activities) and private learner data; owning that model end to end was preferred over bending a CMS's revision and access-control model to fit it, and over depending on a young Payload-on-Workers integration. Authentication, sessions and roles use Better Auth on D1.
 
 ## Consequences
 
