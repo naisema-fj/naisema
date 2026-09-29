@@ -15,6 +15,8 @@ Non-architectural decisions, agreed amendments and launch blockers from the PRD 
 
 No-self-approval is enforced in code from day one: nobody approves a Revision they authored or edited.
 
+Administrators may grant roles to themselves (decided 29 September 2026). With one person holding every editorial role, blocking self-grants would only add friction; every grant is audited, and the no-self-approval rule above still applies to the roles an administrator holds.
+
 ## Phase 1a product scope
 
 - **Content types in 1a:** Page, Article (E-zine), Episode (Voices), Resource, Provider and Offering (plain listings), Creator Profile with one free sample, Topic, and video Content Items with Learning Layers.
@@ -91,6 +93,7 @@ Phase 1a work is tracked as GitHub issues in naisema-fj/naisema, titled with a s
 | 1a-23 | #32 | Exports and audit log |
 | 1a-24 | #34 | Backups and deletion ledger |
 | 1a-25 | #20 | Monitoring and cost report |
+| 1a-26 | #41 | Administrator resets a staff member's two-factor |
 | 1a-B1–B6 | #5–#10 | Launch blockers (human) |
 
 ## Open, not blocking the build baseline

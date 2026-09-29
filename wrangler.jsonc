@@ -41,6 +41,9 @@
         { "pattern": "staging.naisema.com", "custom_domain": true },
         { "pattern": "admin.staging.naisema.com", "custom_domain": true }
       ],
+      // Keep the public workers.dev address too; Wrangler turns it off by default once routes exist.
+      // It serves only the public site: staff tools answer on ADMIN_HOSTNAME alone.
+      "workers_dev": true,
       "vars": {
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
         "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>"
