@@ -110,6 +110,10 @@ An adult (18+) using Learn; may browse and practise without an account.
 An optional, self-declared 18+ account that holds a Learner's private saves, history and progress. No under-18 accounts exist; families use the platform through a caregiver's account or without one.
 _Avoid_: Member profile, child account
 
+**Role Assignment**:
+A staff role granted to a person by an administrator, optionally scoped to a Review Type and, for language reviewers, a Language Variety. Revoked, never deleted.
+_Avoid_: Permission, group
+
 **Educator**:
 A staff or contracted role, granted by an administrator, that may author Learning Layers on assigned drafts. Authoring confers no publication approval and no public profile.
 _Avoid_: Tutor, teacher (for this role)

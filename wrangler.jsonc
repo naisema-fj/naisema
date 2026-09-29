@@ -11,6 +11,15 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "upload_source_maps": true,
+  // Local development and tests: the staff admin site answers on admin.localhost, and email is
+  // written to the email_outbox table instead of being sent.
+  // Set per environment with `wrangler secret put BETTER_AUTH_SECRET --env <env>`; locally in .dev.vars.
+  "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+  "vars": {
+    "ADMIN_HOSTNAME": "admin.localhost",
+    "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>",
+    "EMAIL_OUTBOX": "true"
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -28,7 +37,16 @@
       "name": "naisema-staging",
       // Needs naisema.com as an active zone in this account and Zone › Workers Routes › Edit
       // on the staging CI token (docs/handover/runbook.md, custom domains).
-      "routes": [{ "pattern": "staging.naisema.com", "custom_domain": true }],
+      "routes": [
+        { "pattern": "staging.naisema.com", "custom_domain": true },
+        { "pattern": "admin.staging.naisema.com", "custom_domain": true }
+      ],
+      "vars": {
+        "ADMIN_HOSTNAME": "admin.staging.naisema.com",
+        "EMAIL_FROM": "NAISEMA Staging <no-reply@naisema.com>"
+      },
+      "send_email": [{ "name": "EMAIL" }],
+      "secrets": { "required": ["BETTER_AUTH_SECRET"] },
       "d1_databases": [
         {
           "binding": "DB",
@@ -44,7 +62,13 @@
     },
     "production": {
       "name": "naisema-production",
-      "vars": { "ALLOW_INDEXING": "true" },
+      "vars": {
+        "ALLOW_INDEXING": "true",
+        "ADMIN_HOSTNAME": "admin.naisema.com",
+        "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>"
+      },
+      "send_email": [{ "name": "EMAIL" }],
+      "secrets": { "required": ["BETTER_AUTH_SECRET"] },
       "d1_databases": [
         {
           "binding": "DB",

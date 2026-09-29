@@ -75,6 +75,30 @@ In the repository settings on GitHub:
 2. In each environment, add the secret `CLOUDFLARE_API_TOKEN` holding that environment's scoped token.
 3. **Variables:** add the repository variable `CLOUDFLARE_ACCOUNT_ID`. Deploy jobs stay skipped until this variable exists.
 
+## Staff sign-in
+
+Staff tools live on their own hostname, served by the same Worker (ADR-0005): `admin.naisema.com` in production, `admin.staging.naisema.com` on staging, and `http://admin.localhost:5173` locally. The public site never answers `/admin` or `/api/auth`.
+
+Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in and code check is written to the `audit_event` table.
+
+### Before the first deploy to an environment
+
+1. **Auth secret.** Generate a long random value and store it as a Worker secret:
+   `openssl rand -base64 32 | pnpm wrangler secret put BETTER_AUTH_SECRET --env staging --config wrangler.jsonc`
+   Changing it signs everyone out and invalidates enrolled authenticator apps, so rotate it only as part of an incident.
+2. **Email sending.** In the Cloudflare dashboard go to **Compute → Email Service → Email Sending → Onboard Domain** and onboard `naisema.com`. Cloudflare adds SPF, DKIM, DMARC and bounce MX records; if any address at `@naisema.com` already receives mail, check the proposed MX records before accepting. Sign-in emails come from `no-reply@naisema.com` (`EMAIL_FROM` in `wrangler.jsonc`).
+3. **First administrator.** After the deploy has applied migrations, grant the first role from the command line:
+   `pnpm staff:grant --env staging --email you@example.com --role administrator`
+   That person signs in at the admin site, sets up their authenticator app, and grants everyone else's roles in `/admin/staff`.
+
+### Locally
+
+`pnpm dev` creates `.dev.vars` with a random local secret if it is missing. Open `http://admin.localhost:5173/admin`, grant yourself a role with `pnpm staff:grant --local --email you@example.com --role administrator`, and read sign-in emails from the local outbox:
+
+```sh
+pnpm wrangler d1 execute DB --local --config wrangler.jsonc --command "SELECT \"to\", text FROM email_outbox ORDER BY id DESC LIMIT 1"
+```
+
 ## Custom domains
 
 Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging serves `staging.naisema.com` alongside its `workers.dev` address.
@@ -84,6 +108,8 @@ Prerequisites, done once:
 1. `naisema.com` is an **Active** zone in the NAISEMA Cloudflare account (Add a domain, Free plan, then point the registrar's nameservers at Cloudflare). Check imported MX/TXT records before switching nameservers if email uses the domain.
 2. No existing DNS record for the hostname; Cloudflare creates the record and certificate on deploy.
 3. The environment's CI token has **Zone › Workers Routes › Edit** (and **Zone › DNS › Edit** if the deploy reports it cannot create the record), limited to the `naisema.com` zone.
+
+The staging Worker also serves `admin.staging.naisema.com` for staff tools.
 
 To add a domain, add `{ "pattern": "<hostname>", "custom_domain": true }` to that environment's `routes` and merge; the next deploy attaches it. The first request can take a minute or two while the certificate is issued.
 

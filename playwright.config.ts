@@ -20,7 +20,7 @@ export default defineConfig({
   ],
   webServer: {
     // Serves the production build with local D1, migrated and seeded with e2e fixtures.
-    command: `pnpm db:migrate:local && pnpm wrangler d1 execute DB --local --file e2e/seed.sql && pnpm preview --port ${port} --strictPort`,
+    command: `node scripts/ensure-dev-vars.mjs && pnpm db:migrate:local && pnpm wrangler d1 execute DB --local --file e2e/seed.sql && pnpm preview --port ${port} --strictPort`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

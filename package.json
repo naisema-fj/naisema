@@ -7,27 +7,31 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "react-router dev",
+    "dev": "node scripts/ensure-dev-vars.mjs && react-router dev",
     "build": "react-router build",
     "preview": "vite preview",
     "typegen": "wrangler types && react-router typegen",
-    "typecheck": "pnpm typegen && tsc -b",
+    "typecheck": "pnpm typegen && tsc -p tsconfig.node.json && tsc -p tsconfig.cloudflare.json && tsc -p tests/tsconfig.json",
     "lint": "biome check .",
     "format": "biome format --write .",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "test": "pnpm build && vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "staff:grant": "node scripts/grant-staff-role.mjs"
   },
   "dependencies": {
+    "better-auth": "^1.7.6",
     "drizzle-orm": "^0.45.3",
     "isbot": "^5.2.2",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-router": "^8.4.0"
+    "react-router": "^8.4.0",
+    "uqr": "^0.1.3"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@better-auth/utils": "0.4.2",
     "@biomejs/biome": "^2.5.14",
     "@cloudflare/vite-plugin": "^1.62.0",
     "@cloudflare/vitest-pool-workers": "^0.22.0",
