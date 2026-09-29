@@ -1,4 +1,4 @@
-import { SELF } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import {
   auditActions,
@@ -110,6 +110,32 @@ describe("staff sign-in", () => {
 
     expect(beforeCode.headers.get("Location")).toBe("/admin/two-factor");
     expect(afterCode.status).toBe(200);
+  });
+
+  it("cannot switch off two-factor or guess codes through Better Auth's own endpoints", async () => {
+    const { userId } = await enrolledAdministrator("target@naisema.test");
+    const attacker = new Browser();
+    await signInWithMagicLink(attacker, "target@naisema.test");
+
+    const disable = await attacker.fetch("/api/auth/two-factor/disable", {
+      method: "POST",
+      body: "{}",
+      headers: { "Content-Type": "application/json", Origin: "http://admin.localhost" },
+    });
+    const guess = await attacker.fetch("/api/auth/two-factor/verify-totp", {
+      method: "POST",
+      body: JSON.stringify({ code: "123456" }),
+      headers: { "Content-Type": "application/json", Origin: "http://admin.localhost" },
+    });
+    const home = await attacker.fetch("/admin");
+
+    expect(disable.status).toBe(404);
+    expect(guess.status).toBe(404);
+    expect(home.headers.get("Location")).toBe("/admin/two-factor");
+    const account = await env.DB.prepare("SELECT two_factor_enabled FROM user WHERE id = ?1")
+      .bind(userId)
+      .first<{ two_factor_enabled: number }>();
+    expect(account?.two_factor_enabled).toBe(1);
   });
 
   it("ends the session after five wrong codes", async () => {

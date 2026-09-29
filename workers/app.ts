@@ -6,6 +6,14 @@ const requestHandler = createRequestHandler(() => import("virtual:react-router/s
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
+/**
+ * The only Better Auth endpoint a browser may call directly: the emailed sign-in link.
+ * Everything else (sending links, TOTP enrolment and checks, sign-out) is called server-side by
+ * the staff gate's own pages. Exposing the rest would let a magic-link-only session switch off
+ * two-factor or guess codes without the staff gate's attempt limit (ADR-0013).
+ */
+const PUBLIC_AUTH_ENDPOINTS = new Set([`GET ${AUTH_BASE_PATH}/magic-link/verify`]);
+
 /** Paths that exist only on the staff admin host (ADR-0005). */
 function isAdminPath(pathname: string) {
   return (
@@ -29,6 +37,9 @@ export default {
         return new Response("Cross-site request refused", { status: 403 });
       }
       if (url.pathname.startsWith(`${AUTH_BASE_PATH}/`)) {
+        if (!PUBLIC_AUTH_ENDPOINTS.has(`${request.method} ${url.pathname}`)) {
+          return new Response("Not found", { status: 404 });
+        }
         return createAuth(env, request).handler(request);
       }
       if (!isAdminPath(url.pathname) && !url.pathname.startsWith("/__manifest")) {
