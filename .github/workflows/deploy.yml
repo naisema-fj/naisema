@@ -8,7 +8,8 @@ name: Deploy
 
 on:
   push:
-    branches: ["**"]
+    # The repository's default branch. Update this list if the default branch is renamed.
+    branches: ["main", "claude/brave-davinci-1caxw4"]
     tags: ["v*"]
 
 permissions:
@@ -38,6 +39,11 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+      - name: Check the staging D1 database ID is configured
+        run: |
+          if grep -q REPLACE_WITH_STAGING wrangler.jsonc; then
+            echo "::error::Set the staging database_id in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
+          fi
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm wrangler d1 migrations apply DB --remote --env staging --config wrangler.jsonc
@@ -57,11 +63,24 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
+      - name: Check the tag is on the default branch
+        run: |
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+            echo "::error::Production tags must point at a commit on the default branch."; exit 1
+          fi
+      - name: Check the production D1 database ID is configured
+        run: |
+          if grep -q REPLACE_WITH_PRODUCTION wrangler.jsonc; then
+            echo "::error::Set the production database_id in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
+          fi
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm wrangler d1 migrations apply DB --remote --env production --config wrangler.jsonc

@@ -37,7 +37,11 @@ pnpm wrangler d1 execute DB --local --command \
 
 If the sandbox's Chromium differs from the one Playwright expects, point it at a local binary with `PLAYWRIGHT_CHROMIUM_EXECUTABLE=/path/to/chrome pnpm test:e2e`.
 
-CI (`.github/workflows/ci.yml`) runs lint, typecheck, integration tests, browser tests and a full-history gitleaks secret scan on every pull request.
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, integration tests, browser tests and a full-history gitleaks secret scan on every pull request. Dependabot opens weekly dependency update pull requests.
+
+## Security headers and client JavaScript
+
+Every server-rendered response carries a nonce-based Content Security Policy and baseline security headers (`app/lib/security-headers.ts`); inline scripts must use the per-response nonce. Pages with nothing interactive export `handle = { hydrate: false }` and ship no client JavaScript.
 
 ## Database migrations
 
@@ -59,7 +63,8 @@ pnpm wrangler r2 bucket create naisema-staging-evidence --location oc
 
 - Copy the D1 `database_id` printed by `d1 create` into the matching `env.<name>.d1_databases` entry in `wrangler.jsonc` (replacing the `REPLACE_WITH_…` placeholder) and commit it. Database IDs are not secrets.
 - Leave D1 read replication off (the default) per ADR-0004.
-- Create a Cloudflare API token per environment, scoped to that environment's Worker, D1 database and R2 buckets (Workers Scripts: Edit, D1: Edit, R2: Edit, Account Settings: Read).
+- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Account Settings: Read, limited to the NAISEMA account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
+- **Development** runs entirely in Miniflare on each developer's machine; there is no remote development Worker, database or bucket, and none is needed until a shared preview environment is wanted.
 
 ### Connect GitHub
 
@@ -73,8 +78,10 @@ In the repository settings on GitHub:
 
 Deploys run from `.github/workflows/deploy.yml`, always after the full CI suite passes:
 
-- **Staging:** automatic on every push to the default branch.
-- **Production:** push a tag such as `v0.1.0` from the default branch; the job waits for approval in the `production` environment.
+- **Staging:** automatic on every push to the default branch. The job stops with a clear error while `wrangler.jsonc` still holds the placeholder database ID.
+- **Production:** push a tag such as `v0.1.0` on a commit that is on the default branch (other tags are rejected); the job waits for approval in the `production` environment.
+
+The deploy workflow lists the default branch by name; update `.github/workflows/deploy.yml` if the default branch is renamed.
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0
@@ -91,4 +98,25 @@ To preview a deploy locally without publishing: `CLOUDFLARE_ENV=staging pnpm bui
 
 ## Secrets
 
-Secrets never go in the repository. Runtime secrets are set with `pnpm wrangler secret put NAME --env <env>`; CI secrets live in GitHub environments. Local overrides go in `.dev.vars` (gitignored).
+Secrets never go in the repository. Runtime secrets are set with `pnpm wrangler secret put NAME --env <env>`; CI secrets live in GitHub environments. Local overrides go in `.dev.vars` (gitignored). CI scans the full history for leaked secrets with gitleaks on every pull request.
+
+### Rotating a secret
+
+1. Create the replacement (a new Cloudflare API token, or a new value for a runtime secret).
+2. Update it where it is used: the GitHub environment secret for CI tokens, or `pnpm wrangler secret put NAME --env <env>` for runtime secrets (takes effect immediately, no redeploy needed).
+3. Confirm the next deploy or request succeeds.
+4. Revoke the old token or value in the Cloudflare dashboard.
+5. Rotate immediately, without waiting for step 3, if a secret may have leaked; then follow the incident steps below.
+
+## Incidents
+
+Owner: the technical owner (see `docs/decision-log.md`). Safeguarding or privacy aspects go to the safeguarding lead or privacy contact at the same time.
+
+1. **Detect.** Alerts, a report through the site, or a Cloudflare or GitHub notice. Write down the time and what was seen.
+2. **Contain.** Roll back the Worker (below) if a deploy caused it; rotate any exposed secret; withdraw affected content.
+3. **Preserve evidence.** Export relevant Workers logs and note deploy IDs before they age out. Do not copy personal data into chats or tickets.
+4. **Assess.** What happened, since when, and whether personal information was involved. If it was, the privacy contact decides on notification duties with the privacy adviser (PRD §11).
+5. **Recover.** Fix forward or restore (D1 Time Travel), then verify.
+6. **Review.** Record the incident, cause and follow-ups in a GitHub issue within a week.
+
+This is a first version; it is rehearsed and expanded before launch (PRD §11).

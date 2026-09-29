@@ -3,6 +3,8 @@ import { getDb } from "~/lib/db.server";
 import { getSiteSettings } from "~/lib/site-settings.server";
 import type { Route } from "./+types/home";
 
+export const handle = { hydrate: false };
+
 export async function loader({ context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   return getSiteSettings(getDb(env.DB));

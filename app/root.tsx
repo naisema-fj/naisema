@@ -1,8 +1,21 @@
-import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useMatches } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
+import { useNonce } from "./lib/security-headers";
+
+/**
+ * A route opts out of client JavaScript with `export const handle = { hydrate: false }`
+ * when it has nothing interactive (docs/phase-1a-defaults.md §7).
+ */
+function useHydrates() {
+  const leaf = useMatches().at(-1);
+  return (leaf?.handle as { hydrate?: boolean } | undefined)?.hydrate !== false;
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const nonce = useNonce();
+  const hydrates = useHydrates();
+
   return (
     <html lang="en">
       <head>
@@ -17,8 +30,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           Skip to content
         </a>
         {children}
-        <ScrollRestoration />
-        <Scripts />
+        {hydrates && (
+          <>
+            <ScrollRestoration nonce={nonce} />
+            <Scripts nonce={nonce} />
+          </>
+        )}
       </body>
     </html>
   );

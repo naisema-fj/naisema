@@ -10,7 +10,6 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
   "upload_source_maps": true,
-  "vars": { "ENVIRONMENT": "development" },
   "d1_databases": [
     {
       "binding": "DB",
@@ -26,7 +25,6 @@
   "env": {
     "staging": {
       "name": "naisema-staging",
-      "vars": { "ENVIRONMENT": "staging" },
       "d1_databases": [
         {
           "binding": "DB",
@@ -42,7 +40,6 @@
     },
     "production": {
       "name": "naisema-production",
-      "vars": { "ENVIRONMENT": "production" },
       "d1_databases": [
         {
           "binding": "DB",
