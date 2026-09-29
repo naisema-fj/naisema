@@ -59,7 +59,7 @@ An immutable snapshot of a Content Item or Learning Layer at one save; approvals
 _Avoid_: Version (for content), draft (as a noun for a snapshot)
 
 **Review Type**:
-A kind of specialist sign-off (language, cultural, editorial, accessibility) that covers a defined set of fields on a revision.
+A kind of specialist sign-off (language, cultural, editorial, accessibility, safeguarding) that covers a defined set of fields on a revision.
 
 **Review Approval**:
 A recorded decision by a reviewer, for one Review Type, on one exact revision.
@@ -109,6 +109,10 @@ An adult (18+) using Learn; may browse and practise without an account.
 **Learner Account**:
 An optional, self-declared 18+ account that holds a Learner's private saves, history and progress. No under-18 accounts exist; families use the platform through a caregiver's account or without one.
 _Avoid_: Member profile, child account
+
+**Role Assignment**:
+A staff role granted to a person by an administrator, optionally scoped to a Review Type and, for language reviewers, a Language Variety. Revoked, never deleted.
+_Avoid_: Permission, group
 
 **Educator**:
 A staff or contracted role, granted by an administrator, that may author Learning Layers on assigned drafts. Authoring confers no publication approval and no public profile.
