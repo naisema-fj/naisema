@@ -75,6 +75,22 @@ In the repository settings on GitHub:
 2. In each environment, add the secret `CLOUDFLARE_API_TOKEN` holding that environment's scoped token.
 3. **Variables:** add the repository variable `CLOUDFLARE_ACCOUNT_ID`. Deploy jobs stay skipped until this variable exists.
 
+## Custom domains
+
+Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging serves `staging.naisema.com` alongside its `workers.dev` address.
+
+Prerequisites, done once:
+
+1. `naisema.com` is an **Active** zone in the NAISEMA Cloudflare account (Add a domain, Free plan, then point the registrar's nameservers at Cloudflare). Check imported MX/TXT records before switching nameservers if email uses the domain.
+2. No existing DNS record for the hostname; Cloudflare creates the record and certificate on deploy.
+3. The environment's CI token has **Zone › Workers Routes › Edit** (and **Zone › DNS › Edit** if the deploy reports it cannot create the record), limited to the `naisema.com` zone.
+
+To add a domain, add `{ "pattern": "<hostname>", "custom_domain": true }` to that environment's `routes` and merge; the next deploy attaches it. The first request can take a minute or two while the certificate is issued.
+
+## Search engine indexing
+
+Every HTML response carries `X-Robots-Tag: noindex, nofollow` unless the environment sets `ALLOW_INDEXING = "true"`, which only production does. Staging and local builds therefore never appear in search results.
+
 ## Deploy
 
 Deploys run from `.github/workflows/deploy.yml`, always after the full CI suite passes:

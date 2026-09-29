@@ -35,6 +35,16 @@ describe("public page responses", () => {
   });
 });
 
+describe("search engine indexing", () => {
+  it("is refused unless the environment explicitly allows it", async () => {
+    const home = await SELF.fetch("https://naisema.test/");
+    const missing = await SELF.fetch("https://naisema.test/no-such-page");
+
+    expect(home.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+    expect(missing.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+  });
+});
+
 describe("static pages", () => {
   it("ship no client JavaScript on the home page", async () => {
     const html = await (await SELF.fetch("https://naisema.test/")).text();
