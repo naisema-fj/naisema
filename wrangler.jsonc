@@ -3,110 +3,108 @@
 // docs/handover/runbook.md). All resources live in the one NAISEMA Cloudflare
 // account (ADR-0004) and are created with the Oceania location hint.
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "naisema-dev",
-	"account_id": "79d195146bfff668d5b0e8aa5a6ed28b",
-	"main": "./workers/app.ts",
-	"compatibility_date": "2026-08-22",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
-		"enabled": true
-	},
-	"upload_source_maps": true,
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "naisema-dev",
-			"database_id": "00000000-0000-0000-0000-000000000000",
-			"migrations_dir": "migrations",
-		},
-		{
-			"binding": "naisema_staging",
-			"database_name": "naisema-staging",
-			"database_id": "95030ca2-1220-48a7-b33d-6b7f5c08821e",
-			"remote": true
-		},
-		{
-			"binding": "naisema_production",
-			"database_name": "naisema-production",
-			"database_id": "644c5cbb-480d-4f88-b258-1700523f54c4",
-			"remote": true
-		},
-	],
-	"r2_buckets": [
-		{
-			"binding": "MEDIA",
-			"bucket_name": "naisema-dev-media"
-		},
-		{
-			"binding": "EVIDENCE",
-			"bucket_name": "naisema-dev-evidence"
-		},
-		{
-			"bucket_name": "naisema-staging-media",
-			"binding": "naisema_staging_media",
-			"remote": true
-		},
-		{
-			"bucket_name": "naisema-staging-evidence",
-			"binding": "naisema_staging_evidence",
-			"remote": true
-		},
-		{
-			"bucket_name": "naisema-production-media",
-			"binding": "naisema_production_media",
-			"remote": true
-		},
-		{
-			"bucket_name": "naisema-production-evidence",
-			"binding": "naisema_production_evidence",
-			"remote": true
-		},
-	],
-	"env": {
-		"staging": {
-			"name": "naisema-staging",
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "naisema-staging",
-					"database_id": "REPLACE_WITH_STAGING_D1_DATABASE_ID",
-					"migrations_dir": "migrations",
-				},
-			],
-			"r2_buckets": [
-				{
-					"binding": "MEDIA",
-					"bucket_name": "naisema-staging-media"
-				},
-				{
-					"binding": "EVIDENCE",
-					"bucket_name": "naisema-staging-evidence"
-				},
-			],
-		},
-		"production": {
-			"name": "naisema-production",
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "naisema-production",
-					"database_id": "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID",
-					"migrations_dir": "migrations",
-				},
-			],
-			"r2_buckets": [
-				{
-					"binding": "MEDIA",
-					"bucket_name": "naisema-production-media"
-				},
-				{
-					"binding": "EVIDENCE",
-					"bucket_name": "naisema-production-evidence"
-				},
-			],
-		},
-	},
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "naisema-dev",
+  "account_id": "79d195146bfff668d5b0e8aa5a6ed28b",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+  "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "naisema-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+    {
+      "binding": "naisema_staging",
+      "database_name": "naisema-staging",
+      "database_id": "95030ca2-1220-48a7-b33d-6b7f5c08821e",
+      "remote": true,
+    },
+    {
+      "binding": "naisema_production",
+      "database_name": "naisema-production",
+      "database_id": "644c5cbb-480d-4f88-b258-1700523f54c4",
+      "remote": true,
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "naisema-dev-media",
+    },
+    {
+      "binding": "EVIDENCE",
+      "bucket_name": "naisema-dev-evidence",
+    },
+    {
+      "bucket_name": "naisema-staging-media",
+      "binding": "naisema_staging_media",
+      "remote": true,
+    },
+    {
+      "bucket_name": "naisema-staging-evidence",
+      "binding": "naisema_staging_evidence",
+      "remote": true,
+    },
+    {
+      "bucket_name": "naisema-production-media",
+      "binding": "naisema_production_media",
+      "remote": true,
+    },
+    {
+      "bucket_name": "naisema-production-evidence",
+      "binding": "naisema_production_evidence",
+      "remote": true,
+    },
+  ],
+  "env": {
+    "staging": {
+      "name": "naisema-staging",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "naisema-staging",
+          "database_id": "REPLACE_WITH_STAGING_D1_DATABASE_ID",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEDIA",
+          "bucket_name": "naisema-staging-media",
+        },
+        {
+          "binding": "EVIDENCE",
+          "bucket_name": "naisema-staging-evidence",
+        },
+      ],
+    },
+    "production": {
+      "name": "naisema-production",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "naisema-production",
+          "database_id": "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEDIA",
+          "bucket_name": "naisema-production-media",
+        },
+        {
+          "binding": "EVIDENCE",
+          "bucket_name": "naisema-production-evidence",
+        },
+      ],
+    },
+  },
 }
