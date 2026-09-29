@@ -71,7 +71,7 @@ pnpm wrangler r2 bucket create naisema-staging-evidence --location oc
 
 In the repository settings on GitHub:
 
-1. **Environments:** create `staging` and `production`. On `production`, add required reviewers so every production deploy needs a manual approval.
+1. **Environments:** create `staging` and `production`. Under **Deployment branches and tags**, limit `staging` to the branch `main` and `production` to tags matching `v*`. On `production`, add required reviewers so every production deploy needs a manual approval. These rules name the branch literally: renaming the default branch does not update them, and a deploy job refused by them fails at once with no log.
 2. In each environment, add the secret `CLOUDFLARE_API_TOKEN` holding that environment's scoped token.
 3. **Variables:** add the repository variable `CLOUDFLARE_ACCOUNT_ID`. Deploy jobs stay skipped until this variable exists.
 
@@ -124,7 +124,7 @@ Deploys run from `.github/workflows/deploy.yml`, always after the full CI suite 
 - **Staging:** automatic on every push to the default branch. The job stops with a clear error while `wrangler.jsonc` still holds the placeholder database ID.
 - **Production:** push a tag such as `v0.1.0` on a commit that is on the default branch (other tags are rejected); the job waits for approval in the `production` environment.
 
-The default branch is `main`. The deploy workflow lists it by name; update `.github/workflows/deploy.yml` if the default branch is ever renamed.
+The default branch is `main`. The deploy workflow and the `staging` environment's deployment branch rule both name it; update both if the default branch is ever renamed.
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0
