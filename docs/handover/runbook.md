@@ -8,7 +8,7 @@ One Cloudflare Worker serves everything: React Router 8 in framework mode with s
 
 ## Run locally
 
-Requires Node 22 and pnpm (the version is pinned in `package.json`).
+Requires Node 22 and pnpm. The pnpm version is pinned in `package.json`; run `corepack enable` once so your machine uses it. Which dependencies may run install scripts is set in `pnpm-workspace.yaml` (`allowBuilds`).
 
 ```sh
 pnpm install
@@ -31,7 +31,7 @@ pnpm wrangler d1 execute DB --local --command \
 | Command | What it does |
 | --- | --- |
 | `pnpm lint` | Biome lint and format check |
-| `pnpm typecheck` | Regenerates Worker and route types, then `tsc -b` |
+| `pnpm typecheck` | Regenerates Worker and route types, then runs `tsc -p` on each TypeScript project |
 | `pnpm test` | Builds the Worker, then runs integration tests against the built bundle with a fresh, migrated D1 |
 | `pnpm test:e2e` | Serves the production build with a migrated, seeded local D1 and runs Playwright + axe on desktop and mobile Chromium |
 
@@ -79,7 +79,7 @@ In the repository settings on GitHub:
 
 Staff tools live on their own hostname, served by the same Worker (ADR-0005): `admin.naisema.com` in production, `admin.staging.naisema.com` on staging, and `http://admin.localhost:5173` locally. The public site never answers `/admin` or `/api/auth`.
 
-Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Links go only to accounts that hold an active role, at most three per address every 15 minutes, and the sign-in page gives the same reply either way. A lost phone currently needs the technical owner to reset that person's two-factor in the database; an administrator reset is a follow-up. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in and code check is written to the `audit_event` table.
+Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Links go only to accounts that hold an active role, at most three per address every 15 minutes, and the sign-in page gives the same reply either way. A lost phone currently needs the technical owner to reset that person's two-factor in the database; an administrator reset is tracked in issue #41. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in and code check is written to the `audit_event` table.
 
 ### Before the first deploy to an environment
 
@@ -101,7 +101,7 @@ pnpm wrangler d1 execute DB --local --config wrangler.jsonc --command "SELECT \"
 
 ## Custom domains
 
-Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging serves `staging.naisema.com` alongside its `workers.dev` address.
+Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging is public so testers anywhere can use it: it serves `staging.naisema.com` and stays reachable at its `workers.dev` address because `env.staging` sets `workers_dev: true` (Wrangler turns that address off by default once an environment has routes). The `workers.dev` address serves only the public site; staff tools answer on `admin.staging.naisema.com` alone.
 
 Prerequisites, done once:
 
@@ -124,7 +124,7 @@ Deploys run from `.github/workflows/deploy.yml`, always after the full CI suite 
 - **Staging:** automatic on every push to the default branch. The job stops with a clear error while `wrangler.jsonc` still holds the placeholder database ID.
 - **Production:** push a tag such as `v0.1.0` on a commit that is on the default branch (other tags are rejected); the job waits for approval in the `production` environment.
 
-The deploy workflow lists the default branch by name; update `.github/workflows/deploy.yml` if the default branch is renamed.
+The default branch is `main`. The deploy workflow lists it by name; update `.github/workflows/deploy.yml` if the default branch is ever renamed.
 
 ```sh
 git tag v0.1.0 && git push origin v0.1.0
