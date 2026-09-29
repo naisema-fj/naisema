@@ -52,12 +52,46 @@ No-self-approval is enforced in code from day one: nobody approves a Revision th
 
 ## Phase 1a launch blockers
 
-- [ ] Backup Safeguarding Lead and independent appeal reviewer named, proposed from the initial Advisory Circle (owner: Natasha Mar).
-- [ ] Backup technical owner for alerts named (owner: Natasha Mar).
-- [ ] Qualified Language Reviewer confirmed, with qualification and language variety recorded (LEARN-01) (owner: Natasha Mar).
-- [ ] At least one Educator other than the Language Reviewer named to author the Seed Collection (owner: Natasha Mar).
-- [ ] Written post-launch support agreement (MOU §10) (owners: Natasha Mar, Taia Tiniyara).
-- [ ] Privacy adviser sign-off on overseas-processing disclosure (ADR-0004).
+- [ ] Backup Safeguarding Lead and independent appeal reviewer named, proposed from the initial Advisory Circle (owner: Natasha Mar). #5
+- [ ] Backup technical owner for alerts named (owner: Natasha Mar). #6
+- [ ] Qualified Language Reviewer confirmed, with qualification and language variety recorded (LEARN-01) (owner: Natasha Mar). #7
+- [ ] At least one Educator other than the Language Reviewer named to author the Seed Collection (owner: Natasha Mar). #8
+- [ ] Written post-launch support agreement (MOU §10) (owners: Natasha Mar, Taia Tiniyara). #9
+- [ ] Privacy adviser sign-off on overseas-processing disclosure (ADR-0004). #10
+
+## Backlog
+
+Phase 1a work is tracked as GitHub issues in naisema-fj/naisema, titled with a stable `[1a-NN]` ID.
+
+| ID | Issue | Title |
+| --- | --- | --- |
+| 1a-00 | #3 | Confirm Phase 1a scope and component approvals in writing (human; blocks 1a-01) |
+| 1a-01 | #11 | Walking skeleton |
+| 1a-02 | #4 | Spike: Stream playback and segment timing (Phase 0) |
+| 1a-03 | #12 | Staff sign-in, two-factor and the permission module |
+| 1a-04 | #13 | Articles with immutable Revisions |
+| 1a-05 | #15 | Review gates |
+| 1a-06 | #17 | Rights Records and Permitted Uses |
+| 1a-07 | #18 | Public site shell |
+| 1a-08 | #21 | Public search |
+| 1a-09 | #14 | Upload safety pipeline |
+| 1a-10 | #16 | Video asset pipeline |
+| 1a-11 | #19 | Learning Layer authoring: Segments |
+| 1a-12 | #22 | Learning Layer authoring: Annotations |
+| 1a-13 | #23 | Learning Layer authoring: Activities |
+| 1a-14 | #28 | Learning Layer review and publishing |
+| 1a-15 | #29 | Learner player |
+| 1a-16 | #31 | Progressive immersion flow |
+| 1a-17 | #33 | Learner Accounts |
+| 1a-18 | #24 | Resources, Pages and Topic pages |
+| 1a-19 | #25 | Voices Episodes |
+| 1a-20 | #26 | Providers, Offerings and Creator Profiles |
+| 1a-21 | #27 | Public forms and consent |
+| 1a-22 | #30 | Case queue |
+| 1a-23 | #32 | Exports and audit log |
+| 1a-24 | #34 | Backups and deletion ledger |
+| 1a-25 | #20 | Monitoring and cost report |
+| 1a-B1–B6 | #5–#10 | Launch blockers (human) |
 
 ## Open, not blocking the build baseline
 
