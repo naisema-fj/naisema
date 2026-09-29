@@ -1,10 +1,10 @@
 # Runbook
 
-How to run, provision, deploy and roll back NAISEMA. Kept current with every change that affects operations (OWN-03).
+How to run, provision, deploy and roll back Na iSema. Kept current with every change that affects operations (OWN-03).
 
 ## Stack at a glance
 
-One Cloudflare Worker serves everything: React Router 8 in framework mode with server rendering, Drizzle ORM over D1, and R2 buckets for media and private evidence (ADR-0004, ADR-0005). Local development, staging and production are named environments in `wrangler.jsonc`, all in the one NAISEMA Cloudflare account.
+One Cloudflare Worker serves everything: React Router 8 in framework mode with server rendering, Drizzle ORM over D1, and R2 buckets for media and private evidence (ADR-0004, ADR-0005). Local development, staging and production are named environments in `wrangler.jsonc`, all in the one Na iSema Cloudflare account.
 
 ## Run locally
 
@@ -52,7 +52,7 @@ Every server-rendered response carries a nonce-based Content Security Policy and
 
 ## One-time Cloudflare provisioning
 
-Done once per environment by someone with admin access to the NAISEMA Cloudflare account. Replace `staging` with `production` for production.
+Done once per environment by someone with admin access to the Na iSema Cloudflare account. Replace `staging` with `production` for production.
 
 ```sh
 pnpm wrangler login
@@ -64,7 +64,7 @@ pnpm wrangler r2 bucket create naisema-staging-evidence --location oc
 - When `d1 create` or `r2 bucket create` asks whether to add the resource to your Wrangler configuration, answer **No**. Wrangler would add it to the top level as a *remote* binding, which makes local development and tests talk to real staging or production data.
 - Instead, copy the D1 `database_id` printed by `d1 create` into the matching `env.<name>.d1_databases` entry in `wrangler.jsonc` and commit it. Database IDs and the account ID are not secrets. (Staging and production were provisioned on 29 September 2026; their IDs are already in `wrangler.jsonc`.)
 - Leave D1 read replication off (the default) per ADR-0004.
-- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Account Settings: Read, limited to the NAISEMA account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
+- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Account Settings: Read, limited to the Na iSema account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
 - **Development** runs entirely in Miniflare on each developer's machine; there is no remote development Worker, database or bucket, and none is needed until a shared preview environment is wanted.
 
 ### Connect GitHub
@@ -105,7 +105,7 @@ Domains are declared in `wrangler.jsonc` so the repository is the source of trut
 
 Prerequisites, done once:
 
-1. `naisema.com` is an **Active** zone in the NAISEMA Cloudflare account (Add a domain, Free plan, then point the registrar's nameservers at Cloudflare). Check imported MX/TXT records before switching nameservers if email uses the domain.
+1. `naisema.com` is an **Active** zone in the Na iSema Cloudflare account (Add a domain, Free plan, then point the registrar's nameservers at Cloudflare). Check imported MX/TXT records before switching nameservers if email uses the domain.
 2. No existing DNS record for the hostname; Cloudflare creates the record and certificate on deploy.
 3. The environment's CI token has **Zone › Workers Routes › Edit** (and **Zone › DNS › Edit** if the deploy reports it cannot create the record), limited to the `naisema.com` zone.
 
