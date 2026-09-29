@@ -1,0 +1,60 @@
+// Worker configuration. The top level is local development; `env.staging` and
+// `env.production` are selected at build time with CLOUDFLARE_ENV (see
+// docs/handover/runbook.md). All resources live in the one NAISEMA Cloudflare
+// account (ADR-0004) and are created with the Oceania location hint.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "naisema-dev",
+  "main": "./workers/app.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "upload_source_maps": true,
+  "vars": { "ENVIRONMENT": "development" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "naisema-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "naisema-dev-media" },
+    { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" }
+  ],
+  "env": {
+    "staging": {
+      "name": "naisema-staging",
+      "vars": { "ENVIRONMENT": "staging" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "naisema-staging",
+          "database_id": "REPLACE_WITH_STAGING_D1_DATABASE_ID",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "naisema-staging-media" },
+        { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" }
+      ]
+    },
+    "production": {
+      "name": "naisema-production",
+      "vars": { "ENVIRONMENT": "production" },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "naisema-production",
+          "database_id": "REPLACE_WITH_PRODUCTION_D1_DATABASE_ID",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "naisema-production-media" },
+        { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" }
+      ]
+    }
+  }
+}

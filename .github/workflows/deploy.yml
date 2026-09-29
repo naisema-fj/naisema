@@ -1,0 +1,68 @@
+name: Deploy
+
+# Staging: every push to the default branch, after CI passes.
+# Production: a pushed `v*` tag, gated by the `production` GitHub environment
+# (configure required reviewers on that environment for manual approval).
+# Both jobs stay skipped until the repository variable CLOUDFLARE_ACCOUNT_ID
+# is set, so CI stays green before Cloudflare is provisioned (docs/handover/runbook.md).
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    if: github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch
+    uses: ./.github/workflows/ci.yml
+
+  staging:
+    name: Deploy to staging
+    needs: ci
+    if: github.ref_type == 'branch' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    runs-on: ubuntu-latest
+    environment: staging
+    concurrency: deploy-staging
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_ENV: staging
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm wrangler d1 migrations apply DB --remote --env staging --config wrangler.jsonc
+      - run: pnpm wrangler deploy
+
+  production:
+    name: Deploy to production
+    needs: ci
+    if: github.ref_type == 'tag' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency: deploy-production
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_ENV: production
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm wrangler d1 migrations apply DB --remote --env production --config wrangler.jsonc
+      - run: pnpm wrangler deploy
