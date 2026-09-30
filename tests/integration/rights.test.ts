@@ -109,6 +109,58 @@ describe("Rights Records", () => {
     expect(await rightsRecords(article.id)).toEqual([]);
   });
 
+  it("refuses a file whose declared type or name doesn't match its contents", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const article = await createArticle(editor);
+    const pdfBytes = new TextEncoder().encode("%PDF-1.7 but really a web page");
+
+    const asHtml = await recordRights(editor.browser, article.id, {
+      evidence: new File([pdfBytes], "permission.html", { type: "text/html" }),
+    });
+    const misnamed = await recordRights(editor.browser, article.id, {
+      evidence: new File([pdfBytes], "permission.jpg", { type: "application/pdf" }),
+    });
+
+    expect(asHtml.status).toBe(400);
+    expect(misnamed.status).toBe(400);
+    expect(await rightsRecords(article.id)).toEqual([]);
+  });
+
+  it("refuses evidence over 10 MB, stopping a much larger upload before it is all read", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const article = await createArticle(editor);
+    const pdfOfSize = (bytes: number) => {
+      const content = new Uint8Array(bytes);
+      content.set(new TextEncoder().encode("%PDF-1.7"));
+      return new File([content], "permission.pdf", { type: "application/pdf" });
+    };
+
+    const justOver = await recordRights(editor.browser, article.id, { evidence: pdfOfSize(10 * 1024 * 1024 + 1) });
+    const farOver = await recordRights(editor.browser, article.id, { evidence: pdfOfSize(11 * 1024 * 1024) });
+
+    expect(justOver.status).toBe(400);
+    expect(await justOver.text()).toContain("Evidence files can be at most 10 MB.");
+    expect(farOver.status).toBe(413);
+    expect(await rightsRecords(article.id)).toEqual([]);
+  });
+
+  it("keeps what was entered when the form is refused", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const article = await createArticle(editor);
+
+    const response = await recordRights(editor.browser, article.id, {
+      rightsHolder: "Vanua Levu Heritage Trust",
+      uses: ["publish", "translate"],
+      expiresOn: "2099-06-30",
+      evidence: new File([new TextEncoder().encode("not evidence")], "x.pdf", { type: "application/pdf" }),
+    });
+
+    const page = await response.text();
+    expect(page).toContain('value="Vanua Levu Heritage Trust"');
+    expect(page).toContain('value="2099-06-30"');
+    expect(page).toMatch(/<input type="checkbox" id="use-translate" name="use" checked="" value="translate"\/>/);
+  });
+
   it("needs a Permitted Use, and never ticks AI training for you", async () => {
     const editor = await staff("editor", { role: "editor" });
     const article = await createArticle(editor);
@@ -155,6 +207,9 @@ describe("Rights Records", () => {
     const article = await createArticle(editor);
     await recordRights(editor.browser, article.id);
     const [record] = await rightsRecords(article.id);
+    await expect(
+      env.DB.prepare("UPDATE rights_record SET withdrawal_reason = 'half' WHERE id = ?1").bind(record.id).run(),
+    ).rejects.toThrow(/Rights Records can only be withdrawn/);
 
     await expect(
       env.DB.prepare("UPDATE rights_record SET permitted_uses = '[\"aiTraining\"]' WHERE id = ?1")
@@ -239,5 +294,23 @@ describe("rights in eligibility (AC-02)", () => {
 
     expect(await isEligible(db, published.id, new Date(expiresAt - 1))).toEqual({ eligible: true });
     expect((await isEligible(db, published.id, new Date(expiresAt))).eligible).toBe(false);
+  });
+});
+
+describe("withdrawing a Rights Record", () => {
+  it("only withdraws a record from the article it belongs to", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const first = await createArticle(editor);
+    const second = await createArticle(editor);
+    await recordRights(editor.browser, first.id);
+    const [record] = await rightsRecords(first.id);
+
+    const response = await editor.browser.fetch(`/admin/articles/${second.id}/rights`, {
+      form: { intent: "withdraw", recordId: record.id, reason: "Wrong article." },
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("That Rights Record doesn&#x27;t belong to this article.");
+    expect((await rightsRecords(first.id))[0].withdrawnAt).toBeNull();
   });
 });

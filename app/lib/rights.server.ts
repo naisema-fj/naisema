@@ -8,6 +8,7 @@ import {
   evidenceTypeOf,
   isCurrent,
   isPermittedUse,
+  matchesDeclared,
   type PermittedUse,
   type RightsFacts,
 } from "./rights-rules";
@@ -17,9 +18,9 @@ export type RightsSubject = { type: "content_item"; id: string };
 
 type RecordRow = typeof rightsRecord.$inferSelect;
 
-const toFacts = (row: RecordRow): RightsFacts => ({
+export const toFacts = (row: RecordRow): RightsFacts => ({
   id: row.id,
-  permittedUses: row.permittedUses as PermittedUse[],
+  permittedUses: row.permittedUses,
   guardianPermission: row.guardianPermission,
   expiresAt: row.expiresAt,
   withdrawnAt: row.withdrawnAt,
@@ -34,6 +35,11 @@ export async function rightsFactsFor(db: Database, subject: RightsSubject): Prom
     .orderBy(asc(rightsRecord.createdAt));
   return rows.map(toFacts);
 }
+
+export type RightsStatus = "current" | "expired" | "withdrawn";
+
+const statusOf = (record: RecordRow, now: Date): RightsStatus =>
+  record.withdrawnAt ? "withdrawn" : isCurrent(toFacts(record), now) ? "current" : "expired";
 
 /** Every Rights Record on a subject, newest first, with its contributors and whether it is current. */
 export async function listRights(db: Database, subject: RightsSubject, now = new Date()) {
@@ -58,7 +64,7 @@ export async function listRights(db: Database, subject: RightsSubject, now = new
   return rows.reverse().map(({ record, recordedBy }) => ({
     id: record.id,
     rightsHolder: record.rightsHolder,
-    permittedUses: record.permittedUses as PermittedUse[],
+    permittedUses: record.permittedUses,
     guardianPermission: record.guardianPermission,
     evidenceName: record.evidenceName,
     expiresAt: record.expiresAt,
@@ -67,10 +73,7 @@ export async function listRights(db: Database, subject: RightsSubject, now = new
     createdAt: record.createdAt,
     recordedBy: recordedBy ?? "a former staff member",
     contributors: links.filter((link) => link.recordId === record.id).map((link) => link.name),
-    status: (record.withdrawnAt ? "withdrawn" : isCurrent(toFacts(record), now) ? "current" : "expired") as
-      | "withdrawn"
-      | "current"
-      | "expired",
+    status: statusOf(record, now),
   }));
 }
 
@@ -83,7 +86,17 @@ export type RightsForm = {
   evidence: { bytes: Uint8Array; name: string; type: EvidenceType };
 };
 
-export type RightsFormResult = { ok: true; rights: RightsForm } | { ok: false; errors: Record<string, string> };
+/** What was typed into the form, to show it again when the form is refused (the file can't be kept). */
+export type RightsFormValues = {
+  rightsHolder: string;
+  permittedUses: string[];
+  expiresOn: string;
+  contributorIds: string[];
+};
+
+export type RightsFormResult =
+  | { ok: true; rights: RightsForm }
+  | { ok: false; errors: Record<string, string>; values: RightsFormValues };
 
 /** Reads the Rights Record form, including the evidence file, which must be a PDF or image. */
 export async function readRightsForm(db: Database, form: FormData, now = new Date()): Promise<RightsFormResult> {
@@ -92,7 +105,7 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
   if (!rightsHolder) errors.rightsHolder = "Enter who holds the rights.";
   else if (rightsHolder.length > 300) errors.rightsHolder = "The rights holder can be at most 300 characters.";
 
-  const permittedUses = form.getAll("use").map(String).filter(isPermittedUse);
+  const permittedUses: PermittedUse[] = form.getAll("use").map(String).filter(isPermittedUse);
   if (!permittedUses.length) errors.permittedUses = "Choose at least one Permitted Use.";
 
   let expiresAt: Date | null = null;
@@ -121,10 +134,14 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
     const bytes = new Uint8Array(await file.arrayBuffer());
     const type = evidenceTypeOf(bytes);
     if (!type) errors.evidence = "Evidence must be a PDF, JPEG, PNG or WebP file.";
-    else evidence = { bytes, name: file.name.slice(0, 200) || "evidence", type };
+    else if (!matchesDeclared(type, file.type, file.name)) {
+      errors.evidence = "The file's name or type doesn't match what it contains. Check it is the right file.";
+    } else evidence = { bytes, name: file.name.slice(0, 200), type };
   }
 
-  if (Object.keys(errors).length || !evidence) return { ok: false, errors };
+  if (Object.keys(errors).length || !evidence) {
+    return { ok: false, errors, values: { rightsHolder, permittedUses, expiresOn: expiry, contributorIds } };
+  }
   return {
     ok: true,
     rights: {
@@ -186,7 +203,8 @@ export async function recordRights(
       }),
     ]);
   } catch (error) {
-    await env.EVIDENCE.delete(evidenceKey);
+    // Remove the stored file, but never let a failed clean-up hide why the record wasn't written.
+    await env.EVIDENCE.delete(evidenceKey).catch(() => undefined);
     throw error;
   }
   return id;
@@ -204,26 +222,25 @@ export async function withdrawRights(
   reason: string,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   if (!reason) return { ok: false, error: "Say why the permission is withdrawn." };
-  const updated = await db
-    .update(rightsRecord)
-    .set({ withdrawnAt: new Date(), withdrawnBy, withdrawalReason: reason.slice(0, 1000) })
-    .where(
-      and(
-        eq(rightsRecord.id, recordId),
-        eq(rightsRecord.subjectType, subject.type),
-        eq(rightsRecord.subjectId, subject.id),
-        isNull(rightsRecord.withdrawnAt),
-      ),
-    )
-    .returning({ id: rightsRecord.id });
-  if (!updated.length) return { ok: false, error: "That Rights Record is already withdrawn." };
-  await recordAudit(db, {
-    actorId: withdrawnBy,
-    action: "rights_record.withdrawn",
-    objectType: "rights_record",
-    objectId: recordId,
-    details: { reason },
-  });
+  const record = await db.select().from(rightsRecord).where(eq(rightsRecord.id, recordId)).get();
+  if (record?.subjectType !== subject.type || record.subjectId !== subject.id) {
+    return { ok: false, error: "That Rights Record doesn't belong to this article." };
+  }
+  if (record.withdrawnAt) return { ok: false, error: "That Rights Record is already withdrawn." };
+  const withdrawalReason = reason.slice(0, 1000);
+  await db.batch([
+    db
+      .update(rightsRecord)
+      .set({ withdrawnAt: new Date(), withdrawnBy, withdrawalReason })
+      .where(and(eq(rightsRecord.id, recordId), isNull(rightsRecord.withdrawnAt))),
+    auditInsert(db, {
+      actorId: withdrawnBy,
+      action: "rights_record.withdrawn",
+      objectType: "rights_record",
+      objectId: recordId,
+      details: { reason: withdrawalReason },
+    }),
+  ]);
   return { ok: true };
 }
 
@@ -240,22 +257,4 @@ export async function readEvidence(env: Env, db: Database, readBy: string, recor
     objectId: recordId,
   });
   return { object, name: record.evidenceName, type: record.evidenceType };
-}
-
-export async function listContributors(db: Database) {
-  return db
-    .select({ id: contributor.id, name: contributor.name, notes: contributor.notes })
-    .from(contributor)
-    .orderBy(contributor.name);
-}
-
-export async function createContributor(db: Database, createdBy: string, name: string, notes: string) {
-  if (!name) return { ok: false as const, error: "Enter the contributor's name." };
-  if (name.length > 200) return { ok: false as const, error: "Names can be at most 200 characters." };
-  const id = crypto.randomUUID();
-  await db.batch([
-    db.insert(contributor).values({ id, name, notes: notes || null, createdBy, createdAt: new Date() }),
-    auditInsert(db, { actorId: createdBy, action: "contributor.created", objectType: "contributor", objectId: id }),
-  ]);
-  return { ok: true as const };
 }

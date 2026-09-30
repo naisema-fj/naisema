@@ -45,6 +45,11 @@ Administrators may grant roles to themselves (decided 29 September 2026). With o
 - **Cost envelope:** about AUD 100/month ceiling for 1a, with Cloudflare billing alerts at 50% and 80% and media usage visible in the VAC-10 cost report.
 - **Test profile:** PRD profile (1.5 Mbps down, 150 ms latency, five cold runs, first frame within 5 s in at least 4) on one mid-range Android (Moto G / Samsung A class) and one older iPhone (SE class), plus Playwright with the same throttling in CI on player changes. Exact device models to be recorded here.
 
+## Interim decisions during the 1a build
+
+- **Rights evidence before the scan pipeline (1a-06, 30 September 2026):** until the quarantine and ClamAV pipeline exists (issue #14, ADR-0010), rights evidence is stored straight in the private `EVIDENCE` bucket. To limit the risk it must be a PDF, JPEG, PNG or WebP of at most 10 MB whose first bytes, declared type and file extension agree; it is served only to editors, only as a sandboxed download that is never cached; and every download is audited. #14 must route rights evidence through quarantine like every other upload.
+- **What a Rights Record covers before the media library (1a-06):** a Content Item's own Rights Record covers everything in it, including images in an Article body. Media assets get their own Rights Records, checked by `isEligible`, when the media library arrives (#14).
+
 ## Agreed amendments to the Founding Developer Agreement / MOU
 
 1. **§3 scope:** "Na iSema Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.

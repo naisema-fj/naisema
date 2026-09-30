@@ -104,4 +104,18 @@ describe("daily Rights Record expiry warnings", () => {
     );
     expect(warnings).toEqual([]);
   });
+
+  it("records only the warnings it managed to send, so a failed run is retried", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const article = await createArticle(editor, { title: "Veiqia" });
+    const now = Date.now();
+    await insertRecord(article.id, editor.userId, now + 10 * DAY);
+    const withoutEmail = { ...env, EMAIL_OUTBOX: "false" } as unknown as Env;
+
+    await expect(sendExpiryWarnings(withoutEmail, new Date(now))).rejects.toThrow();
+    await runDailyJob(now + 1000);
+
+    const warnings = (await emailsTo(await emailOf(editor.userId))).filter((email) => email.text.includes("Veiqia"));
+    expect(warnings).toHaveLength(1);
+  });
 });

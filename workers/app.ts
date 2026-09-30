@@ -67,8 +67,8 @@ export default {
     return requestHandler(request, context);
   },
 
-  /** The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings. */
-  async scheduled(controller, env, ctx) {
-    ctx.waitUntil(sendExpiryWarnings(env, new Date(controller.scheduledTime)));
+  /** The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings. Awaited, so a failed run shows as failed. */
+  async scheduled(controller, env) {
+    await sendExpiryWarnings(env, new Date(controller.scheduledTime));
   },
 } satisfies ExportedHandler<Env>;

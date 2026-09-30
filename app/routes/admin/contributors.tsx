@@ -1,8 +1,7 @@
 import { data, Form, redirect } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { can } from "~/lib/permissions";
-import { createContributor, listContributors } from "~/lib/rights.server";
-import { requireStaff } from "~/lib/staff.server";
+import { requireRightsManager } from "~/lib/content.server";
+import { createContributor, listContributors } from "~/lib/contributors.server";
 import type { Route } from "./+types/contributors";
 
 export const handle = { hydrate: false };
@@ -11,21 +10,13 @@ export function meta() {
   return [{ title: "Contributors · Na iSema staff" }];
 }
 
-async function requireRightsManager(request: Request, env: Env) {
-  const staff = await requireStaff(env, request);
-  if (!can(staff.actor, { action: "rights.manage" })) {
-    throw new Response("Only editors can manage contributors.", { status: 403 });
-  }
-  return staff;
-}
-
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db } = await requireRightsManager(request, context.get(cloudflareContext).env);
+  const { db } = await requireRightsManager(context.get(cloudflareContext).env, request);
   return { contributors: await listContributors(db) };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const { db, actor } = await requireRightsManager(request, context.get(cloudflareContext).env);
+  const { db, actor } = await requireRightsManager(context.get(cloudflareContext).env, request);
   const form = await request.formData();
   const result = await createContributor(
     db,
@@ -71,7 +62,7 @@ export default function Contributors({ loaderData, actionData }: Route.Component
           aria-describedby={actionData?.error ? "contributor-error" : undefined}
         />
         {actionData?.error && (
-          <p id="contributor-error" role="alert">
+          <p id="contributor-error" className="field-error" role="alert">
             {actionData.error}
           </p>
         )}

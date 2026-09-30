@@ -15,12 +15,18 @@ export type Eligibility = { eligible: true } | { eligible: false; reasons: strin
  * must have been submitted, every review its Content Flags require must be approved on it, and its
  * rights must be current at this moment: a current Rights Record granting Publish, plus current
  * guardian permission when it shows identifiable children. Because it is evaluated on every call,
- * an expiry or withdrawal takes effect immediately. Media assets' own Rights Records join this
- * check when the media library arrives (#14).
+ * an expiry or withdrawal takes effect immediately. Until the media library arrives (#14), the
+ * item's own Rights Record covers everything in its body, images included; media assets' own
+ * Rights Records then join this check.
  */
 export async function isEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
   const review = await loadReview(db, revisionId);
   if (!review) return { eligible: false, reasons: ["That revision doesn't exist."] };
+  return eligibilityFor(db, review, now);
+}
+
+/** isEligible for a Revision whose review was loaded in this same request. */
+export async function eligibilityFor(db: Database, review: Review, now = new Date()): Promise<Eligibility> {
   const reasons: string[] = [];
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
   for (const { requirement, status } of review.progress) {

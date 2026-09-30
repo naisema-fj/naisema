@@ -8,6 +8,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { PermittedUse } from "../app/lib/rights-rules";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 const updatedAt = () => integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -297,8 +298,8 @@ export const contributor = sqliteTable("contributor", {
 });
 
 /**
- * The legal permission for a contributed work or media asset. Records are never edited: a mistake
- * is corrected by withdrawing the record and recording a new one. The evidence file lives in the
+ * The legal permission for a contributed work or media asset. Records are never edited (a trigger
+ * allows only withdrawal): a mistake is corrected by withdrawing the record and recording a new one. The evidence file lives in the
  * private EVIDENCE bucket under `evidenceKey` and is never served publicly.
  */
 export const rightsRecord = sqliteTable(
@@ -309,7 +310,7 @@ export const rightsRecord = sqliteTable(
     subjectType: text("subject_type").notNull(),
     subjectId: text("subject_id").notNull(),
     rightsHolder: text("rights_holder").notNull(),
-    permittedUses: text("permitted_uses", { mode: "json" }).notNull(),
+    permittedUses: text("permitted_uses", { mode: "json" }).$type<PermittedUse[]>().notNull(),
     guardianPermission: integer("guardian_permission", { mode: "boolean" }).notNull().default(false),
     evidenceKey: text("evidence_key").notNull(),
     evidenceName: text("evidence_name").notNull(),

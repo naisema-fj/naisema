@@ -1,25 +1,18 @@
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
-import { contentItem, revision, rightsExpiryWarning, rightsRecord, roleAssignment, user } from "~db/schema";
+import { contentItem, revision, rightsExpiryWarning, rightsRecord } from "~db/schema";
 import { auditInsert } from "./audit.server";
-import { type Database, getDb } from "./db.server";
+import { getDb } from "./db.server";
 import { sendEmail } from "./email.server";
-import { EXPIRY_WARNING_DAYS, type ExpiryWarning, expiryWarningsDue, type PermittedUse } from "./rights-rules";
+import { toFacts } from "./rights.server";
+import { DAY_MS, EXPIRY_WARNING_DAYS, type ExpiryWarning, expiryWarningsDue, formatDay } from "./rights-rules";
+import { activeHolders } from "./staff-roles.server";
 
-const DAY_MS = 86_400_000;
 const LONGEST_WINDOW_DAYS = Math.max(...EXPIRY_WARNING_DAYS);
 
 /** Where staff open a Content Item's Rights Records, on this environment's admin host. */
 function rightsPageUrl(env: Env, contentItemId: string) {
   const scheme = env.ADMIN_HOSTNAME.endsWith("localhost") ? "http" : "https";
   return `${scheme}://${env.ADMIN_HOSTNAME}/admin/articles/${contentItemId}/rights`;
-}
-
-async function activeEditors(db: Database) {
-  return db
-    .selectDistinct({ id: user.id, email: user.email })
-    .from(roleAssignment)
-    .innerJoin(user, eq(user.id, roleAssignment.userId))
-    .where(and(eq(roleAssignment.role, "editor"), isNull(roleAssignment.revokedAt)));
 }
 
 /**
@@ -57,68 +50,75 @@ export async function sendExpiryWarnings(env: Env, now: Date) {
       ),
     );
   const due = expiryWarningsDue({
-    records: expiring.map(({ record }) => ({
-      id: record.id,
-      permittedUses: record.permittedUses as PermittedUse[],
-      guardianPermission: record.guardianPermission,
-      expiresAt: record.expiresAt,
-      withdrawnAt: record.withdrawnAt,
-    })),
+    records: expiring.map(({ record }) => toFacts(record)),
     sent: sent as ExpiryWarning[],
     now,
   });
   if (!due.length) return;
 
-  const editors = await activeEditors(db);
+  const editors = await activeHolders(db, "editor");
   const byRecord = new Map(expiring.map((row) => [row.record.id, row]));
-  const letters = new Map<string, { withinDays: number; lines: string[] }[]>();
+  type Letter = { to: string; withinDays: number; warnings: ExpiryWarning[]; lines: string[] };
+  const letters = new Map<string, Letter>();
   for (const warning of due) {
     const { record, title } = byRecord.get(warning.recordId) as (typeof expiring)[number];
     const recorder = editors.find((editor) => editor.id === record.createdBy);
     const recipients = recorder ? [recorder.email] : editors.map((editor) => editor.email);
     const itemTitle = (title as { title?: string } | null)?.title ?? "An item";
     const line = [
-      `${itemTitle}: the Rights Record from ${record.rightsHolder} expires on ${record.expiresAt?.toISOString().slice(0, 10)}.`,
+      `${itemTitle}: the Rights Record from ${record.rightsHolder} expires on ${formatDay(record.expiresAt as Date)}.`,
       `  ${rightsPageUrl(env, record.subjectId)}`,
     ].join("\n");
-    for (const email of recipients) {
-      const groups = letters.get(email) ?? [];
-      const group = groups.find((entry) => entry.withinDays === warning.withinDays);
-      if (group) group.lines.push(line);
-      else groups.push({ withinDays: warning.withinDays, lines: [line] });
-      letters.set(email, groups);
+    for (const to of recipients) {
+      const key = `${to}|${warning.withinDays}`;
+      const letter = letters.get(key) ?? { to, withinDays: warning.withinDays, warnings: [], lines: [] };
+      letter.warnings.push(warning);
+      letter.lines.push(line);
+      letters.set(key, letter);
     }
   }
 
-  for (const [to, groups] of letters) {
-    for (const { withinDays, lines } of groups) {
+  // Each letter's warnings are recorded as soon as it is sent, so a failure part-way through
+  // leaves the unsent ones to tomorrow's run. Failures are rethrown at the end so the cron run
+  // shows as failed.
+  const failures: unknown[] = [];
+  for (const letter of letters.values()) {
+    try {
       await sendEmail(env, {
-        to,
-        subject: `Rights Records expiring within ${withinDays} days`,
+        to: letter.to,
+        subject: `Rights Records expiring within ${letter.withinDays} days`,
         text: [
-          `These Rights Records expire within ${withinDays} days. When a record expires, the item it covers can no longer be published or shown until a current Rights Record grants Publish.`,
+          `These Rights Records expire within ${letter.withinDays} days. When a record expires, the item it covers can no longer be published or shown until a current Rights Record grants Publish.`,
           "",
-          ...lines,
+          ...letter.lines,
           "",
           "Renew the permission and record it, or plan to withdraw the item.",
         ].join("\n"),
       });
+    } catch (error) {
+      failures.push(error);
+      continue;
     }
+    await db.batch([
+      db
+        .insert(rightsExpiryWarning)
+        .values(letter.warnings.map((warning) => ({ ...toWarningRow(warning), sentAt: now })))
+        .onConflictDoNothing(),
+      ...letter.warnings.map((warning) =>
+        auditInsert(db, {
+          actorId: null,
+          action: "rights_record.expiry_warned",
+          objectType: "rights_record",
+          objectId: warning.recordId,
+          details: { withinDays: warning.withinDays, to: letter.to },
+        }),
+      ),
+    ]);
   }
-
-  await db.batch([
-    db
-      .insert(rightsExpiryWarning)
-      .values(due.map((warning) => ({ rightsRecordId: warning.recordId, withinDays: warning.withinDays, sentAt: now })))
-      .onConflictDoNothing(),
-    ...due.map((warning) =>
-      auditInsert(db, {
-        actorId: null,
-        action: "rights_record.expiry_warned",
-        objectType: "rights_record",
-        objectId: warning.recordId,
-        details: { withinDays: warning.withinDays },
-      }),
-    ),
-  ]);
+  if (failures.length) throw new AggregateError(failures, `${failures.length} expiry warning emails failed`);
 }
+
+const toWarningRow = (warning: ExpiryWarning) => ({
+  rightsRecordId: warning.recordId,
+  withinDays: warning.withinDays,
+});

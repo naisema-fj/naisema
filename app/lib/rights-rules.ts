@@ -35,8 +35,11 @@ export const isCurrent = (record: RightsFacts, now: Date) =>
 
 const grantsPublish = (record: RightsFacts) => record.permittedUses.includes("publish");
 
-const formatDate = (date: Date) =>
-  date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+export const DAY_MS = 86_400_000;
+
+/** A day as staff read it in rights pages and emails: "30 Sept 2026" (UTC). */
+export const formatDay = (date: Date | string) =>
+  new Date(date).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
 /**
  * Why an item's rights don't allow publishing right now, or nothing if they do. Evaluated at the
@@ -55,7 +58,7 @@ export function rightsProblems(input: {
     const latest = publishable.at(-1);
     if (latest?.withdrawnAt) problems.push("Its Rights Record granting Publish was withdrawn.");
     else if (latest?.expiresAt) {
-      problems.push(`Its Rights Record granting Publish expired on ${formatDate(latest.expiresAt)}.`);
+      problems.push(`Its Rights Record granting Publish expired on ${formatDay(latest.expiresAt)}.`);
     } else problems.push("No current Rights Record grants Publish.");
   }
   if (
@@ -70,8 +73,6 @@ export function rightsProblems(input: {
 /** Warnings go out as a record enters each window before it expires, tightest first. */
 export const EXPIRY_WARNING_DAYS = [7, 30] as const;
 export type ExpiryWarning = { recordId: string; withinDays: (typeof EXPIRY_WARNING_DAYS)[number] };
-
-const DAY_MS = 86_400_000;
 
 /**
  * The expiry warnings to send today: for each current record expiring within 30 days, the
@@ -96,6 +97,22 @@ export function expiryWarningsDue(input: {
 export const EVIDENCE_MAX_BYTES = 10 * 1024 * 1024;
 
 export type EvidenceType = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
+
+const EXTENSIONS: Record<EvidenceType, string[]> = {
+  "application/pdf": ["pdf"],
+  "image/jpeg": ["jpg", "jpeg"],
+  "image/png": ["png"],
+  "image/webp": ["webp"],
+};
+
+/**
+ * Whether a file's name and declared type agree with what its bytes are (docs/phase-1a-defaults.md
+ * §1), so a web page with a PDF header can't be stored as "evidence.html".
+ */
+export function matchesDeclared(actual: EvidenceType, declaredType: string, name: string): boolean {
+  const extension = name.split(".").at(-1)?.toLowerCase() ?? "";
+  return (declaredType === "" || declaredType === actual) && EXTENSIONS[actual].includes(extension);
+}
 
 /**
  * The type of an evidence file, read from its first bytes rather than its name or declared type,

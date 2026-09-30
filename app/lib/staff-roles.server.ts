@@ -144,3 +144,12 @@ export async function listStaff(db: Database) {
     assignment: toRoleAssignment(row),
   }));
 }
+
+/** Everyone who currently holds a role, for sending them staff email. */
+export async function activeHolders(db: Database, role: StaffRole) {
+  return db
+    .selectDistinct({ id: user.id, email: user.email })
+    .from(roleAssignment)
+    .innerJoin(user, eq(user.id, roleAssignment.userId))
+    .where(and(eq(roleAssignment.role, role), isNull(roleAssignment.revokedAt)));
+}

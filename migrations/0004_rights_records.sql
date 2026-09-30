@@ -41,10 +41,11 @@ CREATE TABLE `rights_record_contributor` (
 	FOREIGN KEY (`contributor_id`) REFERENCES `contributor`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
--- A Rights Record is never edited; the only change allowed is withdrawing it, once (CMS-03/04).
+-- A Rights Record is never edited; the only change allowed is withdrawing it, once, with who and why
+-- (CMS-03/04). Deleting rows is left to the deletion ledger (ADR-0009).
 -- Written by hand: drizzle-kit does not generate triggers.
 CREATE TRIGGER `rights_record_withdraw_only` BEFORE UPDATE ON `rights_record`
-WHEN OLD.withdrawn_at IS NOT NULL
+WHEN OLD.withdrawn_at IS NOT NULL OR NEW.withdrawn_at IS NULL
 	OR NEW.id IS NOT OLD.id OR NEW.subject_type IS NOT OLD.subject_type OR NEW.subject_id IS NOT OLD.subject_id
 	OR NEW.rights_holder IS NOT OLD.rights_holder OR NEW.permitted_uses IS NOT OLD.permitted_uses
 	OR NEW.guardian_permission IS NOT OLD.guardian_permission OR NEW.evidence_key IS NOT OLD.evidence_key

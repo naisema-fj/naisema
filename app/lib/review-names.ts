@@ -1,6 +1,5 @@
 import type { ReviewType } from "./permissions";
 import type { ContentFlag, ReviewRequirement, RevisionState } from "./review-rules";
-import type { PermittedUse } from "./rights-rules";
 
 /** How staff pages name each Review Type, Revision state and publication state. */
 export const REVIEW_NAMES: Record<ReviewType, string> = {
@@ -43,13 +42,3 @@ export function requirementName(requirement: ReviewRequirement): string {
   const name = REVIEW_NAMES[requirement.reviewType];
   return requirement.languageVariety ? `${name} (${requirement.languageVariety})` : name;
 }
-
-export const PERMITTED_USE_NAMES: Record<PermittedUse, string> = {
-  publish: "Publish",
-  excerpt: "Excerpt",
-  translate: "Translate",
-  transcribe: "Transcribe",
-  educationalAdaptation: "Educational adaptation",
-  commercial: "Commercial use",
-  aiTraining: "AI training",
-};

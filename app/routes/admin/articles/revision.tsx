@@ -5,7 +5,7 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
-import { archive, isEligible, publishRevision, withdraw } from "~/lib/publication.server";
+import { archive, eligibilityFor, publishRevision, withdraw } from "~/lib/publication.server";
 import {
   assignedReviewerIds,
   assignReviewer,
@@ -78,7 +78,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publicationState: review.contentItem.publicationState,
       publishedNumber: published ? published.number : null,
     },
-    eligibility: await isEligible(db, review.revisionId),
+    eligibility: await eligibilityFor(db, review),
     abilities: {
       isEditor,
       canSubmit: isEditor && isCurrent && !review.submitted,

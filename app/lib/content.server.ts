@@ -9,3 +9,12 @@ export async function requireEditor(env: Env, request: Request) {
   }
   return staff;
 }
+
+/** The staff gate plus the check for recording Rights Records and managing Contributors. */
+export async function requireRightsManager(env: Env, request: Request) {
+  const staff = await requireStaff(env, request);
+  if (!can(staff.actor, { action: "rights.manage" })) {
+    throw new Response("Only editors can manage rights and contributors.", { status: 403 });
+  }
+  return staff;
+}
