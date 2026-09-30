@@ -23,13 +23,15 @@ async function requireAdministrator(request: Request, env: Env) {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db, actor } = await requireAdministrator(request, context.get(cloudflareContext).env);
+  const { env } = context.get(cloudflareContext);
+  const { db, actor } = await requireAdministrator(request, env);
   return { staff: await listStaff(db), twoFactor: await listTwoFactorStatus(db, actor) };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, actor } = await requireAdministrator(request, env);
+  const staff = await requireAdministrator(request, env);
+  const { db, actor } = staff;
   const form = await request.formData();
 
   if (form.get("intent") === "revoke") {
@@ -39,7 +41,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   if (form.get("intent") === "resetTwoFactor") {
-    const result = await resetTwoFactor(env, db, actor, String(form.get("userId") ?? ""));
+    const result = await resetTwoFactor(env, staff, String(form.get("userId") ?? ""));
     if (!result.ok) return data({ error: result.error }, { status: 400 });
     throw redirect("/admin/staff");
   }
@@ -110,7 +112,7 @@ export default function Staff({ loaderData, actionData }: Route.ComponentProps) 
           {loaderData.twoFactor.map((member) => (
             <tr key={member.userId}>
               <td>{member.email}</td>
-              <td>{member.twoFactorEnabled ? "Set up" : "Not set up yet"}</td>
+              <td>{member.enrolled ? "Set up" : "Not set up yet"}</td>
               <td>
                 {member.canReset && (
                   <Form method="post">

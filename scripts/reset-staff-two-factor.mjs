@@ -22,16 +22,23 @@ const { values } = parseArgs({
 const email = requireEmail(values.email);
 const target = requireTarget(values);
 
-const [member] = queryRows(target, `SELECT id FROM user WHERE email = '${email}';`);
-if (!member) fail(`No account uses ${email}.`);
+const [member] = queryRows(
+  target,
+  `SELECT two_factor_enabled AS enrolled,
+          EXISTS (SELECT 1 FROM role_assignment r WHERE r.user_id = user.id AND r.revoked_at IS NULL) AS staff
+     FROM user WHERE email = '${email}';`,
+);
+if (!member?.staff) fail(`No current staff member uses ${email}.`);
+if (!member.enrolled) fail(`${email} hasn't set up two-factor, so there is nothing to reset.`);
 
-const ofMember = `(SELECT id FROM user WHERE email = '${email}')`;
+// The same rows resetTwoFactor (app/lib/staff-two-factor.server.ts) clears; change both together.
+const memberId = `(SELECT id FROM user WHERE email = '${email}')`;
 const now = Date.now();
 const sql = [
-  `DELETE FROM two_factor WHERE user_id = ${ofMember};`,
+  `DELETE FROM two_factor WHERE user_id = ${memberId};`,
   `UPDATE user SET two_factor_enabled = 0, updated_at = ${now} WHERE email = '${email}';`,
-  `DELETE FROM staff_session WHERE user_id = ${ofMember};`,
-  `DELETE FROM session WHERE user_id = ${ofMember};`,
+  `DELETE FROM staff_session WHERE user_id = ${memberId};`,
+  `DELETE FROM session WHERE user_id = ${memberId};`,
   `INSERT INTO audit_event (id, actor_id, action, object_type, object_id, details, created_at)
      SELECT '${randomUUID()}', NULL, 'two_factor.reset', 'user', id, '{"via":"cli"}', ${now}
      FROM user WHERE email = '${email}';`,

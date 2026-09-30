@@ -117,7 +117,7 @@ Before launch, the founder rehearses AC-08 unaided: sign in, publish an eligible
 
 | Role | Can | Cannot |
 | --- | --- | --- |
-| Administrator | Manage accounts, role assignments, site settings, feature flags | Read Case contents or evidence; approve reviews by virtue of the role |
+| Administrator | Manage accounts, role assignments, site settings, feature flags; reset a staff member's two-factor | Read Case contents or evidence; approve reviews by virtue of the role; reset their own two-factor |
 | Editor | Create/edit Content Items, set Content Flags, request reviews, issue Review Links, record Knowledge Holder Approvals, publish/withdraw eligible Revisions | Approve a Revision they authored or edited; publish without required approvals and rights |
 | Educator | Upload and author Learning Layers on assigned drafts; submit for review | Edit unassigned drafts; publish; see learner records |
 | Reviewer | Approve or reject assigned Revisions for their Review Type and Language Variety | Approve outside their scope or their own work |
