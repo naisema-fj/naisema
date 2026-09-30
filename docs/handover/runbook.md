@@ -113,6 +113,13 @@ Use `--env staging` for staging, or `--local` locally. The reset is written to `
 pnpm wrangler d1 execute DB --local --config wrangler.jsonc --command "SELECT \"to\", text FROM email_outbox ORDER BY id DESC LIMIT 1"
 ```
 
+## Rights Records
+
+An item can be published, and later served, only while a current Rights Record grants Publish; items flagged for identifiable children also need a current record marked as documented guardian permission. Eligibility is decided on every request (ADR-0007), so an expiry or withdrawal takes effect immediately and nothing needs unpublishing. Editors record and withdraw Rights Records from an article's Rights Records page; records are never edited, only withdrawn, and a database trigger enforces that.
+
+- **Evidence** (PDF, JPEG, PNG or WebP, up to 10 MB, checked by its first bytes) is stored in the private `EVIDENCE` bucket under `rights/<record id>/`. It is only ever served to editors, as a download, and every download is audited. Until the upload scan pipeline arrives (issue #14) evidence is not virus-scanned, so open downloads with care.
+- **Expiry warnings** run daily at 19:45 UTC (the `triggers.crons` entry in `wrangler.jsonc`, handled by `scheduled` in `workers/app.ts`). Each record expiring within 30 days is emailed once to the editor who recorded it (or to every current editor if they no longer are one), and again inside 7 days. Sent warnings are kept in `rights_expiry_warning`.
+
 ## Custom domains
 
 Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging is public so testers anywhere can use it: it serves `staging.naisema.com` and stays reachable at its `workers.dev` address because `env.staging` sets `workers_dev: true` (Wrangler turns that address off by default once an environment has routes). The `workers.dev` address serves only the public site; staff tools answer on `admin.staging.naisema.com` alone.

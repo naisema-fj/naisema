@@ -10,6 +10,8 @@
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Daily at 19:45 UTC (07:45 in Fiji): Rights Record expiry warnings (app/lib/rights-expiry.server.ts).
+  "triggers": { "crons": ["45 19 * * *"] },
   "upload_source_maps": true,
   // Local development and tests: the staff admin site answers on admin.localhost, and email is
   // written to the email_outbox table instead of being sent.

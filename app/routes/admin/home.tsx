@@ -45,6 +45,9 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
             <li>
               <a href="/admin/topics">Topics</a>
             </li>
+            <li>
+              <a href="/admin/contributors">Contributors</a>
+            </li>
           </ul>
         </>
       )}

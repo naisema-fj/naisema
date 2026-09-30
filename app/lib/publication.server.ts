@@ -5,21 +5,22 @@ import type { Database } from "./db.server";
 import { type Actor, can } from "./permissions";
 import { loadReview, type Review, type ReviewActionResult } from "./review.server";
 import { requirementName } from "./review-names";
+import { rightsFactsFor } from "./rights.server";
+import { rightsProblems } from "./rights-rules";
 
 export type Eligibility = { eligible: true } | { eligible: false; reasons: string[] };
 
 /**
- * The one eligibility decision (ADR-0007): may this exact Revision be published? It must have been
- * submitted, every review its Content Flags require must be approved on it, and its rights must be
- * current. Publication calls this now; public pages will call it on every request.
+ * The one eligibility decision (ADR-0007): may this exact Revision be published, right now? It
+ * must have been submitted, every review its Content Flags require must be approved on it, and its
+ * rights must be current at this moment: a current Rights Record granting Publish, plus current
+ * guardian permission when it shows identifiable children. Because it is evaluated on every call,
+ * an expiry or withdrawal takes effect immediately. Media assets' own Rights Records join this
+ * check when the media library arrives (#14).
  */
-export async function isEligible(db: Database, revisionId: string): Promise<Eligibility> {
+export async function isEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
   const review = await loadReview(db, revisionId);
   if (!review) return { eligible: false, reasons: ["That revision doesn't exist."] };
-  return eligibilityOf(review);
-}
-
-export function eligibilityOf(review: Review): Eligibility {
   const reasons: string[] = [];
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
   for (const { requirement, status } of review.progress) {
@@ -27,22 +28,14 @@ export function eligibilityOf(review: Review): Eligibility {
     const name = requirementName(requirement);
     reasons.push(status === "rejected" ? `${name} was rejected.` : `${name} is still needed.`);
   }
-  if (!rightsAreCurrent(review)) reasons.push("Its rights are not current.");
-  if (review.flags.includes("identifiableChildren")) {
-    reasons.push(
-      "Identifiable children need documented guardian permission, which can be recorded once Rights Records exist.",
-    );
-  }
+  reasons.push(
+    ...rightsProblems({
+      records: await rightsFactsFor(db, { type: "content_item", id: review.contentItem.id }),
+      needsGuardianPermission: review.flags.includes("identifiableChildren"),
+      now,
+    }),
+  );
   return reasons.length ? { eligible: false, reasons } : { eligible: true };
-}
-
-/**
- * Rights Records and Permitted Uses arrive with 1a-06 (#17); until then nothing is refused on
- * rights. Guardian permission for identifiable children belongs there too, so until it can be
- * recorded, items flagged for identifiable children are refused (above).
- */
-function rightsAreCurrent(_review: Review): boolean {
-  return true;
 }
 
 const setState = (db: Database, contentItemId: string, values: Partial<typeof contentItem.$inferInsert>) =>

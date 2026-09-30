@@ -58,6 +58,20 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await expect(page.getByRole("status")).toHaveText("Saved as revision 3.");
   await expect(page.getByRole("textbox", { name: "Body" })).not.toContainText("Then sit and listen.");
 
+  await page.getByRole("link", { name: "Rights Records" }).click();
+  await page.getByLabel("Rights holder").fill("E2E Storyteller");
+  await page.getByLabel("Publish", { exact: true }).check();
+  await page.getByLabel("Evidence (PDF, JPEG, PNG or WebP, up to 10 MB)").setInputFiles({
+    name: "permission.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.7\n% signed permission\n"),
+  });
+  await expectNoAxeViolations(page);
+  await page.getByRole("button", { name: "Record Rights Record" }).click();
+  await expect(page.getByRole("status")).toHaveText("Rights Record recorded.");
+  await expect(page.getByRole("heading", { name: "E2E Storyteller: Current" })).toBeVisible();
+  await page.getByRole("link", { name: `Back to ${title}` }).click();
+
   await page.getByRole("link", { name: "Review and publish revision 3" }).click();
   await expectNoAxeViolations(page);
   await page.getByRole("button", { name: "Submit revision 3 for review" }).click();

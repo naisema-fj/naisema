@@ -1,118 +1,24 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import type { RoleAssignment } from "~/lib/permissions";
-import { auditActions, signedInStaff } from "./support/staff";
-
-type Staff = Awaited<ReturnType<typeof signedInStaff>>;
-
-let counter = 0;
-const unique = (name: string) => `${name}-${++counter}-${crypto.randomUUID().slice(0, 8)}@naisema.test`;
-const staff = (name: string, ...roles: RoleAssignment[]) => signedInStaff(unique(name), roles);
-const languageFlag = { flag: "languageInstruction", languageVariety: "standard-fijian" };
-const languageReviewerRole = { role: "reviewer", reviewType: "language", languageVariety: "standard-fijian" } as const;
-
-const body = (text: string) =>
-  JSON.stringify({ type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text }] }] });
-
-async function topic(editor: Staff) {
-  const name = `Topic ${crypto.randomUUID()}`;
-  await editor.browser.fetch("/admin/topics", { form: { name } });
-  const row = await env.DB.prepare("SELECT id FROM topic WHERE name = ?1").bind(name).first<{ id: string }>();
-  return row?.id as string;
-}
-
-function articleForm(topicId: string, fields: Record<string, string | string[]> = {}) {
-  const flagged = ([] as string[]).concat(fields.flag ?? []);
-  const form = new URLSearchParams({
-    ...(flagged.includes("historicalClaims") && !("sources" in fields) ? { sources: "Oral history from Sera" } : {}),
-    title: "Vosa vakaviti",
-    summary: "Greetings.",
-    primaryArea: "learn",
-    credit: "Words by Sera",
-    body: body("Bula vinaka."),
-    topicId,
-  });
-  for (const [name, value] of Object.entries(fields)) {
-    form.delete(name);
-    for (const item of Array.isArray(value) ? value : [value]) form.append(name, item);
-  }
-  return form;
-}
-
-function post(who: Staff, path: string, form: URLSearchParams) {
-  return who.browser.fetch(path, {
-    method: "POST",
-    body: form,
-    headers: { "Content-Type": "application/x-www-form-urlencoded", Origin: "http://admin.localhost" },
-  });
-}
-
-async function createArticle(editor: Staff, fields: Record<string, string | string[]> = {}) {
-  const topicId = await topic(editor);
-  const response = await post(editor, "/admin/articles/new", articleForm(topicId, fields));
-  const id = response.headers.get("Location")?.split("/").at(-1);
-  if (!id) throw new Error(`Article not created (${response.status}): ${await response.text()}`);
-  return { id, topicId };
-}
-
-async function currentRevision(articleId: string) {
-  return (await env.DB.prepare(
-    "SELECT r.id, r.number FROM content_item c JOIN revision r ON r.id = c.current_draft_revision_id WHERE c.id = ?1",
-  )
-    .bind(articleId)
-    .first<{ id: string; number: number }>()) as { id: string; number: number };
-}
-
-async function saveNewRevision(editor: Staff, article: { id: string; topicId: string }, fields = {}) {
-  const base = await currentRevision(article.id);
-  const response = await post(
-    editor,
-    `/admin/articles/${article.id}`,
-    articleForm(article.topicId, { baseRevisionId: base.id, ...fields }),
-  );
-  expect(response.status, await response.clone().text()).toBe(302);
-  return currentRevision(article.id);
-}
-
-function act(who: Staff, articleId: string, number: number, fields: Record<string, string>) {
-  return who.browser.fetch(`/admin/articles/${articleId}/revisions/${number}`, { form: fields });
-}
-
-async function publication(articleId: string) {
-  return env.DB.prepare(
-    `SELECT c.publication_state AS state, r.number AS publishedNumber
-       FROM content_item c LEFT JOIN revision r ON r.id = c.current_published_revision_id WHERE c.id = ?1`,
-  )
-    .bind(articleId)
-    .first<{ state: string; publishedNumber: number | null }>();
-}
-
-async function approvals(revisionId: string) {
-  const { results } = await env.DB.prepare(
-    "SELECT review_type AS reviewType, decision, carried_forward_from_id AS carriedFrom FROM review_approval WHERE revision_id = ?1 ORDER BY review_type",
-  )
-    .bind(revisionId)
-    .all<{ reviewType: string; decision: string; carriedFrom: string | null }>();
-  return results;
-}
-
-/** An editor writes a flagged article, assigns reviewers, and submits it. */
-async function submittedArticle(flags: string[], reviewers: { reviewType: string; reviewer: Staff }[] = []) {
-  const editor = await staff("editor", { role: "editor" });
-  const article = await createArticle(editor, {
-    flag: flags,
-    languageVariety: flags.includes("languageInstruction") ? "standard-fijian" : "",
-  });
-  for (const { reviewType, reviewer } of reviewers) {
-    const assigned = await act(editor, article.id, 1, { intent: "assign", reviewType, reviewerId: reviewer.userId });
-    expect(assigned.status, await assigned.clone().text()).toBe(302);
-  }
-  expect((await act(editor, article.id, 1, { intent: "submit" })).status).toBe(302);
-  return { editor, article };
-}
-
-const approve = (reviewer: Staff, articleId: string, number: number, reviewType: string) =>
-  act(reviewer, articleId, number, { intent: "decide", reviewType, decision: "approved", scope: "All the Fijian" });
+import {
+  act,
+  approvals,
+  approve,
+  articleForm,
+  body,
+  createArticle,
+  currentRevision,
+  languageFlag,
+  languageReviewerRole,
+  post,
+  publication,
+  saveNewRevision,
+  staff,
+  submittedArticle,
+  topic,
+} from "./support/articles";
+import { recordRights } from "./support/rights";
+import { auditActions } from "./support/staff";
 
 describe("review gates", () => {
   it("blocks publishing a language-flagged revision until its language review is approved (AC-02)", async () => {
@@ -278,6 +184,7 @@ describe("review gates", () => {
   it("publishes an unflagged article once submitted, and never a draft", async () => {
     const editor = await staff("editor", { role: "editor" });
     const article = await createArticle(editor);
+    await recordRights(editor.browser, article.id);
 
     const draft = await act(editor, article.id, 1, { intent: "publish" });
     await act(editor, article.id, 1, { intent: "submit" });
@@ -444,7 +351,7 @@ describe("review gates", () => {
     expect(given.status).toBe(302);
   });
 
-  it("won't publish identifiable children until guardian permission can be recorded (#17)", async () => {
+  it("publishes identifiable children only with current, documented guardian permission", async () => {
     const reviewer = await staff("safeguarding-reviewer", { role: "reviewer", reviewType: "safeguarding" });
     const { editor, article } = await submittedArticle(
       ["identifiableChildren"],
@@ -452,10 +359,13 @@ describe("review gates", () => {
     );
     await approve(reviewer, article.id, 1, "safeguarding");
 
-    const response = await act(editor, article.id, 1, { intent: "publish" });
+    const withoutGuardian = await act(editor, article.id, 1, { intent: "publish" });
+    await recordRights(editor.browser, article.id, { rightsHolder: "Guardian of Litia", guardianPermission: true });
+    const withGuardian = await act(editor, article.id, 1, { intent: "publish" });
 
-    expect(response.status).toBe(400);
-    expect(await response.text()).toContain("documented guardian permission");
+    expect(withoutGuardian.status).toBe(400);
+    expect(await withoutGuardian.text()).toContain("documented guardian permission");
+    expect(withGuardian.status).toBe(302);
   });
 
   it("matches a reviewer's Language Variety however the administrator spelled it", async () => {

@@ -1,6 +1,7 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { AUTH_BASE_PATH, createAuth } from "~/lib/auth.server";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 
 const requestHandler = createRequestHandler(() => import("virtual:react-router/server-build"), import.meta.env.MODE);
 
@@ -64,5 +65,10 @@ export default {
     const context = new RouterContextProvider();
     context.set(cloudflareContext, { env, ctx });
     return requestHandler(request, context);
+  },
+
+  /** The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings. */
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(sendExpiryWarnings(env, new Date(controller.scheduledTime)));
   },
 } satisfies ExportedHandler<Env>;

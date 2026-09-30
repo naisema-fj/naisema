@@ -67,6 +67,8 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
         </a>
         {" · "}
         <a href={`/admin/articles/${article.id}/history`}>Revision history</a>
+        {" · "}
+        <a href={`/admin/articles/${article.id}/rights`}>Rights Records</a>
       </p>
       <ArticleForm
         key={current.id}

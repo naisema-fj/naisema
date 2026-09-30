@@ -51,6 +51,8 @@ export type Check =
   | { action: "content.edit" | "revision.publish" | "reviewLink.issue" }
   /** Taking published content down (withdraw) or retiring it (archive). */
   | { action: "content.withdraw" }
+  /** Recording and withdrawing Rights Records, and reading the private evidence behind them. */
+  | { action: "rights.manage" | "rightsEvidence.read" }
   /** Seeing the Revisions waiting on your review. */
   | { action: "reviewQueue.view" }
   /** Reading a Revision in the staff area: editors, and the reviewers assigned to it. */
@@ -95,6 +97,8 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "revision.publish":
     case "reviewLink.issue":
     case "content.withdraw":
+    case "rights.manage":
+    case "rightsEvidence.read":
       return hasRole("editor");
 
     case "reviewQueue.view":

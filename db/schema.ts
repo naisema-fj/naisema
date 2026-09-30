@@ -1,5 +1,13 @@
 import { sql } from "drizzle-orm";
-import { type AnySQLiteColumn, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  type AnySQLiteColumn,
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 const updatedAt = () => integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -275,4 +283,69 @@ export const reviewApproval = sqliteTable(
     decidedAt: integer("decided_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [index("review_approval_revision_idx").on(table.revisionId)],
+);
+
+// --- Rights (CMS-03/04, ADR-0007) ---
+
+/** Anyone whose story, recording or knowledge appears in content: a rights and credit relationship. */
+export const contributor = sqliteTable("contributor", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  notes: text("notes"),
+  createdBy: text("created_by").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/**
+ * The legal permission for a contributed work or media asset. Records are never edited: a mistake
+ * is corrected by withdrawing the record and recording a new one. The evidence file lives in the
+ * private EVIDENCE bucket under `evidenceKey` and is never served publicly.
+ */
+export const rightsRecord = sqliteTable(
+  "rights_record",
+  {
+    id: text("id").primaryKey(),
+    /** What the record covers: "content_item" now; media assets join with the media library. */
+    subjectType: text("subject_type").notNull(),
+    subjectId: text("subject_id").notNull(),
+    rightsHolder: text("rights_holder").notNull(),
+    permittedUses: text("permitted_uses", { mode: "json" }).notNull(),
+    guardianPermission: integer("guardian_permission", { mode: "boolean" }).notNull().default(false),
+    evidenceKey: text("evidence_key").notNull(),
+    evidenceName: text("evidence_name").notNull(),
+    evidenceType: text("evidence_type").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
+    withdrawnAt: integer("withdrawn_at", { mode: "timestamp_ms" }),
+    withdrawnBy: text("withdrawn_by"),
+    withdrawalReason: text("withdrawal_reason"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("rights_record_subject_idx").on(table.subjectType, table.subjectId)],
+);
+
+export const rightsRecordContributor = sqliteTable(
+  "rights_record_contributor",
+  {
+    rightsRecordId: text("rights_record_id")
+      .notNull()
+      .references(() => rightsRecord.id),
+    contributorId: text("contributor_id")
+      .notNull()
+      .references(() => contributor.id),
+  },
+  (table) => [primaryKey({ columns: [table.rightsRecordId, table.contributorId] })],
+);
+
+/** Expiry warnings already emailed, so each window warns once. */
+export const rightsExpiryWarning = sqliteTable(
+  "rights_expiry_warning",
+  {
+    rightsRecordId: text("rights_record_id")
+      .notNull()
+      .references(() => rightsRecord.id),
+    withinDays: integer("within_days").notNull(),
+    sentAt: integer("sent_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.rightsRecordId, table.withinDays] })],
 );

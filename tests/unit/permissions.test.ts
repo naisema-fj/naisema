@@ -71,6 +71,8 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["administrator cannot withdraw content", administrator, { action: "content.withdraw" }, false],
+  ["administrator cannot manage Rights Records by role alone", administrator, { action: "rights.manage" }, false],
+  ["administrator cannot read rights evidence", administrator, { action: "rightsEvidence.read" }, false],
 
   // Editor
   ["editor edits content", editor, { action: "content.edit" }, true],
@@ -103,6 +105,8 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ],
 
   ["editor withdraws and archives published content", editor, { action: "content.withdraw" }, true],
+  ["editor records and withdraws Rights Records", editor, { action: "rights.manage" }, true],
+  ["editor reads rights evidence", editor, { action: "rightsEvidence.read" }, true],
   ["editor reads any revision", editor, { action: "revision.view", revision: { assignedReviewerIds: [] } }, true],
 
   // Educator
@@ -132,6 +136,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ],
   ["educator cannot publish", educator, { action: "revision.publish" }, false],
   ["educator cannot withdraw content", educator, { action: "content.withdraw" }, false],
+  ["educator cannot manage Rights Records", educator, { action: "rights.manage" }, false],
   [
     "educator cannot read learner records",
     educator,
@@ -216,6 +221,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["reviewer cannot withdraw content", languageReviewer, { action: "content.withdraw" }, false],
+  ["reviewer cannot read rights evidence", languageReviewer, { action: "rightsEvidence.read" }, false],
   ["reviewer has a review queue", culturalReviewer, { action: "reviewQueue.view" }, true],
   ["an editor without a reviewer role has no review queue", editor, { action: "reviewQueue.view" }, false],
   [
