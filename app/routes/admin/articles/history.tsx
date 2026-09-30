@@ -1,32 +1,34 @@
 import { data, Form, redirect } from "react-router";
-import { getArticle, listRevisions, restoreRevision } from "~/lib/articles.server";
+import type { ArticleSnapshot } from "~/lib/article-fields";
+import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
+import { listRevisions, restoreRevision } from "~/lib/revisions.server";
 import type { Route } from "./+types/history";
 
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `History of ${loaderData?.article.draft.snapshot.title ?? "article"} · Na iSema staff` }];
+  return [{ title: `History of ${loaderData?.article.currentRevision.snapshot.title ?? "article"} · Na iSema staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { db } = await requireEditor(context.get(cloudflareContext).env, request);
   const article = await getArticle(db, params.id);
   if (!article) throw new Response("Not found", { status: 404 });
-  return { article, revisions: await listRevisions(db, article.id) };
+  return { article, revisions: await listRevisions<ArticleSnapshot>(db, article.id) };
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { db, actor } = await requireEditor(context.get(cloudflareContext).env, request);
   const form = await request.formData();
-  const restored = await restoreRevision(
-    db,
-    actor.userId,
-    params.id,
-    String(form.get("baseRevisionId") ?? ""),
-    String(form.get("revisionId") ?? ""),
-  );
+  const restored = await restoreRevision(db, {
+    contentItemId: params.id,
+    type: "article",
+    baseRevisionId: String(form.get("baseRevisionId") ?? ""),
+    revisionId: String(form.get("revisionId") ?? ""),
+    savedBy: actor.userId,
+  });
   if (!restored.ok) return data({ error: restored.error }, { status: 409 });
   throw redirect(`/admin/articles/${params.id}?saved=${restored.number}`);
 }
@@ -44,7 +46,7 @@ export default function History({ loaderData, actionData }: Route.ComponentProps
       <p>
         <a href={`/admin/articles/${article.id}`}>Back to editing</a>
       </p>
-      <h1>Revision history: {article.draft.snapshot.title}</h1>
+      <h1>Revision history: {article.currentRevision.snapshot.title}</h1>
       {actionData?.error && <p role="alert">{actionData.error}</p>}
       <p>Revisions are never changed. Restoring an earlier one saves its content again as a new revision.</p>
 
@@ -87,15 +89,15 @@ export default function History({ loaderData, actionData }: Route.ComponentProps
             <tr key={revision.id}>
               <td>
                 <a href={`/admin/articles/${article.id}/revisions/${revision.number}`}>{revision.number}</a>
-                {revision.id === article.draft.id && " (current draft)"}
+                {revision.id === article.currentRevision.id && " (current)"}
                 {revision.restoredFromNumber && ` — restored from ${revision.restoredFromNumber}`}
               </td>
               <td>{formatTime(revision.createdAt)}</td>
               <td>{revision.savedBy}</td>
               <td>
-                {revision.id !== article.draft.id && (
+                {revision.id !== article.currentRevision.id && (
                   <Form method="post">
-                    <input type="hidden" name="baseRevisionId" value={article.draft.id} />
+                    <input type="hidden" name="baseRevisionId" value={article.currentRevision.id} />
                     <input type="hidden" name="revisionId" value={revision.id} />
                     <button type="submit" aria-label={`Restore revision ${revision.number}`}>
                       Restore

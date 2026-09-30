@@ -1,6 +1,7 @@
 import { data, Form, redirect } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
+import { TOPIC_NAME_LIMIT } from "~/lib/topics";
 import { createTopic, listTopics } from "~/lib/topics.server";
 import type { Route } from "./+types/topics";
 
@@ -48,7 +49,7 @@ export default function Topics({ loaderData, actionData }: Route.ComponentProps)
           id="topic-name"
           name="name"
           required
-          maxLength={80}
+          maxLength={TOPIC_NAME_LIMIT}
           aria-describedby={actionData?.error ? "topic-name-error" : undefined}
         />
         {actionData?.error && (

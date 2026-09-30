@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
-import { type ArticleBody, type Block, type Inline, isSafeLinkAddress, type Mark } from "~/lib/article-body";
+import {
+  type ArticleBody,
+  type Block,
+  type Inline,
+  isSafeImageAddress,
+  isSafeLinkAddress,
+  type Mark,
+} from "~/lib/article-body";
 
 /** What an embedded Content Item shows as: its title and where it lives. */
 export type EmbeddedItem = { title: string; href: string };
@@ -34,6 +41,7 @@ function renderBlocks(blocks: readonly Block[] | undefined, embeds: Record<strin
       case "blockquote":
         return <blockquote key={key}>{renderBlocks(node.content, embeds)}</blockquote>;
       case "image":
+        if (!isSafeImageAddress(node.attrs.src)) return null;
         return <img key={key} src={node.attrs.src} alt={node.attrs.alt} loading="lazy" />;
       case "contentItem": {
         const item = embeds[node.attrs.id];

@@ -37,7 +37,6 @@ type Options = {
   content: ArticleBody;
   embeddable: { id: string; title: string }[];
   labelledBy: string;
-  describedBy?: string;
   onChange: (doc: unknown) => void;
 };
 
@@ -45,7 +44,7 @@ type Options = {
  * The editor for the fixed block set in article-body.ts. Its schema holds only those blocks, so
  * pasted content outside the set is dropped as it arrives; the server still re-checks every save.
  */
-export function createArticleEditor({ element, content, embeddable, labelledBy, describedBy, onChange }: Options) {
+export function createArticleEditor({ element, content, embeddable, labelledBy, onChange }: Options) {
   return new Editor({
     element,
     content,
@@ -65,16 +64,25 @@ export function createArticleEditor({ element, content, embeddable, labelledBy, 
       Callout,
       contentItemEmbed(new Map(embeddable.map((item) => [item.id, item.title]))),
     ],
-    editorProps: {
-      attributes: {
-        id: "body-editor",
-        role: "textbox",
-        "aria-multiline": "true",
-        "aria-labelledby": labelledBy,
-        ...(describedBy ? { "aria-describedby": describedBy } : {}),
-        class: "body-editor-content",
-      },
-    },
+    editorProps: { attributes: viewAttributes(labelledBy) },
     onUpdate: ({ editor }) => onChange(editor.getJSON()),
+  });
+}
+
+function viewAttributes(labelledBy: string, describedBy?: string): Record<string, string> {
+  return {
+    id: "body-editor",
+    role: "textbox",
+    "aria-multiline": "true",
+    "aria-labelledby": labelledBy,
+    ...(describedBy ? { "aria-describedby": describedBy } : {}),
+    class: "body-editor-content",
+  };
+}
+
+/** Points the editor's accessible description at an error message, or clears it. */
+export function describeEditor(editor: Editor, labelledBy: string, describedBy: string | undefined) {
+  editor.setOptions({
+    editorProps: { ...editor.options.editorProps, attributes: viewAttributes(labelledBy, describedBy) },
   });
 }

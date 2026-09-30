@@ -170,7 +170,10 @@ describe("articles", () => {
     const late = await save(editor, article, article.firstRevisionId, { title: "Saved second" });
 
     expect(late.status).toBe(409);
-    expect(await late.text()).toContain("Someone else saved this article");
+    const page = await late.text();
+    expect(page).toContain("Someone else saved this");
+    // Sending the refused form again must be refused again, not saved over the newer revision.
+    expect(page).toContain(`name="baseRevisionId" value="${article.firstRevisionId}"`);
     expect((await revisions(article.id)).map((revision) => revision.snapshot.title)).toEqual([
       "Meke for beginners",
       "Saved first",

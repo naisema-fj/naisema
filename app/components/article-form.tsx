@@ -1,11 +1,11 @@
 import { Form } from "react-router";
 import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
-import type { ArticleSnapshot, FieldErrors } from "~/lib/articles.server";
+import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
 import { BodyEditor, type EmbeddableItem } from "./body-editor";
 
 type Props = {
-  /** What the fields start with: the current draft, or what the editor just submitted. */
+  /** What the fields start with: the current revision, or what the editor just submitted. */
   values: ArticleSnapshot;
   errors?: FieldErrors;
   topics: { id: string; name: string }[];
@@ -39,7 +39,7 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
         name="title"
         defaultValue={values.title}
         required
-        maxLength={200}
+        maxLength={ARTICLE_LIMITS.title}
         aria-describedby={describedBy("title")}
       />
       {fieldError("title")}
@@ -50,7 +50,7 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
         name="summary"
         defaultValue={values.summary}
         required
-        maxLength={500}
+        maxLength={ARTICLE_LIMITS.summary}
         rows={3}
         aria-describedby={describedBy("summary")}
       />
@@ -108,7 +108,7 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
         name="credit"
         defaultValue={values.credit}
         required
-        maxLength={300}
+        maxLength={ARTICLE_LIMITS.credit}
         aria-describedby={describedBy("credit")}
       />
       {fieldError("credit")}

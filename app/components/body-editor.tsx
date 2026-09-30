@@ -4,6 +4,9 @@ import { type ArticleBody, HEADING_LEVELS } from "~/lib/article-body";
 
 export type EmbeddableItem = { id: string; title: string };
 
+const LABEL_ID = "body-label";
+const ERROR_ID = "body-error";
+
 /**
  * The Tiptap body editor. The server renders a hidden `body` field holding the current JSON, so a
  * save without the editor keeps the body as it was; once the page hydrates the editor mounts and
@@ -33,8 +36,7 @@ export function BodyEditor({
         element: mount.current,
         content: initial,
         embeddable,
-        labelledBy: "body-label",
-        describedBy: error ? "body-error" : undefined,
+        labelledBy: LABEL_ID,
         onChange: (doc) => setJson(JSON.stringify(doc)),
       });
       created.on("transaction", rerender);
@@ -46,9 +48,17 @@ export function BodyEditor({
     };
   }, []);
 
+  // The error can change after the editor exists (a second failed save), so keep its description in step.
+  useEffect(() => {
+    if (!editor) return;
+    import("~/lib/article-editor.client").then(({ describeEditor }) =>
+      describeEditor(editor, LABEL_ID, error ? ERROR_ID : undefined),
+    );
+  }, [editor, error]);
+
   return (
     <div className="body-field">
-      <p id="body-label" className="label">
+      <p id={LABEL_ID} className="label">
         Body
       </p>
       <input type="hidden" name="body" value={json} />
@@ -58,7 +68,7 @@ export function BodyEditor({
       {editor && <Toolbar editor={editor} embeddable={embeddable} />}
       <div ref={mount} className="body-editor" />
       {error && (
-        <p id="body-error" className="field-error">
+        <p id={ERROR_ID} className="field-error">
           {error}
         </p>
       )}

@@ -39,9 +39,9 @@ export function parseArticleBody(input: unknown): BodyParse {
     if (JSON.stringify(input ?? null).length > MAX_BODY_CHARACTERS) {
       return { ok: false, error: "The article body is too long to save in one go." };
     }
-    const node = record(input);
+    const node = asObject(input);
     if (node.type !== "doc") throw unsupported(node.type);
-    return { ok: true, body: { type: "doc", content: list(node.content).map((child) => block(child, 1)) } };
+    return { ok: true, body: { type: "doc", content: asArray(node.content).map((child) => parseBlock(child, 1)) } };
   } catch (error) {
     if (error instanceof BodyRefused) return { ok: false, error: error.message };
     throw error;
@@ -63,40 +63,43 @@ export function embeddedItemIds(body: ArticleBody): string[] {
   return ids;
 }
 
-function block(input: unknown, depth: number): Block {
+function parseBlock(input: unknown, depth: number): Block {
   if (depth > MAX_DEPTH) throw new BodyRefused("The article body is nested too deeply.");
-  const node = record(input);
+  const node = asObject(input);
   switch (node.type) {
     case "paragraph":
-      return withInline({ type: "paragraph" }, node.content);
+      return withParsedInline({ type: "paragraph" }, node.content);
     case "heading": {
-      const level = record(node.attrs ?? {}).level;
+      const level = asObject(node.attrs ?? {}).level;
       if (!HEADING_LEVELS.includes(level as HeadingLevel)) throw new BodyRefused("Headings must be level 2, 3 or 4.");
-      return withInline({ type: "heading", attrs: { level: level as HeadingLevel } }, node.content);
+      return withParsedInline({ type: "heading", attrs: { level: level as HeadingLevel } }, node.content);
     }
     case "bulletList":
-      return { type: "bulletList", content: listItems(node.content, depth) };
+      return { type: "bulletList", content: parseListItems(node.content, depth) };
     case "orderedList": {
-      const start = record(node.attrs ?? {}).start;
-      const content = listItems(node.content, depth);
+      const start = asObject(node.attrs ?? {}).start;
+      const content = parseListItems(node.content, depth);
       if (start === undefined || start === null) return { type: "orderedList", content };
       if (!Number.isInteger(start) || (start as number) < 1)
         throw new BodyRefused("A numbered list must start at 1 or more.");
       return { type: "orderedList", attrs: { start: start as number }, content };
     }
     case "blockquote":
-      return { type: "blockquote", content: nonEmpty(node.content).map((child) => block(child, depth + 1)) };
+      return {
+        type: "blockquote",
+        content: asNonEmptyArray(node.content).map((child) => parseBlock(child, depth + 1)),
+      };
     case "image": {
-      const attrs = record(node.attrs ?? {});
+      const attrs = asObject(node.attrs ?? {});
       const alt = typeof attrs.alt === "string" ? attrs.alt.trim() : "";
       if (!alt) throw new BodyRefused("Every image needs alt text describing it.");
-      if (typeof attrs.src !== "string" || !isSafeAddress(attrs.src, ["https:"])) {
+      if (typeof attrs.src !== "string" || !isSafeImageAddress(attrs.src)) {
         throw new BodyRefused("Image addresses must start with https:// or /.");
       }
       return { type: "image", attrs: { src: attrs.src, alt } };
     }
     case "contentItem": {
-      const id = record(node.attrs ?? {}).id;
+      const id = asObject(node.attrs ?? {}).id;
       if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id)) {
         throw new BodyRefused("An embedded Content Item is missing its ID.");
       }
@@ -105,8 +108,8 @@ function block(input: unknown, depth: number): Block {
     case "callout":
       return {
         type: "callout",
-        content: nonEmpty(node.content).map((child) => {
-          const paragraph = block(child, depth + 1);
+        content: asNonEmptyArray(node.content).map((child) => {
+          const paragraph = parseBlock(child, depth + 1);
           if (paragraph.type !== "paragraph") throw new BodyRefused("Callouts may only contain paragraphs.");
           return paragraph;
         }),
@@ -116,39 +119,42 @@ function block(input: unknown, depth: number): Block {
   }
 }
 
-function listItems(input: unknown, depth: number): ListItem[] {
-  return nonEmpty(input).map((child) => {
-    const node = record(child);
+function parseListItems(input: unknown, depth: number): ListItem[] {
+  return asNonEmptyArray(input).map((child) => {
+    const node = asObject(child);
     if (node.type !== "listItem") throw unsupported(node.type);
-    return { type: "listItem", content: nonEmpty(node.content).map((item) => block(item, depth + 1)) };
+    return { type: "listItem", content: asNonEmptyArray(node.content).map((item) => parseBlock(item, depth + 1)) };
   });
 }
 
-function withInline<T extends Paragraph | Heading>(node: T, content: unknown): T {
+function withParsedInline<T extends Paragraph | Heading>(node: T, content: unknown): T {
   if (content === undefined) return node;
-  const inline = list(content).map(inlineNode);
+  const inline = asArray(content).map(parseInline);
   return inline.length ? { ...node, content: inline } : node;
 }
 
-function inlineNode(input: unknown): Inline {
-  const node = record(input);
+function parseInline(input: unknown): Inline {
+  const node = asObject(input);
   if (node.type === "hardBreak") return { type: "hardBreak" };
   if (node.type !== "text" || typeof node.text !== "string") throw unsupported(node.type);
   if (node.marks === undefined) return { type: "text", text: node.text };
-  const marks = list(node.marks).map(mark);
+  const marks = asArray(node.marks).map(parseMark);
   return marks.length ? { type: "text", text: node.text, marks } : { type: "text", text: node.text };
 }
 
-function mark(input: unknown): Mark {
-  const node = record(input);
+function parseMark(input: unknown): Mark {
+  const node = asObject(input);
   if (node.type === "bold" || node.type === "italic") return { type: node.type };
   if (node.type !== "link") throw unsupported(node.type);
-  const href = record(node.attrs ?? {}).href;
+  const href = asObject(node.attrs ?? {}).href;
   if (typeof href !== "string" || !isSafeLinkAddress(href)) {
     throw new BodyRefused("Links must start with https://, http://, mailto: or /.");
   }
   return { type: "link", attrs: { href } };
 }
+
+/** Where an image may come from: a path on this site, or an https address. */
+export const isSafeImageAddress = (src: string) => isSafeAddress(src, ["https:"]);
 
 /** Where a link may point: a path on this site, or a web or email address. */
 export const isSafeLinkAddress = (href: string) => isSafeAddress(href, ["https:", "http:", "mailto:"]);
@@ -163,21 +169,21 @@ function isSafeAddress(address: string, schemes: string[]): boolean {
   }
 }
 
-function record(input: unknown): Record<string, unknown> {
+function asObject(input: unknown): Record<string, unknown> {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     throw new BodyRefused("The article body could not be read.");
   }
   return input as Record<string, unknown>;
 }
 
-function list(input: unknown): unknown[] {
+function asArray(input: unknown): unknown[] {
   if (input === undefined) return [];
   if (!Array.isArray(input)) throw new BodyRefused("The article body could not be read.");
   return input;
 }
 
-function nonEmpty(input: unknown): unknown[] {
-  const items = list(input);
+function asNonEmptyArray(input: unknown): unknown[] {
+  const items = asArray(input);
   if (!items.length) throw new BodyRefused("The article body has an empty list, quote or callout.");
   return items;
 }

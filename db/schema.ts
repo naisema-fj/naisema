@@ -163,7 +163,7 @@ export const emailOutbox = sqliteTable("email_outbox", {
 
 // --- Content (ADR-0006) ---
 
-/** A minimal subject tag for Content Items. Topic pages arrive with 1a-18. */
+/** A subject Content Items are tagged with. Topic pages arrive with 1a-18. */
 export const topic = sqliteTable("topic", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull().unique(),

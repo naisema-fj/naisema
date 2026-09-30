@@ -5,3 +5,5 @@ Content Items and Learning Layers are stored as a parent row pointing at its cur
 ## Consequences
 
 The same fingerprints drive learner-progress migration when a new Revision publishes: an activity completion carries over only if that activity's fingerprint is unchanged (otherwise it is kept but labelled "completed on an earlier version"); watch position carries over if its segment still exists; saved vocabulary keeps its source Revision and shows an "updated" note when the expression changed.
+
+Revision rows are write-once, enforced by a database trigger that refuses any UPDATE (1a-04). Anything that belongs to a Revision but is only known later, such as its review state and Review Approvals, is therefore stored in its own rows referencing the Revision, never as columns updated on it. The per-Review-Type fingerprints are computed when the Revision is written. Deleting Revisions is left to the deletion ledger (ADR-0009).

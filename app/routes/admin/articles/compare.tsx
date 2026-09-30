@@ -1,14 +1,17 @@
-import { getArticle, getRevision } from "~/lib/articles.server";
+import type { ArticleSnapshot } from "~/lib/article-fields";
+import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { bodyLines, diffLines } from "~/lib/revision-diff";
-import { listTopics } from "~/lib/topics.server";
+import { getRevision } from "~/lib/revisions.server";
+import { topicNamer } from "~/lib/topics.server";
 import type { Route } from "./+types/compare";
 
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `Compare revisions ${loaderData?.from.number} and ${loaderData?.to.number} · Na iSema staff` }];
+  if (!loaderData) return [{ title: "Na iSema staff" }];
+  return [{ title: `Compare revisions ${loaderData.from.number} and ${loaderData.to.number} · Na iSema staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -17,17 +20,13 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const article = await getArticle(db, params.id);
   if (!article) throw new Response("Not found", { status: 404 });
   const [from, to] = await Promise.all([
-    getRevision(db, article.id, Number(search.get("from"))),
-    getRevision(db, article.id, Number(search.get("to"))),
+    getRevision<ArticleSnapshot>(db, article.id, Number(search.get("from"))),
+    getRevision<ArticleSnapshot>(db, article.id, Number(search.get("to"))),
   ]);
   if (!from || !to) throw new Response("Choose two revisions of this article to compare.", { status: 404 });
 
-  const topicNames = new Map((await listTopics(db)).map((topic) => [topic.id, topic.name]));
-  const topics = (ids: string[]) =>
-    ids
-      .map((id) => topicNames.get(id) ?? "A removed topic")
-      .sort()
-      .join(", ");
+  const topicNames = await topicNamer(db);
+  const topics = (ids: string[]) => topicNames(ids).sort().join(", ");
   const fields = [
     { label: "Title", before: from.snapshot.title, after: to.snapshot.title },
     { label: "Summary", before: from.snapshot.summary, after: to.snapshot.summary },
@@ -55,7 +54,7 @@ export default function Compare({ loaderData }: Route.ComponentProps) {
       <h1>
         Revision {from.number} compared with revision {to.number}
       </h1>
-      <p>{article.draft.snapshot.title}</p>
+      <p>{article.currentRevision.snapshot.title}</p>
 
       <h2>Fields</h2>
       <dl className="compare-fields">
