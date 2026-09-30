@@ -1,0 +1,252 @@
+import { Form } from "react-router";
+import type { ReviewType } from "~/lib/permissions";
+import { PUBLICATION_NAMES, type PublicationState, REVIEW_NAMES, STATE_NAMES } from "~/lib/review-names";
+import { type ContentFlag, FLAG_NAMES, type ReviewRequirement, type RevisionState } from "~/lib/review-rules";
+
+type Approval = {
+  id: string;
+  reviewType: string;
+  languageVariety: string | null;
+  decision: string;
+  reviewerEmail: string;
+  scope: string | null;
+  notes: string | null;
+  knowledgeHolderName: string | null;
+  knowledgeHolderMethod: string | null;
+  conditions: string | null;
+  carriedFromNumber: number | null;
+  decidedAt: Date | string;
+};
+
+type Props = {
+  revisionNumber: number;
+  review: {
+    state: RevisionState;
+    flags: ContentFlag[];
+    languageVariety: string | null;
+    progress: {
+      requirement: ReviewRequirement;
+      status: "awaiting" | "approved" | "rejected";
+      decisionId: string | null;
+    }[];
+    approvals: Approval[];
+    assignments: { id: string; reviewType: string; reviewerId: string; email: string | null }[];
+    publicationState: PublicationState;
+    publishedNumber: number | null;
+  };
+  eligibility: { eligible: true } | { eligible: false; reasons: string[] };
+  abilities: {
+    isEditor: boolean;
+    canSubmit: boolean;
+    decideTypes: ReviewType[];
+    canRecordKnowledgeHolder: boolean;
+    canPublish: boolean;
+    canWithdraw: boolean;
+  };
+  reviewerChoices: Partial<Record<string, { id: string; email: string }[]>>;
+};
+
+const formatDate = (date: Date | string) =>
+  new Date(date).toLocaleDateString("en-AU", { dateStyle: "medium", timeZone: "UTC" });
+
+function requirementName(requirement: ReviewRequirement) {
+  if (requirement.knowledgeHolder) return "Knowledge Holder Approval";
+  const name = REVIEW_NAMES[requirement.reviewType];
+  return requirement.languageVariety ? `${name} (${requirement.languageVariety})` : name;
+}
+
+function describeApproval(approval: Approval) {
+  const verb = approval.decision === "approved" ? "Approved" : "Rejected";
+  const who = approval.knowledgeHolderName
+    ? `by ${approval.knowledgeHolderName} (${approval.knowledgeHolderMethod}), recorded by ${approval.reviewerEmail}`
+    : `by ${approval.reviewerEmail}`;
+  const carried = approval.carriedFromNumber ? `, carried forward from revision ${approval.carriedFromNumber}` : "";
+  return `${verb} ${who} on ${formatDate(approval.decidedAt)}${carried}`;
+}
+
+/** Review and publication for one Revision: what it needs, what is decided, and what you can do. */
+export function ReviewPanel({ revisionNumber, review, eligibility, abilities, reviewerChoices }: Props) {
+  const approvals = new Map(review.approvals.map((approval) => [approval.id, approval]));
+
+  return (
+    <section aria-labelledby="review-heading" className="review-panel">
+      <h2 id="review-heading">Review and publishing</h2>
+      <dl>
+        <dt>This revision</dt>
+        <dd>{STATE_NAMES[review.state]}</dd>
+        <dt>Article</dt>
+        <dd>
+          {PUBLICATION_NAMES[review.publicationState]}
+          {review.publishedNumber !== null && review.publicationState !== "unpublished"
+            ? ` (revision ${review.publishedNumber})`
+            : ""}
+        </dd>
+        <dt>Content Flags</dt>
+        <dd>{review.flags.length ? review.flags.map((flag) => FLAG_NAMES[flag]).join(", ") : "None"}</dd>
+      </dl>
+
+      <h3>Required reviews</h3>
+      {review.progress.length === 0 ? (
+        <p>These Content Flags need no review. Submitting the revision makes it approved.</p>
+      ) : (
+        <table>
+          <caption className="visually-hidden">Reviews this revision needs and where each stands</caption>
+          <thead>
+            <tr>
+              <th scope="col">Review</th>
+              <th scope="col">Status</th>
+              <th scope="col">Assigned</th>
+            </tr>
+          </thead>
+          <tbody>
+            {review.progress.map(({ requirement, decisionId }) => {
+              const decision = decisionId ? approvals.get(decisionId) : undefined;
+              const assigned = review.assignments.filter((row) => row.reviewType === requirement.reviewType);
+              return (
+                <tr key={requirementName(requirement)}>
+                  <td>{requirementName(requirement)}</td>
+                  <td>{decision ? describeApproval(decision) : "Waiting for review"}</td>
+                  <td>
+                    {requirement.knowledgeHolder
+                      ? "Recorded by an editor"
+                      : assigned.map((row) => row.email ?? "a former staff member").join(", ") || "Nobody yet"}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
+
+      {abilities.canSubmit && (
+        <Form method="post">
+          <input type="hidden" name="intent" value="submit" />
+          <button type="submit">Submit revision {revisionNumber} for review</button>
+        </Form>
+      )}
+
+      {abilities.isEditor &&
+        review.progress
+          .filter(({ requirement }) => !requirement.knowledgeHolder)
+          .map(({ requirement }) => {
+            const choices = reviewerChoices[requirement.reviewType] ?? [];
+            const id = `assign-${requirement.reviewType}`;
+            return (
+              <Form method="post" key={id} className="inline-form">
+                <input type="hidden" name="intent" value="assign" />
+                <input type="hidden" name="reviewType" value={requirement.reviewType} />
+                <label htmlFor={id}>Assign a reviewer for {REVIEW_NAMES[requirement.reviewType].toLowerCase()}</label>
+                {choices.length ? (
+                  <>
+                    <select id={id} name="reviewerId" required>
+                      {choices.map((choice) => (
+                        <option key={choice.id} value={choice.id}>
+                          {choice.email}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="submit">Assign</button>
+                  </>
+                ) : (
+                  <p id={id}>Nobody holds this reviewer role yet. An administrator can grant it.</p>
+                )}
+              </Form>
+            );
+          })}
+
+      {abilities.decideTypes.map((reviewType) => (
+        <Form method="post" key={`decide-${reviewType}`} className="decision-form">
+          <h3>Your {REVIEW_NAMES[reviewType].toLowerCase()}</h3>
+          <input type="hidden" name="intent" value="decide" />
+          <input type="hidden" name="reviewType" value={reviewType} />
+          <fieldset>
+            <legend>Decision on revision {revisionNumber}</legend>
+            <div className="choice">
+              <input type="radio" id={`${reviewType}-approve`} name="decision" value="approved" required />
+              <label htmlFor={`${reviewType}-approve`}>Approve</label>
+            </div>
+            <div className="choice">
+              <input type="radio" id={`${reviewType}-reject`} name="decision" value="rejected" />
+              <label htmlFor={`${reviewType}-reject`}>Reject</label>
+            </div>
+          </fieldset>
+          <label htmlFor={`${reviewType}-scope`}>What you reviewed</label>
+          <input id={`${reviewType}-scope`} name="scope" />
+          <label htmlFor={`${reviewType}-notes`}>Notes (required when rejecting)</label>
+          <textarea id={`${reviewType}-notes`} name="notes" rows={3} />
+          <button type="submit">Record decision</button>
+        </Form>
+      ))}
+
+      {abilities.canRecordKnowledgeHolder && (
+        <Form method="post" className="decision-form">
+          <h3>Record a Knowledge Holder Approval</h3>
+          <p>Record it only for revision {revisionNumber}, the exact revision the Knowledge Holder saw.</p>
+          <input type="hidden" name="intent" value="knowledgeHolder" />
+          <label htmlFor="kh-name">Knowledge Holder</label>
+          <input id="kh-name" name="knowledgeHolderName" required />
+          <label htmlFor="kh-method">How they gave approval</label>
+          <input id="kh-method" name="method" required placeholder="In person, by phone…" />
+          <label htmlFor="kh-conditions">Conditions</label>
+          <textarea id="kh-conditions" name="conditions" rows={2} />
+          <label htmlFor="kh-scope">What they reviewed</label>
+          <input id="kh-scope" name="scope" />
+          <label htmlFor="kh-notes">Notes</label>
+          <textarea id="kh-notes" name="notes" rows={2} />
+          <button type="submit">Record approval</button>
+        </Form>
+      )}
+
+      {abilities.canPublish && (
+        <>
+          <h3>Publishing</h3>
+          {!eligibility.eligible && (
+            <>
+              <p>Revision {revisionNumber} can't be published yet:</p>
+              <ul>
+                {eligibility.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {review.publicationState !== "archived" && (
+            <Form method="post" className="inline-form">
+              <input type="hidden" name="intent" value="publish" />
+              <button type="submit">Publish revision {revisionNumber}</button>
+            </Form>
+          )}
+        </>
+      )}
+      {abilities.canWithdraw && review.publicationState === "published" && (
+        <Form method="post" className="inline-form">
+          <input type="hidden" name="intent" value="withdraw" />
+          <button type="submit">Withdraw the article</button>
+        </Form>
+      )}
+      {abilities.canWithdraw &&
+        (review.publicationState === "unpublished" || review.publicationState === "withdrawn") && (
+          <Form method="post" className="inline-form">
+            <input type="hidden" name="intent" value="archive" />
+            <button type="submit">Archive the article</button>
+          </Form>
+        )}
+
+      {review.approvals.length > 0 && (
+        <>
+          <h3>All decisions on this revision</h3>
+          <ul>
+            {review.approvals.map((approval) => (
+              <li key={approval.id}>
+                {REVIEW_NAMES[approval.reviewType as ReviewType]}: {describeApproval(approval)}
+                {approval.scope && `. Reviewed: ${approval.scope}`}
+                {approval.conditions && `. Conditions: ${approval.conditions}`}
+                {approval.notes && `. Notes: ${approval.notes}`}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}

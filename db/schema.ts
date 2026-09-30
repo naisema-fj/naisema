@@ -185,6 +185,8 @@ export const contentItem = sqliteTable(
     primaryArea: text("primary_area").notNull(),
     currentDraftRevisionId: text("current_draft_revision_id").references((): AnySQLiteColumn => revision.id),
     currentPublishedRevisionId: text("current_published_revision_id").references((): AnySQLiteColumn => revision.id),
+    /** unpublished → published → withdrawn → archived (docs/phase-1a-defaults.md §3). */
+    publicationState: text("publication_state").notNull().default("unpublished"),
     createdBy: text("created_by").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
@@ -206,10 +208,71 @@ export const revision = sqliteTable(
     /** 1, 2, 3… within its Content Item, in save order. */
     number: integer("number").notNull(),
     snapshot: text("snapshot", { mode: "json" }).notNull(),
+    /** One hash per Review Type over the fields it covers, taken when the Revision is written (ADR-0006). */
+    fingerprints: text("fingerprints", { mode: "json" }).notNull().default({}),
     /** Set when this Revision was made by restoring an earlier one. */
     restoredFromRevisionId: text("restored_from_revision_id"),
     createdBy: text("created_by").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [uniqueIndex("revision_item_number_idx").on(table.contentItemId, table.number)],
+);
+
+// --- Review (ADR-0003, ADR-0006, ADR-0007) ---
+
+/** An editor sending a Revision for review. Its existence is what makes the Revision "submitted". */
+export const revisionSubmission = sqliteTable("revision_submission", {
+  revisionId: text("revision_id")
+    .primaryKey()
+    .references(() => revision.id),
+  submittedBy: text("submitted_by").notNull(),
+  submittedAt: integer("submitted_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/** A reviewer asked to review a Content Item for one Review Type; it applies to all its Revisions. */
+export const reviewAssignment = sqliteTable(
+  "review_assignment",
+  {
+    id: text("id").primaryKey(),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    reviewType: text("review_type").notNull(),
+    reviewerId: text("reviewer_id").notNull(),
+    assignedBy: text("assigned_by").notNull(),
+    assignedAt: integer("assigned_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("review_assignment_item_type_reviewer_idx").on(table.contentItemId, table.reviewType, table.reviewerId),
+  ],
+);
+
+/**
+ * A Review Approval: one decision, for one Review Type, on one exact Revision. Write-once like
+ * Revisions (a trigger refuses UPDATE). Also holds Knowledge Holder Approvals, recorded by an
+ * editor, and Carried-forward Approvals, which point at the approval they carry.
+ */
+export const reviewApproval = sqliteTable(
+  "review_approval",
+  {
+    id: text("id").primaryKey(),
+    revisionId: text("revision_id")
+      .notNull()
+      .references(() => revision.id),
+    reviewType: text("review_type").notNull(),
+    languageVariety: text("language_variety"),
+    decision: text("decision").notNull(),
+    /** The reviewer; for a Knowledge Holder Approval, the editor who recorded it. */
+    reviewerId: text("reviewer_id").notNull(),
+    /** What the reviewer looked at, in their words. */
+    scope: text("scope"),
+    notes: text("notes"),
+    knowledgeHolderName: text("knowledge_holder_name"),
+    /** How the Knowledge Holder gave their approval (in person, by phone…). */
+    knowledgeHolderMethod: text("knowledge_holder_method"),
+    conditions: text("conditions"),
+    carriedForwardFromId: text("carried_forward_from_id").references((): AnySQLiteColumn => reviewApproval.id),
+    decidedAt: integer("decided_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("review_approval_revision_idx").on(table.revisionId)],
 );

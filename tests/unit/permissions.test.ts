@@ -64,6 +64,13 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["administrator cannot approve reviews by role alone", administrator, languageRevision(), false],
+  [
+    "administrator cannot read revisions by role alone",
+    administrator,
+    { action: "revision.view", revision: { assignedReviewerIds: [] } },
+    false,
+  ],
+  ["administrator cannot withdraw content", administrator, { action: "content.withdraw" }, false],
 
   // Editor
   ["editor edits content", editor, { action: "content.edit" }, true],
@@ -95,6 +102,9 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
 
+  ["editor withdraws and archives published content", editor, { action: "content.withdraw" }, true],
+  ["editor reads any revision", editor, { action: "revision.view", revision: { assignedReviewerIds: [] } }, true],
+
   // Educator
   [
     "educator authors an assigned learning layer",
@@ -121,6 +131,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["educator cannot publish", educator, { action: "revision.publish" }, false],
+  ["educator cannot withdraw content", educator, { action: "content.withdraw" }, false],
   [
     "educator cannot read learner records",
     educator,
@@ -190,6 +201,26 @@ const rows: [string, Actor | null, Check, boolean][] = [
     editorAndReviewer,
     languageRevision({ authorIds: ["educator"] }),
     true,
+  ],
+
+  [
+    "reviewer reads a revision they are assigned to review",
+    languageReviewer,
+    { action: "revision.view", revision: { assignedReviewerIds: ["lang-reviewer"] } },
+    true,
+  ],
+  [
+    "reviewer cannot read a revision they are not assigned to",
+    languageReviewer,
+    { action: "revision.view", revision: { assignedReviewerIds: ["someone-else"] } },
+    false,
+  ],
+  ["reviewer cannot withdraw content", languageReviewer, { action: "content.withdraw" }, false],
+  [
+    "someone still assigned whose reviewer role was revoked cannot read the revision",
+    educator,
+    { action: "revision.view", revision: { assignedReviewerIds: ["educator"] } },
+    false,
   ],
 
   // Safeguarding lead

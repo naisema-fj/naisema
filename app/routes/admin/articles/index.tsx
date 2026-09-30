@@ -1,6 +1,7 @@
 import { listArticles } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
+import { PUBLICATION_NAMES, type PublicationState } from "~/lib/review-names";
 import type { Route } from "./+types/index";
 
 export const handle = { hydrate: false };
@@ -32,6 +33,7 @@ export default function Articles({ loaderData }: Route.ComponentProps) {
               <th scope="col">Title</th>
               <th scope="col">Area</th>
               <th scope="col">Latest revision</th>
+              <th scope="col">Publication</th>
             </tr>
           </thead>
           <tbody>
@@ -42,6 +44,7 @@ export default function Articles({ loaderData }: Route.ComponentProps) {
                 </td>
                 <td>{article.areaName}</td>
                 <td>{article.number}</td>
+                <td>{PUBLICATION_NAMES[article.publicationState as PublicationState]}</td>
               </tr>
             ))}
           </tbody>

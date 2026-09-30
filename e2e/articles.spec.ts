@@ -57,4 +57,12 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await page.getByRole("button", { name: "Restore revision 1" }).click();
   await expect(page.getByRole("status")).toHaveText("Saved as revision 3.");
   await expect(page.getByRole("textbox", { name: "Body" })).not.toContainText("Then sit and listen.");
+
+  await page.getByRole("link", { name: "Review and publish revision 3" }).click();
+  await expectNoAxeViolations(page);
+  await page.getByRole("button", { name: "Submit revision 3 for review" }).click();
+  await expect(page.getByRole("status")).toHaveText("Submitted for review.");
+  await page.getByRole("button", { name: "Publish revision 3" }).click();
+  await expect(page.getByRole("status")).toHaveText("Published.");
+  await expectNoAxeViolations(page);
 });

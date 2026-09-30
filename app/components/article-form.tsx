@@ -2,6 +2,7 @@ import { Form } from "react-router";
 import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
+import { CONTENT_FLAGS, FLAG_NAMES } from "~/lib/review-rules";
 import { BodyEditor, type EmbeddableItem } from "./body-editor";
 
 type Props = {
@@ -112,6 +113,32 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
         aria-describedby={describedBy("credit")}
       />
       {fieldError("credit")}
+
+      <fieldset aria-describedby="flags-hint">
+        <legend>Content Flags</legend>
+        <p id="flags-hint">Flags decide which reviews this revision needs before it can be published.</p>
+        {CONTENT_FLAGS.map((flag) => (
+          <div key={flag} className="choice">
+            <input
+              type="checkbox"
+              id={`flag-${flag}`}
+              name="flag"
+              value={flag}
+              defaultChecked={(values.flags ?? []).includes(flag)}
+            />
+            <label htmlFor={`flag-${flag}`}>{FLAG_NAMES[flag]}</label>
+          </div>
+        ))}
+        <label htmlFor="languageVariety">Language Variety (for language instruction)</label>
+        <input
+          id="languageVariety"
+          name="languageVariety"
+          defaultValue={values.languageVariety ?? ""}
+          placeholder="standard-fijian"
+          aria-describedby={describedBy("languageVariety")}
+        />
+        {fieldError("languageVariety")}
+      </fieldset>
 
       <BodyEditor initial={values.body as ArticleBody} embeddable={embeddable} error={errors.body} />
 

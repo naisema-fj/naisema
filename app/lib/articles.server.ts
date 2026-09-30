@@ -2,8 +2,9 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { contentItem, revision } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody } from "./article-body";
-import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "./article-fields";
+import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
 import type { Database } from "./db.server";
+import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
 import { existingTopicIds } from "./topics.server";
 
@@ -14,7 +15,8 @@ export type ArticleFormResult =
 
 /**
  * Reads the article form. Title, summary, credit and at least one Topic are required on every
- * save, and the body must pass the allowlist.
+ * save, the body must pass the allowlist, and flagging language instruction needs the Language
+ * Variety taught.
  */
 export async function readArticleForm(db: Database, form: FormData): Promise<ArticleFormResult> {
   const errors: FieldErrors = {};
@@ -28,6 +30,17 @@ export async function readArticleForm(db: Database, form: FormData): Promise<Art
   const title = text("title", "title");
   const summary = text("summary", "summary");
   const credit = text("credit", "credit");
+
+  const flags = CONTENT_FLAGS.filter((flag) => form.getAll("flag").includes(flag));
+  let languageVariety: string | null = String(form.get("languageVariety") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!flags.includes("languageInstruction")) languageVariety = null;
+  else if (!languageVariety) errors.languageVariety = "Enter the Language Variety this article teaches.";
+  else if (!/^[a-z0-9-]{1,60}$/.test(languageVariety)) {
+    errors.languageVariety =
+      "Write the Language Variety in lower-case letters, digits and hyphens, like standard-fijian.";
+  }
 
   const topicIds = [...new Set(form.getAll("topicId").map(String))];
   const known = await existingTopicIds(db, topicIds);
@@ -50,9 +63,9 @@ export async function readArticleForm(db: Database, form: FormData): Promise<Art
     // A body the allowlist refused goes back as sent, so the writer can fix it rather than lose it;
     // it is only ever loaded into the editor, never rendered as HTML.
     const body = parsed.ok ? parsed.body : isDoc(submittedBody) ? (submittedBody as ArticleBody) : EMPTY_ARTICLE_BODY;
-    return { ok: false, errors, values: { title, summary, credit, topicIds, body } };
+    return { ok: false, errors, values: { title, summary, credit, topicIds, body, flags, languageVariety } };
   }
-  return { ok: true, snapshot: { title, summary, credit, topicIds, body: parsed.body } };
+  return { ok: true, snapshot: { title, summary, credit, topicIds, body: parsed.body, flags, languageVariety } };
 }
 
 /** The primary area chosen when an Article is created, or null if none of the six was chosen. */
@@ -70,6 +83,9 @@ async function anyMissing(db: Database, contentItemIds: string[]): Promise<boole
   return rows.length !== new Set(contentItemIds).size;
 }
 
+/** An Article snapshot's fingerprints, one per Review Type, for storing with its Revision. */
+export const articleFingerprints = (snapshot: ArticleSnapshot) => fingerprintsOf(articleReviewFields(snapshot));
+
 export const getArticle = (db: Database, id: string) => getContentItem<ArticleSnapshot>(db, id, "article");
 
 export async function listArticles(db: Database) {
@@ -77,6 +93,7 @@ export async function listArticles(db: Database) {
     .select({
       id: contentItem.id,
       primaryArea: contentItem.primaryArea,
+      publicationState: contentItem.publicationState,
       snapshot: revision.snapshot,
       number: revision.number,
     })

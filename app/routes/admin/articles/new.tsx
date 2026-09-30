@@ -1,7 +1,7 @@
 import { data, redirect } from "react-router";
 import { ArticleForm } from "~/components/article-form";
 import { EMPTY_ARTICLE_BODY } from "~/lib/article-body";
-import { embeddableArticles, readArticleForm, readPrimaryArea } from "~/lib/articles.server";
+import { articleFingerprints, embeddableArticles, readArticleForm, readPrimaryArea } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { createContentItem } from "~/lib/revisions.server";
@@ -39,6 +39,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     primaryArea,
     title: result.snapshot.title,
     snapshot: result.snapshot,
+    fingerprints: await articleFingerprints(result.snapshot),
     createdBy: actor.userId,
   });
   throw redirect(`/admin/articles/${id}`);
@@ -52,7 +53,17 @@ export default function NewArticle({ loaderData, actionData }: Route.ComponentPr
       </p>
       <h1>New article</h1>
       <ArticleForm
-        values={actionData?.values ?? { title: "", summary: "", credit: "", topicIds: [], body: EMPTY_ARTICLE_BODY }}
+        values={
+          actionData?.values ?? {
+            title: "",
+            summary: "",
+            credit: "",
+            topicIds: [],
+            body: EMPTY_ARTICLE_BODY,
+            flags: [],
+            languageVariety: null,
+          }
+        }
         errors={actionData?.errors}
         topics={loaderData.topics}
         embeddable={loaderData.embeddable}

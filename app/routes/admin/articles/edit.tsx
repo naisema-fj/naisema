@@ -1,6 +1,6 @@
 import { data, redirect } from "react-router";
 import { ArticleForm } from "~/components/article-form";
-import { embeddableArticles, getArticle, readArticleForm } from "~/lib/articles.server";
+import { articleFingerprints, embeddableArticles, getArticle, readArticleForm } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { appendRevision } from "~/lib/revisions.server";
@@ -40,6 +40,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     type: "article",
     baseRevisionId,
     snapshot: result.snapshot,
+    fingerprints: await articleFingerprints(result.snapshot),
     savedBy: actor.userId,
   });
   if (!saved.ok) {
@@ -61,6 +62,10 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
       {actionData?.error && <p role="alert">{actionData.error}</p>}
       <p>
         Editing revision {current.number}. Every save adds a new revision.{" "}
+        <a href={`/admin/articles/${article.id}/revisions/${current.number}`}>
+          Review and publish revision {current.number}
+        </a>
+        {" · "}
         <a href={`/admin/articles/${article.id}/history`}>Revision history</a>
       </p>
       <ArticleForm

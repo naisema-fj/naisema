@@ -49,6 +49,10 @@ export type Check =
    * current) is the eligibility decision, not a permission (ADR-0007).
    */
   | { action: "content.edit" | "revision.publish" | "reviewLink.issue" }
+  /** Taking published content down (withdraw) or retiring it (archive). */
+  | { action: "content.withdraw" }
+  /** Reading a Revision in the staff area: editors, and the reviewers assigned to it. */
+  | { action: "revision.view"; revision: { assignedReviewerIds: string[] } }
   | { action: "content.hidePendingReview" }
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
   /** Approving or rejecting a Revision for one Review Type. */
@@ -88,7 +92,11 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "content.edit":
     case "revision.publish":
     case "reviewLink.issue":
+    case "content.withdraw":
       return hasRole("editor");
+
+    case "revision.view":
+      return hasRole("editor") || (hasRole("reviewer") && check.revision.assignedReviewerIds.includes(actor.userId));
 
     case "knowledgeHolderApproval.record":
       return hasRole("editor") && !check.revision.authorIds.includes(actor.userId);

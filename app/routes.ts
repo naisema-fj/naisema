@@ -13,6 +13,7 @@ export default [
     route("articles/:id/compare", "routes/admin/articles/compare.tsx"),
     route("sign-in", "routes/admin/sign-in.tsx"),
     route("sign-out", "routes/admin/sign-out.tsx"),
+    route("reviews", "routes/admin/reviews.tsx"),
     route("staff", "routes/admin/staff.tsx"),
     route("topics", "routes/admin/topics.tsx"),
     route("two-factor", "routes/admin/two-factor.tsx"),

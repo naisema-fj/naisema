@@ -90,6 +90,8 @@ describe("articles", () => {
       credit: "Words by Mere",
       topicIds: [topicId],
       body: JSON.parse(body("The first bowl goes to the chief.")),
+      flags: [],
+      languageVariety: null,
     });
     expect(await auditActions(editor.userId)).toEqual(
       expect.arrayContaining(["content_item.created", "revision.saved"]),

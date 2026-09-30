@@ -3,6 +3,8 @@ import { contentItem, revision, user } from "~db/schema";
 import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
+import { carryForwardInserts } from "./review.server";
+import type { Fingerprints } from "./review-rules";
 import { firstFreeSlug, slugify } from "./slug";
 
 /**
@@ -32,10 +34,7 @@ function toRevision<Snapshot>(row: typeof revision.$inferSelect): Revision<Snaps
 }
 
 /** Creates a Content Item and its first Revision. Returns the new Content Item's ID. */
-export async function createContentItem(
-  db: Database,
-  item: { type: ContentType; primaryArea: PrimaryArea; title: string; snapshot: unknown; createdBy: string },
-): Promise<string> {
+export async function createContentItem(db: Database, item: NewItem & { title: string }): Promise<string> {
   const base = slugify(item.title);
   // Two items created at the same moment can pick the same free slug; the loser tries the next one.
   for (let attempt = 0; ; attempt++) {
@@ -56,11 +55,16 @@ export async function createContentItem(
   }
 }
 
-async function insertContentItem(
-  db: Database,
-  item: { type: ContentType; primaryArea: PrimaryArea; snapshot: unknown; createdBy: string },
-  slug: string,
-) {
+type NewItem = {
+  type: ContentType;
+  primaryArea: PrimaryArea;
+  snapshot: unknown;
+  /** One per Review Type, over the fields it covers (review-rules.ts). */
+  fingerprints: Fingerprints;
+  createdBy: string;
+};
+
+async function insertContentItem(db: Database, item: NewItem, slug: string) {
   const now = new Date();
   const id = crypto.randomUUID();
   const revisionId = crypto.randomUUID();
@@ -80,6 +84,7 @@ async function insertContentItem(
       contentItemId: id,
       number: 1,
       snapshot: item.snapshot,
+      fingerprints: item.fingerprints,
       createdBy,
       createdAt: now,
     }),
@@ -124,6 +129,7 @@ type Save = {
   /** The Revision the editor started from; the save is refused if it is no longer the current draft. */
   baseRevisionId: string;
   snapshot: unknown;
+  fingerprints: Fingerprints;
   savedBy: string;
   restoredFromRevisionId?: string;
 };
@@ -147,6 +153,14 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
   const now = new Date();
   const id = crypto.randomUUID();
   const number = base.number + 1;
+  const carried = await carryForwardInserts(db, {
+    contentItemId,
+    baseRevisionId: save.baseRevisionId,
+    newRevisionId: id,
+    newNumber: number,
+    newFingerprints: save.fingerprints,
+    savedBy,
+  });
   try {
     await db.batch([
       // A concurrent save of the same base takes this number first; the unique index then refuses this one.
@@ -155,6 +169,7 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
         contentItemId,
         number,
         snapshot: save.snapshot,
+        fingerprints: save.fingerprints,
         restoredFromRevisionId,
         createdBy: savedBy,
         createdAt: now,
@@ -170,6 +185,7 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
         objectId: id,
         details: { contentItemId, number, ...(restoredFromRevisionId ? { restoredFromRevisionId } : {}) },
       }),
+      ...carried,
     ]);
   } catch (error) {
     if (String(error).includes("UNIQUE")) return { ok: false, error: STALE_SAVE_MESSAGE };
@@ -181,7 +197,7 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
 /** Restoring saves an earlier Revision's snapshot again as a new Revision; history is never rewritten. */
 export async function restoreRevision(
   db: Database,
-  restore: Omit<Save, "snapshot" | "restoredFromRevisionId"> & { revisionId: string },
+  restore: Omit<Save, "snapshot" | "fingerprints" | "restoredFromRevisionId"> & { revisionId: string },
 ): Promise<SaveResult> {
   const earlier = await db
     .select()
@@ -189,7 +205,12 @@ export async function restoreRevision(
     .where(and(eq(revision.id, restore.revisionId), eq(revision.contentItemId, restore.contentItemId)))
     .get();
   if (!earlier) return { ok: false, error: "That revision doesn't belong to this item." };
-  return appendRevision(db, { ...restore, snapshot: earlier.snapshot, restoredFromRevisionId: earlier.id });
+  return appendRevision(db, {
+    ...restore,
+    snapshot: earlier.snapshot,
+    fingerprints: earlier.fingerprints as Fingerprints,
+    restoredFromRevisionId: earlier.id,
+  });
 }
 
 /** Every Revision of a Content Item, newest first, with who saved it. */
