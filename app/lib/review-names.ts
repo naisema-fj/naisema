@@ -1,5 +1,5 @@
 import type { ReviewType } from "./permissions";
-import type { RevisionState } from "./review-rules";
+import type { ContentFlag, ReviewRequirement, RevisionState } from "./review-rules";
 
 /** How staff pages name each Review Type, Revision state and publication state. */
 export const REVIEW_NAMES: Record<ReviewType, string> = {
@@ -26,3 +26,19 @@ export const PUBLICATION_NAMES: Record<PublicationState, string> = {
   withdrawn: "Withdrawn",
   archived: "Archived",
 };
+
+export const FLAG_NAMES: Record<ContentFlag, string> = {
+  languageInstruction: "Language instruction",
+  sensitiveCultural: "Sensitive cultural material",
+  identifiableChildren: "Identifiable children",
+  disabilityAdvice: "Disability-specific advice",
+  historicalClaims: "Historical claims",
+  opinion: "Opinion or personal experience",
+};
+
+/** A required review as staff see it: "Language review (standard-fijian)", "Knowledge Holder Approval". */
+export function requirementName(requirement: ReviewRequirement): string {
+  if (requirement.knowledgeHolder) return "Knowledge Holder Approval";
+  const name = REVIEW_NAMES[requirement.reviewType];
+  return requirement.languageVariety ? `${name} (${requirement.languageVariety})` : name;
+}

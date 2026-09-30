@@ -60,6 +60,7 @@ export default function NewArticle({ loaderData, actionData }: Route.ComponentPr
             credit: "",
             topicIds: [],
             body: EMPTY_ARTICLE_BODY,
+            sources: "",
             flags: [],
             languageVariety: null,
           }

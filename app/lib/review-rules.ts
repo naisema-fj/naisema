@@ -16,15 +16,6 @@ export const CONTENT_FLAGS = [
 ] as const;
 export type ContentFlag = (typeof CONTENT_FLAGS)[number];
 
-export const FLAG_NAMES: Record<ContentFlag, string> = {
-  languageInstruction: "Language instruction",
-  sensitiveCultural: "Sensitive cultural material",
-  identifiableChildren: "Identifiable children",
-  disabilityAdvice: "Disability-specific advice",
-  historicalClaims: "Historical claims",
-  opinion: "Opinion or personal experience",
-};
-
 export const isContentFlag = (value: string): value is ContentFlag =>
   (CONTENT_FLAGS as readonly string[]).includes(value);
 
@@ -35,6 +26,11 @@ export type ReviewRequirement = {
   languageVariety?: string;
   /** Only a Knowledge Holder Approval satisfies this cultural review. */
   knowledgeHolder?: true;
+  /**
+   * Set when this Revision no longer has the flag that requires the review, but the last
+   * submitted Revision (this number) did: removing a flag needs the review it guarded.
+   */
+  flagRemovedAfter?: number;
 };
 
 /**
@@ -55,6 +51,34 @@ export function requiredReviews(flags: readonly ContentFlag[], languageVariety: 
     .map((flag) => FLAG_REVIEWS[flag](languageVariety))
     .filter((requirement): requirement is ReviewRequirement => requirement !== null);
   return REVIEW_TYPES.flatMap((type) => requirements.filter((requirement) => requirement.reviewType === type));
+}
+
+type Flagged = { flags: readonly ContentFlag[]; languageVariety: string | null };
+
+const requirementKey = (requirement: ReviewRequirement) =>
+  [requirement.reviewType, requirement.languageVariety ?? "", requirement.knowledgeHolder ? "kh" : ""].join("|");
+
+/**
+ * A Revision's required reviews, taking the last submitted Revision into account. Flags are the
+ * editor's call, but unticking one must not quietly skip the review it guarded (ADR-0003): a
+ * review stays required until a Revision without its flag has been submitted, so the reviewer
+ * of that type confirms the removal.
+ */
+export function requiredReviewsSince(
+  revision: Flagged,
+  lastSubmitted: (Flagged & { number: number }) | null,
+): ReviewRequirement[] {
+  const own = requiredReviews(revision.flags, revision.languageVariety);
+  if (!lastSubmitted) return own;
+  const keys = new Set(own.map(requirementKey));
+  const removed = requiredReviews(
+    lastSubmitted.flags.filter((flag) => !revision.flags.includes(flag)),
+    lastSubmitted.languageVariety,
+  )
+    .filter((requirement) => !keys.has(requirementKey(requirement)))
+    .map((requirement) => ({ ...requirement, flagRemovedAfter: lastSubmitted.number }));
+  const all = [...own, ...removed];
+  return REVIEW_TYPES.flatMap((type) => all.filter((requirement) => requirement.reviewType === type));
 }
 
 /** A recorded decision on one Revision for one Review Type, as the rules need to see it. */

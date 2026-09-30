@@ -194,3 +194,7 @@ a {
 .body-diff .removed {
   background: #fce8e6;
 }
+
+.sources {
+  white-space: pre-line;
+}

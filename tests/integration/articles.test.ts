@@ -90,6 +90,7 @@ describe("articles", () => {
       credit: "Words by Mere",
       topicIds: [topicId],
       body: JSON.parse(body("The first bowl goes to the chief.")),
+      sources: "",
       flags: [],
       languageVariety: null,
     });

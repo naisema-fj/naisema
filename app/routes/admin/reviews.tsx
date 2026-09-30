@@ -1,5 +1,5 @@
 import { cloudflareContext } from "~/lib/cloudflare";
-import type { ReviewType } from "~/lib/permissions";
+import { can, type ReviewType } from "~/lib/permissions";
 import { reviewQueue } from "~/lib/review.server";
 import { REVIEW_NAMES } from "~/lib/review-names";
 import { requireStaff } from "~/lib/staff.server";
@@ -13,7 +13,7 @@ export function meta() {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { db, actor } = await requireStaff(context.get(cloudflareContext).env, request);
-  if (!actor.roles.some((assignment) => assignment.role === "reviewer")) {
+  if (!can(actor, { action: "reviewQueue.view" })) {
     throw new Response("Only reviewers have a review queue.", { status: 403 });
   }
   return { queue: await reviewQueue(db, actor.userId) };

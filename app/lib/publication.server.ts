@@ -4,7 +4,7 @@ import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { type Actor, can } from "./permissions";
 import { loadReview, type Review, type ReviewActionResult } from "./review.server";
-import { REVIEW_NAMES } from "./review-names";
+import { requirementName } from "./review-names";
 
 export type Eligibility = { eligible: true } | { eligible: false; reasons: string[] };
 
@@ -24,16 +24,23 @@ export function eligibilityOf(review: Review): Eligibility {
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
   for (const { requirement, status } of review.progress) {
     if (status === "approved") continue;
-    const name = requirement.knowledgeHolder
-      ? "Knowledge Holder Approval"
-      : `${REVIEW_NAMES[requirement.reviewType]}${requirement.languageVariety ? ` (${requirement.languageVariety})` : ""}`;
+    const name = requirementName(requirement);
     reasons.push(status === "rejected" ? `${name} was rejected.` : `${name} is still needed.`);
   }
   if (!rightsAreCurrent(review)) reasons.push("Its rights are not current.");
+  if (review.flags.includes("identifiableChildren")) {
+    reasons.push(
+      "Identifiable children need documented guardian permission, which can be recorded once Rights Records exist.",
+    );
+  }
   return reasons.length ? { eligible: false, reasons } : { eligible: true };
 }
 
-/** Rights Records and Permitted Uses arrive with 1a-06 (#17); until then nothing is refused on rights. */
+/**
+ * Rights Records and Permitted Uses arrive with 1a-06 (#17); until then nothing is refused on
+ * rights. Guardian permission for identifiable children belongs there too, so until it can be
+ * recorded, items flagged for identifiable children are refused (above).
+ */
 function rightsAreCurrent(_review: Review): boolean {
   return true;
 }
@@ -44,12 +51,19 @@ const setState = (db: Database, contentItemId: string, values: Partial<typeof co
     .set({ ...values, updatedAt: new Date() })
     .where(eq(contentItem.id, contentItemId));
 
-/** Publishes this exact Revision, if it is eligible. A refused attempt is audited too. */
+/**
+ * Publishes this exact Revision, if it is the latest one and isEligible says so at the moment of
+ * publishing. An earlier Revision comes back by restoring it, which carries its approvals forward.
+ * A refused attempt is audited too.
+ */
 export async function publishRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "revision.publish" })) return { ok: false, error: "Only editors can publish." };
   const { contentItem: item } = review;
   if (item.publicationState === "archived") return { ok: false, error: "Archived items can't be published." };
-  const eligibility = eligibilityOf(review);
+  if (item.currentDraftRevisionId !== review.revisionId) {
+    return { ok: false, error: "Only the latest revision can be published. Restore this one to publish it again." };
+  }
+  const eligibility = await isEligible(db, review.revisionId);
   if (!eligibility.eligible) {
     await recordAudit(db, {
       actorId: actor.userId,

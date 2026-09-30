@@ -51,6 +51,8 @@ export type Check =
   | { action: "content.edit" | "revision.publish" | "reviewLink.issue" }
   /** Taking published content down (withdraw) or retiring it (archive). */
   | { action: "content.withdraw" }
+  /** Seeing the Revisions waiting on your review. */
+  | { action: "reviewQueue.view" }
   /** Reading a Revision in the staff area: editors, and the reviewers assigned to it. */
   | { action: "revision.view"; revision: { assignedReviewerIds: string[] } }
   | { action: "content.hidePendingReview" }
@@ -94,6 +96,9 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "reviewLink.issue":
     case "content.withdraw":
       return hasRole("editor");
+
+    case "reviewQueue.view":
+      return hasRole("reviewer");
 
     case "revision.view":
       return hasRole("editor") || (hasRole("reviewer") && check.revision.assignedReviewerIds.includes(actor.userId));

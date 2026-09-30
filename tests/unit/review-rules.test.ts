@@ -6,6 +6,7 @@ import {
   fingerprint,
   type RecordedDecision,
   requiredReviews,
+  requiredReviewsSince,
   reviewProgress,
   revisionState,
 } from "~/lib/review-rules";
@@ -31,6 +32,36 @@ describe("requiredReviews", () => {
       { reviewType: "language", languageVariety: "standard-fijian" },
       { reviewType: "editorial" },
     ]);
+  });
+});
+
+describe("requiredReviewsSince", () => {
+  it("is the revision's own requirements when nothing earlier was submitted", () => {
+    expect(requiredReviewsSince({ flags: ["historicalClaims"], languageVariety: null }, null)).toEqual([
+      { reviewType: "editorial" },
+    ]);
+  });
+
+  it("keeps a removed flag's review required until a revision without it has been submitted", () => {
+    const lastSubmitted = {
+      number: 3,
+      flags: ["languageInstruction", "sensitiveCultural"],
+      languageVariety: "bauan",
+    } as const;
+
+    expect(requiredReviewsSince({ flags: ["historicalClaims"], languageVariety: null }, lastSubmitted)).toEqual([
+      { reviewType: "language", languageVariety: "bauan", flagRemovedAfter: 3 },
+      { reviewType: "cultural", knowledgeHolder: true, flagRemovedAfter: 3 },
+      { reviewType: "editorial" },
+    ]);
+  });
+
+  it("adds nothing for flags the revision still has", () => {
+    const lastSubmitted = { number: 2, flags: ["languageInstruction"], languageVariety: "standard-fijian" } as const;
+
+    expect(
+      requiredReviewsSince({ flags: ["languageInstruction"], languageVariety: "standard-fijian" }, lastSubmitted),
+    ).toEqual([{ reviewType: "language", languageVariety: "standard-fijian" }]);
   });
 });
 
@@ -93,6 +124,7 @@ const snapshot = (overrides: Partial<ArticleSnapshot> = {}): ArticleSnapshot => 
   credit: "Words by Sera",
   topicIds: ["a", "b"],
   body: EMPTY_ARTICLE_BODY,
+  sources: "",
   flags: ["languageInstruction"],
   languageVariety: "standard-fijian",
   ...overrides,

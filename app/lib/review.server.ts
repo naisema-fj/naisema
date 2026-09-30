@@ -1,5 +1,7 @@
-import { and, desc, eq, inArray, isNull, lte } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lt, lte, notExists, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/sqlite-core";
 import {
+  auditEvent,
   contentItem,
   reviewApproval,
   reviewAssignment,
@@ -8,16 +10,17 @@ import {
   roleAssignment,
   user,
 } from "~db/schema";
-import { auditInsert } from "./audit.server";
+import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { type Actor, can, type ReviewType } from "./permissions";
-import type { PublicationState } from "./review-names";
+import { type PublicationState, REVIEW_NAMES } from "./review-names";
 import {
   approvalsToCarryForward,
   type ContentFlag,
   type Fingerprints,
   type RecordedDecision,
-  requiredReviews,
+  type ReviewRequirement,
+  requiredReviewsSince,
   reviewProgress,
   revisionState,
 } from "./review-rules";
@@ -55,56 +58,97 @@ export async function authorIdsOf(db: Database, contentItemId: string, upToNumbe
 }
 
 /**
- * The inserts that carry a base Revision's approvals forward to a new one (ADR-0003), for running
- * in the same batch as the new Revision. Each is an explicit Carried-forward Approval pointing at
- * the approval it carries, and is audited.
+ * The inserts that carry approvals forward to a new Revision (ADR-0003), for running in the same
+ * batch as the new Revision. They come from the Revision the new one's content came from: the base
+ * for an edit, the restored Revision for a restore. Each is an explicit Carried-forward Approval
+ * pointing at the approval it carries, keeping its original decision date, and is audited. The
+ * insert re-checks that no newer decision for that Review Type landed since the approvals were read,
+ * so a rejection recorded at the same moment is never carried past.
  */
 export async function carryForwardInserts(
   db: Database,
   carry: {
     contentItemId: string;
-    baseRevisionId: string;
+    /** The Revision whose content and approvals the new one takes up. */
+    sourceRevisionId: string;
     newRevisionId: string;
     newNumber: number;
     newFingerprints: Fingerprints;
     savedBy: string;
   },
 ) {
-  const [base, approvals, earlierAuthors] = await Promise.all([
+  const [source, approvals, earlierAuthors] = await Promise.all([
     db
       .select({ fingerprints: revision.fingerprints })
       .from(revision)
-      .where(eq(revision.id, carry.baseRevisionId))
+      .where(eq(revision.id, carry.sourceRevisionId))
       .get(),
-    db.select().from(reviewApproval).where(eq(reviewApproval.revisionId, carry.baseRevisionId)),
+    db.select().from(reviewApproval).where(eq(reviewApproval.revisionId, carry.sourceRevisionId)),
     authorIdsOf(db, carry.contentItemId, carry.newNumber - 1),
   ]);
   const carried = approvalsToCarryForward({
     approvals: approvals.map(toRecordedDecision),
-    baseFingerprints: (base?.fingerprints ?? {}) as Fingerprints,
+    baseFingerprints: (source?.fingerprints ?? {}) as Fingerprints,
     newFingerprints: carry.newFingerprints,
     newAuthorIds: [...earlierAuthors, carry.savedBy],
   });
-  const rows = new Map(approvals.map((row) => [row.id, row]));
-  const now = new Date();
-  return carried.flatMap((decision) => {
-    const original = rows.get(decision.id) as ApprovalRow;
+  return carried.flatMap(({ id: originalId }) => {
     const id = crypto.randomUUID();
+    const original = alias(reviewApproval, "original");
+    const newer = alias(reviewApproval, "newer");
     return [
-      db.insert(reviewApproval).values({
-        ...original,
-        id,
-        revisionId: carry.newRevisionId,
-        carriedForwardFromId: original.id,
-        decidedAt: now,
-      }),
-      auditInsert(db, {
-        actorId: carry.savedBy,
-        action: "review_approval.carried_forward",
-        objectType: "review_approval",
-        objectId: id,
-        details: { revisionId: carry.newRevisionId, reviewType: original.reviewType, from: original.id },
-      }),
+      db.insert(reviewApproval).select(
+        db
+          .select({
+            id: sql<string>`${id}`.as("id"),
+            revisionId: sql<string>`${carry.newRevisionId}`.as("revision_id"),
+            reviewType: original.reviewType,
+            languageVariety: original.languageVariety,
+            decision: original.decision,
+            reviewerId: original.reviewerId,
+            scope: original.scope,
+            notes: original.notes,
+            knowledgeHolderName: original.knowledgeHolderName,
+            knowledgeHolderMethod: original.knowledgeHolderMethod,
+            conditions: original.conditions,
+            carriedForwardFromId: original.id,
+            decidedAt: original.decidedAt,
+          })
+          .from(original)
+          .where(
+            and(
+              eq(original.id, originalId),
+              notExists(
+                db
+                  .select({ id: newer.id })
+                  .from(newer)
+                  .where(
+                    and(
+                      eq(newer.revisionId, original.revisionId),
+                      eq(newer.reviewType, original.reviewType),
+                      gt(newer.decidedAt, original.decidedAt),
+                    ),
+                  ),
+              ),
+            ),
+          ),
+      ),
+      db.insert(auditEvent).select(
+        db
+          .select({
+            id: sql<string>`${crypto.randomUUID()}`.as("id"),
+            actorId: sql<string>`${carry.savedBy}`.as("actor_id"),
+            action: sql<string>`'review_approval.carried_forward'`.as("action"),
+            objectType: sql<string>`'review_approval'`.as("object_type"),
+            objectId: reviewApproval.id,
+            details: sql<string>`${JSON.stringify({ revisionId: carry.newRevisionId, from: originalId })}`.as(
+              "details",
+            ),
+            createdAt: sql<number>`${Date.now()}`.as("created_at"),
+          })
+          .from(reviewApproval)
+          .where(eq(reviewApproval.id, id)),
+      ),
     ];
   });
 }
@@ -153,12 +197,13 @@ export async function loadReview(db: Database, revisionId: string) {
     assignmentsOf(db, row.item.id),
     authorIdsOf(db, row.item.id, row.revision.number),
   ]);
+  const lastSubmitted = await lastSubmittedBefore(db, row.item.id, row.revision.number);
   const carriedFrom = await carriedFromNumbers(
     db,
     approvals.map(({ approval }) => approval.carriedForwardFromId).filter((id): id is string => id !== null),
   );
 
-  const requirements = requiredReviews(flags, languageVariety);
+  const requirements = requiredReviewsSince({ flags, languageVariety }, lastSubmitted);
   const progress = reviewProgress(
     requirements,
     approvals.map(({ approval }) => toRecordedDecision(approval)),
@@ -196,6 +241,20 @@ export async function loadReview(db: Database, revisionId: string) {
   };
 }
 
+/** The flags of the latest submitted Revision before this one, which a removed flag's review follows. */
+async function lastSubmittedBefore(db: Database, contentItemId: string, number: number) {
+  const row = await db
+    .select({ number: revision.number, snapshot: revision.snapshot })
+    .from(revision)
+    .innerJoin(revisionSubmission, eq(revisionSubmission.revisionId, revision.id))
+    .where(and(eq(revision.contentItemId, contentItemId), lt(revision.number, number)))
+    .orderBy(desc(revision.number))
+    .get();
+  if (!row) return null;
+  const snapshot = row.snapshot as Reviewable;
+  return { number: row.number, flags: snapshot.flags ?? [], languageVariety: snapshot.languageVariety ?? null };
+}
+
 /** The Revision number each carried approval was first given on, keyed by approval ID. */
 async function carriedFromNumbers(db: Database, approvalIds: string[]) {
   if (!approvalIds.length) return new Map<string, number>();
@@ -217,6 +276,17 @@ const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
 const isCurrent = (review: Review) => review.contentItem.currentDraftRevisionId === review.revisionId;
 
 /** An editor sends the current draft for review. */
+/** Runs a write, turning a unique-index clash (a second click racing the first) into a refusal. */
+async function onceOnly(write: () => Promise<unknown>, message: string): Promise<ReviewActionResult> {
+  try {
+    await write();
+    return { ok: true };
+  } catch (error) {
+    if (String(error).includes("UNIQUE") || String(error).includes("PRIMARY KEY")) return refuse(message);
+    throw error;
+  }
+}
+
 export async function submitRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.edit" })) return refuse("Only editors can submit for review.");
   if (!isCurrent(review)) return refuse("Only the latest revision can be submitted.");
@@ -224,18 +294,21 @@ export async function submitRevision(db: Database, actor: Actor, review: Review)
   if (review.languageVariety === null && review.flags.includes("languageInstruction")) {
     return refuse("Language instruction needs its Language Variety before it can be submitted.");
   }
-  await db.batch([
-    db
-      .insert(revisionSubmission)
-      .values({ revisionId: review.revisionId, submittedBy: actor.userId, submittedAt: new Date() }),
-    auditInsert(db, {
-      actorId: actor.userId,
-      action: "revision.submitted",
-      objectType: "revision",
-      objectId: review.revisionId,
-    }),
-  ]);
-  return { ok: true };
+  return onceOnly(
+    () =>
+      db.batch([
+        db
+          .insert(revisionSubmission)
+          .values({ revisionId: review.revisionId, submittedBy: actor.userId, submittedAt: new Date() }),
+        auditInsert(db, {
+          actorId: actor.userId,
+          action: "revision.submitted",
+          objectType: "revision",
+          objectId: review.revisionId,
+        }),
+      ]),
+    "This revision has already been submitted.",
+  );
 }
 
 /** The staff who may be assigned a Review Type: active reviewers scoped to it. */
@@ -265,41 +338,45 @@ export async function assignReviewer(
   if (!can(actor, { action: "content.edit" })) return refuse("Only editors can assign reviewers.");
   const eligible = await reviewersFor(db, reviewType);
   if (!eligible.some((reviewer) => reviewer.id === reviewerId)) {
-    return refuse(`Choose someone who reviews ${reviewType}.`);
+    return refuse(`Choose someone who does ${REVIEW_NAMES[reviewType].toLowerCase()}.`);
   }
   if (review.assignments.some((row) => row.reviewType === reviewType && row.reviewerId === reviewerId)) {
     return refuse("That reviewer is already assigned.");
   }
   const id = crypto.randomUUID();
-  await db.batch([
-    db.insert(reviewAssignment).values({
-      id,
-      contentItemId: review.contentItem.id,
-      reviewType,
-      reviewerId,
-      assignedBy: actor.userId,
-      assignedAt: new Date(),
-    }),
-    auditInsert(db, {
-      actorId: actor.userId,
-      action: "review.assigned",
-      objectType: "review_assignment",
-      objectId: id,
-      details: { contentItemId: review.contentItem.id, reviewType, reviewerId },
-    }),
-  ]);
-  return { ok: true };
+  return onceOnly(
+    () =>
+      db.batch([
+        db.insert(reviewAssignment).values({
+          id,
+          contentItemId: review.contentItem.id,
+          reviewType,
+          reviewerId,
+          assignedBy: actor.userId,
+          assignedAt: new Date(),
+        }),
+        auditInsert(db, {
+          actorId: actor.userId,
+          action: "review.assigned",
+          objectType: "review_assignment",
+          objectId: id,
+          details: { contentItemId: review.contentItem.id, reviewType, reviewerId },
+        }),
+      ]),
+    "That reviewer is already assigned.",
+  );
 }
 
-/** A reviewer approves or rejects the exact Revision for one Review Type. */
-export async function recordDecision(
-  db: Database,
-  actor: Actor,
-  review: Review,
-  decision: { reviewType: ReviewType; decision: "approved" | "rejected"; scope: string; notes: string },
-): Promise<ReviewActionResult> {
-  const { reviewType } = decision;
-  const languageVariety = reviewType === "language" ? (review.languageVariety ?? undefined) : undefined;
+/**
+ * The requirement a reviewer would be deciding for this Review Type, if they may decide it: the
+ * Revision must need that review (Knowledge Holder Approvals are recorded by editors instead), and
+ * can() must allow this reviewer, which rules out anyone who authored or edited the Revision.
+ */
+export function decidableRequirement(actor: Actor, review: Review, reviewType: ReviewType): ReviewRequirement | null {
+  const requirement = review.requirements.find(
+    (candidate) => candidate.reviewType === reviewType && !candidate.knowledgeHolder,
+  );
+  if (!requirement) return null;
   const allowed = can(actor, {
     action: "revision.review",
     revision: {
@@ -308,10 +385,34 @@ export async function recordDecision(
         .filter((row) => row.reviewType === reviewType)
         .map((row) => row.reviewerId),
       reviewType,
-      languageVariety,
+      languageVariety: requirement.languageVariety,
     },
   });
-  if (!allowed) return refuse("You can't review this revision for that Review Type.");
+  return allowed ? requirement : null;
+}
+
+const auditRefusal = (db: Database, actor: Actor, review: Review, reason: string, reviewType?: ReviewType) =>
+  recordAudit(db, {
+    actorId: actor.userId,
+    action: "review_approval.refused",
+    objectType: "revision",
+    objectId: review.revisionId,
+    details: { reason, ...(reviewType ? { reviewType } : {}) },
+  });
+
+/** A reviewer approves or rejects the exact Revision for one Review Type. Refusals are audited. */
+export async function recordDecision(
+  db: Database,
+  actor: Actor,
+  review: Review,
+  decision: { reviewType: ReviewType; decision: "approved" | "rejected"; scope: string; notes: string },
+): Promise<ReviewActionResult> {
+  const { reviewType } = decision;
+  const requirement = decidableRequirement(actor, review, reviewType);
+  if (!requirement) {
+    await auditRefusal(db, actor, review, "not allowed or not required", reviewType);
+    return refuse("You can't review this revision for that Review Type.");
+  }
   if (!isCurrent(review) || !review.submitted) return refuse("Only a submitted, latest revision can be reviewed.");
   if (decision.decision === "rejected" && !decision.notes) return refuse("Say what needs to change.");
 
@@ -321,7 +422,7 @@ export async function recordDecision(
       id,
       revisionId: review.revisionId,
       reviewType,
-      languageVariety: languageVariety ?? null,
+      languageVariety: requirement.languageVariety ?? null,
       decision: decision.decision,
       reviewerId: actor.userId,
       scope: decision.scope || null,
@@ -333,7 +434,7 @@ export async function recordDecision(
       action: decision.decision === "approved" ? "review.approved" : "review.rejected",
       objectType: "review_approval",
       objectId: id,
-      details: { revisionId: review.revisionId, reviewType, languageVariety },
+      details: { revisionId: review.revisionId, reviewType, languageVariety: requirement.languageVariety },
     }),
   ]);
   return { ok: true };
@@ -350,9 +451,13 @@ export async function recordKnowledgeHolderApproval(
   approval: { knowledgeHolderName: string; method: string; conditions: string; scope: string; notes: string },
 ): Promise<ReviewActionResult> {
   if (!can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } })) {
+    await auditRefusal(db, actor, review, "knowledge holder approval not allowed");
     return refuse("Only an editor who didn't write or edit this revision can record a Knowledge Holder Approval.");
   }
   if (!isCurrent(review) || !review.submitted) return refuse("Only a submitted, latest revision can be reviewed.");
+  if (!review.requirements.some((requirement) => requirement.knowledgeHolder)) {
+    return refuse("This revision doesn't need a Knowledge Holder Approval.");
+  }
   if (!approval.knowledgeHolderName || !approval.method) {
     return refuse("Enter the Knowledge Holder's name and how they gave their approval.");
   }

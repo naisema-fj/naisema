@@ -9,6 +9,7 @@ import { archive, eligibilityOf, publishRevision, withdraw } from "~/lib/publica
 import {
   assignedReviewerIds,
   assignReviewer,
+  decidableRequirement,
   loadReview,
   recordDecision,
   recordKnowledgeHolderApproval,
@@ -50,23 +51,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const topicNames = await topicNamer(db);
   const isEditor = can(actor, { action: "content.edit" });
   const isCurrent = review.contentItem.currentDraftRevisionId === review.revisionId;
-  const decideTypes = REVIEW_TYPES.filter(
-    (reviewType) =>
-      review.requirements.some(
-        (requirement) => requirement.reviewType === reviewType && !requirement.knowledgeHolder,
-      ) &&
-      can(actor, {
-        action: "revision.review",
-        revision: {
-          authorIds: review.authorIds,
-          assignedReviewerIds: review.assignments
-            .filter((row) => row.reviewType === reviewType)
-            .map((row) => row.reviewerId),
-          reviewType,
-          languageVariety: reviewType === "language" ? (review.languageVariety ?? undefined) : undefined,
-        },
-      }),
-  );
+  const decideTypes = REVIEW_TYPES.filter((reviewType) => decidableRequirement(actor, review, reviewType) !== null);
   const published =
     review.contentItem.currentPublishedRevisionId &&
     (await db.query.revision.findFirst({
@@ -204,6 +189,12 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
           <dd>{topics.join(", ")}</dd>
           <dt>Credit</dt>
           <dd>{snapshot.credit}</dd>
+          {snapshot.sources && (
+            <>
+              <dt>Sources</dt>
+              <dd className="sources">{snapshot.sources}</dd>
+            </>
+          )}
         </dl>
         <ArticleBodyView body={snapshot.body} embeds={embeds} />
       </article>

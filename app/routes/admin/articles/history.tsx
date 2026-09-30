@@ -1,6 +1,6 @@
 import { data, Form, redirect } from "react-router";
 import type { ArticleSnapshot } from "~/lib/article-fields";
-import { getArticle } from "~/lib/articles.server";
+import { articleFingerprints, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { listRevisions, restoreRevision } from "~/lib/revisions.server";
@@ -28,6 +28,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     baseRevisionId: String(form.get("baseRevisionId") ?? ""),
     revisionId: String(form.get("revisionId") ?? ""),
     savedBy: actor.userId,
+    fingerprintsOf: (snapshot) => articleFingerprints(snapshot as ArticleSnapshot),
   });
   if (!restored.ok) return data({ error: restored.error }, { status: 409 });
   throw redirect(`/admin/articles/${params.id}?saved=${restored.number}`);

@@ -4,6 +4,7 @@ import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody } from "./article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
 import type { Database } from "./db.server";
+import { toLanguageVariety } from "./language-variety";
 import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
 import { existingTopicIds } from "./topics.server";
@@ -32,14 +33,20 @@ export async function readArticleForm(db: Database, form: FormData): Promise<Art
   const credit = text("credit", "credit");
 
   const flags = CONTENT_FLAGS.filter((flag) => form.getAll("flag").includes(flag));
-  let languageVariety: string | null = String(form.get("languageVariety") ?? "")
-    .trim()
-    .toLowerCase();
-  if (!flags.includes("languageInstruction")) languageVariety = null;
-  else if (!languageVariety) errors.languageVariety = "Enter the Language Variety this article teaches.";
-  else if (!/^[a-z0-9-]{1,60}$/.test(languageVariety)) {
-    errors.languageVariety =
-      "Write the Language Variety in lower-case letters, digits and hyphens, like standard-fijian.";
+  let languageVariety: string | null = null;
+  if (flags.includes("languageInstruction")) {
+    const entered = String(form.get("languageVariety") ?? "");
+    languageVariety = toLanguageVariety(entered);
+    if (!entered.trim()) errors.languageVariety = "Enter the Language Variety this article teaches.";
+    else if (!languageVariety) {
+      errors.languageVariety = "Write the Language Variety in letters, digits and hyphens, like standard-fijian.";
+    }
+  }
+  const sources = String(form.get("sources") ?? "").trim();
+  if (sources.length > ARTICLE_LIMITS.sources) {
+    errors.sources = `The sources can be at most ${ARTICLE_LIMITS.sources} characters.`;
+  } else if (flags.includes("historicalClaims") && !sources) {
+    errors.sources = "List the sources for the historical claims.";
   }
 
   const topicIds = [...new Set(form.getAll("topicId").map(String))];
@@ -63,9 +70,12 @@ export async function readArticleForm(db: Database, form: FormData): Promise<Art
     // A body the allowlist refused goes back as sent, so the writer can fix it rather than lose it;
     // it is only ever loaded into the editor, never rendered as HTML.
     const body = parsed.ok ? parsed.body : isDoc(submittedBody) ? (submittedBody as ArticleBody) : EMPTY_ARTICLE_BODY;
-    return { ok: false, errors, values: { title, summary, credit, topicIds, body, flags, languageVariety } };
+    return { ok: false, errors, values: { title, summary, credit, topicIds, body, sources, flags, languageVariety } };
   }
-  return { ok: true, snapshot: { title, summary, credit, topicIds, body: parsed.body, flags, languageVariety } };
+  return {
+    ok: true,
+    snapshot: { title, summary, credit, topicIds, body: parsed.body, sources, flags, languageVariety },
+  };
 }
 
 /** The primary area chosen when an Article is created, or null if none of the six was chosen. */

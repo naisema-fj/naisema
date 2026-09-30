@@ -216,6 +216,8 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["reviewer cannot withdraw content", languageReviewer, { action: "content.withdraw" }, false],
+  ["reviewer has a review queue", culturalReviewer, { action: "reviewQueue.view" }, true],
+  ["an editor without a reviewer role has no review queue", editor, { action: "reviewQueue.view" }, false],
   [
     "someone still assigned whose reviewer role was revoked cannot read the revision",
     educator,

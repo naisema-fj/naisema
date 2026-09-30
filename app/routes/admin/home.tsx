@@ -17,7 +17,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
     canEditContent: can(actor, { action: "content.edit" }),
-    isReviewer: actor.roles.some((assignment) => assignment.role === "reviewer"),
+    isReviewer: can(actor, { action: "reviewQueue.view" }),
     roles: actor.roles.map(describeRoleAssignment),
   };
 }

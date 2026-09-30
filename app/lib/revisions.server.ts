@@ -155,7 +155,7 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
   const number = base.number + 1;
   const carried = await carryForwardInserts(db, {
     contentItemId,
-    baseRevisionId: save.baseRevisionId,
+    sourceRevisionId: restoredFromRevisionId ?? save.baseRevisionId,
     newRevisionId: id,
     newNumber: number,
     newFingerprints: save.fingerprints,
@@ -197,7 +197,11 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
 /** Restoring saves an earlier Revision's snapshot again as a new Revision; history is never rewritten. */
 export async function restoreRevision(
   db: Database,
-  restore: Omit<Save, "snapshot" | "fingerprints" | "restoredFromRevisionId"> & { revisionId: string },
+  restore: Omit<Save, "snapshot" | "fingerprints" | "restoredFromRevisionId"> & {
+    revisionId: string;
+    /** Fingerprints are computed when a Revision is written, by the content type's rules. */
+    fingerprintsOf: (snapshot: unknown) => Promise<Fingerprints>;
+  },
 ): Promise<SaveResult> {
   const earlier = await db
     .select()
@@ -205,10 +209,11 @@ export async function restoreRevision(
     .where(and(eq(revision.id, restore.revisionId), eq(revision.contentItemId, restore.contentItemId)))
     .get();
   if (!earlier) return { ok: false, error: "That revision doesn't belong to this item." };
+  const { fingerprintsOf, revisionId: _, ...save } = restore;
   return appendRevision(db, {
-    ...restore,
+    ...save,
     snapshot: earlier.snapshot,
-    fingerprints: earlier.fingerprints as Fingerprints,
+    fingerprints: await fingerprintsOf(earlier.snapshot),
     restoredFromRevisionId: earlier.id,
   });
 }

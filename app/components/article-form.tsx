@@ -2,7 +2,8 @@ import { Form } from "react-router";
 import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
-import { CONTENT_FLAGS, FLAG_NAMES } from "~/lib/review-rules";
+import { FLAG_NAMES } from "~/lib/review-names";
+import { CONTENT_FLAGS } from "~/lib/review-rules";
 import { BodyEditor, type EmbeddableItem } from "./body-editor";
 
 type Props = {
@@ -138,6 +139,16 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
           aria-describedby={describedBy("languageVariety")}
         />
         {fieldError("languageVariety")}
+        <label htmlFor="sources">Sources (for historical claims)</label>
+        <textarea
+          id="sources"
+          name="sources"
+          defaultValue={values.sources ?? ""}
+          rows={3}
+          maxLength={ARTICLE_LIMITS.sources}
+          aria-describedby={describedBy("sources")}
+        />
+        {fieldError("sources")}
       </fieldset>
 
       <BodyEditor initial={values.body as ArticleBody} embeddable={embeddable} error={errors.body} />

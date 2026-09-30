@@ -1,7 +1,14 @@
 import { Form } from "react-router";
 import type { ReviewType } from "~/lib/permissions";
-import { PUBLICATION_NAMES, type PublicationState, REVIEW_NAMES, STATE_NAMES } from "~/lib/review-names";
-import { type ContentFlag, FLAG_NAMES, type ReviewRequirement, type RevisionState } from "~/lib/review-rules";
+import {
+  FLAG_NAMES,
+  PUBLICATION_NAMES,
+  type PublicationState,
+  REVIEW_NAMES,
+  requirementName,
+  STATE_NAMES,
+} from "~/lib/review-names";
+import type { ContentFlag, ReviewRequirement, RevisionState } from "~/lib/review-rules";
 
 type Approval = {
   id: string;
@@ -48,12 +55,6 @@ type Props = {
 
 const formatDate = (date: Date | string) =>
   new Date(date).toLocaleDateString("en-AU", { dateStyle: "medium", timeZone: "UTC" });
-
-function requirementName(requirement: ReviewRequirement) {
-  if (requirement.knowledgeHolder) return "Knowledge Holder Approval";
-  const name = REVIEW_NAMES[requirement.reviewType];
-  return requirement.languageVariety ? `${name} (${requirement.languageVariety})` : name;
-}
 
 function describeApproval(approval: Approval) {
   const verb = approval.decision === "approved" ? "Approved" : "Rejected";
@@ -104,7 +105,11 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
               const assigned = review.assignments.filter((row) => row.reviewType === requirement.reviewType);
               return (
                 <tr key={requirementName(requirement)}>
-                  <td>{requirementName(requirement)}</td>
+                  <td>
+                    {requirementName(requirement)}
+                    {requirement.flagRemovedAfter &&
+                      `: still needed because revision ${requirement.flagRemovedAfter} had its flag`}
+                  </td>
                   <td>{decision ? describeApproval(decision) : "Waiting for review"}</td>
                   <td>
                     {requirement.knowledgeHolder
@@ -135,9 +140,11 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
               <Form method="post" key={id} className="inline-form">
                 <input type="hidden" name="intent" value="assign" />
                 <input type="hidden" name="reviewType" value={requirement.reviewType} />
-                <label htmlFor={id}>Assign a reviewer for {REVIEW_NAMES[requirement.reviewType].toLowerCase()}</label>
                 {choices.length ? (
                   <>
+                    <label htmlFor={id}>
+                      Assign a reviewer for {REVIEW_NAMES[requirement.reviewType].toLowerCase()}
+                    </label>
                     <select id={id} name="reviewerId" required>
                       {choices.map((choice) => (
                         <option key={choice.id} value={choice.id}>
@@ -148,7 +155,10 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
                     <button type="submit">Assign</button>
                   </>
                 ) : (
-                  <p id={id}>Nobody holds this reviewer role yet. An administrator can grant it.</p>
+                  <p>
+                    Nobody does {REVIEW_NAMES[requirement.reviewType].toLowerCase()} yet. An administrator can grant the
+                    reviewer role.
+                  </p>
                 )}
               </Form>
             );
@@ -172,8 +182,9 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
           </fieldset>
           <label htmlFor={`${reviewType}-scope`}>What you reviewed</label>
           <input id={`${reviewType}-scope`} name="scope" />
-          <label htmlFor={`${reviewType}-notes`}>Notes (required when rejecting)</label>
-          <textarea id={`${reviewType}-notes`} name="notes" rows={3} />
+          <label htmlFor={`${reviewType}-notes`}>Notes</label>
+          <p id={`${reviewType}-notes-hint`}>Required when rejecting: say what needs to change.</p>
+          <textarea id={`${reviewType}-notes`} name="notes" rows={3} aria-describedby={`${reviewType}-notes-hint`} />
           <button type="submit">Record decision</button>
         </Form>
       ))}
@@ -186,7 +197,8 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
           <label htmlFor="kh-name">Knowledge Holder</label>
           <input id="kh-name" name="knowledgeHolderName" required />
           <label htmlFor="kh-method">How they gave approval</label>
-          <input id="kh-method" name="method" required placeholder="In person, by phone…" />
+          <p id="kh-method-hint">For example in person, by phone or in writing.</p>
+          <input id="kh-method" name="method" required aria-describedby="kh-method-hint" />
           <label htmlFor="kh-conditions">Conditions</label>
           <textarea id="kh-conditions" name="conditions" rows={2} />
           <label htmlFor="kh-scope">What they reviewed</label>
