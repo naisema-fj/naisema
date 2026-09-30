@@ -79,7 +79,19 @@ In the repository settings on GitHub:
 
 Staff tools live on their own hostname, served by the same Worker (ADR-0005): `admin.naisema.com` in production, `admin.staging.naisema.com` on staging, and `http://admin.localhost:5173` locally. The public site never answers `/admin` or `/api/auth`.
 
-Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Links go only to accounts that hold an active role, at most three per address every 15 minutes, and the sign-in page gives the same reply either way. A lost phone currently needs the technical owner to reset that person's two-factor in the database; an administrator reset is tracked in issue #41. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in and code check is written to the `audit_event` table.
+Staff sign in with an emailed link, then enter a 6-digit code from an authenticator app. Links go only to accounts that hold an active role, at most three per address every 15 minutes, and the sign-in page gives the same reply either way. Two-factor is enforced by the staff gate, not by Better Auth (ADR-0013): a role only counts for a session that has passed the code check, and five wrong codes end the session. Roles are managed by administrators at `/admin/staff`; every grant, revoke, sign-in, code check and two-factor reset is written to the `audit_event` table.
+
+### A lost authenticator app
+
+If a staff member loses the phone with their authenticator app, an administrator resets their two-factor under **Two-factor** at `/admin/staff`. That signs the person out everywhere and emails them to say it happened; at their next sign-in they set up a new authenticator app. Administrators can't reset their own two-factor from the admin site.
+
+If the only administrator has lost their phone, the technical owner resets it from the command line instead. No email is sent this way, so tell the person yourself:
+
+```sh
+pnpm staff:reset-two-factor --env production --email natasha@example.com
+```
+
+Use `--env staging` for staging, or `--local` locally. The reset is written to `audit_event` with no actor and `"via":"cli"`, like `pnpm staff:grant`.
 
 ### Before the first deploy to an environment
 

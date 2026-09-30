@@ -44,6 +44,18 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["administrator manages accounts", administrator, { action: "account.manage" }, true],
   ["administrator assigns roles", administrator, { action: "role.assign" }, true],
   ["administrator edits site settings and feature flags", administrator, { action: "settings.edit" }, true],
+  [
+    "administrator resets another staff member's two-factor",
+    administrator,
+    { action: "twoFactor.reset", staffMember: { userId: "editor" } },
+    true,
+  ],
+  [
+    "administrator cannot reset their own two-factor",
+    administrator,
+    { action: "twoFactor.reset", staffMember: { userId: "admin" } },
+    false,
+  ],
   ["administrator cannot read report cases", administrator, { action: "case.read", case: { kind: "report" } }, false],
   [
     "administrator cannot read data-request cases",
@@ -70,6 +82,12 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["editor cannot assign roles", editor, { action: "role.assign" }, false],
+  [
+    "editor cannot reset a staff member's two-factor",
+    editor,
+    { action: "twoFactor.reset", staffMember: { userId: "educator" } },
+    false,
+  ],
   [
     "editor cannot approve reviews without a reviewer role",
     editor,

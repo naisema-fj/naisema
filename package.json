@@ -18,7 +18,8 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "test": "pnpm build && vitest run",
     "test:e2e": "playwright test",
-    "staff:grant": "node scripts/grant-staff-role.mjs"
+    "staff:grant": "node scripts/grant-staff-role.mjs",
+    "staff:reset-two-factor": "node scripts/reset-staff-two-factor.mjs"
   },
   "dependencies": {
     "better-auth": "^1.7.6",

@@ -4,6 +4,7 @@ import { can, REVIEW_TYPES, STAFF_ROLES } from "~/lib/permissions";
 import { describeRoleAssignment, ROLE_NAMES } from "~/lib/role-names";
 import { requireStaff } from "~/lib/staff.server";
 import { grantRole, listStaff, revokeRole, validateGrant } from "~/lib/staff-roles.server";
+import { listTwoFactorStatus, resetTwoFactor } from "~/lib/staff-two-factor.server";
 import type { Route } from "./+types/staff";
 
 export const handle = { hydrate: false };
@@ -22,16 +23,23 @@ async function requireAdministrator(request: Request, env: Env) {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db } = await requireAdministrator(request, context.get(cloudflareContext).env);
-  return { staff: await listStaff(db) };
+  const { db, actor } = await requireAdministrator(request, context.get(cloudflareContext).env);
+  return { staff: await listStaff(db), twoFactor: await listTwoFactorStatus(db, actor) };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const { db, actor } = await requireAdministrator(request, context.get(cloudflareContext).env);
+  const { env } = context.get(cloudflareContext);
+  const { db, actor } = await requireAdministrator(request, env);
   const form = await request.formData();
 
   if (form.get("intent") === "revoke") {
     const result = await revokeRole(db, actor.userId, String(form.get("assignmentId") ?? ""));
+    if (!result.ok) return data({ error: result.error }, { status: 400 });
+    throw redirect("/admin/staff");
+  }
+
+  if (form.get("intent") === "resetTwoFactor") {
+    const result = await resetTwoFactor(env, db, actor, String(form.get("userId") ?? ""));
     if (!result.ok) return data({ error: result.error }, { status: 400 });
     throw redirect("/admin/staff");
   }
@@ -76,6 +84,43 @@ export default function Staff({ loaderData, actionData }: Route.ComponentProps) 
                     Revoke
                   </button>
                 </Form>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <h2>Two-factor</h2>
+      <p>
+        If someone loses the phone with their authenticator app, reset their two-factor. They are signed out everywhere
+        and set up a new authenticator app the next time they sign in.
+      </p>
+      <table>
+        <caption className="visually-hidden">Two-factor status of each staff member</caption>
+        <thead>
+          <tr>
+            <th scope="col">Email</th>
+            <th scope="col">Two-factor</th>
+            <th scope="col">
+              <span className="visually-hidden">Actions</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {loaderData.twoFactor.map((member) => (
+            <tr key={member.userId}>
+              <td>{member.email}</td>
+              <td>{member.twoFactorEnabled ? "Set up" : "Not set up yet"}</td>
+              <td>
+                {member.canReset && (
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="resetTwoFactor" />
+                    <input type="hidden" name="userId" value={member.userId} />
+                    <button type="submit" aria-label={`Reset two-factor for ${member.email}`}>
+                      Reset two-factor
+                    </button>
+                  </Form>
+                )}
               </td>
             </tr>
           ))}

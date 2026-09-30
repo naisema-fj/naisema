@@ -37,7 +37,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const enabled = await signedIn.auth.api.enableTwoFactor({ headers: request.headers, body: {} });
     if (enabled.method !== "totp") throw new Error("Staff two-factor must use an authenticator app (TOTP)");
     // Better Auth also generates backup codes; they are not shown because nothing accepts them yet.
-    // A lost phone is recovered by an administrator resetting two-factor (follow-up issue).
+    // A lost phone is recovered by an administrator resetting two-factor at /admin/staff.
     return { key: describeKey(enabled.totpURI), error: null };
   }
 

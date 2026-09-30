@@ -42,6 +42,8 @@ type RevisionUnderReview = {
 export type Check =
   | { action: "staffArea.enter" }
   | { action: "account.manage" | "role.assign" | "settings.edit" }
+  /** Signed-in administrators still hold a working authenticator, so nobody resets their own. */
+  | { action: "twoFactor.reset"; staffMember: { userId: string } }
   /**
    * Who may publish. Whether a particular Revision may be published (approvals present, rights
    * current) is the eligibility decision, not a permission (ADR-0007).
@@ -79,6 +81,9 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "role.assign":
     case "settings.edit":
       return hasRole("administrator");
+
+    case "twoFactor.reset":
+      return hasRole("administrator") && check.staffMember.userId !== actor.userId;
 
     case "content.edit":
     case "revision.publish":
