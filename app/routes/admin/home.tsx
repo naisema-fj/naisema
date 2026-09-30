@@ -16,6 +16,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
+    canEditContent: can(actor, { action: "content.edit" }),
     roles: actor.roles.map(describeRoleAssignment),
   };
 }
@@ -33,6 +34,19 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
           <li key={role}>{role}</li>
         ))}
       </ul>
+      {loaderData.canEditContent && (
+        <>
+          <h2>Content</h2>
+          <ul>
+            <li>
+              <a href="/admin/articles">Articles</a>
+            </li>
+            <li>
+              <a href="/admin/topics">Topics</a>
+            </li>
+          </ul>
+        </>
+      )}
       {loaderData.canManageStaff && (
         <p>
           <a href="/admin/staff">Manage staff and roles</a>

@@ -22,6 +22,10 @@
     "staff:reset-two-factor": "node scripts/reset-staff-two-factor.mjs"
   },
   "dependencies": {
+    "@tiptap/core": "^3.31.4",
+    "@tiptap/extension-image": "^3.31.4",
+    "@tiptap/pm": "^3.31.4",
+    "@tiptap/starter-kit": "^3.31.4",
     "better-auth": "^1.7.6",
     "drizzle-orm": "^0.45.3",
     "isbot": "^5.2.2",

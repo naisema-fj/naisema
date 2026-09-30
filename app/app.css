@@ -42,3 +42,155 @@ a {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Staff forms */
+.article-form label,
+.article-form .label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.article-form input:not([type="checkbox"]),
+.article-form textarea,
+.article-form select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.4rem;
+}
+
+.article-form fieldset {
+  margin-top: 1rem;
+}
+
+.article-form .choice label {
+  display: inline;
+  font-weight: normal;
+  margin: 0 0 0 0.4rem;
+}
+
+.article-form > button[type="submit"] {
+  margin-top: 1.5rem;
+}
+
+.field-error {
+  color: #a4161a;
+  margin: 0.25rem 0 0;
+}
+
+/* Article body editor (Tiptap). Its own CSS injection is off because the CSP allows no inline styles. */
+.body-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+}
+
+.body-toolbar button[aria-pressed="true"] {
+  background: #0b4f5c;
+  color: #fff;
+}
+
+.embed-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  width: 100%;
+}
+
+.article-form .embed-picker label {
+  margin: 0;
+}
+
+.article-form .embed-picker select {
+  flex: 1 1 12rem;
+  width: auto;
+  min-width: 0;
+}
+
+.body-editor-content {
+  min-height: 12rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #767676;
+  background: #fff;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.body-editor-content:focus {
+  outline: 3px solid #0b4f5c;
+}
+
+.ProseMirror {
+  position: relative;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-variant-ligatures: none;
+}
+
+.ProseMirror [contenteditable="false"] {
+  white-space: normal;
+}
+
+.ProseMirror-hideselection *::selection {
+  background: transparent;
+}
+
+.ProseMirror-selectednode {
+  outline: 2px solid #0b4f5c;
+}
+
+.ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Blocks shared by the editor and the rendered body */
+.callout {
+  border-left: 4px solid #0b4f5c;
+  background: #eef5f6;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+}
+
+.embedded-item {
+  border: 1px dashed #767676;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+}
+
+.article-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Comparing revisions */
+.body-diff {
+  list-style: none;
+  padding: 0;
+}
+
+.body-diff li {
+  padding: 0.15rem 0.5rem;
+}
+
+.body-diff .added {
+  background: #e6f4ea;
+}
+
+.body-diff .removed {
+  background: #fce8e6;
+}

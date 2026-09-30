@@ -15,6 +15,13 @@
       "when": 1790670679175,
       "tag": "0001_staff_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790798420781,
+      "tag": "0002_articles_and_revisions",
+      "breakpoints": true
     }
   ]
 }

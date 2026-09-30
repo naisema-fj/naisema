@@ -50,6 +50,8 @@ Every server-rendered response carries a nonce-based Content Security Policy and
 3. Review the SQL, then `pnpm db:migrate:local`.
 4. Commit the schema and migration together. Deploys apply pending migrations before the new Worker goes live, so every migration must work with the previous Worker version still running.
 
+Revisions are immutable (ADR-0006): the `revision_immutable` trigger refuses any `UPDATE` on the `revision` table. A migration that genuinely has to rewrite revision rows (a backfill, say) must drop the trigger, make the change and recreate the trigger in the same migration, and say why in the migration. drizzle-kit does not generate triggers, so they are written by hand at the end of the migration that needs them.
+
 ## One-time Cloudflare provisioning
 
 Done once per environment by someone with admin access to the Na iSema Cloudflare account. Replace `staging` with `production` for production.

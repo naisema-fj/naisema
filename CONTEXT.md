@@ -140,6 +140,10 @@ _Avoid_: Ticket, complaint (as the record)
 
 ## Discovery
 
+**Topic**:
+A subject that Content Items are tagged with (at least one each), with its own page at `/topics/{slug}`. Topics cut across the primary areas.
+_Avoid_: Tag, category
+
 **Provider**:
 Any organisation or person whose learning Offering is listed on Na iSema. Listing implies no endorsement or partnership.
 _Avoid_: Partner (unless an agreement exists)

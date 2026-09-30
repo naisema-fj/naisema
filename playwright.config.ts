@@ -15,8 +15,24 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    { name: "desktop-chromium", use: { ...devices["Desktop Chrome"], launchOptions: { executablePath } } },
-    { name: "mobile-chromium", use: { ...devices["Pixel 7"], launchOptions: { executablePath } } },
+    // Each project reports its own client IP, as Cloudflare would, so the sign-in rate limit
+    // (5 magic links a minute per IP) counts each project's sign-ins separately.
+    {
+      name: "desktop-chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        launchOptions: { executablePath },
+        extraHTTPHeaders: { "CF-Connecting-IP": "203.0.113.10" },
+      },
+    },
+    {
+      name: "mobile-chromium",
+      use: {
+        ...devices["Pixel 7"],
+        launchOptions: { executablePath },
+        extraHTTPHeaders: { "CF-Connecting-IP": "203.0.113.20" },
+      },
+    },
   ],
   webServer: {
     // Serves the production build with local D1, migrated and seeded with e2e fixtures.

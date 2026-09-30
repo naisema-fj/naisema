@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { type AnySQLiteColumn, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 const updatedAt = () => integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -160,3 +160,56 @@ export const emailOutbox = sqliteTable("email_outbox", {
   text: text("text").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
+
+// --- Content (ADR-0006) ---
+
+/** A minimal subject tag for Content Items. Topic pages arrive with 1a-18. */
+export const topic = sqliteTable("topic", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  createdBy: text("created_by").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/**
+ * The stable parent of a Content Item: its identity and URL, pointing at its current draft and
+ * current published Revision. Everything an editor writes lives in the Revisions.
+ */
+export const contentItem = sqliteTable(
+  "content_item",
+  {
+    id: text("id").primaryKey(),
+    type: text("type").notNull(),
+    slug: text("slug").notNull(),
+    primaryArea: text("primary_area").notNull(),
+    currentDraftRevisionId: text("current_draft_revision_id").references((): AnySQLiteColumn => revision.id),
+    currentPublishedRevisionId: text("current_published_revision_id").references((): AnySQLiteColumn => revision.id),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [uniqueIndex("content_item_area_slug_idx").on(table.primaryArea, table.slug)],
+);
+
+/**
+ * One save of a Content Item: a full snapshot of everything the editor wrote. Never updated in
+ * place; a database trigger (migrations/0002) refuses any UPDATE.
+ */
+export const revision = sqliteTable(
+  "revision",
+  {
+    id: text("id").primaryKey(),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    /** 1, 2, 3… within its Content Item, in save order. */
+    number: integer("number").notNull(),
+    snapshot: text("snapshot", { mode: "json" }).notNull(),
+    /** Set when this Revision was made by restoring an earlier one. */
+    restoredFromRevisionId: text("restored_from_revision_id"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [uniqueIndex("revision_item_number_idx").on(table.contentItemId, table.number)],
+);
