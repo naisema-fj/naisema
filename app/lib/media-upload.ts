@@ -1,4 +1,4 @@
-import { checkDeclared } from "./upload-rules";
+import { checkContent, checkDeclared, HEAD_BYTES } from "./upload-rules";
 
 /**
  * The media library's browser upload (app/lib/media.server.ts is the other side). It checks the
@@ -20,6 +20,18 @@ export type UploadOutcome = { ok: true; id: string } | { ok: false; error: strin
 
 const RETRIES = 3;
 
+/** localStorage, or a stand-in that remembers nothing where the browser blocks it (resuming is then off). */
+function browserStorage(): UploadStorage {
+  try {
+    const probe = "naisema-upload-probe";
+    localStorage.setItem(probe, "1");
+    localStorage.removeItem(probe);
+    return localStorage;
+  } catch {
+    return { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  }
+}
+
 class Refused extends Error {}
 
 /** Remembers an unfinished upload by the file's name, size and modification time. */
@@ -36,11 +48,14 @@ async function errorOf(response: Response) {
 
 export async function uploadFile(file: File, options: UploadOptions = {}): Promise<UploadOutcome> {
   const send = options.fetch ?? ((input: string, init?: RequestInit) => fetch(input, init));
-  const storage = options.storage ?? localStorage;
+  const storage = options.storage ?? browserStorage();
   const wait = options.wait ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
   const declared = checkDeclared(file, "media");
   if (!declared.ok) return { ok: false, error: declared.error };
+  const head = new Uint8Array(await file.slice(0, HEAD_BYTES).arrayBuffer());
+  const content = checkContent(declared.type, head);
+  if (!content.ok) return { ok: false, error: content.error };
 
   try {
     let upload: { id: string; partSize: number; partCount: number; received: number[] } | null = null;
@@ -57,7 +72,12 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
       const response = await send("/admin/media/uploads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file.name, type: file.type, size: file.size }),
+        body: JSON.stringify({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          head: btoa(String.fromCharCode(...head)),
+        }),
       });
       if (!response.ok) throw new Refused(await errorOf(response));
       const started = (await response.json()) as { id: string; partSize: number; partCount: number };

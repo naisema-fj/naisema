@@ -4,9 +4,9 @@ import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { quarantineFile } from "./media.server";
 import { isCurrent, isPermittedUse, type PermittedUse, type RightsFacts } from "./rights-rules";
-import { checkContent, checkDeclared, type UploadType } from "./upload-rules";
+import { checkContent, checkDeclared, HEAD_BYTES, storedName, type UploadType } from "./upload-rules";
 
-/** What a Rights Record covers. Only whole Content Items for now; media assets join with #14. */
+/** What a Rights Record covers. Only whole Content Items for now; media assets get their own later. */
 export type RightsSubject = { type: "content_item"; id: string };
 
 type RecordRow = typeof rightsRecord.$inferSelect;
@@ -136,9 +136,9 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
     if (!declared.ok) errors.evidence = declared.error;
     else {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const content = checkContent(declared.type, bytes.subarray(0, 16));
+      const content = checkContent(declared.type, bytes.subarray(0, HEAD_BYTES));
       if (!content.ok) errors.evidence = content.error;
-      else evidence = { bytes, name: file.name.slice(0, 200), type: declared.type };
+      else evidence = { bytes, name: storedName(file.name), type: declared.type };
     }
   }
 
@@ -207,12 +207,23 @@ export async function recordRights(
       }),
     ]);
   } catch (error) {
-    // Refuse the quarantined file, but never let a failed clean-up hide why the record wasn't written.
-    await db
-      .update(mediaAsset)
-      .set({ status: "failed", statusReason: "Its Rights Record wasn't saved.", updatedAt: new Date() })
-      .where(eq(mediaAsset.id, evidence.id))
-      .catch(() => undefined);
+    // The evidence belongs to no record: refuse it wherever its scan has got to, including a copy
+    // already passed to the evidence bucket. Never let a failed clean-up hide why the record wasn't written.
+    const reason = "Its Rights Record wasn't saved.";
+    await Promise.all([
+      db
+        .update(mediaAsset)
+        .set({ status: "failed", statusReason: reason, scannedAt: new Date(), updatedAt: new Date() })
+        .where(eq(mediaAsset.id, evidence.id)),
+      env.EVIDENCE.delete(evidence.destinationKey),
+      recordAudit(db, {
+        actorId: recordedBy,
+        action: "media_asset.failed",
+        objectType: "media_asset",
+        objectId: evidence.id,
+        details: { reason },
+      }),
+    ]).catch(() => undefined);
     throw error;
   }
   return id;

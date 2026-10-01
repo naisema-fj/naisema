@@ -17,10 +17,9 @@ import type { Database } from "./db.server";
 export const IMAGE_WIDTHS = [320, 640, 960, 1280, 1920] as const;
 
 export const imagePath = (id: string, width: number) => `/media/images/${id}/${width}`;
-export const imageSrcSet = (id: string) => IMAGE_WIDTHS.map((width) => `${imagePath(id, width)} ${width}w`).join(", ");
 export const filePath = (id: string) => `/media/files/${id}`;
 
-/** A ready media library file of one of the given types, or null. */
+/** A media library file that has passed its scan, or null. */
 export function readyMedia(db: Database, id: string) {
   return db
     .select()
@@ -29,7 +28,10 @@ export function readyMedia(db: Database, id: string) {
     .get();
 }
 
-/** An image, re-encoded as WebP at one of IMAGE_WIDTHS (never wider than the original). */
+/**
+ * An image, re-encoded as WebP at one of IMAGE_WIDTHS (never wider than the original). WebP output
+ * carries no EXIF or other metadata, so location and camera details are dropped.
+ */
 export async function transformedImage(env: Env, key: string, width: number) {
   const original = await env.MEDIA.get(key);
   if (!original) return null;

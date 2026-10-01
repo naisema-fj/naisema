@@ -9,6 +9,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import type { PermittedUse } from "../app/lib/rights-rules";
+import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 const updatedAt = () => integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -425,12 +426,12 @@ export const mediaAsset = sqliteTable(
   {
     id: text("id").primaryKey(),
     /** "media" (the media library) or "evidence" (a Rights Record's private evidence). */
-    purpose: text("purpose").notNull(),
+    purpose: text("purpose").$type<UploadPurpose>().notNull(),
     /** The accepted file type (app/lib/upload-rules.ts). */
-    type: text("type").notNull(),
+    type: text("type").$type<UploadType>().notNull(),
     name: text("name").notNull(),
     size: integer("size").notNull(),
-    status: text("status").notNull(),
+    status: text("status").$type<MediaStatus>().notNull(),
     /** Why an upload was refused or failed, or which signature ClamAV found, for staff to read. */
     statusReason: text("status_reason"),
     quarantineKey: text("quarantine_key").notNull(),
@@ -444,6 +445,7 @@ export const mediaAsset = sqliteTable(
       .references(() => user.id),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    /** When the file was passed or refused; failures are removed 30 days after this. */
     scannedAt: integer("scanned_at", { mode: "timestamp_ms" }),
   },
   (table) => [

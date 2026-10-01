@@ -83,6 +83,20 @@ describe("checkContent: the file's first bytes must match its declared type", ()
     expect(checkContent(type, content)).toEqual({ ok: true });
   });
 
+  it("checks the ISO media brand, so other formats in the same container are refused", () => {
+    expect(checkContent("video/mp4", isoMedia("heic"))).toMatchObject({ ok: false });
+    expect(checkContent("image/png", isoMedia("avif"))).toMatchObject({ ok: false });
+    expect(checkContent("video/mp4", isoMedia("3gp4"))).toMatchObject({ ok: false });
+    expect(checkContent("audio/mp4", isoMedia("qt  "))).toMatchObject({ ok: false });
+    expect(checkContent("video/quicktime", isoMedia("isom"))).toEqual({ ok: true });
+  });
+
+  it("needs a real MPEG audio frame header, not just its sync bits", () => {
+    // Layer bits 00 are reserved, as is bitrate index 1111.
+    expect(checkContent("audio/mpeg", bytes(0xff, 0xf9, 0x90, 0x44))).toMatchObject({ ok: false });
+    expect(checkContent("audio/mpeg", bytes(0xff, 0xfb, 0xf0, 0x44))).toMatchObject({ ok: false });
+  });
+
   it("blocks a renamed executable", () => {
     expect(checkContent("video/mp4", bytes(0x4d, 0x5a, 0x90, 0x00))).toMatchObject({ ok: false });
     expect(checkContent("application/pdf", bytes(0x7f, 0x45, 0x4c, 0x46))).toMatchObject({ ok: false });

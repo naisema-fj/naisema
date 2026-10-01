@@ -2,6 +2,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { readyMedia } from "~/lib/media-delivery.server";
 import { PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
+import { downloadName } from "~/lib/upload-rules";
 import type { Route } from "./+types/file";
 
 /**
@@ -14,7 +15,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (asset?.type !== "application/pdf") throw new Response("Not found", { status: 404 });
   const file = await env.MEDIA.get(asset.destinationKey);
   if (!file) throw new Response("Not found", { status: 404 });
-  const filename = asset.name.replace(/[^\w.-]+/g, "_");
+  const filename = downloadName(asset.name);
   return new Response(file.body, {
     headers: {
       "Content-Type": "application/pdf",

@@ -2,6 +2,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { can } from "~/lib/permissions";
 import { readEvidence } from "~/lib/rights.server";
 import { requireStaff } from "~/lib/staff.server";
+import { downloadName } from "~/lib/upload-rules";
 import type { Route } from "./+types/evidence";
 
 /**
@@ -22,7 +23,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store" },
     });
   }
-  const filename = evidence.name.replace(/[^\w.-]+/g, "_");
+  const filename = downloadName(evidence.name);
   return new Response(evidence.object.body, {
     headers: {
       "Content-Type": evidence.type,

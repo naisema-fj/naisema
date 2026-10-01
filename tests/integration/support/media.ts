@@ -3,8 +3,13 @@ import { ADMIN, type Browser } from "./staff";
 const json = { "Content-Type": "application/json", Origin: ADMIN };
 
 /** The upload endpoints, called as the media library's browser code calls them. */
-export function startUpload(browser: Browser, file: { name: string; type: string; size: number }) {
-  return browser.fetch("/admin/media/uploads", { method: "POST", headers: json, body: JSON.stringify(file) });
+export function startUpload(browser: Browser, file: { name: string; type: string; size: number; head?: Uint8Array }) {
+  const head = file.head ? btoa(String.fromCharCode(...file.head.subarray(0, 16))) : undefined;
+  return browser.fetch("/admin/media/uploads", {
+    method: "POST",
+    headers: json,
+    body: JSON.stringify({ name: file.name, type: file.type, size: file.size, head }),
+  });
 }
 
 export function sendPart(browser: Browser, id: string, number: number, bytes: Uint8Array) {

@@ -54,6 +54,9 @@ export const pagesShowing = (item: { area: string; slug: string }) => [
   "/sitemap.xml",
 ];
 
+/** The public site's main address, for linking to it from the admin host. */
+export const primaryPublicOrigin = (env: Env) => env.PUBLIC_ORIGINS.split(",")[0]?.trim() ?? "";
+
 /** Purges public pages from the edge cache, here at once and everywhere when a zone token is set. */
 export async function purgePublicPages(env: Env, paths: string[]) {
   const origins = env.PUBLIC_ORIGINS.split(",")

@@ -44,6 +44,9 @@ expect() {
 
 expect "a clean PDF" clean --data-binary "%PDF-1.7 nothing to see here"
 expect "the EICAR test file" infected --data-binary "$EICAR"
+# What can actually reach the scanner: a file that passes the type check with EICAR inside it.
+EICAR_PDF=$(printf '%%PDF-1.7\n1 0 obj\n<< /Length 68 >>\nstream\n%s\nendstream\nendobj\n%%%%EOF\n' "$EICAR")
+expect "EICAR inside a PDF stream" infected --data-binary "$EICAR_PDF"
 expect "EICAR sent chunked" infected -H "Transfer-Encoding: chunked" --data-binary "$EICAR"
 expect "a clean file sent chunked" clean -H "Transfer-Encoding: chunked" --data-binary "hello"
 echo "Scanner smoke test passed."

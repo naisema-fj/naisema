@@ -17,8 +17,14 @@ import { completeUpload, sendPart, startUpload } from "./support/media";
 const EICAR = atob("WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo=");
 
 /**
- * Stands in for ClamAV (scripts/scanner-smoke.sh checks the real one): it reports the EICAR
- * signature wherever it appears, as ClamAV does, and passes everything else.
+ * EICAR inside a PDF stream object: a file that passes the type check and that the real ClamAV
+ * reports as Eicar-Signature (scripts/scanner-smoke.sh checks exactly this payload).
+ */
+const EICAR_IN_PDF = `1 0 obj\n<< /Length 68 >>\nstream\n${EICAR}\nendstream\nendobj\n%%EOF\n`;
+
+/**
+ * Stands in for ClamAV, which tests can't run: it reports the EICAR string when it appears, and
+ * passes everything else.
  */
 const eicarScanner: Scanner = async ({ body }) => {
   const text = await new Response(body).text();
@@ -35,7 +41,7 @@ async function uploadedPdf(content: string) {
   const editor = await staff("editor", { role: "editor" });
   const bytes = new TextEncoder().encode(`%PDF-1.7\n${content}`);
   const { id } = (await (
-    await startUpload(editor.browser, { name: "file.pdf", type: "application/pdf", size: bytes.length })
+    await startUpload(editor.browser, { name: "file.pdf", type: "application/pdf", size: bytes.length, head: bytes })
   ).json()) as { id: string };
   await sendPart(editor.browser, id, 1, bytes);
   expect((await completeUpload(editor.browser, id)).status).toBe(200);
@@ -88,7 +94,7 @@ describe("scanning quarantined uploads", () => {
   });
 
   it("rejects the EICAR test file: it stays in quarantine, with the signature shown to staff", async () => {
-    const id = await uploadedPdf(EICAR);
+    const id = await uploadedPdf(EICAR_IN_PDF);
 
     expect(await scanUpload(env, getDb(env.DB), id, eicarScanner)).toBe("infected");
 
@@ -99,9 +105,38 @@ describe("scanning quarantined uploads", () => {
     expect(await env.MEDIA.head(row?.destinationKey as string)).toBeNull();
   });
 
+  it("removes a copy left in the media bucket by an earlier delivery when the file is refused", async () => {
+    const id = await uploadedPdf(EICAR_IN_PDF);
+    const row = await asset(id);
+    // An earlier delivery copied the file, then stopped before recording the verdict.
+    await env.MEDIA.put(row?.destinationKey as string, "copied before the run stopped");
+
+    expect(await scanUpload(env, getDb(env.DB), id, eicarScanner)).toBe("infected");
+
+    expect(await env.MEDIA.head(row?.destinationKey as string)).toBeNull();
+  });
+
+  it("records each verdict once, however often it is delivered", async () => {
+    const id = await uploadedPdf("Clean.");
+    const db = getDb(env.DB);
+    await scanUpload(env, db, id, eicarScanner);
+    await scanUpload(env, db, id, eicarScanner);
+    const last = delivery(id, MAX_SCAN_ATTEMPTS);
+    await handleScanBatch(last.batch, env, async () => {
+      throw new ScannerUnavailable("down");
+    });
+
+    const { results } = await env.DB.prepare(
+      "SELECT action FROM audit_event WHERE object_id = ?1 AND action IN ('media_asset.passed', 'media_asset.failed')",
+    )
+      .bind(id)
+      .all<{ action: string }>();
+    expect(results.map((row) => row.action)).toEqual(["media_asset.passed"]);
+  });
+
   it("is safe to repeat: a second delivery of the same scan changes nothing", async () => {
     const clean = await uploadedPdf("Clean.");
-    const infected = await uploadedPdf(EICAR);
+    const infected = await uploadedPdf(EICAR_IN_PDF);
     const db = getDb(env.DB);
     await scanUpload(env, db, clean, eicarScanner);
     await scanUpload(env, db, infected, eicarScanner);
@@ -129,7 +164,7 @@ describe("scanning quarantined uploads", () => {
   });
 
   it("removes failed and infected files 30 days on, and queues lost scans again", async () => {
-    const infected = await uploadedPdf(EICAR);
+    const infected = await uploadedPdf(EICAR_IN_PDF);
     const db = getDb(env.DB);
     await scanUpload(env, db, infected, eicarScanner);
     const waiting = await uploadedPdf("Still waiting.");

@@ -25,6 +25,7 @@ describe("uploading into quarantine", () => {
       name: "guide.pdf",
       type: "application/pdf",
       size: bytes.length,
+      head: bytes,
     });
     expect(started.status).toBe(201);
     const { id, partCount } = (await started.json()) as { id: string; partCount: number };
@@ -46,7 +47,7 @@ describe("uploading into quarantine", () => {
     const editor = await staff("editor", { role: "editor" });
     const bytes = pdf(PART_SIZE + 10);
     const { id } = (await (
-      await startUpload(editor.browser, { name: "long.pdf", type: "application/pdf", size: bytes.length })
+      await startUpload(editor.browser, { name: "long.pdf", type: "application/pdf", size: bytes.length, head: bytes })
     ).json()) as { id: string };
     await sendPart(editor.browser, id, 1, bytes.subarray(0, PART_SIZE));
 
@@ -73,42 +74,59 @@ describe("uploading into quarantine", () => {
     );
   });
 
-  it("blocks a renamed executable at its first part, and keeps the reason for staff", async () => {
+  it("blocks a renamed executable before the upload starts", async () => {
     const editor = await staff("editor", { role: "editor" });
     // A Windows executable's "MZ" header, named as a video.
     const exe = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00]);
-    const { id } = (await (
-      await startUpload(editor.browser, { name: "clip.mp4", type: "video/mp4", size: exe.length })
-    ).json()) as { id: string };
 
-    const response = await sendPart(editor.browser, id, 1, exe);
+    const response = await startUpload(editor.browser, {
+      name: "clip.mp4",
+      type: "video/mp4",
+      size: exe.length,
+      head: exe,
+    });
 
     expect(response.status).toBe(400);
+    expect(((await response.json()) as { error: string }).error).toContain("don't match its type");
+  });
+
+  it("checks the first part as it actually arrives, and keeps the reason for staff", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const exe = new Uint8Array([0x4d, 0x5a, 0x90, 0x00, 0x03, 0x00, 0x00, 0x00, 0x04, 0x00]);
+    // The start claims a PDF's first bytes; the part that arrives is an executable.
+    const { id } = (await (
+      await startUpload(editor.browser, { name: "a.pdf", type: "application/pdf", size: exe.length, head: pdf(10) })
+    ).json()) as { id: string };
+
+    expect((await sendPart(editor.browser, id, 1, exe)).status).toBe(400);
     const row = await asset(id);
     expect(row?.status).toBe("failed");
     expect(row?.reason).toContain("don't match its type");
     expect((await completeUpload(editor.browser, id)).status).toBe(409);
   });
 
-  it("refuses the EICAR test file named as a PDF before it is stored", async () => {
+  it("refuses the bare EICAR test file named as a PDF before it is stored", async () => {
     const editor = await staff("editor", { role: "editor" });
     // The EICAR test file, decoded here so no copy of it sits in the repository.
     const eicar = Uint8Array.from(
       atob("WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo="),
       (char) => char.charCodeAt(0),
     );
-    const { id } = (await (
-      await startUpload(editor.browser, { name: "eicar.pdf", type: "application/pdf", size: eicar.length })
-    ).json()) as { id: string };
 
-    expect((await sendPart(editor.browser, id, 1, eicar)).status).toBe(400);
-    expect((await asset(id))?.status).toBe("failed");
+    const response = await startUpload(editor.browser, {
+      name: "eicar.pdf",
+      type: "application/pdf",
+      size: eicar.length,
+      head: eicar,
+    });
+
+    expect(response.status).toBe(400);
   });
 
   it("refuses a part of the wrong size", async () => {
     const editor = await staff("editor", { role: "editor" });
     const { id } = (await (
-      await startUpload(editor.browser, { name: "a.pdf", type: "application/pdf", size: 100 })
+      await startUpload(editor.browser, { name: "a.pdf", type: "application/pdf", size: 100, head: pdf(100) })
     ).json()) as { id: string };
 
     expect((await sendPart(editor.browser, id, 1, pdf(99))).status).toBe(400);
@@ -121,7 +139,12 @@ describe("uploading into quarantine", () => {
     );
 
     const educator = await staff("educator", { role: "educator" });
-    const started = await startUpload(educator.browser, { name: "a.pdf", type: "application/pdf", size: 10 });
+    const started = await startUpload(educator.browser, {
+      name: "a.pdf",
+      type: "application/pdf",
+      size: 10,
+      head: pdf(10),
+    });
     expect(started.status).toBe(201);
     const { id } = (await started.json()) as { id: string };
 

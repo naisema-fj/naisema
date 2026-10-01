@@ -19,7 +19,9 @@ const scanner =
   };
 
 async function upload(browser: Browser, name: string, type: string, bytes: Uint8Array) {
-  const { id } = (await (await startUpload(browser, { name, type, size: bytes.length })).json()) as { id: string };
+  const { id } = (await (await startUpload(browser, { name, type, size: bytes.length, head: bytes })).json()) as {
+    id: string;
+  };
   await sendPart(browser, id, 1, bytes);
   await completeUpload(browser, id);
   return id;
@@ -50,6 +52,7 @@ describe("the media library", () => {
   it("saves an image's alt text", async () => {
     const editor = await staff("editor", { role: "editor" });
     const id = await upload(editor.browser, "drua.png", "image/png", PNG);
+    await scanUpload(env, getDb(env.DB), id, scanner("clean"));
 
     const response = await editor.browser.fetch("/admin/media", {
       form: { intent: "alt", assetId: id, altText: "A drua under sail off Kadavu" },

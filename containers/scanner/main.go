@@ -125,6 +125,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case err != nil:
 		respond(w, http.StatusInternalServerError, result{Verdict: "error", Detail: err.Error()})
+	case strings.Contains(reply, "size limit exceeded"):
+		respond(w, http.StatusInternalServerError, result{Verdict: "error", Detail: "too large to scan"})
 	case strings.HasSuffix(reply, " OK"):
 		respond(w, http.StatusOK, result{Verdict: "clean"})
 	case strings.HasSuffix(reply, " FOUND"):
@@ -138,5 +140,12 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	log.Fatal(http.ListenAndServe(":8080", http.HandlerFunc(handle)))
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: http.HandlerFunc(handle),
+		// Headers must arrive promptly; a body may take as long as a 2 GB upload takes to stream.
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+	}
+	log.Fatal(server.ListenAndServe())
 }

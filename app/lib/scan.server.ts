@@ -1,10 +1,10 @@
-import { and, eq, inArray, lt } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, or } from "drizzle-orm";
 import { mediaAsset } from "~db/schema";
-import { auditInsert } from "./audit.server";
+import { auditInsert, recordAudit } from "./audit.server";
 import { type Database, getDb } from "./db.server";
-import type { MediaAsset, ScanMessage } from "./media.server";
+import { abortMultipart, type MediaAsset, type ScanMessage } from "./media.server";
 import { DAY_MS } from "./rights-rules";
-import { checkContent, type UploadType } from "./upload-rules";
+import { checkContent, HEAD_BYTES } from "./upload-rules";
 
 /**
  * The scan step (ADR-0010). A queued upload is read from quarantine, its type checked again,
@@ -25,12 +25,20 @@ export function containerScanner(env: Env): Scanner {
   return async ({ body, size }) => {
     // A fixed length, so the container receives a Content-Length rather than a chunked body.
     const { readable, writable } = new FixedLengthStream(size);
-    const sending = body.pipeTo(writable);
-    const response = await env.SCANNER.getByName("upload-scanner").fetch("http://scanner/scan", {
-      method: "POST",
-      body: readable,
-    });
-    await sending.catch(() => undefined);
+    const sending = body.pipeTo(writable).catch(() => undefined);
+    let response: Response;
+    try {
+      response = await env.SCANNER.getByName("upload-scanner").fetch("http://scanner/scan", {
+        method: "POST",
+        body: readable,
+      });
+    } catch (error) {
+      // Stop reading from quarantine if the scanner never took the file.
+      await readable.cancel().catch(() => undefined);
+      throw new ScannerUnavailable(`The scanner could not be reached: ${error}`);
+    } finally {
+      await sending;
+    }
     const result = (await response.json().catch(() => null)) as { verdict?: string; signature?: string } | null;
     if (response.ok && result?.verdict === "clean") return { verdict: "clean" };
     if (response.ok && result?.verdict === "infected") {
@@ -46,24 +54,38 @@ export const MAX_SCAN_ATTEMPTS = 5;
 const SCAN_FAILED =
   "The virus scan could not finish. Upload the file again; if it keeps failing, tell the technical owner.";
 
-type Outcome = "skipped" | "clean" | "infected" | "refused";
+type Outcome = "skipped" | "clean" | "infected" | "failed";
 
-/** Moves an asset out of "scanning", only if it is still there, so a repeated delivery changes nothing. */
-function settle(db: Database, asset: MediaAsset, status: "ready" | "infected" | "failed", reason: string | null) {
-  return [
-    db
-      .update(mediaAsset)
-      .set({ status, statusReason: reason, scannedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(mediaAsset.id, asset.id), eq(mediaAsset.status, "scanning"))),
-    auditInsert(db, {
-      actorId: null,
-      action: `media_asset.${status === "ready" ? "passed" : status}`,
-      objectType: "media_asset",
-      objectId: asset.id,
-      details: reason ? { reason } : undefined,
-    }),
-  ] as const;
+/**
+ * Moves an asset out of "scanning", only if it is still there, and audits only a move that
+ * happened, so a repeated delivery changes and records nothing. A refused file's destination copy
+ * is removed too, in case an earlier delivery copied it before stopping.
+ */
+async function settle(
+  env: Env,
+  db: Database,
+  asset: MediaAsset,
+  status: "ready" | "infected" | "failed",
+  reason: string | null,
+) {
+  const now = new Date();
+  const moved = await db
+    .update(mediaAsset)
+    .set({ status, statusReason: reason, scannedAt: now, updatedAt: now })
+    .where(and(eq(mediaAsset.id, asset.id), eq(mediaAsset.status, "scanning")))
+    .returning({ id: mediaAsset.id });
+  if (!moved.length) return;
+  if (status !== "ready") await destinationOf(env, asset).delete(asset.destinationKey);
+  await recordAudit(db, {
+    actorId: null,
+    action: `media_asset.${status === "ready" ? "passed" : status}`,
+    objectType: "media_asset",
+    objectId: asset.id,
+    details: reason ? { reason } : undefined,
+  });
 }
+
+const destinationOf = (env: Env, asset: MediaAsset) => (asset.purpose === "evidence" ? env.EVIDENCE : env.MEDIA);
 
 /** Scans one queued upload and acts on the verdict. */
 export async function scanUpload(env: Env, db: Database, assetId: string, scanner: Scanner): Promise<Outcome> {
@@ -76,30 +98,30 @@ export async function scanUpload(env: Env, db: Database, assetId: string, scanne
   }
   if (asset.status !== "scanning") return "skipped";
 
-  const head = await env.QUARANTINE.get(asset.quarantineKey, { range: { offset: 0, length: 16 } });
+  const head = await env.QUARANTINE.get(asset.quarantineKey, { range: { offset: 0, length: HEAD_BYTES } });
   if (!head) {
-    await db.batch(settle(db, asset, "failed", "The uploaded file is missing. Upload it again."));
-    return "refused";
+    await settle(env, db, asset, "failed", "The uploaded file is missing. Upload it again.");
+    return "failed";
   }
-  const content = checkContent(asset.type as UploadType, new Uint8Array(await head.arrayBuffer()));
+  const content = checkContent(asset.type, new Uint8Array(await head.arrayBuffer()));
   if (!content.ok) {
-    await db.batch(settle(db, asset, "failed", content.error));
-    return "refused";
+    await settle(env, db, asset, "failed", content.error);
+    return "failed";
   }
 
   const file = await env.QUARANTINE.get(asset.quarantineKey);
   if (!file) throw new Error("The quarantined file disappeared during the scan.");
   const result = await scanner({ body: file.body, size: file.size });
   if (result.verdict === "infected") {
-    await db.batch(settle(db, asset, "infected", `The virus scanner found ${result.signature}.`));
+    await settle(env, db, asset, "infected", `The virus scanner found ${result.signature}.`);
     return "infected";
   }
 
-  const clean = await env.QUARANTINE.get(asset.quarantineKey);
-  if (!clean) throw new Error("The quarantined file disappeared after its scan.");
-  const destination = asset.purpose === "evidence" ? env.EVIDENCE : env.MEDIA;
-  await destination.put(asset.destinationKey, clean.body, { httpMetadata: { contentType: asset.type } });
-  await db.batch(settle(db, asset, "ready", null));
+  // Copy exactly the bytes that were scanned: the same object, unchanged since (its etag).
+  const clean = await env.QUARANTINE.get(asset.quarantineKey, { onlyIf: { etagMatches: file.etag } });
+  if (!clean || !("body" in clean)) throw new Error("The quarantined file changed after its scan.");
+  await destinationOf(env, asset).put(asset.destinationKey, clean.body, { httpMetadata: { contentType: asset.type } });
+  await settle(env, db, asset, "ready", null);
   await env.QUARANTINE.delete(asset.quarantineKey);
   return "clean";
 }
@@ -118,7 +140,7 @@ export async function handleScanBatch(batch: MessageBatch<ScanMessage>, env: Env
       console.error("Upload scan failed", message.body.assetId, message.attempts, error);
       if (message.attempts >= MAX_SCAN_ATTEMPTS) {
         const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, message.body.assetId)).get();
-        if (asset) await db.batch(settle(db, asset, "failed", SCAN_FAILED));
+        if (asset) await settle(env, db, asset, "failed", SCAN_FAILED);
         message.ack();
       } else {
         message.retry({ delaySeconds: Math.min(60 * message.attempts, 600) });
@@ -127,7 +149,7 @@ export async function handleScanBatch(batch: MessageBatch<ScanMessage>, env: Env
   }
 }
 
-/** Quarantined failures are kept this long for staff to see, then removed (docs/phase-1a-defaults.md §1). */
+/** Quarantined failures are kept this long after their scan for staff to see, then removed (docs/phase-1a-defaults.md §1). */
 export const QUARANTINE_DAYS = 30;
 /** An upload left unfinished this long is abandoned. */
 const ABANDONED_DAYS = 7;
@@ -135,8 +157,8 @@ const ABANDONED_DAYS = 7;
 const STALLED_SCAN_MS = 60 * 60 * 1000;
 
 /**
- * The daily job's part: remove failed and infected files after 30 days, abandon uploads nobody
- * finished, and queue again any scan that has waited too long (a lost queue message).
+ * The daily job's part: remove failed and infected files 30 days after they were refused, abandon
+ * uploads nobody finished, and queue again any scan that has waited too long (a lost message).
  */
 export async function tidyQuarantine(env: Env, db: Database, now: Date) {
   const expired = await db
@@ -145,7 +167,14 @@ export async function tidyQuarantine(env: Env, db: Database, now: Date) {
     .where(
       and(
         inArray(mediaAsset.status, ["infected", "failed"]),
-        lt(mediaAsset.updatedAt, new Date(now.getTime() - QUARANTINE_DAYS * DAY_MS)),
+        // The clock is when it was refused, which nothing else moves (alt text, say).
+        or(
+          lt(mediaAsset.scannedAt, new Date(now.getTime() - QUARANTINE_DAYS * DAY_MS)),
+          and(
+            isNull(mediaAsset.scannedAt),
+            lt(mediaAsset.updatedAt, new Date(now.getTime() - QUARANTINE_DAYS * DAY_MS)),
+          ),
+        ),
       ),
     );
   for (const asset of expired) {
@@ -166,20 +195,21 @@ export async function tidyQuarantine(env: Env, db: Database, now: Date) {
       ),
     );
   for (const asset of abandoned) {
-    if (asset.multipartUploadId) {
-      await env.QUARANTINE.resumeMultipartUpload(asset.quarantineKey, asset.multipartUploadId)
-        .abort()
-        .catch(() => undefined);
-    }
-    await db
-      .update(mediaAsset)
-      .set({
-        status: "failed",
-        statusReason: "This upload was never finished.",
-        multipartUploadId: null,
-        updatedAt: now,
-      })
-      .where(eq(mediaAsset.id, asset.id));
+    await abortMultipart(env, asset);
+    const reason = "This upload was never finished.";
+    await db.batch([
+      db
+        .update(mediaAsset)
+        .set({ status: "failed", statusReason: reason, multipartUploadId: null, scannedAt: now, updatedAt: now })
+        .where(eq(mediaAsset.id, asset.id)),
+      auditInsert(db, {
+        actorId: null,
+        action: "media_asset.failed",
+        objectType: "media_asset",
+        objectId: asset.id,
+        details: { reason },
+      }),
+    ]);
   }
 
   const stalled = await db

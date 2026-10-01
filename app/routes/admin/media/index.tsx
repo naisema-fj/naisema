@@ -1,10 +1,11 @@
 import { data, Form } from "react-router";
 import { MediaUploader } from "~/components/media-uploader";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { listMedia, type MediaStatus, setAltText } from "~/lib/media.server";
+import { listMedia, setAltText } from "~/lib/media.server";
 import { requireUploader } from "~/lib/media-access.server";
 import { filePath, imagePath } from "~/lib/media-delivery.server";
-import { formatBytes, isUploadType, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
+import { primaryPublicOrigin } from "~/lib/public-cache.server";
+import { formatBytes, type MediaStatus, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import type { Route } from "./+types/index";
 
 export function meta() {
@@ -24,7 +25,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const { db } = await requireUploader(env, request);
   // Ready files open on the public site, where they are delivered.
-  const publicOrigin = env.PUBLIC_ORIGINS.split(",")[0]?.trim() ?? "";
+  const publicOrigin = primaryPublicOrigin(env);
   const assets = await listMedia(db);
   return {
     assets: assets.map((asset) => {
@@ -33,11 +34,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       return {
         id: asset.id,
         name: asset.name,
-        typeName: isUploadType(asset.type) ? UPLOAD_TYPE_NAMES[asset.type] : asset.type,
+        typeName: UPLOAD_TYPE_NAMES[asset.type] ?? asset.type,
         size: formatBytes(asset.size),
-        status: STATUS_NAMES[asset.status as MediaStatus] ?? asset.status,
+        status: STATUS_NAMES[asset.status] ?? asset.status,
         reason: asset.statusReason,
         isImage,
+        // Alt text describes an image people can see, so only a ready image takes it.
+        takesAltText: isImage && ready,
         altText: asset.altText,
         link:
           ready && isImage
@@ -105,7 +108,7 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
                     {asset.reason && <span className="reason">{asset.reason}</span>}
                   </td>
                   <td>
-                    {asset.isImage ? (
+                    {asset.takesAltText ? (
                       <Form method="post" className="alt-form">
                         <input type="hidden" name="intent" value="alt" />
                         <input type="hidden" name="assetId" value={asset.id} />
@@ -124,6 +127,8 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
                           <span role="status">Saved</span>
                         )}
                       </Form>
+                    ) : asset.isImage ? (
+                      "Once it passes its scan"
                     ) : (
                       "Not needed"
                     )}
