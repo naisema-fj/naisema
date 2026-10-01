@@ -163,9 +163,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   })();
 
   if (!result.ok) return data({ error: result.error }, { status: 400 });
-  if (intent === "publish" || intent === "withdraw" || intent === "archive") {
-    await purgePublicPages(env, pagesShowing({ area: article.primaryArea, slug: article.slug }));
-  }
+  // Publishing, withdrawing and archiving change what is public, and so can a review decision
+  // recorded on the published Revision; purging after every action keeps that rule in one place.
+  await purgePublicPages(env, pagesShowing({ area: article.primaryArea, slug: article.slug }));
   throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
 }
 

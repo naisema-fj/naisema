@@ -20,9 +20,13 @@ const edgeCache = () => (caches as unknown as { default: Cache }).default;
 /** The Cache-Control a public route sends to be edge-cached; browsers keep it for a minute. */
 export const PUBLIC_CACHE_CONTROL = `public, max-age=60, s-maxage=${PUBLIC_CACHE_SECONDS}`;
 
-/** The edge cache key for a public URL under this Worker version. */
+/**
+ * The edge cache key for a public URL under this Worker version. Public pages don't read the query
+ * string, so it is dropped: one cached copy per page, which a purge by path always reaches.
+ */
 export function publicCacheKey(env: Env, url: string) {
   const key = new URL(url);
+  key.search = "";
   key.searchParams.set("__version", env.CF_VERSION_METADATA.id);
   return key.toString();
 }

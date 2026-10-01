@@ -19,7 +19,11 @@ export const publicPath = (area: string, slug: string) => `/${area}/${slug}`;
 
 type ItemRow = typeof contentItem.$inferSelect;
 
-/** The published Revision of an item, if the item is published and eligible right now. */
+/**
+ * The public decision of ADR-0007: the item is published and its published Revision is eligible
+ * right now. `eligibilityFor` leaves out the publication state because publishing itself asks it;
+ * public code asks this instead, never `eligibilityFor` alone.
+ */
 async function eligiblePublished(db: Database, item: ItemRow, now: Date) {
   if (item.publicationState !== "published" || !item.currentPublishedRevisionId) return null;
   const review = await loadReview(db, item.currentPublishedRevisionId);
@@ -29,6 +33,10 @@ async function eligiblePublished(db: Database, item: ItemRow, now: Date) {
   const row = await db.select().from(revision).where(eq(revision.id, item.currentPublishedRevisionId)).get();
   return row ? { review, snapshot: row.snapshot as ArticleSnapshot } : null;
 }
+
+/** Withdrawn or archived after being published; an item never published stays unknown to visitors. */
+const isTakenDown = (item: ItemRow) =>
+  (item.publicationState === "withdrawn" || item.publicationState === "archived") && item.firstPublishedAt !== null;
 
 export type PublicArticle = {
   id: string;
@@ -77,13 +85,14 @@ export async function findPublicArticle(
       .innerJoin(contentItem, eq(contentItem.id, slugRedirect.contentItemId))
       .where(and(eq(slugRedirect.primaryArea, area), eq(slugRedirect.slug, slug)))
       .get();
-    if (redirect && (await eligiblePublished(db, redirect.item, now))) {
-      return { kind: "moved", to: publicPath(redirect.item.primaryArea, redirect.item.slug) };
-    }
-    return { kind: "missing" };
+    if (!redirect) return { kind: "missing" };
+    // An old address answers as the item's own address would.
+    if (isTakenDown(redirect.item)) return { kind: "withdrawn" };
+    if (!(await eligiblePublished(db, redirect.item, now))) return { kind: "missing" };
+    return { kind: "moved", to: publicPath(redirect.item.primaryArea, redirect.item.slug) };
   }
 
-  if (item.publicationState === "withdrawn" || item.publicationState === "archived") return { kind: "withdrawn" };
+  if (isTakenDown(item)) return { kind: "withdrawn" };
   const published = await eligiblePublished(db, item, now);
   if (!published) return { kind: "missing" };
   const { snapshot, review } = published;
@@ -141,7 +150,10 @@ export type PublicListing = {
   lastPublishedAt: Date | null;
 };
 
-/** Published, eligible items, newest first: in one area, or across the site. */
+/**
+ * Published, eligible Articles, newest first: in one area, or across the site. Each is checked
+ * one by one, which is fine at Phase 1a volumes; revisit before listings reach the hundreds.
+ */
 export async function listPublic(
   db: Database,
   { area, limit }: { area?: PrimaryArea; limit?: number } = {},
@@ -150,7 +162,13 @@ export async function listPublic(
   const items = await db
     .select()
     .from(contentItem)
-    .where(and(eq(contentItem.publicationState, "published"), area ? eq(contentItem.primaryArea, area) : undefined))
+    .where(
+      and(
+        eq(contentItem.type, "article"),
+        eq(contentItem.publicationState, "published"),
+        area ? eq(contentItem.primaryArea, area) : undefined,
+      ),
+    )
     .orderBy(desc(contentItem.lastPublishedAt));
   const listings: PublicListing[] = [];
   for (const item of items) {

@@ -79,7 +79,7 @@ export default function Article({ loaderData: article }: Route.ComponentProps) {
               ))}
             </Postmarks>
           ) : (
-            <p className="no-review">None on this version.</p>
+            <p className="no-review">This article has none.</p>
           )}
         </section>
 

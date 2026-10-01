@@ -21,8 +21,7 @@ export const isPrimaryArea = (value: string): value is PrimaryArea =>
 export const AREA_INFO: Record<PrimaryArea, { description: string; notYetOpen?: string }> = {
   learn: {
     description: "Fijian language and culture, one step at a time.",
-    notYetOpen:
-      "Video lessons with captions, word meanings and practice open with the first lessons, once they are reviewed.",
+    notYetOpen: "Videos with captions, word meanings and practice open once the first ones are reviewed.",
   },
   voices: {
     description: "Stories and recordings from Fijians at home and abroad.",

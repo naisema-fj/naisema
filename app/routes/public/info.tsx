@@ -7,14 +7,14 @@ export const handle = { hydrate: false };
 export const headers = publicHeaders;
 
 export function loader({ request }: Route.LoaderArgs) {
-  const path = new URL(request.url).pathname.slice(1);
+  const path = new URL(request.url).pathname.replace(/^\/|\/$/g, "");
   const page = INFO_PAGES.find((candidate) => candidate.path === path);
   if (!page) throw new Response("Not found", { status: 404 });
   return page;
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.title ?? "Na iSema"} · Na iSema` }];
+  return [{ title: loaderData ? `${loaderData.title} · Na iSema` : "Na iSema" }];
 }
 
 /** A footer page that hasn't been written yet says so, and what it will hold (PUB-01). */

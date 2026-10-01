@@ -10,8 +10,8 @@ async function expectNoHorizontalScroll(page: Page) {
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
-test("the homepage, an area and an article pass axe", async ({ page }) => {
-  for (const path of ["/", "/ezine", "/learn", ARTICLE, "/about"]) {
+test("the homepage, an area, an article and the not-found page pass axe", async ({ page }) => {
+  for (const path of ["/", "/ezine", "/learn", ARTICLE, "/about", "/nowhere"]) {
     await page.goto(path);
     await expectNoAxeViolations(page);
   }

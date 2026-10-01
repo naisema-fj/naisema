@@ -1,12 +1,12 @@
+import { formatDay } from "~/lib/rights-rules";
+
 /** Dates as they are written on a public page, and as a machine-readable <time>. */
 export function DateMark({ label, date }: { label: string; date: Date | string }) {
   const value = new Date(date);
   return (
     <>
       {`${label} `}
-      <time dateTime={value.toISOString().slice(0, 10)}>
-        {value.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}
-      </time>
+      <time dateTime={value.toISOString().slice(0, 10)}>{formatDay(value)}</time>
     </>
   );
 }

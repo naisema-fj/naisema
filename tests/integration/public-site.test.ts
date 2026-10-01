@@ -51,13 +51,20 @@ describe("public site shell", () => {
     const learn = await (await visit("/learn")).text();
     const home = await (await visit("/")).text();
 
-    expect(learn).toContain("Video lessons with captions, word meanings and practice open with the first lessons");
+    expect(learn).toContain("Videos with captions, word meanings and practice open once the first ones are reviewed.");
     expect(home).toContain("The newsletter isn&#x27;t open yet.");
   });
 
   it("answers unknown areas and pages with 404", async () => {
     expect((await visit("/nowhere")).status).toBe(404);
     expect((await visit("/learn/no-such-article")).status).toBe(404);
+  });
+
+  it("says what each footer page will hold, with or without a trailing slash", async () => {
+    const accessibility = await visit("/accessibility/");
+
+    expect(accessibility.status).toBe(200);
+    expect(await accessibility.text()).toContain("This page is being written.");
   });
 
   it("ships no client JavaScript and allows none on public pages", async () => {
@@ -67,11 +74,13 @@ describe("public site shell", () => {
     expect(await response.text()).not.toContain("<script");
   });
 
-  it("keys cached pages by the deployed version, so a deploy never serves pages built for old assets", () => {
+  it("keys cached pages by path and deployed version, so purges reach every copy and a deploy never serves old pages", () => {
     const deployed = (id: string) => ({ ...env, CF_VERSION_METADATA: { id, tag: "", timestamp: "" } });
 
     expect(publicCacheKey(deployed("v1"), `${PUBLIC}/`)).not.toBe(publicCacheKey(deployed("v2"), `${PUBLIC}/`));
-    expect(publicCacheKey(deployed("v1"), `${PUBLIC}/learn`)).toBe(publicCacheKey(deployed("v1"), `${PUBLIC}/learn`));
+    expect(publicCacheKey(deployed("v1"), `${PUBLIC}/learn?utm_source=x`)).toBe(
+      publicCacheKey(deployed("v1"), `${PUBLIC}/learn`),
+    );
   });
 
   it("keeps non-production sites out of search engines", async () => {
@@ -116,6 +125,15 @@ describe("a published article", () => {
 
     expect(page).toContain("<h1>Vosa vakaviti</h1>");
     expect(page).not.toContain("Draft words.");
+  });
+
+  it("never reveals an item that was archived without being published", async () => {
+    const { editor, article } = await submittedArticle([]);
+    const path = await itemPath(article.id);
+
+    await act(editor, article.id, 1, { intent: "archive" });
+
+    expect((await visit(path)).status).toBe(404);
   });
 
   it("never renders a draft that was never published", async () => {
@@ -165,6 +183,27 @@ describe("a published article", () => {
     expect(old.status).toBe(301);
     expect(old.headers.get("Location")).toBe("/learn/greetings-in-fijian");
     expect((await visit("/learn/greetings-in-fijian")).status).toBe(200);
+  });
+
+  it("answers 410 at an old address too, once the item is withdrawn", async () => {
+    const { editor, article, path } = await publishedLanguageArticle();
+    await editor.browser.fetch(`/admin/articles/${article.id}`, { form: { intent: "slug", slug: "moved-greetings" } });
+
+    await act(editor, article.id, 1, { intent: "withdraw" });
+
+    expect((await visit(path)).status).toBe(410);
+  });
+
+  it("never reuses an old address, even for the same item, so cached redirects can't loop", async () => {
+    const { editor, article, path } = await publishedLanguageArticle();
+    const oldSlug = path.split("/")[2];
+    await editor.browser.fetch(`/admin/articles/${article.id}`, { form: { intent: "slug", slug: "greetings-again" } });
+
+    const back = await editor.browser.fetch(`/admin/articles/${article.id}`, {
+      form: { intent: "slug", slug: oldSlug },
+    });
+
+    expect(back.status).toBe(400);
   });
 
   it("refuses a slug that another item uses", async () => {

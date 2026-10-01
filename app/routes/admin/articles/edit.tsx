@@ -3,6 +3,7 @@ import { ArticleForm } from "~/components/article-form";
 import { articleFingerprints, embeddableArticles, getArticle, readArticleForm } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
+import { publicPath } from "~/lib/public.server";
 import { pagesShowing, purgePublicPages } from "~/lib/public-cache.server";
 import { appendRevision } from "~/lib/revisions.server";
 import { changeSlug } from "~/lib/slugs.server";
@@ -39,8 +40,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { errors: {}, values: null, error: null, baseRevisionId: null, slugError: changed.error },
         { status: 400 },
       );
-    const area = changed.newPath.split("/")[1];
-    await purgePublicPages(env, [...pagesShowing({ area, slug: changed.newPath.split("/")[2] }), changed.oldPath]);
+    await purgePublicPages(env, [
+      ...pagesShowing({ area: changed.area, slug: changed.newSlug }),
+      publicPath(changed.area, changed.oldSlug),
+    ]);
     throw redirect(`/admin/articles/${params.id}?slug=changed`);
   }
 

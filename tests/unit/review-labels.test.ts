@@ -63,6 +63,15 @@ describe("reviewLabels (PUB-02)", () => {
     ).toEqual([]);
   });
 
+  it("leaves out a Language Variety the decision didn't record, rather than printing a gap", () => {
+    expect(
+      reviewLabels({
+        progress: [approved({ reviewType: "language" }, decision({ languageVariety: null }))],
+        flags: [],
+      }),
+    ).toEqual(["Language reviewed · 12 Oct 2026"]);
+  });
+
   it("never says verified", () => {
     const labels = reviewLabels({
       progress: [approved({ reviewType: "language", languageVariety: "standard-fijian" })],

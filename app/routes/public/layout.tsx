@@ -78,14 +78,23 @@ export default function PublicLayout() {
   );
 }
 
-export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+/** What a public error page says, by status. */
+function errorPage(error: unknown) {
   const status = isRouteErrorResponse(error) ? error.status : 500;
-  const [title, text] =
-    status === 410
-      ? ["This has been withdrawn", "It is no longer published on Na iSema."]
-      : status === 404
-        ? ["We couldn't find that page", "It may have moved, or it may not be published yet."]
-        : ["Something went wrong", "Something went wrong on our side. Please try again in a moment."];
+  return status === 410
+    ? { title: "This has been withdrawn", text: "It is no longer published on Na iSema." }
+    : status === 404
+      ? { title: "We couldn't find that page", text: "It may have moved, or it may not be published yet." }
+      : { title: "Something went wrong", text: "Something went wrong on our side. Please try again in a moment." };
+}
+
+/** Pages below an error boundary don't contribute meta, so an error page gets its title here. */
+export function meta({ error }: Route.MetaArgs) {
+  return [{ title: error ? `${errorPage(error).title} · Na iSema` : "Na iSema" }];
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const { title, text } = errorPage(error);
   return (
     <div className="public">
       <SiteHeader />

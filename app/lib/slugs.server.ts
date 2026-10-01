@@ -1,15 +1,18 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { contentItem, slugRedirect } from "~db/schema";
+import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
-import { publicPath } from "./public.server";
 import { slugify } from "./slug";
 
-export type SlugChange = { ok: true; oldPath: string; newPath: string } | { ok: false; error: string };
+export type SlugChange =
+  | { ok: true; area: PrimaryArea; oldSlug: string; newSlug: string }
+  | { ok: false; error: string };
 
 /**
  * Changes a Content Item's slug. The old slug is kept as a redirect, so links to the old address
- * answer with a 301 to the new one (docs/phase-1a-defaults.md §5).
+ * answer with a 301 to the new one (docs/phase-1a-defaults.md §5). An old slug is never reused,
+ * not even by the same item: browsers keep permanent redirects, so moving back would loop.
  */
 export async function changeSlug(
   db: Database,
@@ -35,24 +38,14 @@ export async function changeSlug(
     db
       .select({ id: slugRedirect.contentItemId })
       .from(slugRedirect)
-      .where(
-        and(
-          eq(slugRedirect.primaryArea, area),
-          eq(slugRedirect.slug, slug),
-          ne(slugRedirect.contentItemId, contentItemId),
-        ),
-      )
+      .where(and(eq(slugRedirect.primaryArea, area), eq(slugRedirect.slug, slug)))
       .get(),
   ]);
-  if (takenByItem || takenByRedirect) return { ok: false, error: "Another item already uses or used that address." };
+  if (takenByItem || takenByRedirect)
+    return { ok: false, error: "That address is in use or was used before. Choose a new one." };
 
   await db.batch([
-    // Taking back one of its own old slugs: that address stops being a redirect.
-    db.delete(slugRedirect).where(and(eq(slugRedirect.primaryArea, area), eq(slugRedirect.slug, slug))),
-    db
-      .insert(slugRedirect)
-      .values({ primaryArea: area, slug: item.slug, contentItemId, createdAt: new Date() })
-      .onConflictDoNothing(),
+    db.insert(slugRedirect).values({ primaryArea: area, slug: item.slug, contentItemId, createdAt: new Date() }),
     db.update(contentItem).set({ slug, updatedAt: new Date() }).where(eq(contentItem.id, contentItemId)),
     auditInsert(db, {
       actorId: changedBy,
@@ -62,5 +55,5 @@ export async function changeSlug(
       details: { from: item.slug, to: slug },
     }),
   ]);
-  return { ok: true, oldPath: publicPath(area, item.slug), newPath: publicPath(area, slug) };
+  return { ok: true, area: area as PrimaryArea, oldSlug: item.slug, newSlug: slug };
 }
