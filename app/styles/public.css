@@ -789,6 +789,12 @@ html:has(.public) {
   margin-top: 2rem;
 }
 
+.public .area-letter > .see-all {
+  margin-top: 1.25rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
 /* What isn't open yet: a ruled postmark line, stated plainly. */
 .not-open {
   font-family: var(--font-ui);

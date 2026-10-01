@@ -1,5 +1,7 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { getDb } from "~/lib/db.server";
+import { reindexExpiredRights } from "~/lib/search.server";
 import { act, createArticle, type Staff, staff } from "./support/articles";
 import { recordRights } from "./support/rights";
 
@@ -108,6 +110,30 @@ describe("public search", () => {
     const second = await search(`?q=${term}&area=ezine&page=2`);
     expect(second.match(new RegExp(`Paged ${term} \\d+`, "g"))).toHaveLength(1);
     expect(second).toContain(`href="/search?q=${term}&amp;area=ezine"`);
+
+    // The area page lists the newest 20 and sends the rest to search.
+    const area = await (await visit("/ezine")).text();
+    expect(area.match(new RegExp(`Paged ${term} \\d+`, "g"))).toHaveLength(20);
+    expect(area).toContain('href="/search?area=ezine"');
+  });
+
+  it("drops an item from search and listings once the daily job sees its rights expired", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const term = word();
+    const inThreeDays = new Date(Date.now() + 3 * 86_400_000);
+    const article = await createArticle(editor, { flag: [], languageVariety: "", title: `Expiring ${term}` });
+    await recordRights(editor.browser, article.id, { expiresOn: inThreeDays.toISOString().slice(0, 10) });
+    await act(editor, article.id, 1, { intent: "submit" });
+    await act(editor, article.id, 1, { intent: "publish" });
+    expect(await search(`?q=${term}`)).toContain(`Expiring ${term}`);
+
+    const dayAfter = new Date(inThreeDays.getTime() + 86_400_000);
+    await reindexExpiredRights(getDb(env.DB), new Date(dayAfter.getTime() - 2 * 86_400_000), dayAfter);
+
+    const left = await env.DB.prepare("SELECT count(*) AS n FROM search_entry WHERE content_item_id = ?1")
+      .bind(article.id)
+      .first<{ n: number }>();
+    expect(left?.n).toBe(0);
   });
 
   it("helps when nothing matches, and offers a way to start again", async () => {

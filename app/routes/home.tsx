@@ -3,8 +3,8 @@ import { DateMark } from "~/components/public/postmarks";
 import { AREA_INFO, AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { listPublic } from "~/lib/public.server";
 import { publicHeaders } from "~/lib/public-cache.server";
+import { listPublic } from "~/lib/search.server";
 import { getSiteSettings } from "~/lib/site-settings.server";
 import type { Route } from "./+types/home";
 
@@ -14,7 +14,7 @@ export const headers = publicHeaders;
 export async function loader({ context }: Route.LoaderArgs) {
   const db = getDb(context.get(cloudflareContext).env.DB);
   const [settings, latest] = await Promise.all([getSiteSettings(db), listPublic(db, { limit: 3 })]);
-  return { ...settings, latest };
+  return { ...settings, latest: latest.listings };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -38,9 +38,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     <main id="main" className="home">
       <section className="letter welcome" aria-labelledby="welcome-heading">
         <h1 id="welcome-heading">Bula vinaka</h1>
-        {first?.lastPublishedAt && (
+        {first?.publishedAt && (
           <p className="dateline">
-            <DateMark label="Last published" date={first.lastPublishedAt} />
+            <DateMark label="Last published" date={first.publishedAt} />
           </p>
         )}
         <p className="letter-body">{loaderData.welcomeStatement ?? DEFAULT_WELCOME}</p>
@@ -80,10 +80,10 @@ export default function Home({ loaderData }: Route.ComponentProps) {
                 <p>{item.summary}</p>
                 <p className="list-mark">
                   {item.areaName}
-                  {item.lastPublishedAt && (
+                  {item.publishedAt && (
                     <>
                       {" · "}
-                      <DateMark label="Published" date={item.lastPublishedAt} />
+                      <DateMark label="Published" date={item.publishedAt} />
                     </>
                   )}
                 </p>

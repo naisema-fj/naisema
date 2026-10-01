@@ -1,6 +1,6 @@
-import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, lte, sql } from "drizzle-orm";
 import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
-import { contentItem, searchEntry, searchEntryTopic, topic } from "~db/schema";
+import { contentItem, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
 import { AREA_NAMES, type PrimaryArea } from "./areas";
 import type { Database } from "./db.server";
 import { FORMAT_NAMES, isContentFormat } from "./formats";
@@ -8,9 +8,10 @@ import { eligiblePublished, publicPath } from "./public.server";
 import { matchExpression, type SearchFilters } from "./search-query";
 
 /**
- * Public search (PUB-03, ADR-0007). The index holds items whose published Revision was eligible
- * when last indexed; it is rebuilt for an item whenever its public state may change, and every hit
- * is checked again before it is shown, so an item that lapsed since then never appears.
+ * The public index (PUB-03, ADR-0007): search, area listings and the sitemap all read it. It holds
+ * items whose published Revision was eligible when last indexed. An item is reindexed whenever its
+ * public state may change, and daily when its rights expire (the only change that comes with time);
+ * every item shown is checked again first, so one that lapsed in between never appears.
  */
 
 /** The FTS5 table from migrations/0006, declared here (not in db/schema.ts) so drizzle-kit leaves it alone. */
@@ -52,6 +53,7 @@ export async function indexItem(db: Database, contentItemId: string, now = new D
 
 export type SearchResult = {
   id: string;
+  area: PrimaryArea;
   path: string;
   title: string;
   summary: string;
@@ -104,17 +106,35 @@ export async function searchPublic(db: Database, filters: SearchFilters, now = n
       .orderBy(asc(topic.name)),
   ]);
 
+  const results = await stillEligible(db, rows, now);
+  return {
+    results,
+    total: total - (rows.length - results.length),
+    pageCount: Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE)),
+    topics,
+  };
+}
+
+/**
+ * The hits that are still eligible, as results. A hit that lapsed since it was indexed (its rights
+ * expired today, say) is left out and dropped from the index there and then.
+ */
+async function stillEligible(
+  db: Database,
+  rows: { item: typeof contentItem.$inferSelect; format: string }[],
+  now: Date,
+): Promise<SearchResult[]> {
   const checked = await Promise.all(
     rows.map(async ({ item, format }) => {
       const published = await eligiblePublished(db, item, now);
       if (!published) {
-        // It lapsed since it was indexed (a rights expiry, say): drop it from the index now.
         await indexItem(db, item.id, now);
         return null;
       }
       const area = item.primaryArea as PrimaryArea;
       return {
         id: item.id,
+        area,
         path: publicPath(area, item.slug),
         title: published.snapshot.title,
         summary: published.snapshot.summary,
@@ -124,11 +144,56 @@ export async function searchPublic(db: Database, filters: SearchFilters, now = n
       } satisfies SearchResult;
     }),
   );
-  const results = checked.filter((result) => result !== null);
-  return {
-    results,
-    total: total - (rows.length - results.length),
-    pageCount: Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE)),
-    topics,
-  };
+  return checked.filter((result) => result !== null);
+}
+
+/** The newest public items, in one area or across the site, and how many there are in all. */
+export async function listPublic(
+  db: Database,
+  { area, limit }: { area?: PrimaryArea; limit: number },
+  now = new Date(),
+) {
+  const where = area ? eq(searchEntry.primaryArea, area) : undefined;
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select({ item: contentItem, format: searchEntry.format })
+      .from(searchEntry)
+      .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId))
+      .where(where)
+      .orderBy(desc(searchEntry.publishedAt))
+      .limit(limit),
+    db.select({ total: count() }).from(searchEntry).where(where),
+  ]);
+  const listings = await stillEligible(db, rows, now);
+  return { listings, total: total - (rows.length - listings.length) };
+}
+
+/**
+ * Every indexed item's address for the sitemap, without re-checking each one: a sitemap only
+ * suggests addresses, and each page decides eligibility when it is requested.
+ */
+export function sitemapEntries(db: Database) {
+  return db
+    .select({ area: contentItem.primaryArea, slug: contentItem.slug, publishedAt: searchEntry.publishedAt })
+    .from(searchEntry)
+    .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId))
+    .orderBy(desc(searchEntry.publishedAt));
+}
+
+/**
+ * The daily job's part: items whose Rights Records expired in the window stop being public with
+ * nothing else happening, so reindex them. The window overlaps the previous run's.
+ */
+export async function reindexExpiredRights(db: Database, since: Date, now: Date) {
+  const expired = await db
+    .selectDistinct({ id: rightsRecord.subjectId })
+    .from(rightsRecord)
+    .where(
+      and(
+        eq(rightsRecord.subjectType, "content_item"),
+        gt(rightsRecord.expiresAt, since),
+        lte(rightsRecord.expiresAt, now),
+      ),
+    );
+  for (const { id } of expired) await indexItem(db, id, now);
 }

@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { EmbeddedItem } from "~/components/article-body-view";
 import { contentItem, revision, slugRedirect, topic } from "~db/schema";
 import { AREA_NAMES, type PrimaryArea } from "./areas";
@@ -138,53 +138,4 @@ async function publicEmbeds(db: Database, body: ArticleBody, now: Date) {
     }),
   );
   return Object.fromEntries(entries.filter((entry) => entry !== null));
-}
-
-export type PublicListing = {
-  area: PrimaryArea;
-  areaName: string;
-  slug: string;
-  path: string;
-  title: string;
-  summary: string;
-  lastPublishedAt: Date | null;
-};
-
-/**
- * Published, eligible Articles, newest first: in one area, or across the site. Each is checked
- * one by one, which is fine at Phase 1a volumes; revisit before listings reach the hundreds.
- */
-export async function listPublic(
-  db: Database,
-  { area, limit }: { area?: PrimaryArea; limit?: number } = {},
-  now = new Date(),
-): Promise<PublicListing[]> {
-  const items = await db
-    .select()
-    .from(contentItem)
-    .where(
-      and(
-        eq(contentItem.type, "article"),
-        eq(contentItem.publicationState, "published"),
-        area ? eq(contentItem.primaryArea, area) : undefined,
-      ),
-    )
-    .orderBy(desc(contentItem.lastPublishedAt));
-  const listings: PublicListing[] = [];
-  for (const item of items) {
-    if (limit && listings.length >= limit) break;
-    const published = await eligiblePublished(db, item, now);
-    if (!published) continue;
-    const itemArea = item.primaryArea as PrimaryArea;
-    listings.push({
-      area: itemArea,
-      areaName: AREA_NAMES[itemArea],
-      slug: item.slug,
-      path: publicPath(itemArea, item.slug),
-      title: published.snapshot.title,
-      summary: published.snapshot.summary,
-      lastPublishedAt: item.lastPublishedAt,
-    });
-  }
-  return listings;
 }

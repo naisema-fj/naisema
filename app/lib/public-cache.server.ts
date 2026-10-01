@@ -21,8 +21,9 @@ const edgeCache = () => (caches as unknown as { default: Cache }).default;
 export const PUBLIC_CACHE_CONTROL = `public, max-age=60, s-maxage=${PUBLIC_CACHE_SECONDS}`;
 
 /**
- * The edge cache key for a public URL under this Worker version. Public pages don't read the query
- * string, so it is dropped: one cached copy per page, which a purge by path always reaches.
+ * The edge cache key for a public URL under this Worker version. Cached pages don't read the query
+ * string (search, which does, is never cached), so it is dropped: one cached copy per page, which a
+ * purge by path always reaches.
  */
 export function publicCacheKey(env: Env, url: string) {
   const key = new URL(url);

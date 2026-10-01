@@ -1,8 +1,10 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { AUTH_BASE_PATH, createAuth } from "~/lib/auth.server";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { getDb } from "~/lib/db.server";
 import { servePublic } from "~/lib/public-cache.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
+import { reindexExpiredRights } from "~/lib/search.server";
 
 const requestHandler = createRequestHandler(() => import("virtual:react-router/server-build"), import.meta.env.MODE);
 
@@ -69,8 +71,14 @@ export default {
     return servePublic(request, env, ctx, () => requestHandler(request, context));
   },
 
-  /** The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings. Awaited, so a failed run shows as failed. */
+  /**
+   * The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings, then reindexing items
+   * whose rights expired in the last two days (overlapping, in case a run was missed). Awaited, so
+   * a failed run shows as failed.
+   */
   async scheduled(controller, env) {
-    await sendExpiryWarnings(env, new Date(controller.scheduledTime));
+    const now = new Date(controller.scheduledTime);
+    await sendExpiryWarnings(env, now);
+    await reindexExpiredRights(getDb(env.DB), new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), now);
   },
 } satisfies ExportedHandler<Env>;
