@@ -66,3 +66,31 @@ VALUES ('e2e-article', 'ezine', 'article', 'A letter from home',
 ON CONFLICT(content_item_id) DO NOTHING;
 INSERT INTO search_entry_topic (content_item_id, topic_id) VALUES ('e2e-article', 'e2e-topic-ceremonies')
 ON CONFLICT DO NOTHING;
+
+-- A published link Resource, and a description for the seeded Topic, for the public pages' checks.
+UPDATE topic SET description = 'Sevusevu, the yaqona ceremony and how a visit begins.' WHERE id = 'e2e-topic-ceremonies';
+INSERT INTO content_item (id, type, slug, primary_area, created_by, created_at, updated_at,
+  publication_state, first_published_at, last_published_at)
+VALUES ('e2e-resource', 'resource', 'e2e-dictionary-link', 'resources', 'e2e-seed', 0, 0, 'published',
+  1790000000000, 1790000000000)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO revision (id, content_item_id, number, snapshot, fingerprints, created_by, created_at)
+VALUES ('e2e-resource-r1', 'e2e-resource', 1,
+  '{"title":"A Fijian dictionary online","summary":"Look words up in Standard Fijian and English.","credit":"Listed by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"A free dictionary kept by another site."}]}]},"sources":"","flags":[],"languageVariety":null,"resource":{"source":{"kind":"link","url":"https://example.org/dictionary","checkedOn":"2026-09-30"},"language":"Standard Fijian and English","ageGuidance":"all-ages","accessibility":"Works with screen readers.","permittedUse":"Free to use; follow the site''s own terms."}}',
+  '{}', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+UPDATE content_item SET current_draft_revision_id = 'e2e-resource-r1', current_published_revision_id = 'e2e-resource-r1'
+WHERE id = 'e2e-resource';
+INSERT INTO revision_submission (revision_id, submitted_by, submitted_at) VALUES ('e2e-resource-r1', 'e2e-seed', 0)
+ON CONFLICT(revision_id) DO NOTHING;
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-resource-rights', 'content_item', 'e2e-resource', 'E2E Listing', '["publish"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO search_entry (content_item_id, primary_area, format, title, summary, topic_names, published_at)
+VALUES ('e2e-resource', 'resources', 'resource', 'A Fijian dictionary online',
+  'Look words up in Standard Fijian and English.', 'E2E Ceremonies', 1790000000000)
+ON CONFLICT(content_item_id) DO NOTHING;
+INSERT INTO search_entry_topic (content_item_id, topic_id) VALUES ('e2e-resource', 'e2e-topic-ceremonies')
+ON CONFLICT DO NOTHING;

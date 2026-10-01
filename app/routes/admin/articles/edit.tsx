@@ -114,9 +114,7 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
       {actionData?.error && <p role="alert">{actionData.error}</p>}
       {loaderData.linkReports > 0 && (
         <p role="status">
-          Visitors have reported this link broken {loaderData.linkReports}{" "}
-          {loaderData.linkReports === 1 ? "time" : "times"} since you last checked it. Check it, then save with the new
-          date.
+          {`Visitors have reported this link broken ${loaderData.linkReports} ${loaderData.linkReports === 1 ? "time" : "times"} since you last checked it. Check it, then save with the new date.`}
         </p>
       )}
       <p>

@@ -33,7 +33,12 @@ describe("readResourceFields", () => {
 
   it("reads an external link with the date it was last checked", () => {
     const result = readResourceFields(
-      form({ ...common, resourceKind: "link", resourceUrl: "https://example.org/guide", resourceCheckedOn: "2026-09-30" }),
+      form({
+        ...common,
+        resourceKind: "link",
+        resourceUrl: "https://example.org/guide",
+        resourceCheckedOn: "2026-09-30",
+      }),
       today,
     );
 

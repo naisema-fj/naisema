@@ -145,6 +145,17 @@ The public site (`app/routes/public/`, styles in `app/styles/public.css`, design
 - **Load test** (#21: p95 ≤ 2 s with 5,000 items): run `pnpm search:load-test seed --env staging --count 5000`, then `run --url https://staging.naisema.com`, then `remove --env staging`. The script refuses production. The plan needs Workers Paid: a search page makes about 165 D1 queries, over the Free plan's 50. A local run measures one worker queueing every request, so its p95 overstates what staging will show; one search takes about 0.2 s locally.
 - **Backups:** Cloudflare documents that `wrangler d1 export` does not support virtual tables, which includes `search_fts`. Time Travel is unaffected. An export-based backup must drop `search_fts` first and rebuild it after import (see #34).
 
+## Resources, Pages and Topic pages
+
+Articles, Resources and Pages are one content model (`app/lib/content-types.ts`): the same editor, Revisions, review gates, Rights Records and eligibility. The admin list is now "Content", with a "New" link for each type.
+
+- **Pages** back the footer pages (About, Privacy and the rest in `app/lib/info-pages.ts`), one Page per footer page. A Page is served at `/{slug}`, sits in no area, and stays out of the homepage and area listings, though search finds it. Until its Page is published, a footer page says it is being written.
+- **Resources** are either a file from the media library (a PDF, MP3 or M4A that has passed its virus scan) or an `https://` link with the date it was last checked. Before a visitor downloads or follows one, the page shows the file's type and size, or the link's website and last check, plus the language, age guidance, accessibility notes and permitted use. Downloads go through `/resources/<id>/download`, which counts the download and redirects to `/media/files/<asset id>`. A Resource whose file is no longer ready, or never was, isn't eligible to publish or to be served.
+- **Broken links:** visitors can report a Resource's link as broken. Reports are counted once a day per visitor, keyed by a keyed hash of their IP address and the day, and the Resource's edit page tells the editor how many have come in since the link's checked-on date. To clear the notice, check the link and save a new Revision with today's date.
+- **Topic pages:** `/topics` lists the Topics, and `/topics/<slug>` shows a Topic's description, its lead feature and its newest public items. Topics can have one level of subtopics, and `/topics/<slug>/<subtopic>` narrows the list to one subtopic. Editors set descriptions, parents and lead features on the Topics page. A change there purges `/topics` and the affected Topic pages, and publishing an item purges the Topic pages it is tagged with.
+- **Related items:** an editor can choose up to six related items per Revision. Only the ones currently public are shown.
+- **Events:** viewing an item writes `content_opened`, through a 1-pixel image that is never cached, so cached pages are counted too. A download writes `resource_downloaded`. Both go to the `EVENTS` dataset and carry only IDs and the item type, never anything about the visitor.
+
 ## Upload safety
 
 Every upload follows the same path (docs/phase-1a-defaults.md §1, ADR-0010); the code is in `app/lib/upload-rules.ts`, `media.server.ts` and `scan.server.ts`.

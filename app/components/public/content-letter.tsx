@@ -49,7 +49,7 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
             ))}
           </Postmarks>
         ) : (
-          <p className="no-review">This {name} has none.</p>
+          <p className="no-review">{`This ${name} has none.`}</p>
         )}
       </section>
 
@@ -112,14 +112,12 @@ function ResourceDetails({ id, resource }: { id: string; resource: NonNullable<P
         {resource.kind === "file" ? (
           <>
             <dt>File</dt>
-            <dd>
-              {resource.fileType}, {resource.size}
-            </dd>
+            <dd>{`${resource.fileType}, ${resource.size}`}</dd>
           </>
         ) : (
           <>
             <dt>Goes to</dt>
-            <dd>{resource.host}, another website</dd>
+            <dd>{`${resource.host}, another website`}</dd>
             <dt>Link last checked</dt>
             <dd>
               <DateMark label="" date={resource.checkedOn} />
@@ -138,14 +136,14 @@ function ResourceDetails({ id, resource }: { id: string; resource: NonNullable<P
       {resource.kind === "file" ? (
         <p>
           <a className="primary-link" href={resource.downloadPath}>
-            Download ({resource.fileType}, {resource.size})
+            {`Download (${resource.fileType}, ${resource.size})`}
           </a>
         </p>
       ) : (
         <>
           <p>
             <a className="primary-link" href={resource.url} rel="external noopener noreferrer">
-              Go to {resource.host}
+              {`Go to ${resource.host}`}
             </a>
           </p>
           <form method="post" action={`/resources/${id}/report-link`} className="report-link">

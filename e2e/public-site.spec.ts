@@ -11,7 +11,19 @@ async function expectNoHorizontalScroll(page: Page) {
 }
 
 test("the homepage, an area, an article and the not-found page pass axe", async ({ page }) => {
-  for (const path of ["/", "/ezine", "/learn", ARTICLE, "/about", "/nowhere", "/search?q=village", "/search?q=zzzz"]) {
+  for (const path of [
+    "/",
+    "/ezine",
+    "/learn",
+    ARTICLE,
+    "/about",
+    "/nowhere",
+    "/search?q=village",
+    "/search?q=zzzz",
+    "/resources/e2e-dictionary-link",
+    "/topics/e2e-ceremonies",
+    "/topics",
+  ]) {
     await page.goto(path);
     await expectNoAxeViolations(page);
   }
@@ -66,7 +78,7 @@ test("pages reflow at 320 px and at 200% zoom without sideways scrolling", async
   // 320 CSS px is WCAG's reflow width; 640 px is a 1280 px window at 200% zoom.
   for (const width of [320, 640]) {
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ["/", "/learn", ARTICLE]) {
+    for (const path of ["/", "/learn", ARTICLE, "/resources/e2e-dictionary-link", "/topics/e2e-ceremonies"]) {
       await page.goto(path);
       await expectNoHorizontalScroll(page);
     }
