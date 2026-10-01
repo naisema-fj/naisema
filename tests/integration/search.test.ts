@@ -49,17 +49,36 @@ describe("public search", () => {
     expect(await search(`?q=${secret}`)).not.toContain(`Draft ${secret}`);
   });
 
-  it("drops an item the moment it is withdrawn", async () => {
+  it("drops an item from search, its area and the sitemap the moment it is withdrawn", async () => {
     const editor = await staff("editor", { role: "editor" });
     const term = word();
     const article = await publishedArticle(editor, { title: `Withdrawn ${term}` });
+    const row = await env.DB.prepare("SELECT slug FROM content_item WHERE id = ?1")
+      .bind(article.id)
+      .first<{ slug: string }>();
+    const path = `/learn/${row?.slug}`;
     expect(await search(`?q=${term}`)).toContain(`Withdrawn ${term}`);
+    expect(await (await visit("/learn")).text()).toContain(path);
+    expect(await (await visit("/sitemap.xml")).text()).toContain(path);
 
     await act(editor, article.id, 1, { intent: "withdraw" });
 
     const response = await visit(`/search?q=${term}`);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
     expect(await response.text()).not.toContain(`Withdrawn ${term}`);
+    expect(await (await visit("/learn")).text()).not.toContain(path);
+    expect(await (await visit("/sitemap.xml")).text()).not.toContain(path);
+  });
+
+  it("sends a page past the last one back to the last page", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const term = word();
+    await publishedArticle(editor, { title: `Only ${term}` });
+
+    const response = await visit(`/search?q=${term}&page=99`);
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("Location")).toBe(`/search?q=${term}`);
   });
 
   it("re-checks every hit, so an item that lapsed since it was indexed never appears", async () => {

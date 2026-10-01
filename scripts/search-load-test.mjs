@@ -1,8 +1,8 @@
 // The public search load test (issue #21: p95 ≤ 2 s against a 5,000-item catalogue on staging).
 //
-//   node scripts/search-load-test.mjs seed --env staging --count 5000
-//   node scripts/search-load-test.mjs run --url https://staging.naisema.com --requests 300 --concurrency 10
-//   node scripts/search-load-test.mjs remove --env staging
+//   pnpm search:load-test seed --env staging --count 5000
+//   pnpm search:load-test run --url https://staging.naisema.com --requests 300 --concurrency 10
+//   pnpm search:load-test remove --env staging
 //
 // `seed` writes published, eligible Articles (no flags, a Rights Record granting Publish) with IDs
 // starting "load-", already indexed for search; `remove` deletes exactly those. Both also take
@@ -171,7 +171,7 @@ function seedSql(count) {
     ),
     ...inserts(
       "search_entry",
-      ["content_item_id", "primary_area", "format", "title", "summary", "tags", "published_at"],
+      ["content_item_id", "primary_area", "format", "title", "summary", "topic_names", "published_at"],
       items.map((item) => [item.id, item.area, "article", item.title, item.summary, item.topic[2], item.at]),
     ),
     ...inserts(

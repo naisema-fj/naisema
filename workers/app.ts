@@ -4,6 +4,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { servePublic } from "~/lib/public-cache.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
+import { DAY_MS } from "~/lib/rights-rules";
 import { reindexExpiredRights } from "~/lib/search.server";
 
 const requestHandler = createRequestHandler(() => import("virtual:react-router/server-build"), import.meta.env.MODE);
@@ -79,6 +80,6 @@ export default {
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
     await sendExpiryWarnings(env, now);
-    await reindexExpiredRights(getDb(env.DB), new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000), now);
+    await reindexExpiredRights(getDb(env.DB), new Date(now.getTime() - 2 * DAY_MS), now);
   },
 } satisfies ExportedHandler<Env>;

@@ -383,11 +383,12 @@ export const searchEntry = sqliteTable(
       .unique()
       .references(() => contentItem.id),
     primaryArea: text("primary_area").notNull(),
+    /** The item's type (content_item.type), which visitors filter by as its format. */
     format: text("format").notNull(),
     title: text("title").notNull(),
     summary: text("summary").notNull(),
-    /** The item's Topic names, so a search for a topic's name finds what it tags. */
-    tags: text("tags").notNull(),
+    /** The item's Topic names, so searching for a Topic's name finds the items in it. */
+    topicNames: text("topic_names").notNull(),
     publishedAt: integer("published_at", { mode: "timestamp_ms" }),
   },
   (table) => [index("search_entry_area_idx").on(table.primaryArea, table.format)],

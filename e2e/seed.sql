@@ -50,7 +50,7 @@ VALUES ('e2e-article-rights', 'content_item', 'e2e-article', 'E2E Storyteller', 
   'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;
 -- Its search entry, as publishing would write it (app/lib/search.server.ts).
-INSERT INTO search_entry (content_item_id, primary_area, format, title, summary, tags, published_at)
+INSERT INTO search_entry (content_item_id, primary_area, format, title, summary, topic_names, published_at)
 VALUES ('e2e-article', 'ezine', 'article', 'A letter from home',
   'How the village greets a visitor who has been away a long time.', 'E2E Ceremonies', 1790000000000)
 ON CONFLICT(content_item_id) DO NOTHING;

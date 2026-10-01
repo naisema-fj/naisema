@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, gt, inArray, lte, sql } from "drizzle-orm";
-import { integer, sqliteTable } from "drizzle-orm/sqlite-core";
+import { type AnySQLiteColumn, integer, sqliteTable } from "drizzle-orm/sqlite-core";
 import { contentItem, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
 import { AREA_NAMES, type PrimaryArea } from "./areas";
 import type { Database } from "./db.server";
@@ -44,11 +44,39 @@ export async function indexItem(db: Database, contentItemId: string, now = new D
       format: item.type,
       title: snapshot.title,
       summary: snapshot.summary,
-      tags: topics.map((row) => row.name).join(", "),
+      topicNames: topics.map((row) => row.name).join(", "),
       publishedAt: item.lastPublishedAt,
     }),
     ...topics.map((row) => db.insert(searchEntryTopic).values({ contentItemId, topicId: row.id })),
   ]);
+}
+
+/**
+ * A cheap pre-filter, in SQL, for the commonest way an indexed item stops being public: its Rights
+ * Records granting Publish expired or were withdrawn. It keeps counts, the Topic list and the
+ * sitemap honest without running the full eligibility decision on every row; that decision still
+ * runs on every item shown (ADR-0007).
+ */
+const hasPublishRights = (contentItemId: AnySQLiteColumn, now: Date) => sql`exists (
+  select 1 from ${rightsRecord}
+  where ${rightsRecord.subjectType} = 'content_item' and ${rightsRecord.subjectId} = ${contentItemId}
+    and ${rightsRecord.withdrawnAt} is null
+    and (${rightsRecord.expiresAt} is null or ${rightsRecord.expiresAt} > ${now.getTime()})
+    and ${rightsRecord.permittedUses} like '%"publish"%'
+)`;
+
+/** Indexed items with their Content Items, matched against the words searched for when there are any. */
+function indexedItems(db: Database, match: string | null) {
+  const query = db
+    .select({ item: contentItem, format: searchEntry.format })
+    .from(searchEntry)
+    .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId));
+  return match ? query.innerJoin(searchFts, eq(searchFts.rowid, searchEntry.id)) : query;
+}
+
+function countIndexed(db: Database, match: string | null) {
+  const query = db.select({ total: count() }).from(searchEntry);
+  return match ? query.innerJoin(searchFts, eq(searchFts.rowid, searchEntry.id)) : query;
 }
 
 export type SearchResult = {
@@ -64,6 +92,7 @@ export type SearchResult = {
 
 export type SearchOutcome = {
   results: SearchResult[];
+  /** Matches in the index; the items shown are re-checked, so a page can show fewer. */
   total: number;
   pageCount: number;
   topics: { id: string; name: string }[];
@@ -72,6 +101,7 @@ export type SearchOutcome = {
 export async function searchPublic(db: Database, filters: SearchFilters, now = new Date()): Promise<SearchOutcome> {
   const match = matchExpression(filters.q);
   const conditions = and(
+    hasPublishRights(searchEntry.contentItemId, now),
     match ? sql`${searchFts} MATCH ${match}` : undefined,
     filters.area ? eq(searchEntry.primaryArea, filters.area) : undefined,
     filters.format ? eq(searchEntry.format, filters.format) : undefined,
@@ -85,41 +115,36 @@ export async function searchPublic(db: Database, filters: SearchFilters, now = n
         )
       : undefined,
   );
-  const base = db
-    .select({ item: contentItem, format: searchEntry.format })
-    .from(searchEntry)
-    .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId));
-  const counted = db.select({ total: count() }).from(searchEntry);
 
   const [rows, [{ total }], topics] = await Promise.all([
-    (match ? base.innerJoin(searchFts, eq(searchFts.rowid, searchEntry.id)) : base)
+    indexedItems(db, match)
       .where(conditions)
       // Titles weigh most, then summaries, then Topic names; without words, newest first.
       .orderBy(...(match ? [sql`bm25(search_fts, 10.0, 4.0, 2.0)`] : [desc(searchEntry.publishedAt)]))
       .limit(SEARCH_PAGE_SIZE)
       .offset((filters.page - 1) * SEARCH_PAGE_SIZE),
-    (match ? counted.innerJoin(searchFts, eq(searchFts.rowid, searchEntry.id)) : counted).where(conditions),
+    countIndexed(db, match).where(conditions),
     db
       .selectDistinct({ id: topic.id, name: topic.name })
       .from(searchEntryTopic)
       .innerJoin(topic, eq(topic.id, searchEntryTopic.topicId))
+      .where(hasPublishRights(searchEntryTopic.contentItemId, now))
       .orderBy(asc(topic.name)),
   ]);
 
-  const results = await stillEligible(db, rows, now);
   return {
-    results,
-    total: total - (rows.length - results.length),
+    results: await recheckHits(db, rows, now),
+    total,
     pageCount: Math.max(1, Math.ceil(total / SEARCH_PAGE_SIZE)),
     topics,
   };
 }
 
 /**
- * The hits that are still eligible, as results. A hit that lapsed since it was indexed (its rights
- * expired today, say) is left out and dropped from the index there and then.
+ * Runs the eligibility decision on each hit and returns those still public, as results. A hit
+ * that lapsed since it was indexed is also dropped from the index there and then, so this writes.
  */
-async function stillEligible(
+async function recheckHits(
   db: Database,
   rows: { item: typeof contentItem.$inferSelect; format: string }[],
   now: Date,
@@ -147,42 +172,47 @@ async function stillEligible(
   return checked.filter((result) => result !== null);
 }
 
-/** The newest public items, in one area or across the site, and how many there are in all. */
+/** A few extra candidates, so a listing stays full when one of its newest items has just lapsed. */
+const LISTING_SPARES = 5;
+
+/** The newest public items, in one area or across the site, and how many the index holds in all. */
 export async function listPublic(
   db: Database,
   { area, limit }: { area?: PrimaryArea; limit: number },
   now = new Date(),
 ) {
-  const where = area ? eq(searchEntry.primaryArea, area) : undefined;
+  const where = and(
+    hasPublishRights(searchEntry.contentItemId, now),
+    area ? eq(searchEntry.primaryArea, area) : undefined,
+  );
   const [rows, [{ total }]] = await Promise.all([
-    db
-      .select({ item: contentItem, format: searchEntry.format })
-      .from(searchEntry)
-      .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId))
+    indexedItems(db, null)
       .where(where)
       .orderBy(desc(searchEntry.publishedAt))
-      .limit(limit),
-    db.select({ total: count() }).from(searchEntry).where(where),
+      .limit(limit + LISTING_SPARES),
+    countIndexed(db, null).where(where),
   ]);
-  const listings = await stillEligible(db, rows, now);
-  return { listings, total: total - (rows.length - listings.length) };
+  return { listings: (await recheckHits(db, rows, now)).slice(0, limit), total };
 }
 
 /**
- * Every indexed item's address for the sitemap, without re-checking each one: a sitemap only
- * suggests addresses, and each page decides eligibility when it is requested.
+ * Every indexed item with current Publish rights, for the sitemap. Items aren't put through the
+ * full decision one by one: a sitemap only suggests addresses, each page decides eligibility when
+ * requested, and every other change to an item reindexes it at once.
  */
-export function sitemapEntries(db: Database) {
+export function sitemapEntries(db: Database, now = new Date()) {
   return db
     .select({ area: contentItem.primaryArea, slug: contentItem.slug, publishedAt: searchEntry.publishedAt })
     .from(searchEntry)
     .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId))
+    .where(hasPublishRights(searchEntry.contentItemId, now))
     .orderBy(desc(searchEntry.publishedAt));
 }
 
 /**
- * The daily job's part: items whose Rights Records expired in the window stop being public with
- * nothing else happening, so reindex them. The window overlaps the previous run's.
+ * The daily job's part: reindex items whose Rights Records expired in the window, so expiries the
+ * SQL pre-filter doesn't cover (guardian permission, say) leave the index too. The caller's window
+ * overlaps the previous run's.
  */
 export async function reindexExpiredRights(db: Database, since: Date, now: Date) {
   const expired = await db

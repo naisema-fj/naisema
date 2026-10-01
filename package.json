@@ -19,7 +19,8 @@
     "test": "pnpm build && vitest run",
     "test:e2e": "playwright test",
     "staff:grant": "node scripts/grant-staff-role.mjs",
-    "staff:reset-two-factor": "node scripts/reset-staff-two-factor.mjs"
+    "staff:reset-two-factor": "node scripts/reset-staff-two-factor.mjs",
+    "search:load-test": "node scripts/search-load-test.mjs"
   },
   "dependencies": {
     "@fontsource-variable/jost": "^5.3.0",

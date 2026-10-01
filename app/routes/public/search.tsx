@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, redirect } from "react-router";
 import { DateMark } from "~/components/public/postmarks";
 import { AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -19,9 +19,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const filters = searchFilters(new URL(request.url));
   const outcome = await searchPublic(getDb(env.DB), filters);
+  if (filters.page > outcome.pageCount) throw redirect(searchHref(filters, { page: outcome.pageCount }));
   if (isSearching(filters)) {
+    // Only a Topic that exists is recorded: anything else in ?topic= is text a visitor typed.
+    const topic = outcome.topics.some((known) => known.id === filters.topic) ? filters.topic : null;
     env.EVENTS.writeDataPoint(
-      searchEvent({ filters, resultIds: outcome.results.map((result) => result.id), total: outcome.total }),
+      searchEvent({
+        filters: { ...filters, topic },
+        resultIds: outcome.results.map((result) => result.id),
+        total: outcome.total,
+      }),
     );
   }
   return { filters, ...outcome };
@@ -110,8 +117,10 @@ export default function Search({ loaderData }: Route.ComponentProps) {
                   </li>
                 ))}
               </ul>
-            ) : (
+            ) : total === 0 ? (
               <NoResults filters={filters} />
+            ) : (
+              <p>The results on this page have just changed. Search again to see them.</p>
             )}
             {pageCount > 1 && (
               <nav aria-label="Result pages" className="pager">

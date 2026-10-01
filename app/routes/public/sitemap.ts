@@ -9,7 +9,7 @@ import type { Route } from "./+types/sitemap";
 const escapeXml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-/** The sitemap: the homepage, the six areas and every eligible item, nothing else (§5). */
+/** The sitemap: the homepage, the six areas and every item in the public index (§5, app/lib/search.server.ts). */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
   const items = await sitemapEntries(getDb(context.get(cloudflareContext).env.DB));

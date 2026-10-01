@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f80fa9c1-3708-41de-a385-3373215b5c7c",
+  "id": "467b2cac-a87c-4e1b-94c7-a5b4ed8f701a",
   "prevId": "5ae198ec-13e4-468a-92eb-6f35669f08ff",
   "tables": {
     "account": {
@@ -1188,8 +1188,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "tags": {
-          "name": "tags",
+        "topic_names": {
+          "name": "topic_names",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
