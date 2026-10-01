@@ -4,7 +4,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { publicHeaders } from "~/lib/public-cache.server";
 import { listByTopics, publicCard, type SearchResult } from "~/lib/search.server";
-import { listTopics, topicBySlug } from "~/lib/topics.server";
+import { topicBySlug } from "~/lib/topics.server";
 import type { Route } from "./+types/topic";
 
 export const handle = { hydrate: false };
@@ -25,19 +25,19 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (params.subtopic && !subtopic) throw new Response("Not found", { status: 404 });
 
   const topicIds = subtopic ? [subtopic.id] : [topic.id, ...topic.subtopics.map((sub) => sub.id)];
-  const [lead, { listings, total }, parent] = await Promise.all([
-    !subtopic && topic.leadItemId ? publicCard(db, topic.leadItemId) : null,
-    listByTopics(db, topicIds, TOPIC_PAGE_LIMIT + 1),
-    topic.parentTopicId ? listTopics(db).then((all) => all.find((row) => row.id === topic.parentTopicId)) : null,
+  const leadId = subtopic ? null : topic.leadItemId;
+  const [lead, { listings, total }] = await Promise.all([
+    leadId ? publicCard(db, leadId) : null,
+    listByTopics(db, { topicIds, exceptId: leadId, limit: TOPIC_PAGE_LIMIT }),
   ]);
   return {
     topic: { name: topic.name, slug: topic.slug, description: topic.description },
-    parent: parent ? { name: parent.name, slug: parent.slug } : null,
+    parent: topic.parent ? { name: topic.parent.name, slug: topic.parent.slug } : null,
     subtopics: topic.subtopics.map(({ name, slug }) => ({ name, slug })),
     subtopic: subtopic ? { name: subtopic.name, slug: subtopic.slug } : null,
     lead,
-    items: listings.filter((item) => item.id !== lead?.id).slice(0, TOPIC_PAGE_LIMIT),
-    total: total - (lead ? 1 : 0),
+    items: listings,
+    total,
   };
 }
 

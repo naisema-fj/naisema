@@ -119,27 +119,29 @@ export function ArticleForm({
         </p>
       ) : null}
 
-      <fieldset aria-describedby={describedBy("topicIds")}>
-        <legend>Topics</legend>
-        {topics.length === 0 && (
-          <p>
-            There are no topics yet. <a href="/admin/topics">Add a topic</a> first.
-          </p>
-        )}
-        {topics.map((topic) => (
-          <div key={topic.id} className="choice">
-            <input
-              type="checkbox"
-              id={`topic-${topic.id}`}
-              name="topicId"
-              value={topic.id}
-              defaultChecked={values.topicIds.includes(topic.id)}
-            />
-            <label htmlFor={`topic-${topic.id}`}>{topic.name}</label>
-          </div>
-        ))}
-        {fieldError("topicIds")}
-      </fieldset>
+      {type !== "page" && (
+        <fieldset aria-describedby={describedBy("topicIds")}>
+          <legend>Topics</legend>
+          {topics.length === 0 && (
+            <p>
+              There are no topics yet. <a href="/admin/topics">Add a topic</a> first.
+            </p>
+          )}
+          {topics.map((topic) => (
+            <div key={topic.id} className="choice">
+              <input
+                type="checkbox"
+                id={`topic-${topic.id}`}
+                name="topicId"
+                value={topic.id}
+                defaultChecked={values.topicIds.includes(topic.id)}
+              />
+              <label htmlFor={`topic-${topic.id}`}>{topic.name}</label>
+            </div>
+          ))}
+          {fieldError("topicIds")}
+        </fieldset>
+      )}
 
       <label htmlFor="credit">Credit</label>
       <input
@@ -287,17 +289,17 @@ export function ArticleForm({
             aria-describedby={describedBy("resourceAccessibility")}
           />
           {fieldError("resourceAccessibility")}
-          <label htmlFor="resourcePermittedUse">What visitors may do with it</label>
+          <label htmlFor="resourceUsageTerms">What visitors may do with it</label>
           <textarea
-            id="resourcePermittedUse"
-            name="resourcePermittedUse"
+            id="resourceUsageTerms"
+            name="resourceUsageTerms"
             rows={2}
             placeholder="Free to print and share for teaching. Not for sale."
-            maxLength={RESOURCE_LIMITS.permittedUse}
-            defaultValue={resource?.permittedUse ?? ""}
-            aria-describedby={describedBy("resourcePermittedUse")}
+            maxLength={RESOURCE_LIMITS.usageTerms}
+            defaultValue={resource?.usageTerms ?? ""}
+            aria-describedby={describedBy("resourceUsageTerms")}
           />
-          {fieldError("resourcePermittedUse")}
+          {fieldError("resourceUsageTerms")}
         </fieldset>
       )}
 

@@ -1,13 +1,15 @@
 import { and, count, eq, gte } from "drizzle-orm";
 import { contentItem, linkReport } from "~db/schema";
 import type { Database } from "./db.server";
-import { eligiblePublished } from "./public.server";
+import { eligiblePublished, itemPath } from "./public.server";
 import { linkHost } from "./resource-fields";
 
 /**
  * Visitors' reports that a Resource's link is broken. Nothing personal is kept: the reporter is a
  * keyed hash of their address and the day, so one person counts once a day per Resource.
  */
+
+/** The reporter, as an HMAC of their address and the day; never the address itself. */
 async function reporterKey(env: Env, request: Request, day: string) {
   const address = request.headers.get("CF-Connecting-IP") ?? "unknown";
   const key = await crypto.subtle.importKey(
@@ -38,7 +40,7 @@ export async function reportBrokenLink(env: Env, db: Database, request: Request,
   return {
     title: published.snapshot.title,
     host: linkHost(source.url),
-    path: `/${item.primaryArea}/${item.slug}`,
+    path: itemPath(item),
   };
 }
 

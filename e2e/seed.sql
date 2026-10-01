@@ -76,7 +76,7 @@ VALUES ('e2e-resource', 'resource', 'e2e-dictionary-link', 'resources', 'e2e-see
 ON CONFLICT(id) DO NOTHING;
 INSERT INTO revision (id, content_item_id, number, snapshot, fingerprints, created_by, created_at)
 VALUES ('e2e-resource-r1', 'e2e-resource', 1,
-  '{"title":"A Fijian dictionary online","summary":"Look words up in Standard Fijian and English.","credit":"Listed by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"A free dictionary kept by another site."}]}]},"sources":"","flags":[],"languageVariety":null,"resource":{"source":{"kind":"link","url":"https://example.org/dictionary","checkedOn":"2026-09-30"},"language":"Standard Fijian and English","ageGuidance":"all-ages","accessibility":"Works with screen readers.","permittedUse":"Free to use; follow the site''s own terms."}}',
+  '{"title":"A Fijian dictionary online","summary":"Look words up in Standard Fijian and English.","credit":"Listed by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"A free dictionary kept by another site."}]}]},"sources":"","flags":[],"languageVariety":null,"resource":{"source":{"kind":"link","url":"https://example.org/dictionary","checkedOn":"2026-09-30"},"language":"Standard Fijian and English","ageGuidance":"all-ages","accessibility":"Works with screen readers.","usageTerms":"Free to use; follow the site''s own terms."}}',
   '{}', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;
 UPDATE content_item SET current_draft_revision_id = 'e2e-resource-r1', current_published_revision_id = 'e2e-resource-r1'

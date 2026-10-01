@@ -197,11 +197,20 @@ export async function listPublic(
   return { listings: (await recheckHits(db, rows, now)).slice(0, limit), total };
 }
 
-/** The newest public items in any of these Topics, for a Topic's page, and how many there are. */
-export async function listByTopics(db: Database, topicIds: string[], limit: number, now = new Date()) {
+/**
+ * The newest public items in any of these Topics, for a Topic's page, and how many there are; site
+ * Pages aren't listed, and `exceptId` (the lead feature, shown on its own) is left out.
+ */
+export async function listByTopics(
+  db: Database,
+  { topicIds, exceptId, limit }: { topicIds: string[]; exceptId: string | null; limit: number },
+  now = new Date(),
+) {
   if (!topicIds.length) return { listings: [], total: 0 };
   const where = and(
     hasPublishRights(searchEntry.contentItemId, now),
+    ne(searchEntry.format, "page"),
+    exceptId ? ne(searchEntry.contentItemId, exceptId) : undefined,
     inArray(
       searchEntry.contentItemId,
       db

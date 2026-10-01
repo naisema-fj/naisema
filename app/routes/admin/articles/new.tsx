@@ -5,7 +5,6 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import {
   articleFingerprints,
   availablePages,
-  downloadableFiles,
   embeddableArticles,
   readArticleForm,
   readPrimaryArea,
@@ -13,9 +12,10 @@ import {
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { CONTENT_TYPE_NAMES, type ContentType, isContentType, PAGE_AREA } from "~/lib/content-types";
+import type { Database } from "~/lib/db.server";
+import { downloadChoices } from "~/lib/media-delivery.server";
 import { createContentItem } from "~/lib/revisions.server";
 import { listTopics } from "~/lib/topics.server";
-import { UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import type { Route } from "./+types/new";
 
 /** The type being created, from `?type=` (an Article unless it says otherwise). */
@@ -34,7 +34,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const [topics, embeddable, files, pages] = await Promise.all([
     listTopics(db),
     embeddableArticles(db),
-    type === "resource" ? downloadableFiles(db) : [],
+    type === "resource" ? downloadChoices(db) : [],
     type === "page" ? availablePages(db) : [],
   ]);
   return {
@@ -42,7 +42,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     topics,
     embeddable,
     pages,
-    files: files.map((file) => ({ id: file.id, name: file.name, typeName: UPLOAD_TYPE_NAMES[file.type] })),
+    files,
   };
 }
 
@@ -73,7 +73,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 /** Where a new item goes: its primary area, or for a Page, which site page it is (its fixed address). */
-async function readPlacement(db: Parameters<typeof availablePages>[0], type: ContentType, form: FormData) {
+async function readPlacement(db: Database, type: ContentType, form: FormData) {
   if (type === "page") {
     const path = String(form.get("page") ?? "");
     const page = (await availablePages(db)).find((candidate) => candidate.path === path);

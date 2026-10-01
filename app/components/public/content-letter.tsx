@@ -131,7 +131,7 @@ function ResourceDetails({ id, resource }: { id: string; resource: NonNullable<P
         <dt>Accessibility</dt>
         <dd>{resource.accessibility || "Not described yet."}</dd>
         <dt>You may</dt>
-        <dd>{resource.permittedUse}</dd>
+        <dd>{resource.usageTerms}</dd>
       </dl>
       {resource.kind === "file" ? (
         <p>

@@ -8,8 +8,17 @@ _Avoid_: NAISEMA, Naisema, NaiSema
 ## Content and learning
 
 **Content Item**:
-A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area.
-_Avoid_: Cultural item, post, page (for content)
+A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area. Its type is Article, Resource or Page; all share Revisions and review.
+_Avoid_: Cultural item, post, page (for content other than a Page)
+
+**Resource**:
+A Content Item a visitor downloads (a scanned PDF or audio file) or follows (an external link with a last-checked date), shown with its language, age guidance, accessibility and usage terms first.
+
+**Usage Terms**:
+What a Resource tells visitors they may do with it, in plain words (for example "free to print for teaching"). Not a Permitted Use, which is what a Rights Record grants Na iSema.
+
+**Page**:
+A Content Item backing one of the fixed site pages in the footer (About, Privacy and so on), at `/{slug}`, outside the primary areas and Topics.
 
 **Learning Layer**:
 An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
@@ -141,8 +150,11 @@ _Avoid_: Ticket, complaint (as the record)
 ## Discovery
 
 **Topic**:
-A subject that Content Items are tagged with (at least one each), with its own page at `/topics/{slug}`. Topics cut across the primary areas.
+A subject that Content Items are tagged with (at least one each, except Pages), with its own page at `/topics/{slug}`. Topics cut across the primary areas. A Topic may sit under one broader Topic as a **Subtopic** (one level only), and may have a **Lead Feature**: one item shown first on its page.
 _Avoid_: Tag, category
+
+**Related Items**:
+The other Content Items, of any type, an editor links from an item's Revision; shown only while each is public.
 
 **Provider**:
 Any organisation or person whose learning Offering is listed on Na iSema. Listing implies no endorsement or partnership.

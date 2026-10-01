@@ -11,7 +11,7 @@ const common = {
   resourceLanguage: "Standard Fijian and English",
   resourceAgeGuidance: "all-ages",
   resourceAccessibility: "Tagged PDF with headings; large print.",
-  resourcePermittedUse: "Free to print and share for teaching. Not for sale.",
+  resourceUsageTerms: "Free to print and share for teaching. Not for sale.",
 };
 const today = new Date("2026-10-01T09:00:00Z");
 
@@ -26,7 +26,7 @@ describe("readResourceFields", () => {
         language: "Standard Fijian and English",
         ageGuidance: "all-ages",
         accessibility: "Tagged PDF with headings; large print.",
-        permittedUse: "Free to print and share for teaching. Not for sale.",
+        usageTerms: "Free to print and share for teaching. Not for sale.",
       },
     });
   });
@@ -75,7 +75,7 @@ describe("readResourceFields", () => {
       errors: {
         resourceLanguage: expect.any(String),
         resourceAgeGuidance: expect.any(String),
-        resourcePermittedUse: expect.any(String),
+        resourceUsageTerms: expect.any(String),
       },
     });
   });

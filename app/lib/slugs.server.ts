@@ -22,6 +22,8 @@ export async function changeSlug(
 ): Promise<SlugChange> {
   const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
   if (!item) return { ok: false, error: "That item doesn't exist." };
+  // A Page's address is the footer page it backs, so it never moves.
+  if (item.type === "page") return { ok: false, error: "A Page's address is fixed by the site page it backs." };
   const slug = slugify(requested);
   if (!requested.trim() || slug !== requested.trim()) {
     return { ok: false, error: `Use lower-case letters, digits and hyphens, for example "${slug}".` };

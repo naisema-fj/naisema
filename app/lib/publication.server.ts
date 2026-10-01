@@ -1,13 +1,13 @@
 import { eq, sql } from "drizzle-orm";
-import { contentItem, mediaAsset } from "~db/schema";
+import { contentItem } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { readyDownload } from "./media-delivery.server";
 import { type Actor, can } from "./permissions";
 import { loadReview, type Review, type ReviewActionResult } from "./review.server";
 import { requirementName } from "./review-names";
 import { rightsFactsFor } from "./rights.server";
 import { rightsProblems } from "./rights-rules";
-import { DOWNLOADABLE_TYPES } from "./upload-rules";
 
 export type Eligibility = { eligible: true } | { eligible: false; reasons: string[] };
 
@@ -35,7 +35,7 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
     const name = requirementName(requirement);
     reasons.push(status === "rejected" ? `${name} was rejected.` : `${name} is still needed.`);
   }
-  if (review.resourceAssetId && !(await isServableDownload(db, review.resourceAssetId))) {
+  if (review.resourceAssetId && !(await readyDownload(db, review.resourceAssetId))) {
     reasons.push("Its file isn't in the media library as a PDF or audio file that has passed its virus scan.");
   }
   reasons.push(
@@ -46,16 +46,6 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
     }),
   );
   return reasons.length ? { eligible: false, reasons } : { eligible: true };
-}
-
-/** Whether a Resource's file is a ready media library download. */
-async function isServableDownload(db: Database, assetId: string) {
-  const asset = await db
-    .select({ status: mediaAsset.status, purpose: mediaAsset.purpose, type: mediaAsset.type })
-    .from(mediaAsset)
-    .where(eq(mediaAsset.id, assetId))
-    .get();
-  return asset?.status === "ready" && asset.purpose === "media" && DOWNLOADABLE_TYPES.includes(asset.type);
 }
 
 const setState = (db: Database, contentItemId: string, values: Partial<typeof contentItem.$inferInsert>) =>

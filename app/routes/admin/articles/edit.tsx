@@ -1,23 +1,17 @@
 import { data, Form, redirect } from "react-router";
 import { ArticleForm } from "~/components/article-form";
 import { isPrimaryArea } from "~/lib/areas";
-import {
-  articleFingerprints,
-  downloadableFiles,
-  embeddableArticles,
-  getArticle,
-  readArticleForm,
-} from "~/lib/articles.server";
+import { articleFingerprints, embeddableArticles, getArticle, readArticleForm } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { CONTENT_TYPE_NAMES } from "~/lib/content-types";
 import { reportsSince } from "~/lib/link-reports.server";
+import { downloadChoices } from "~/lib/media-delivery.server";
 import { publicPath } from "~/lib/public.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { appendRevision } from "~/lib/revisions.server";
 import { changeSlug } from "~/lib/slugs.server";
 import { listTopics } from "~/lib/topics.server";
-import { UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import type { Route } from "./+types/edit";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -40,14 +34,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         : 0,
     topics: await listTopics(db),
     embeddable: await embeddableArticles(db, article.id),
-    files:
-      article.type === "resource"
-        ? (await downloadableFiles(db)).map((file) => ({
-            id: file.id,
-            name: file.name,
-            typeName: UPLOAD_TYPE_NAMES[file.type],
-          }))
-        : [],
+    files: article.type === "resource" ? await downloadChoices(db) : [],
   };
 }
 

@@ -50,7 +50,7 @@ export type PublicResource = {
   language: string;
   ageGuidance: string;
   accessibility: string;
-  permittedUse: string;
+  usageTerms: string;
 } & (
   | { kind: "file"; fileType: string; size: string; downloadPath: string }
   | { kind: "link"; url: string; host: string; checkedOn: string }
@@ -183,7 +183,7 @@ async function publicResource(db: Database, itemId: string, details: ResourceDet
     language: details.language,
     ageGuidance: AGE_GUIDANCE[details.ageGuidance],
     accessibility: details.accessibility,
-    permittedUse: details.permittedUse,
+    usageTerms: details.usageTerms,
   };
   if (details.source.kind === "link") {
     const { url, checkedOn } = details.source;

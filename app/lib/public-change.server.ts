@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 import { contentItem, revision, topic } from "~db/schema";
 import type { ArticleSnapshot } from "./article-fields";
 import type { Database } from "./db.server";
@@ -8,8 +8,8 @@ import { indexItem } from "./search.server";
 /**
  * Call after anything that may change what the public sees of an item: publishing, withdrawing,
  * archiving, a review decision, a rights change or a new address. Its search entry is rebuilt and
- * the pages showing it (its own, its area or site page, its Topic pages, the homepage and the
- * sitemap) are purged from the edge cache (ADR-0007), together, in one place.
+ * the pages showing it (its own, its area or site page, its Topic pages and any it leads, the
+ * homepage and the sitemap) are purged from the edge cache (ADR-0007), together, in one place.
  */
 export async function publicItemChanged(env: Env, db: Database, itemId: string, alsoPurge: string[] = []) {
   await indexItem(db, itemId);
@@ -23,12 +23,13 @@ export async function publicItemChanged(env: Env, db: Database, itemId: string, 
     ? await db.select({ snapshot: revision.snapshot }).from(revision).where(inArray(revision.id, revisionIds))
     : [];
   const topicIds = [...new Set(snapshots.flatMap(({ snapshot }) => (snapshot as ArticleSnapshot).topicIds ?? []))];
-  const topics = topicIds.length
-    ? await db
-        .select({ slug: topic.slug, parentId: topic.parentTopicId })
-        .from(topic)
-        .where(inArray(topic.id, topicIds))
-    : [];
+  // A Topic it leads shows it too, even once it is no longer tagged with that Topic.
+  const topics = await db
+    .select({ slug: topic.slug, parentId: topic.parentTopicId })
+    .from(topic)
+    .where(
+      topicIds.length ? or(inArray(topic.id, topicIds), eq(topic.leadItemId, itemId)) : eq(topic.leadItemId, itemId),
+    );
   // A subtopic's items also show on its broader Topic's page, whole and filtered to the subtopic.
   const parentIds = topics.map((row) => row.parentId).filter((id): id is string => id !== null);
   const parents = parentIds.length

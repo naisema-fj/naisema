@@ -30,7 +30,7 @@ export async function updateTopic(
   updatedBy: string,
   id: string,
   changes: { description: string; parentTopicId: string | null; leadItemId: string | null },
-): Promise<TopicResult & { slugs?: string[] }> {
+): Promise<TopicResult & { paths?: string[] }> {
   const description = changes.description.trim();
   if (description.length > TOPIC_DESCRIPTION_LIMIT) {
     return { ok: false, error: `The description can be at most ${TOPIC_DESCRIPTION_LIMIT} characters.` };
@@ -62,20 +62,30 @@ export async function updateTopic(
       .where(eq(topic.id, id)),
     auditInsert(db, { actorId: updatedBy, action: "topic.updated", objectType: "topic", objectId: id }),
   ]);
-  // The pages that show this topic: its own, and its old and new parents' (which list subtopics).
-  const previousParent = all.find((row) => row.id === current.parentTopicId);
+  // The public pages that show this topic: its own and its subtopics' filtered views (which carry its
+  // description), and its old and new parents' pages, whole and filtered to it.
+  const subtopics = all.filter((row) => row.parentTopicId === id);
+  const parents = [all.find((row) => row.id === current.parentTopicId), parent].filter((row) => !!row);
   return {
     ok: true,
-    slugs: [current.slug, previousParent?.slug, parent?.slug].filter((slug): slug is string => !!slug),
+    paths: [
+      `/topics/${current.slug}`,
+      ...subtopics.map((sub) => `/topics/${current.slug}/${sub.slug}`),
+      ...parents.flatMap((row) => [`/topics/${row.slug}`, `/topics/${row.slug}/${current.slug}`]),
+    ],
   };
 }
 
-/** A Topic by its address, with its subtopics, for its public page. */
+/** A Topic by its address, with its broader Topic and its subtopics, for its public page. */
 export async function topicBySlug(db: Database, slug: string) {
   const all = await listTopics(db);
   const found = all.find((row) => row.slug === slug);
   if (!found) return null;
-  return { ...found, subtopics: all.filter((row) => row.parentTopicId === found.id) };
+  return {
+    ...found,
+    parent: all.find((row) => row.id === found.parentTopicId) ?? null,
+    subtopics: all.filter((row) => row.parentTopicId === found.id),
+  };
 }
 
 /** Turns Topic IDs into names, for showing what a Revision was tagged with. */

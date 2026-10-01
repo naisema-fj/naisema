@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { contentItem, mediaAsset, revision } from "~db/schema";
+import { contentItem, revision } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody } from "./article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
@@ -7,11 +7,11 @@ import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types
 import type { Database } from "./db.server";
 import { INFO_PAGES } from "./info-pages";
 import { toLanguageVariety } from "./language-variety";
+import { readyDownload } from "./media-delivery.server";
 import { readResourceFields } from "./resource-fields";
 import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
 import { existingTopicIds } from "./topics.server";
-import { DOWNLOADABLE_TYPES } from "./upload-rules";
 
 export type ArticleFormResult =
   | { ok: true; snapshot: ArticleSnapshot }
@@ -60,9 +60,10 @@ export async function readArticleForm(
     errors.sources = "List the sources for the historical claims.";
   }
 
-  const topicIds = [...new Set(form.getAll("topicId").map(String))];
+  // Site Pages sit outside the Topics, as they do outside the areas.
+  const topicIds = type === "page" ? [] : [...new Set(form.getAll("topicId").map(String))];
   const known = await existingTopicIds(db, topicIds);
-  if (!topicIds.length) errors.topicIds = "Choose at least one topic.";
+  if (!topicIds.length && type !== "page") errors.topicIds = "Choose at least one topic.";
   else if (topicIds.some((id) => !known.has(id))) errors.topicIds = "One of those topics no longer exists.";
 
   let submittedBody: unknown;
@@ -89,7 +90,7 @@ export async function readArticleForm(
       resource = read.values as ArticleSnapshot["resource"];
     } else {
       resource = read.details;
-      if (read.details.source.kind === "file" && !(await isDownloadable(db, read.details.source.assetId))) {
+      if (read.details.source.kind === "file" && !(await readyDownload(db, read.details.source.assetId))) {
         errors.resourceAssetId = "Choose a PDF or audio file that has passed its virus scan.";
       }
     }
@@ -112,23 +113,6 @@ export async function readArticleForm(
   };
 }
 
-/** Whether a media library file can be a Resource's download: a document or audio that passed its scan. */
-async function isDownloadable(db: Database, assetId: string) {
-  const asset = await db
-    .select({ id: mediaAsset.id })
-    .from(mediaAsset)
-    .where(
-      and(
-        eq(mediaAsset.id, assetId),
-        eq(mediaAsset.purpose, "media"),
-        eq(mediaAsset.status, "ready"),
-        inArray(mediaAsset.type, [...DOWNLOADABLE_TYPES]),
-      ),
-    )
-    .get();
-  return Boolean(asset);
-}
-
 /** The footer pages (info-pages.ts) that have no Page yet, for creating one. */
 export async function availablePages(db: Database) {
   const existing = await db
@@ -137,21 +121,6 @@ export async function availablePages(db: Database) {
     .where(and(eq(contentItem.type, "page"), eq(contentItem.primaryArea, PAGE_AREA)));
   const taken = new Set(existing.map((row) => row.slug));
   return INFO_PAGES.filter((page) => !taken.has(page.path)).map(({ path, title }) => ({ path, title }));
-}
-
-/** Media library files a Resource can offer, for the form's file choice. */
-export function downloadableFiles(db: Database) {
-  return db
-    .select({ id: mediaAsset.id, name: mediaAsset.name, type: mediaAsset.type })
-    .from(mediaAsset)
-    .where(
-      and(
-        eq(mediaAsset.purpose, "media"),
-        eq(mediaAsset.status, "ready"),
-        inArray(mediaAsset.type, [...DOWNLOADABLE_TYPES]),
-      ),
-    )
-    .orderBy(desc(mediaAsset.createdAt));
 }
 
 /** The primary area chosen when an Article is created, or null if none of the six was chosen. */

@@ -6,8 +6,24 @@ import { expect, type Page } from "@playwright/test";
 
 export const ADMIN = "http://admin.localhost:4173";
 
-export function latestEmailText(email: string): string {
-  const output = execFileSync(
+/**
+ * Reads the outbox from the local D1 file. The preview server writes to the same file, so a read can
+ * meet its lock (SQLITE_BUSY); it is tried again after a short wait.
+ */
+export function latestEmailText(email: string, attempts = 4): string {
+  let output: string;
+  try {
+    output = queryOutbox(email);
+  } catch (error) {
+    if (attempts <= 1 || !String(error).includes("SQLITE_BUSY")) throw error;
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+    return latestEmailText(email, attempts - 1);
+  }
+  return JSON.parse(output.slice(output.indexOf("[")))[0].results[0].text;
+}
+
+function queryOutbox(email: string) {
+  return execFileSync(
     "pnpm",
     [
       "--silent",
@@ -22,9 +38,8 @@ export function latestEmailText(email: string): string {
       "--command",
       `SELECT text FROM email_outbox WHERE "to" = '${email}' ORDER BY id DESC LIMIT 1`,
     ],
-    { encoding: "utf8" },
+    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
   );
-  return JSON.parse(output.slice(output.indexOf("[")))[0].results[0].text;
 }
 
 export async function expectNoAxeViolations(page: Page) {

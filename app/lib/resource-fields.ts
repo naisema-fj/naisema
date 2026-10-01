@@ -14,7 +14,7 @@ export type ResourceDetails = {
   /** Its accessibility features, or what it lacks, in words. */
   accessibility: string;
   /** What a visitor may do with it, in words: "Free to print and share for teaching". */
-  permittedUse: string;
+  usageTerms: string;
 };
 
 export const AGE_GUIDANCE = {
@@ -26,7 +26,7 @@ export const AGE_GUIDANCE = {
 
 export type AgeGuidance = keyof typeof AGE_GUIDANCE;
 
-export const RESOURCE_LIMITS = { language: 100, accessibility: 500, permittedUse: 300, url: 2000 } as const;
+export const RESOURCE_LIMITS = { language: 100, accessibility: 500, usageTerms: 300, url: 2000 } as const;
 
 export type ResourceField =
   | "resourceKind"
@@ -36,7 +36,7 @@ export type ResourceField =
   | "resourceLanguage"
   | "resourceAgeGuidance"
   | "resourceAccessibility"
-  | "resourcePermittedUse";
+  | "resourceUsageTerms";
 
 export type ResourceFieldsResult =
   | { ok: true; details: ResourceDetails }
@@ -79,9 +79,9 @@ export function readResourceFields(form: FormData, today = new Date()): Resource
   const ageGuidance = String(form.get("resourceAgeGuidance") ?? "");
   if (!isAgeGuidance(ageGuidance)) errors.resourceAgeGuidance = "Choose who it is suitable for.";
   const accessibility = text("resourceAccessibility", RESOURCE_LIMITS.accessibility, null);
-  const permittedUse = text(
-    "resourcePermittedUse",
-    RESOURCE_LIMITS.permittedUse,
+  const usageTerms = text(
+    "resourceUsageTerms",
+    RESOURCE_LIMITS.usageTerms,
     "Say what visitors may do with it, such as print or share it.",
   );
 
@@ -94,11 +94,11 @@ export function readResourceFields(form: FormData, today = new Date()): Resource
         language,
         ...(isAgeGuidance(ageGuidance) ? { ageGuidance } : {}),
         accessibility,
-        permittedUse,
+        usageTerms,
       },
     };
   }
-  return { ok: true, details: { source, language, ageGuidance, accessibility, permittedUse } };
+  return { ok: true, details: { source, language, ageGuidance, accessibility, usageTerms } };
 }
 
 function isSecureUrl(value: string) {

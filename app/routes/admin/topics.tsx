@@ -40,7 +40,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       leadItemId: String(form.get("leadItemId") ?? "") || null,
     });
     if (!result.ok) return data({ error: null, updateError: { id, message: result.error } }, { status: 400 });
-    await purgePublicPages(env, ["/topics", ...(result.slugs ?? []).map((slug) => `/topics/${slug}`)]);
+    await purgePublicPages(env, ["/topics", ...(result.paths ?? [])]);
     throw redirect(`/admin/topics?updated=${id}`);
   }
   const result = await createTopic(db, actor.userId, String(form.get("name") ?? ""));

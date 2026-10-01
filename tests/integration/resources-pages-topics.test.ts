@@ -15,7 +15,7 @@ const resourceFields = {
   resourceLanguage: "Standard Fijian and English",
   resourceAgeGuidance: "all-ages",
   resourceAccessibility: "Tagged PDF with headings.",
-  resourcePermittedUse: "Free to print and share for teaching. Not for sale.",
+  resourceUsageTerms: "Free to print and share for teaching. Not for sale.",
 };
 
 /** Creates an item of any type; `fields` override the defaults, `type` picks Article, Resource or Page. */
@@ -108,6 +108,22 @@ describe("Pages", () => {
     expect(await read("/")).not.toContain(`Contact ${term}`);
     expect(await read(`/search?q=${term}`)).toContain(`Contact ${term}`);
   });
+
+  it("keep their footer address and sit outside the Topics", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const { id } = await create(editor, "page", { page: "privacy" });
+
+    const moved = await editor.browser.fetch(`/admin/articles/${id}`, { form: { intent: "slug", slug: "secrets" } });
+
+    expect(moved.status).toBe(400);
+    expect(await moved.text()).toContain("address is fixed");
+    const row = await env.DB.prepare(
+      "SELECT r.snapshot FROM content_item c JOIN revision r ON r.id = c.current_draft_revision_id WHERE c.id = ?1",
+    )
+      .bind(id)
+      .first<{ snapshot: string }>();
+    expect(JSON.parse(row?.snapshot ?? "{}").topicIds).toEqual([]);
+  });
 });
 
 describe("Resources", () => {
@@ -176,8 +192,27 @@ describe("Resources", () => {
     expect(page).toContain("Download (PDF, 1 KB)");
 
     const download = await visit(`/resources/${id}/download`);
-    expect(download.status).toBe(302);
-    expect(download.headers.get("Location")).toBe(`/media/files/${assetId}`);
+    expect(download.status).toBe(200);
+    expect(download.headers.get("Content-Disposition")).toBe('attachment; filename="sheet.pdf"');
+    expect(download.headers.get("Cache-Control")).toBe("no-store");
+    expect(await download.text()).toContain("A vocabulary sheet.");
+  });
+
+  it("stop offering the file once the Resource is withdrawn", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const assetId = await libraryPdf(editor);
+    const { id } = await create(editor, "resource", {
+      primaryArea: "resources",
+      resourceKind: "file",
+      resourceAssetId: assetId,
+      ...resourceFields,
+    });
+    await publish(editor, id);
+    expect((await visit(`/resources/${id}/download`)).status).toBe(200);
+
+    await act(editor, id, 1, { intent: "withdraw" });
+
+    expect((await visit(`/resources/${id}/download`)).status).toBe(404);
   });
 
   it("can't offer a file that hasn't passed its virus scan", async () => {
