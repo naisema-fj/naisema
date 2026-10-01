@@ -19,9 +19,28 @@ export type PermittedUse = (typeof PERMITTED_USES)[number];
 export const isPermittedUse = (value: string): value is PermittedUse =>
   (PERMITTED_USES as readonly string[]).includes(value);
 
+/**
+ * The parts of an item that can carry their own Rights Records, apart from the item as a whole: a
+ * speaker or guest, a piece of music, an archive clip (Voices Episodes, PRD §04).
+ */
+export const RIGHTS_PART_KINDS = ["speaker", "music", "archive"] as const;
+export type RightsPartKind = (typeof RIGHTS_PART_KINDS)[number];
+export type RightsPart = { kind: RightsPartKind; name: string };
+
+export const RIGHTS_PART_NAMES: Record<RightsPartKind, string> = {
+  speaker: "speaker or guest",
+  music: "music",
+  archive: "archive clip",
+};
+
+export const isRightsPartKind = (value: string): value is RightsPartKind =>
+  (RIGHTS_PART_KINDS as readonly string[]).includes(value);
+
 /** What the rules need to know about a Rights Record. */
 export type RightsFacts = {
   id: string;
+  /** The part of the item it covers; absent or null for the item as a whole. */
+  part?: RightsPart | null;
   permittedUses: PermittedUse[];
   /** The record is documented permission from the guardian of children who can be identified. */
   guardianPermission: boolean;
@@ -54,12 +73,32 @@ export function rightsProblems(input: {
   const publishable = input.records.filter(grantsPublish);
   const problems: string[] = [];
 
-  if (!publishable.some((record) => isCurrent(record, now))) {
-    const latest = publishable.at(-1);
+  const whole = publishable.filter((record) => !record.part);
+  if (!whole.some((record) => isCurrent(record, now))) {
+    const latest = whole.at(-1);
     if (latest?.withdrawnAt) problems.push("Its Rights Record granting Publish was withdrawn.");
     else if (latest?.expiresAt) {
       problems.push(`Its Rights Record granting Publish expired on ${formatDay(latest.expiresAt)}.`);
     } else problems.push("No current Rights Record grants Publish.");
+  }
+  // Each part with records of its own needs one of them current, granting Publish.
+  const parts = new Map<string, { part: RightsPart; records: RightsFacts[] }>();
+  for (const record of input.records) {
+    if (!record.part) continue;
+    const key = `${record.part.kind}|${record.part.name.trim().toLowerCase()}`;
+    const entry = parts.get(key) ?? { part: record.part, records: [] };
+    entry.records.push(record);
+    parts.set(key, entry);
+  }
+  for (const { part, records } of parts.values()) {
+    const granting = records.filter(grantsPublish);
+    if (granting.some((record) => isCurrent(record, now))) continue;
+    const label = `${RIGHTS_PART_NAMES[part.kind]}: ${part.name.trim()}`;
+    const latest = granting.at(-1);
+    if (latest?.withdrawnAt) problems.push(`The Rights Record for ${label} was withdrawn.`);
+    else if (latest?.expiresAt)
+      problems.push(`The Rights Record for ${label} expired on ${formatDay(latest.expiresAt)}.`);
+    else problems.push(`No current Rights Record for ${label} grants Publish.`);
   }
   if (
     input.needsGuardianPermission &&

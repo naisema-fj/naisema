@@ -1,11 +1,13 @@
 import type { ArticleBody } from "./article-body";
+import type { EpisodeDetails, EpisodeField } from "./episode-fields";
 import type { ReviewType } from "./permissions";
 import type { ResourceDetails, ResourceField } from "./resource-fields";
 import type { ContentFlag } from "./review-rules";
 
 /**
  * Everything an editor writes on a Content Item; each save stores one of these as a Revision.
- * Articles, Resources and Pages share it (content-types.ts); a Resource also has `resource`.
+ * Every content type shares it (content-types.ts); a Resource also has `resource`, an Episode
+ * `episode`.
  */
 export type ArticleSnapshot = {
   title: string;
@@ -23,9 +25,11 @@ export type ArticleSnapshot = {
   relatedIds?: string[];
   /** A Resource's file or link and what a visitor reads before using it. */
   resource?: ResourceDetails;
+  /** An Episode's recording, speakers, transcript and distribution links. */
+  episode?: EpisodeDetails;
 };
 
-export type ArticleField = keyof ArticleSnapshot | "primaryArea" | "page" | ResourceField;
+export type ArticleField = keyof ArticleSnapshot | "primaryArea" | "page" | ResourceField | EpisodeField;
 export type FieldErrors = Partial<Record<ArticleField, string>>;
 
 /** Maximum lengths of the article's text fields, shared by the form and the server check. */
@@ -47,11 +51,31 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   const related = snapshot.relatedIds?.length ? { relatedIds: snapshot.relatedIds } : {};
   const resource = snapshot.resource ? { resource: snapshot.resource } : {};
   const resourceAccess = snapshot.resource ? { resourceAccessibility: snapshot.resource.accessibility } : {};
+  // An Episode's recording and transcript are its words, so every review covers them; who speaks is
+  // source and context; the date, length and distribution links are editorial facts.
+  const episode = snapshot.episode;
+  const recording = episode ? { audioAssetId: episode.audioAssetId, transcript: episode.transcript } : {};
+  const speakers = episode ? { host: episode.host, guests: episode.guests } : {};
+  const episodeFacts = episode
+    ? { recordedOn: episode.recordedOn, durationSeconds: episode.durationSeconds, distribution: episode.distribution }
+    : {};
   return {
-    language: { title, summary, body, languageVariety },
-    cultural: { title, summary, body, credit, topicIds, sources, ...resource },
-    editorial: { title, summary, body, credit, topicIds, sources, ...related, ...resource },
-    accessibility: { title, body, ...resourceAccess },
-    safeguarding: { title, summary, body },
+    language: { title, summary, body, languageVariety, ...recording },
+    cultural: { title, summary, body, credit, topicIds, sources, ...resource, ...recording, ...speakers },
+    editorial: {
+      title,
+      summary,
+      body,
+      credit,
+      topicIds,
+      sources,
+      ...related,
+      ...resource,
+      ...recording,
+      ...speakers,
+      ...episodeFacts,
+    },
+    accessibility: { title, body, ...resourceAccess, ...recording },
+    safeguarding: { title, summary, body, ...recording, ...speakers },
   };
 }

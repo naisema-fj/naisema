@@ -64,6 +64,13 @@
       "when": 1790838443599,
       "tag": "0008_resources_pages_topics",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790840101250,
+      "tag": "0009_rights_parts_and_episodes",
+      "breakpoints": true
     }
   ]
 }

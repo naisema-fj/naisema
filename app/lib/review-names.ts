@@ -39,6 +39,7 @@ export const FLAG_NAMES: Record<ContentFlag, string> = {
 /** A required review as staff see it: "Language review (standard-fijian)", "Knowledge Holder Approval". */
 export function requirementName(requirement: ReviewRequirement): string {
   if (requirement.knowledgeHolder) return "Knowledge Holder Approval";
+  if (requirement.transcript) return `${REVIEW_NAMES.accessibility} of the transcript`;
   const name = REVIEW_NAMES[requirement.reviewType];
   return requirement.languageVariety ? `${name} (${requirement.languageVariety})` : name;
 }

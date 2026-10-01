@@ -936,25 +936,29 @@ html:has(.public) {
 
 /* Resources: what a visitor reads before downloading, set as a ruled card on the letter. */
 
-.resource-details {
+.resource-details,
+.episode {
   margin-top: 1.5rem;
   padding: 1.25rem 1.25rem 1.4rem;
   border-block: 1px solid var(--masi);
   background: var(--sand);
 }
 
-.resource-details h2 {
+.resource-details h2,
+.episode h2 {
   font-size: var(--step-1);
 }
 
-.resource-details dl {
+.resource-details dl,
+.episode dl {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 0.4rem 1.25rem;
   margin: 1rem 0 1.25rem;
 }
 
-.resource-details dt {
+.resource-details dt,
+.episode dt {
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--step--1);
@@ -964,7 +968,8 @@ html:has(.public) {
   padding-top: 0.2rem;
 }
 
-.resource-details dd {
+.resource-details dd,
+.episode dd {
   margin: 0;
 }
 
@@ -987,14 +992,45 @@ html:has(.public) {
 }
 
 @media (max-width: 34rem) {
-  .resource-details dl {
+  .resource-details dl,
+  .episode dl {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.15rem;
   }
 
-  .resource-details dd {
+  .resource-details dd,
+  .episode dd {
     margin-bottom: 0.6rem;
   }
+}
+
+/* An Episode's player: as wide as the column, never wider. */
+.episode-player {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.episode h3 {
+  font-size: var(--step-0);
+}
+
+.distribution {
+  padding-left: 1.25rem;
+}
+
+/* The transcript keeps its own line breaks (sound cues, verse) inside paragraphs. */
+.transcript {
+  margin-top: 2rem;
+}
+
+.transcript p {
+  white-space: pre-line;
+  margin-top: 0.85rem;
+}
+
+.transcript .speaker {
+  font-family: var(--font-ui);
 }
 
 /* The view beacon (content_opened): an image no one sees. */

@@ -6,7 +6,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { CONTENT_TYPE_NAMES } from "~/lib/content-types";
 import { reportsSince } from "~/lib/link-reports.server";
-import { downloadChoices } from "~/lib/media-delivery.server";
+import { downloadChoices, episodeAudioChoices } from "~/lib/media-delivery.server";
 import { publicPath } from "~/lib/public.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { appendRevision } from "~/lib/revisions.server";
@@ -35,6 +35,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     topics: await listTopics(db),
     embeddable: await embeddableArticles(db, article.id),
     files: article.type === "resource" ? await downloadChoices(db) : [],
+    audio: article.type === "episode" ? await episodeAudioChoices(db) : [],
   };
 }
 
@@ -118,6 +119,7 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
         key={current.id}
         type={article.type}
         files={loaderData.files}
+        audio={loaderData.audio}
         values={actionData?.values ?? current.snapshot}
         errors={actionData?.errors}
         topics={loaderData.topics}

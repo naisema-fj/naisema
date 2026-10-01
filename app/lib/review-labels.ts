@@ -18,7 +18,7 @@ export const languageVarietyName = (variety: string) =>
 export function reviewLabels(input: { progress: ReviewProgress[]; flags: readonly ContentFlag[] }): string[] {
   const labels = input.progress.flatMap(({ requirement, status, decision }) => {
     if (status !== "approved" || !decision) return [];
-    const label = LABELS[requirement.reviewType](requirement, decision, formatDay(decision.decidedAt));
+    const label = LABELS[requirement.reviewType](requirement, decision, formatDay(decision.decidedAt), input.flags);
     return label ? [label] : [];
   });
   if (input.flags.includes("opinion")) labels.push("Opinion or personal experience");
@@ -28,7 +28,12 @@ export function reviewLabels(input: { progress: ReviewProgress[]; flags: readonl
 /** One wording per Review Type, so a new type can't be added without deciding its label. */
 const LABELS: Record<
   ReviewType,
-  (requirement: ReviewProgress["requirement"], decision: RecordedDecision, date: string) => string | null
+  (
+    requirement: ReviewProgress["requirement"],
+    decision: RecordedDecision,
+    date: string,
+    flags: readonly ContentFlag[],
+  ) => string | null
 > = {
   language: (_, decision, date) =>
     decision.languageVariety
@@ -39,7 +44,12 @@ const LABELS: Record<
       ? `Cultural context reviewed with a Knowledge Holder · ${date}`
       : `Cultural context reviewed · ${date}`,
   editorial: (_, __, date) => `Sources and claims reviewed · ${date}`,
-  accessibility: (_, __, date) => `Disability advice reviewed · ${date}`,
+  accessibility: (requirement, _, date, flags) =>
+    !requirement.transcript
+      ? `Disability advice reviewed · ${date}`
+      : flags.includes("disabilityAdvice")
+        ? `Disability advice and transcript reviewed · ${date}`
+        : `Transcript reviewed for accessibility · ${date}`,
   // Safeguarding review stays internal.
   safeguarding: () => null,
 };

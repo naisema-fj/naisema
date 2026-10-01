@@ -30,6 +30,9 @@ export default function Articles({ loaderData }: Route.ComponentProps) {
           <a href="/admin/articles/new?type=resource">Add a new resource</a>
         </li>
         <li>
+          <a href="/admin/articles/new?type=episode">Add a Voices episode</a>
+        </li>
+        <li>
           <a href="/admin/articles/new?type=page">Write a site page</a>
         </li>
       </ul>

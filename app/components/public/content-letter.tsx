@@ -54,10 +54,13 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
       </section>
 
       {item.resource && <ResourceDetails id={item.id} resource={item.resource} />}
+      {item.episode && <EpisodePlayer episode={item.episode} />}
 
       <div className="letter-body">
         <ArticleBodyView body={item.body} embeds={item.embeds} />
       </div>
+
+      {item.episode && <Transcript paragraphs={item.episode.transcript} />}
 
       <footer className="letter-foot">
         {item.topics.length > 0 && (
@@ -100,6 +103,74 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
       {/* Counts the view (content_opened, IDs only) even when the page came from the edge cache; no script needed. */}
       <img src={`/e/opened/${item.id}`} alt="" width={1} height={1} className="beacon" />
     </article>
+  );
+}
+
+/**
+ * An Episode's native audio player and who is speaking. Nothing plays until the visitor presses
+ * play (`preload="none"`), the page has one player, and the transcript below doesn't depend on it.
+ */
+function EpisodePlayer({ episode }: { episode: NonNullable<PublicArticle["episode"]> }) {
+  return (
+    <section className="episode" aria-labelledby="listen-heading">
+      <h2 id="listen-heading">Listen</h2>
+      {/* biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the full transcript on this page (WCAG 1.2.1). */}
+      <audio controls preload="none" className="episode-player">
+        <source src={episode.audioPath} type={episode.audioType} />
+        <a href={episode.audioPath}>Open the audio</a>
+      </audio>
+      <p>
+        <a href="#transcript">Read the transcript</a>
+      </p>
+      <dl>
+        <dt>Host</dt>
+        <dd>{episode.host}</dd>
+        {episode.guests.length > 0 && (
+          <>
+            <dt>{episode.guests.length === 1 ? "Guest" : "Guests"}</dt>
+            <dd>{episode.guests.join(", ")}</dd>
+          </>
+        )}
+        <dt>Recorded</dt>
+        <dd>
+          <DateMark label="" date={episode.recordedOn} />
+        </dd>
+        <dt>Length</dt>
+        <dd>
+          <time dateTime={episode.isoDuration}>{episode.duration}</time>
+        </dd>
+      </dl>
+      {episode.distribution.length > 0 && (
+        <>
+          <h3>Also available on</h3>
+          <ul className="distribution">
+            {episode.distribution.map((link) => (
+              <li key={link.url}>
+                <a href={link.url} rel="external noopener noreferrer">
+                  {link.label}
+                </a>
+                {` (${link.host}, another website)`}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
+  );
+}
+
+/** The full transcript, always on the page: the Episode can be read without the player (A11Y-03). */
+function Transcript({ paragraphs }: { paragraphs: NonNullable<PublicArticle["episode"]>["transcript"] }) {
+  return (
+    <section id="transcript" className="transcript" aria-labelledby="transcript-heading">
+      <h2 id="transcript-heading">Transcript</h2>
+      {paragraphs.map((paragraph, index) => (
+        <p key={`p-${index.toString()}`}>
+          {paragraph.speaker && <strong className="speaker">{`${paragraph.speaker}: `}</strong>}
+          {paragraph.text}
+        </p>
+      ))}
+    </section>
   );
 }
 

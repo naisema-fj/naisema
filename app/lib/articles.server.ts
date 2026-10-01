@@ -5,9 +5,10 @@ import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody
 import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
+import { readEpisodeFields } from "./episode-fields";
 import { INFO_PAGES } from "./info-pages";
 import { toLanguageVariety } from "./language-variety";
-import { readyDownload } from "./media-delivery.server";
+import { readyDownload, readyEpisodeAudio } from "./media-delivery.server";
 import { readResourceFields } from "./resource-fields";
 import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
@@ -24,7 +25,8 @@ export const RELATED_LIMIT = 6;
 /**
  * Reads the content form. Title, summary, credit and at least one Topic are required on every
  * save, the body must pass the allowlist, and flagging language instruction needs the Language
- * Variety taught. A Resource also needs its file or link and what visitors read before using it.
+ * Variety taught. A Resource also needs its file or link and what visitors read before using it;
+ * an Episode needs its audio, host, recording date and length (its transcript can follow).
  */
 export async function readArticleForm(
   db: Database,
@@ -95,7 +97,24 @@ export async function readArticleForm(
       }
     }
   }
-  const extras = { ...(relatedIds.length ? { relatedIds } : {}), ...(resource ? { resource } : {}) };
+  let episode: ArticleSnapshot["episode"];
+  if (type === "episode") {
+    const read = readEpisodeFields(form);
+    if (!read.ok) {
+      Object.assign(errors, read.errors);
+      episode = read.values as ArticleSnapshot["episode"];
+    } else {
+      episode = read.details;
+      if (!(await readyEpisodeAudio(db, read.details.audioAssetId))) {
+        errors.episodeAudioAssetId = "Choose an MP3 or M4A file that has passed its virus scan.";
+      }
+    }
+  }
+  const extras = {
+    ...(relatedIds.length ? { relatedIds } : {}),
+    ...(resource ? { resource } : {}),
+    ...(episode ? { episode } : {}),
+  };
 
   if (!parsed.ok || Object.keys(errors).length) {
     // A body the allowlist refused goes back as sent, so the writer can fix it rather than lose it;

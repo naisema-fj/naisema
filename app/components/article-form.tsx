@@ -3,6 +3,7 @@ import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType } from "~/lib/content-types";
+import { EPISODE_LIMITS } from "~/lib/episode-fields";
 import { AGE_GUIDANCE, RESOURCE_LIMITS } from "~/lib/resource-fields";
 import { FLAG_NAMES } from "~/lib/review-names";
 import { CONTENT_FLAGS } from "~/lib/review-rules";
@@ -25,6 +26,8 @@ type Props = {
     | { choose: false; current: PrimaryArea | null };
   /** Media library files a Resource can offer for download. */
   files?: { id: string; name: string; typeName: string }[];
+  /** Media library audio an Episode can play. */
+  audio?: { id: string; name: string; typeName: string }[];
   /** The Revision this form was opened from, so a save can't silently replace a newer one. */
   baseRevisionId?: string;
   submitLabel: string;
@@ -38,11 +41,18 @@ export function ArticleForm({
   embeddable,
   area,
   files = [],
+  audio = [],
   baseRevisionId,
   submitLabel,
 }: Props) {
   const resource = values.resource;
   const source = resource?.source;
+  const episode = values.episode;
+  // Room for every saved distribution link, and at least two empty rows to add one.
+  const linkRows = [
+    ...(episode?.distribution ?? []),
+    ...Array.from({ length: EPISODE_LIMITS.distribution }, () => ({ label: "", url: "" })),
+  ].slice(0, Math.max(EPISODE_LIMITS.distribution, (episode?.distribution.length ?? 0) + 2));
   const describedBy = (field: keyof FieldErrors) => (errors[field] ? `${field}-error` : undefined);
   const fieldError = (field: keyof FieldErrors) =>
     errors[field] && (
@@ -303,7 +313,109 @@ export function ArticleForm({
         </fieldset>
       )}
 
+      {type === "episode" && (
+        <fieldset>
+          <legend>Episode</legend>
+          <label htmlFor="episodeAudioAssetId">Audio</label>
+          <select
+            id="episodeAudioAssetId"
+            name="episodeAudioAssetId"
+            defaultValue={episode?.audioAssetId ?? ""}
+            aria-describedby={describedBy("episodeAudioAssetId")}
+          >
+            <option value="">Choose the audio</option>
+            {audio.map((file) => (
+              <option key={file.id} value={file.id}>
+                {file.name} ({file.typeName})
+              </option>
+            ))}
+          </select>
+          {fieldError("episodeAudioAssetId")}
+          <label htmlFor="episodeHost">Host</label>
+          <input
+            id="episodeHost"
+            name="episodeHost"
+            maxLength={EPISODE_LIMITS.name}
+            defaultValue={episode?.host ?? ""}
+            aria-describedby={describedBy("episodeHost")}
+          />
+          {fieldError("episodeHost")}
+          <label htmlFor="episodeGuests">Guests, one per line</label>
+          <textarea
+            id="episodeGuests"
+            name="episodeGuests"
+            rows={3}
+            defaultValue={episode?.guests.join("\n") ?? ""}
+            aria-describedby={describedBy("episodeGuests")}
+          />
+          {fieldError("episodeGuests")}
+          <label htmlFor="episodeRecordedOn">Recorded on</label>
+          <input
+            id="episodeRecordedOn"
+            name="episodeRecordedOn"
+            type="date"
+            defaultValue={episode?.recordedOn ?? ""}
+            aria-describedby={describedBy("episodeRecordedOn")}
+          />
+          {fieldError("episodeRecordedOn")}
+          <label htmlFor="episodeDuration">Length, as minutes:seconds or hours:minutes:seconds</label>
+          <input
+            id="episodeDuration"
+            name="episodeDuration"
+            inputMode="numeric"
+            placeholder="32:10"
+            defaultValue={episode?.durationSeconds ? clock(episode.durationSeconds) : ""}
+            aria-describedby={describedBy("episodeDuration")}
+          />
+          {fieldError("episodeDuration")}
+          <fieldset aria-describedby={describedBy("episodeDistribution") ?? "distribution-hint"}>
+            <legend>Also available on</legend>
+            <p id="distribution-hint">Only places approved for distribution, such as a podcast app.</p>
+            {linkRows.map((link, index) => (
+              <div key={`link-${index.toString()}`}>
+                <label htmlFor={`episodeLinkLabel-${index}`}>{`Name of place ${index + 1}`}</label>
+                <input
+                  id={`episodeLinkLabel-${index}`}
+                  name="episodeLinkLabel"
+                  maxLength={EPISODE_LIMITS.linkLabel}
+                  defaultValue={link.label}
+                />
+                <label htmlFor={`episodeLinkUrl-${index}`}>{`Web address ${index + 1}`}</label>
+                <input
+                  id={`episodeLinkUrl-${index}`}
+                  name="episodeLinkUrl"
+                  type="url"
+                  placeholder="https://"
+                  maxLength={EPISODE_LIMITS.url}
+                  defaultValue={link.url}
+                />
+              </div>
+            ))}
+            {fieldError("episodeDistribution")}
+          </fieldset>
+        </fieldset>
+      )}
+
       <BodyEditor initial={values.body as ArticleBody} embeddable={embeddable} error={errors.body} />
+
+      {type === "episode" && (
+        <>
+          <label htmlFor="episodeTranscript">Transcript</label>
+          <p id="transcript-hint" className="hint">
+            Needed before publishing, and reviewed for accessibility. Separate paragraphs with a blank line; start a
+            paragraph with a name and a colon, like "Mere: Bula", to show who is speaking.
+          </p>
+          <textarea
+            id="episodeTranscript"
+            name="episodeTranscript"
+            rows={16}
+            maxLength={EPISODE_LIMITS.transcript}
+            defaultValue={episode?.transcript ?? ""}
+            aria-describedby={errors.episodeTranscript ? "transcript-hint episodeTranscript-error" : "transcript-hint"}
+          />
+          {fieldError("episodeTranscript")}
+        </>
+      )}
 
       <label htmlFor="relatedId">Related items (up to 6, in the order chosen)</label>
       <p id="related-hint" className="hint">
@@ -329,4 +441,12 @@ export function ArticleForm({
       <button type="submit">{submitLabel}</button>
     </Form>
   );
+}
+
+/** Seconds as the form takes them back: "32:10", "1:05:00". */
+function clock(seconds: number) {
+  const pad = (value: number) => String(value).padStart(2, "0");
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours ? `${hours}:${pad(minutes)}:${pad(seconds % 60)}` : `${minutes}:${pad(seconds % 60)}`;
 }

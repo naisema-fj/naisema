@@ -1,24 +1,23 @@
 import { data, redirect } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { ReviewPanel } from "~/components/review-panel";
+import { RevisionTypeDetails } from "~/components/revision-type-details";
 import type { ArticleSnapshot } from "~/lib/article-fields";
-import { embedsFor, getArticle } from "~/lib/articles.server";
+import { embedsFor } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { mediaName } from "~/lib/media.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { archive, eligibilityFor, publishRevision, withdraw } from "~/lib/publication.server";
 import {
-  assignedReviewerIds,
   assignReviewer,
   decidableRequirement,
-  loadReview,
   recordDecision,
   recordKnowledgeHolderApproval,
   reviewersFor,
   submitRevision,
 } from "~/lib/review.server";
-import { getRevision } from "~/lib/revisions.server";
-import { requireStaff } from "~/lib/staff.server";
+import { requireRevision } from "~/lib/revision-access.server";
 import { topicNamer } from "~/lib/topics.server";
 import type { Route } from "./+types/revision";
 
@@ -28,20 +27,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: loaderData ? `Revision ${loaderData.revision.number} · Na iSema staff` : "Na iSema staff" }];
 }
 
-/** Editors, and the reviewers assigned to the article, may open its revisions (revision.view). */
-async function requireRevision(request: Request, env: Env, params: Route.LoaderArgs["params"]) {
-  const staff = await requireStaff(env, request);
-  const article = await getArticle(staff.db, params.id);
-  if (!article) throw new Response("Not found", { status: 404 });
-  const assigned = await assignedReviewerIds(staff.db, article.id);
-  if (!can(staff.actor, { action: "revision.view", revision: { assignedReviewerIds: assigned } })) {
-    throw new Response("Only editors and this article's reviewers can open its revisions.", { status: 403 });
-  }
-  const revision = await getRevision<ArticleSnapshot>(staff.db, article.id, Number(params.number));
-  const review = revision && (await loadReview(staff.db, revision.id));
-  if (!revision || !review) throw new Response("Not found", { status: 404 });
-  return { ...staff, article, revision, review };
-}
+/** The media library file a Resource offers or an Episode plays, if any. */
+const typeAssetId = (snapshot: ArticleSnapshot) =>
+  snapshot.episode?.audioAssetId ??
+  (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { db, actor, article, revision, review } = await requireRevision(
@@ -65,6 +54,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     revision,
     topics: topicNames(revision.snapshot.topicIds),
     embeds: await embedsFor(db, revision.snapshot.body),
+    fileName: await mediaName(db, typeAssetId(revision.snapshot)),
     review: {
       state: review.state,
       flags: review.flags,
@@ -202,6 +192,11 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
           )}
         </dl>
         <ArticleBodyView body={snapshot.body} embeds={embeds} />
+        <RevisionTypeDetails
+          snapshot={snapshot}
+          fileName={loaderData.fileName}
+          audioPath={`/admin/articles/${article.id}/revisions/${revision.number}/audio`}
+        />
       </article>
       <ReviewPanel
         revisionNumber={revision.number}

@@ -8,7 +8,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
-import type { PermittedUse } from "../app/lib/rights-rules";
+import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -333,6 +333,10 @@ export const rightsRecord = sqliteTable(
     /** What the record covers: "content_item" now; media assets join with the media library. */
     subjectType: text("subject_type").notNull(),
     subjectId: text("subject_id").notNull(),
+    /** A part of the subject with rights of its own (speaker, music, archive clip); null for all of it. */
+    partKind: text("part_kind").$type<RightsPartKind>(),
+    /** Which speaker, piece of music or clip, as staff name it. */
+    partName: text("part_name"),
     rightsHolder: text("rights_holder").notNull(),
     permittedUses: text("permitted_uses", { mode: "json" }).$type<PermittedUse[]>().notNull(),
     guardianPermission: integer("guardian_permission", { mode: "boolean" }).notNull().default(false),

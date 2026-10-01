@@ -15,10 +15,15 @@ export function recordRights(
     expiresOn?: string;
     evidence?: File;
     rightsHolder?: string;
+    part?: { kind: string; name: string };
   } = {},
 ) {
   const form = new FormData();
   form.set("intent", "record");
+  if (fields.part) {
+    form.set("partKind", fields.part.kind);
+    form.set("partName", fields.part.name);
+  }
   form.set("rightsHolder", fields.rightsHolder ?? "Sera Vula");
   for (const use of fields.uses ?? ["publish"]) form.append("use", use);
   if (fields.guardianPermission) form.set("guardianPermission", "on");

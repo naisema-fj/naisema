@@ -2,7 +2,7 @@ import { eq, sql } from "drizzle-orm";
 import { contentItem } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
-import { readyDownload } from "./media-delivery.server";
+import { readyDownload, readyEpisodeAudio } from "./media-delivery.server";
 import { type Actor, can } from "./permissions";
 import { loadReview, type Review, type ReviewActionResult } from "./review.server";
 import { requirementName } from "./review-names";
@@ -37,6 +37,12 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
   }
   if (review.resourceAssetId && !(await readyDownload(db, review.resourceAssetId))) {
     reasons.push("Its file isn't in the media library as a PDF or audio file that has passed its virus scan.");
+  }
+  if (review.episode && !(await readyEpisodeAudio(db, review.episode.audioAssetId))) {
+    reasons.push("Its audio isn't in the media library as an MP3 or M4A file that has passed its virus scan.");
+  }
+  if (review.episode && !review.episode.hasTranscript) {
+    reasons.push("It has no transcript yet. Every Episode is published with a reviewed transcript.");
   }
   reasons.push(
     ...rightsProblems({

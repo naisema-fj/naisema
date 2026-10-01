@@ -31,6 +31,8 @@ export type Reviewable = {
   languageVariety?: string | null;
   /** A Resource's download, which must have passed its scan for the Revision to be public. */
   resource?: { source: { kind: "file"; assetId: string } | { kind: "link" } };
+  /** An Episode's recording, whose transcript is reviewed for accessibility and needed to publish. */
+  episode?: { audioAssetId: string; transcript: string };
 };
 
 type ApprovalRow = typeof reviewApproval.$inferSelect;
@@ -208,7 +210,7 @@ export async function loadReview(db: Database, revisionId: string) {
     approvals.map(({ approval }) => approval.carriedForwardFromId).filter((id): id is string => id !== null),
   );
 
-  const requirements = requiredReviewsSince({ flags, languageVariety }, lastSubmitted);
+  const requirements = requiredReviewsSince({ flags, languageVariety, recording: !!snapshot.episode }, lastSubmitted);
   const progress = reviewProgress(
     requirements,
     approvals.map(({ approval }) => toRecordedDecision(approval)),
@@ -227,6 +229,9 @@ export async function loadReview(db: Database, revisionId: string) {
     flags,
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
+    episode: snapshot.episode
+      ? { audioAssetId: snapshot.episode.audioAssetId, hasTranscript: snapshot.episode.transcript.trim() !== "" }
+      : null,
     requirements,
     progress,
     submitted,
@@ -258,7 +263,12 @@ async function lastSubmittedBefore(db: Database, contentItemId: string, number: 
     .get();
   if (!row) return null;
   const snapshot = row.snapshot as Reviewable;
-  return { number: row.number, flags: snapshot.flags ?? [], languageVariety: snapshot.languageVariety ?? null };
+  return {
+    number: row.number,
+    flags: snapshot.flags ?? [],
+    languageVariety: snapshot.languageVariety ?? null,
+    recording: !!snapshot.episode,
+  };
 }
 
 /** The Revision number each carried approval was first given on, keyed by approval ID. */

@@ -6,7 +6,7 @@ import { listContributors } from "~/lib/contributors.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { listRights, readRightsForm, recordRights, withdrawRights } from "~/lib/rights.server";
 import { PERMITTED_USE_NAMES } from "~/lib/rights-names";
-import { formatDay, PERMITTED_USES } from "~/lib/rights-rules";
+import { formatDay, PERMITTED_USES, RIGHTS_PART_KINDS, RIGHTS_PART_NAMES } from "~/lib/rights-rules";
 import { readLimitedFormData, UploadTooLarge } from "~/lib/upload-limit.server";
 import { EVIDENCE_MAX_BYTES } from "~/lib/upload-rules";
 import type { Route } from "./+types/rights";
@@ -107,6 +107,10 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
         separately. Records are never edited: to correct one, withdraw it and record it again. Until the media library
         arrives, a Rights Record covers everything in the article, including its images.
       </p>
+      <p>
+        A speaker or guest, a piece of music or an archive clip can have Rights Records of its own as well. Once a part
+        has one, the item can be published only while that part has a current record granting Publish too.
+      </p>
 
       {records.length === 0 ? (
         <p>No Rights Records yet.</p>
@@ -116,6 +120,12 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
             <li key={record.id}>
               <h2>{`${record.rightsHolder}: ${STATUS_NAMES[record.status]}`}</h2>
               <dl>
+                <dt>Covers</dt>
+                <dd>
+                  {record.part
+                    ? `${capitalise(RIGHTS_PART_NAMES[record.part.kind])}: ${record.part.name}`
+                    : "The whole item"}
+                </dd>
                 <dt>Permitted Uses</dt>
                 <dd>{record.permittedUses.map((use) => PERMITTED_USE_NAMES[use]).join(", ")}</dd>
                 {record.guardianPermission && (
@@ -186,6 +196,32 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
       <h2>Record a Rights Record</h2>
       <Form method="post" encType="multipart/form-data" className="article-form">
         <input type="hidden" name="intent" value="record" />
+        <label htmlFor="partKind">What it covers</label>
+        <select
+          id="partKind"
+          name="partKind"
+          defaultValue={values?.partKind ?? ""}
+          aria-describedby={describedBy("partKind")}
+        >
+          <option value="">The whole item</option>
+          {RIGHTS_PART_KINDS.map((kind) => (
+            <option key={kind} value={kind}>
+              {`One ${RIGHTS_PART_NAMES[kind]}`}
+            </option>
+          ))}
+        </select>
+        {fieldError("partKind")}
+        <label htmlFor="partName">Which one, if it covers a part</label>
+        <input
+          id="partName"
+          name="partName"
+          maxLength={200}
+          defaultValue={values?.partName}
+          aria-describedby={describedBy("partName") ?? "part-name-hint"}
+        />
+        <p id="part-name-hint">For example the guest's name, the song and recording, or the archive and clip.</p>
+        {fieldError("partName")}
+
         <label htmlFor="rightsHolder">Rights holder</label>
         <input
           id="rightsHolder"
@@ -270,3 +306,5 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
     </main>
   );
 }
+
+const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);

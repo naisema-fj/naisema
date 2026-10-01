@@ -20,6 +20,7 @@ export default [
   route("media/images/:id/:width", "routes/media/image.ts"),
   route("media/files/:id", "routes/media/file.ts"),
   route("resources/:id/download", "routes/public/resource-download.ts"),
+  route("episodes/:id/audio", "routes/public/episode-audio.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
   // Staff tools, served only on the admin host (workers/app.ts, ADR-0005).
   ...prefix("admin", [
@@ -29,6 +30,7 @@ export default [
     route("articles/:id", "routes/admin/articles/edit.tsx"),
     route("articles/:id/history", "routes/admin/articles/history.tsx"),
     route("articles/:id/revisions/:number", "routes/admin/articles/revision.tsx"),
+    route("articles/:id/revisions/:number/audio", "routes/admin/articles/revision-audio.ts"),
     route("articles/:id/compare", "routes/admin/articles/compare.tsx"),
     route("articles/:id/rights", "routes/admin/articles/rights.tsx"),
     route("contributors", "routes/admin/contributors.tsx"),

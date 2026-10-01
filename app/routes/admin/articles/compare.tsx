@@ -2,7 +2,8 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
-import { bodyLines, diffLines } from "~/lib/revision-diff";
+import { type EpisodeDetails, formatDuration } from "~/lib/episode-fields";
+import { bodyLines, type DiffLine, diffLines } from "~/lib/revision-diff";
 import { getRevision } from "~/lib/revisions.server";
 import { topicNamer } from "~/lib/topics.server";
 import type { Route } from "./+types/compare";
@@ -32,19 +33,50 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     { label: "Summary", before: from.snapshot.summary, after: to.snapshot.summary },
     { label: "Topics", before: topics(from.snapshot.topicIds), after: topics(to.snapshot.topicIds) },
     { label: "Credit", before: from.snapshot.credit, after: to.snapshot.credit },
+    ...episodeFields(from.snapshot.episode, to.snapshot.episode),
   ];
+  const transcript = (snapshot: ArticleSnapshot) =>
+    (snapshot.episode?.transcript ?? "")
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
   return {
     article,
     from: { number: from.number },
     to: { number: to.number },
     fields,
     body: diffLines(bodyLines(from.snapshot.body), bodyLines(to.snapshot.body)),
+    transcript:
+      from.snapshot.episode || to.snapshot.episode
+        ? diffLines(transcript(from.snapshot), transcript(to.snapshot))
+        : null,
   };
 }
 
+/** An Episode's facts as compared fields; its transcript is compared line by line below. */
+function episodeFields(before: EpisodeDetails | undefined, after: EpisodeDetails | undefined) {
+  if (!before && !after) return [];
+  const facts = (episode: EpisodeDetails | undefined) => ({
+    audio: episode?.audioAssetId ?? "",
+    host: episode?.host ?? "",
+    guests: episode?.guests.join(", ") ?? "",
+    recordedOn: episode?.recordedOn ?? "",
+    length: episode ? formatDuration(episode.durationSeconds) : "",
+    links: episode?.distribution.map((link) => `${link.label} (${link.url})`).join(", ") ?? "",
+  });
+  const [was, now] = [facts(before), facts(after)];
+  return [
+    { label: "Audio file (media library ID)", before: was.audio, after: now.audio },
+    { label: "Host", before: was.host, after: now.host },
+    { label: "Guests", before: was.guests, after: now.guests },
+    { label: "Recorded on", before: was.recordedOn, after: now.recordedOn },
+    { label: "Length", before: was.length, after: now.length },
+    { label: "Also available on", before: was.links, after: now.links },
+  ];
+}
+
 export default function Compare({ loaderData }: Route.ComponentProps) {
-  const { article, from, to, fields, body } = loaderData;
-  const bodyChanged = body.some((line) => line.kind !== "same");
+  const { article, from, to, fields, body, transcript } = loaderData;
 
   return (
     <main id="main" className="page">
@@ -78,20 +110,29 @@ export default function Compare({ loaderData }: Route.ComponentProps) {
       </dl>
 
       <h2>Body</h2>
-      {bodyChanged ? (
-        <ol className="body-diff">
-          {body.map((line, index) => (
-            // biome-ignore lint/suspicious/noArrayIndexKey: the diff is rendered once and never reordered.
-            <li key={index} className={line.kind}>
-              {line.kind === "added" && <ins>Added: {line.text}</ins>}
-              {line.kind === "removed" && <del>Removed: {line.text}</del>}
-              {line.kind === "same" && line.text}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p>The body is unchanged.</p>
+      <LineDiff lines={body} unchanged="The body is unchanged." />
+      {transcript && (
+        <>
+          <h2>Transcript</h2>
+          <LineDiff lines={transcript} unchanged="The transcript is unchanged." />
+        </>
       )}
     </main>
+  );
+}
+
+function LineDiff({ lines, unchanged }: { lines: DiffLine[]; unchanged: string }) {
+  if (!lines.some((line) => line.kind !== "same")) return <p>{unchanged}</p>;
+  return (
+    <ol className="body-diff">
+      {lines.map((line, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: the diff is rendered once and never reordered.
+        <li key={index} className={line.kind}>
+          {line.kind === "added" && <ins>Added: {line.text}</ins>}
+          {line.kind === "removed" && <del>Removed: {line.text}</del>}
+          {line.kind === "same" && line.text}
+        </li>
+      ))}
+    </ol>
   );
 }

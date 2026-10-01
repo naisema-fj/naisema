@@ -1,15 +1,22 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { mediaAsset } from "~db/schema";
+import { parseRange } from "./byte-range";
 import type { Database } from "./db.server";
-import { DOWNLOADABLE_TYPES, downloadName, UPLOAD_TYPE_NAMES } from "./upload-rules";
+import {
+  DOWNLOADABLE_TYPES,
+  downloadName,
+  EPISODE_AUDIO_TYPES,
+  UPLOAD_TYPE_NAMES,
+  type UploadType,
+} from "./upload-rules";
 
 /**
  * Public delivery of media library files (docs/phase-1a-defaults.md §1). Only files that passed
  * their scan are served. Images are re-encoded through Cloudflare Images at a fixed set of widths,
  * which strips their metadata (location included) and neutralises malformed image payloads; PDFs
  * are downloads that never open in the site's origin. A Resource's file (PDF or audio) is downloaded
- * through its Resource, which checks eligibility first. Other audio and video are delivered by
- * their own players later (Voices #25, video #16).
+ * through its Resource, and an Episode's audio is streamed through its Episode, each checking
+ * eligibility first. Video is delivered by its own player later (#16).
  *
  * Note: a media asset's own Rights Records arrive later (the library shows a placeholder); until
  * then a ready file is served to anyone with its unguessable address.
@@ -30,31 +37,35 @@ export function readyMedia(db: Database, id: string) {
     .get();
 }
 
-/** A media library file a Resource can offer: a PDF or audio file that has passed its scan. */
-const isReadyDownload = and(
-  eq(mediaAsset.purpose, "media"),
-  eq(mediaAsset.status, "ready"),
-  inArray(mediaAsset.type, [...DOWNLOADABLE_TYPES]),
-);
+/** A media library file of one of these types that has passed its scan. */
+const isReadyOf = (types: readonly UploadType[]) =>
+  and(eq(mediaAsset.purpose, "media"), eq(mediaAsset.status, "ready"), inArray(mediaAsset.type, [...types]));
 
-/** A file a Resource can offer, or undefined. */
-export function readyDownload(db: Database, id: string) {
+function readyOf(db: Database, id: string, types: readonly UploadType[]) {
   return db
     .select()
     .from(mediaAsset)
-    .where(and(eq(mediaAsset.id, id), isReadyDownload))
+    .where(and(eq(mediaAsset.id, id), isReadyOf(types)))
     .get();
 }
 
-/** The files a Resource can offer, newest first, for the form's file choice. */
-export async function downloadChoices(db: Database) {
+/** Ready files of these types, newest first, for a form's file choice. */
+async function choicesOf(db: Database, types: readonly UploadType[]) {
   const files = await db
     .select({ id: mediaAsset.id, name: mediaAsset.name, type: mediaAsset.type })
     .from(mediaAsset)
-    .where(isReadyDownload)
+    .where(isReadyOf(types))
     .orderBy(desc(mediaAsset.createdAt));
   return files.map((file) => ({ id: file.id, name: file.name, typeName: UPLOAD_TYPE_NAMES[file.type] }));
 }
+
+/** A file a Resource can offer (a PDF or audio file that has passed its scan), or undefined. */
+export const readyDownload = (db: Database, id: string) => readyOf(db, id, DOWNLOADABLE_TYPES);
+export const downloadChoices = (db: Database) => choicesOf(db, DOWNLOADABLE_TYPES);
+
+/** The audio an Episode can play (an MP3 or M4A that has passed its scan), or undefined. */
+export const readyEpisodeAudio = (db: Database, id: string) => readyOf(db, id, EPISODE_AUDIO_TYPES);
+export const episodeAudioChoices = (db: Database) => choicesOf(db, EPISODE_AUDIO_TYPES);
 
 /**
  * A ready file as a download, sandboxed by its own content security policy so it can never run in
@@ -76,6 +87,40 @@ export async function fileDownload(
       "Cache-Control": cacheControl,
     },
   });
+}
+
+/**
+ * Audio for a native `<audio>` player, with byte ranges so it starts at once and can seek. The
+ * caller has already decided the visitor may hear it.
+ */
+export async function audioResponse(
+  env: Env,
+  request: Request,
+  asset: { destinationKey: string; size: number; type: string },
+  cacheControl: string,
+) {
+  const headers = new Headers({
+    "Content-Type": asset.type,
+    "Content-Disposition": "inline",
+    "Content-Security-Policy": "default-src 'none'; sandbox",
+    "X-Content-Type-Options": "nosniff",
+    "Accept-Ranges": "bytes",
+    "Cache-Control": cacheControl,
+  });
+  const range = parseRange(request.headers.get("Range"), asset.size);
+  if (range === "unsatisfiable") {
+    headers.set("Content-Range", `bytes */${asset.size}`);
+    return new Response(null, { status: 416, headers });
+  }
+  const file = await env.MEDIA.get(asset.destinationKey, range ? { range } : {});
+  if (!file) return null;
+  if (!range) {
+    headers.set("Content-Length", String(asset.size));
+    return new Response(file.body, { headers });
+  }
+  headers.set("Content-Length", String(range.length));
+  headers.set("Content-Range", `bytes ${range.offset}-${range.offset + range.length - 1}/${asset.size}`);
+  return new Response(file.body, { status: 206, headers });
 }
 
 /**

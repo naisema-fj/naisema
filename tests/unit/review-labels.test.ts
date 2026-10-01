@@ -42,6 +42,20 @@ describe("reviewLabels (PUB-02)", () => {
     ]);
   });
 
+  it("says when an accessibility review covered a recording's transcript", () => {
+    const transcript = approved(
+      { reviewType: "accessibility", transcript: true },
+      decision({ reviewType: "accessibility", languageVariety: null }),
+    );
+
+    expect(reviewLabels({ progress: [transcript], flags: [] })).toEqual([
+      "Transcript reviewed for accessibility · 12 Oct 2026",
+    ]);
+    expect(reviewLabels({ progress: [transcript], flags: ["disabilityAdvice"] })).toEqual([
+      "Disability advice and transcript reviewed · 12 Oct 2026",
+    ]);
+  });
+
   it("labels opinion and personal experience, which needs no review", () => {
     expect(reviewLabels({ progress: [], flags: ["opinion"] })).toEqual(["Opinion or personal experience"]);
   });

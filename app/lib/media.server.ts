@@ -292,3 +292,10 @@ export async function setAltText(db: Database, actorId: string, assetId: string,
   ]);
   return true;
 }
+
+/** A media library file's name, for staff pages that show which file an item uses. */
+export async function mediaName(db: Database, id: string | null) {
+  if (!id) return null;
+  const row = await db.select({ name: mediaAsset.name }).from(mediaAsset).where(eq(mediaAsset.id, id)).get();
+  return row?.name ?? null;
+}

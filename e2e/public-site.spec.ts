@@ -2,6 +2,7 @@ import { expect, type Page, test } from "@playwright/test";
 import { expectNoAxeViolations } from "./support";
 
 const ARTICLE = "/ezine/e2e-letter-from-home";
+const EPISODE = "/voices/e2e-talanoa";
 
 async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(
@@ -23,6 +24,8 @@ test("the homepage, an area, an article and the not-found page pass axe", async 
     "/resources/e2e-dictionary-link",
     "/topics/e2e-ceremonies",
     "/topics",
+    "/voices",
+    EPISODE,
   ]) {
     await page.goto(path);
     await expectNoAxeViolations(page);
@@ -60,6 +63,23 @@ test("a visitor reads an article: who it is from, when, and what it was reviewed
   await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("E-zine");
 });
 
+test("a visitor opens a Voices Episode: nothing plays until they choose, and the transcript is always there", async ({
+  page,
+}) => {
+  await page.goto("/voices");
+  await page.getByRole("link", { name: "Talanoa: coming home to Levuka" }).click();
+
+  const player = page.locator("audio");
+  await expect(player).toHaveCount(1);
+  await expect(player).toHaveAttribute("preload", "none");
+  expect(await player.evaluate((audio: HTMLAudioElement) => audio.paused && !audio.autoplay)).toBe(true);
+  await page.getByRole("link", { name: "Read the transcript" }).click();
+  await expect(page).toHaveURL(/#transcript$/);
+  const transcript = page.getByRole("region", { name: "Transcript" });
+  await expect(transcript).toContainText("Ratu Joni: Bula, Mere. It has been a long time.");
+  await expect(page.getByText("open.spotify.com, another website")).toBeVisible();
+});
+
 test("the menu works by keyboard on a phone-width screen", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto("/");
@@ -78,7 +98,7 @@ test("pages reflow at 320 px and at 200% zoom without sideways scrolling", async
   // 320 CSS px is WCAG's reflow width; 640 px is a 1280 px window at 200% zoom.
   for (const width of [320, 640]) {
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ["/", "/learn", ARTICLE, "/resources/e2e-dictionary-link", "/topics/e2e-ceremonies"]) {
+    for (const path of ["/", "/learn", ARTICLE, "/resources/e2e-dictionary-link", "/topics/e2e-ceremonies", EPISODE]) {
       await page.goto(path);
       await expectNoHorizontalScroll(page);
     }

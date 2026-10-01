@@ -3,7 +3,14 @@ import { contributor, mediaAsset, rightsRecord, rightsRecordContributor, user } 
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { quarantineFile } from "./media.server";
-import { isCurrent, isPermittedUse, type PermittedUse, type RightsFacts } from "./rights-rules";
+import {
+  isCurrent,
+  isPermittedUse,
+  isRightsPartKind,
+  type PermittedUse,
+  type RightsFacts,
+  type RightsPart,
+} from "./rights-rules";
 import { checkContent, checkDeclared, HEAD_BYTES, storedName, type UploadType } from "./upload-rules";
 
 /** What a Rights Record covers. Only whole Content Items for now; media assets get their own later. */
@@ -11,8 +18,13 @@ export type RightsSubject = { type: "content_item"; id: string };
 
 type RecordRow = typeof rightsRecord.$inferSelect;
 
+/** The part of its subject a record covers, or null when it covers all of it. */
+const partOf = (row: RecordRow): RightsPart | null =>
+  row.partKind && isRightsPartKind(row.partKind) && row.partName ? { kind: row.partKind, name: row.partName } : null;
+
 export const toFacts = (row: RecordRow): RightsFacts => ({
   id: row.id,
+  part: partOf(row),
   permittedUses: row.permittedUses,
   guardianPermission: row.guardianPermission,
   expiresAt: row.expiresAt,
@@ -62,6 +74,7 @@ export async function listRights(db: Database, subject: RightsSubject, now = new
     : [];
   return rows.reverse().map(({ record, recordedBy, evidenceStatus, evidenceReason }) => ({
     id: record.id,
+    part: partOf(record),
     rightsHolder: record.rightsHolder,
     permittedUses: record.permittedUses,
     guardianPermission: record.guardianPermission,
@@ -80,6 +93,7 @@ export async function listRights(db: Database, subject: RightsSubject, now = new
 }
 
 export type RightsForm = {
+  part: RightsPart | null;
   rightsHolder: string;
   permittedUses: PermittedUse[];
   guardianPermission: boolean;
@@ -90,6 +104,8 @@ export type RightsForm = {
 
 /** What was typed into the form, to show it again when the form is refused (the file can't be kept). */
 export type RightsFormValues = {
+  partKind: string;
+  partName: string;
   rightsHolder: string;
   permittedUses: string[];
   expiresOn: string;
@@ -103,6 +119,16 @@ export type RightsFormResult =
 /** Reads the Rights Record form, including the evidence file, which must be a PDF or image. */
 export async function readRightsForm(db: Database, form: FormData, now = new Date()): Promise<RightsFormResult> {
   const errors: Record<string, string> = {};
+  // Blank: the record covers the whole item. Otherwise one named speaker, piece of music or clip.
+  const partKind = String(form.get("partKind") ?? "");
+  const partName = String(form.get("partName") ?? "").trim();
+  let part: RightsPart | null = null;
+  if (partKind && !isRightsPartKind(partKind)) errors.partKind = "Choose what this record covers.";
+  else if (isRightsPartKind(partKind)) {
+    if (!partName) errors.partName = "Name the speaker, music or clip this record covers.";
+    else if (partName.length > 200) errors.partName = "The name can be at most 200 characters.";
+    else part = { kind: partKind, name: partName };
+  }
   const rightsHolder = String(form.get("rightsHolder") ?? "").trim();
   if (!rightsHolder) errors.rightsHolder = "Enter who holds the rights.";
   else if (rightsHolder.length > 300) errors.rightsHolder = "The rights holder can be at most 300 characters.";
@@ -143,11 +169,16 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
   }
 
   if (Object.keys(errors).length || !evidence) {
-    return { ok: false, errors, values: { rightsHolder, permittedUses, expiresOn: expiry, contributorIds } };
+    return {
+      ok: false,
+      errors,
+      values: { partKind, partName, rightsHolder, permittedUses, expiresOn: expiry, contributorIds },
+    };
   }
   return {
     ok: true,
     rights: {
+      part,
       rightsHolder,
       permittedUses,
       guardianPermission: form.get("guardianPermission") === "on",
@@ -178,6 +209,8 @@ export async function recordRights(
         id,
         subjectType: subject.type,
         subjectId: subject.id,
+        partKind: rights.part?.kind ?? null,
+        partName: rights.part?.name ?? null,
         rightsHolder: rights.rightsHolder,
         permittedUses: rights.permittedUses,
         guardianPermission: rights.guardianPermission,
@@ -200,6 +233,7 @@ export async function recordRights(
         details: {
           subjectType: subject.type,
           subjectId: subject.id,
+          part: rights.part,
           permittedUses: rights.permittedUses,
           guardianPermission: rights.guardianPermission,
           expiresAt: rights.expiresAt?.toISOString() ?? null,

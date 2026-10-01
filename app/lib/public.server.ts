@@ -6,6 +6,7 @@ import { type ArticleBody, embeddedItemIds } from "./article-body";
 import type { ArticleSnapshot } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
+import { type EpisodeDetails, formatDuration, isoDuration, transcriptParagraphs } from "./episode-fields";
 import { eligibilityFor } from "./publication.server";
 import { AGE_GUIDANCE, linkHost, type ResourceDetails } from "./resource-fields";
 import { loadReview } from "./review.server";
@@ -56,6 +57,19 @@ export type PublicResource = {
   | { kind: "link"; url: string; host: string; checkedOn: string }
 );
 
+/** An Episode as a visitor sees it: the player's source, who speaks, and the full transcript. */
+export type PublicEpisode = {
+  audioPath: string;
+  audioType: string;
+  host: string;
+  guests: string[];
+  recordedOn: string;
+  duration: string;
+  isoDuration: string;
+  transcript: { speaker: string | null; text: string }[];
+  distribution: { label: string; url: string; host: string }[];
+};
+
 export type RelatedItem = { title: string; path: string; typeName: string; summary: string };
 
 export type PublicArticle = {
@@ -74,6 +88,7 @@ export type PublicArticle = {
   embeds: Record<string, EmbeddedItem>;
   labels: string[];
   resource: PublicResource | null;
+  episode: PublicEpisode | null;
   related: RelatedItem[];
   firstPublishedAt: Date | null;
   lastPublishedAt: Date | null;
@@ -86,10 +101,10 @@ export type PublicLookup =
   | { kind: "missing" };
 
 /** Types that live at /{area}/{slug}. */
-const AREA_TYPES = ["article", "resource"] as const;
+const AREA_TYPES = ["article", "resource", "episode"] as const;
 
 /**
- * The item at /{area}/{slug}: the published, eligible Article or Resource; a redirect from an old
+ * The item at /{area}/{slug}: the published, eligible Article, Resource or Episode; a redirect from an old
  * slug; a withdrawn notice; or nothing. An ineligible item answers "missing", never its draft.
  */
 export async function findPublicArticle(
@@ -172,6 +187,7 @@ async function publicView(
     embeds: await publicEmbeds(db, snapshot.body, now),
     labels: reviewLabels({ progress: review.progress, flags: review.flags }),
     resource: snapshot.resource ? await publicResource(db, item.id, snapshot.resource) : null,
+    episode: snapshot.episode ? await publicEpisode(db, item.id, snapshot.episode) : null,
     related: await relatedItems(db, snapshot.relatedIds ?? [], now),
     firstPublishedAt: item.firstPublishedAt,
     lastPublishedAt: item.lastPublishedAt,
@@ -198,6 +214,28 @@ async function publicResource(db: Database, itemId: string, details: ResourceDet
     downloadPath: `/resources/${itemId}/download`,
   };
 }
+
+async function publicEpisode(db: Database, itemId: string, details: EpisodeDetails): Promise<PublicEpisode> {
+  const asset = await db
+    .select({ type: mediaAsset.type })
+    .from(mediaAsset)
+    .where(eq(mediaAsset.id, details.audioAssetId))
+    .get();
+  return {
+    audioPath: episodeAudioPath(itemId),
+    audioType: asset?.type ?? "audio/mpeg",
+    host: details.host,
+    guests: details.guests,
+    recordedOn: details.recordedOn,
+    duration: formatDuration(details.durationSeconds),
+    isoDuration: isoDuration(details.durationSeconds),
+    transcript: transcriptParagraphs(details.transcript),
+    distribution: details.distribution.map((link) => ({ ...link, host: linkHost(link.url) })),
+  };
+}
+
+/** Where an Episode's audio streams from: through the Episode, so eligibility is decided each time. */
+export const episodeAudioPath = (itemId: string) => `/episodes/${itemId}/audio`;
 
 /** The curated related items that are public right now, in the order chosen. */
 async function relatedItems(db: Database, ids: string[], now: Date): Promise<RelatedItem[]> {
