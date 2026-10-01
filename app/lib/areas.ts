@@ -13,3 +13,29 @@ export const AREA_NAMES: Record<PrimaryArea, string> = {
 
 export const isPrimaryArea = (value: string): value is PrimaryArea =>
   (PRIMARY_AREAS as readonly string[]).includes(value);
+
+/**
+ * What each area holds, and what in it isn't open yet (PUB-01: inactive services say so plainly).
+ * `notYetOpen` names the services still being prepared, in the visitor's words.
+ */
+export const AREA_INFO: Record<PrimaryArea, { description: string; notYetOpen?: string }> = {
+  learn: {
+    description: "Fijian language and culture, one step at a time.",
+    notYetOpen:
+      "Video lessons with captions, word meanings and practice open with the first lessons, once they are reviewed.",
+  },
+  voices: {
+    description: "Stories and recordings from Fijians at home and abroad.",
+    notYetOpen: "Recorded episodes and their transcripts are being prepared.",
+  },
+  discover: { description: "Places, history and the ways things are done." },
+  connect: {
+    description: "Classes, courses and people who teach.",
+    notYetOpen: "Listings of classes, courses and teachers are being prepared.",
+  },
+  ezine: { description: "Articles, essays and reflections." },
+  resources: {
+    description: "Guides and materials to use and share.",
+    notYetOpen: "Downloadable guides and materials are being prepared.",
+  },
+};

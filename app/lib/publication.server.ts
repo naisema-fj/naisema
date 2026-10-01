@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { contentItem } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
@@ -74,7 +74,17 @@ export async function publishRevision(db: Database, actor: Actor, review: Review
     return { ok: false, error: `Revision ${review.number} can't be published yet. ${eligibility.reasons.join(" ")}` };
   }
   await db.batch([
-    setState(db, item.id, { publicationState: "published", currentPublishedRevisionId: review.revisionId }),
+    db
+      .update(contentItem)
+      .set({
+        publicationState: "published",
+        currentPublishedRevisionId: review.revisionId,
+        // Republishing keeps the first publication date; the last one moves on.
+        firstPublishedAt: sql`coalesce(${contentItem.firstPublishedAt}, ${Date.now()})`,
+        lastPublishedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(contentItem.id, item.id)),
     auditInsert(db, {
       actorId: actor.userId,
       action: "content_item.published",

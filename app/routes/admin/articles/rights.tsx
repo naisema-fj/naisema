@@ -3,6 +3,7 @@ import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireRightsManager } from "~/lib/content.server";
 import { listContributors } from "~/lib/contributors.server";
+import { pagesShowing, purgePublicPages } from "~/lib/public-cache.server";
 import { listRights, readRightsForm, recordRights, withdrawRights } from "~/lib/rights.server";
 import { PERMITTED_USE_NAMES } from "~/lib/rights-names";
 import { EVIDENCE_MAX_BYTES, formatDay, PERMITTED_USES } from "~/lib/rights-rules";
@@ -60,6 +61,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { status: 400 },
       );
     }
+    // The item may have just become ineligible: clear its cached public pages.
+    await purgePublicPages(env, pagesShowing({ area: article.primaryArea, slug: article.slug }));
     throw redirect(`/admin/articles/${article.id}/rights?done=withdrawn`);
   }
 

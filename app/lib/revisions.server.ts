@@ -1,5 +1,5 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
-import { contentItem, revision, user } from "~db/schema";
+import { contentItem, revision, slugRedirect, user } from "~db/schema";
 import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
@@ -38,17 +38,30 @@ export async function createContentItem(db: Database, item: NewItem & { title: s
   const base = slugify(item.title);
   // Two items created at the same moment can pick the same free slug; the loser tries the next one.
   for (let attempt = 0; ; attempt++) {
-    const taken = await db
-      .select({ slug: contentItem.slug })
-      .from(contentItem)
-      .where(
-        and(
-          eq(contentItem.primaryArea, item.primaryArea),
-          or(eq(contentItem.slug, base), like(contentItem.slug, `${base}-%`)),
+    // An old slug another item still redirects from is taken too.
+    const [current, redirected] = await Promise.all([
+      db
+        .select({ slug: contentItem.slug })
+        .from(contentItem)
+        .where(
+          and(
+            eq(contentItem.primaryArea, item.primaryArea),
+            or(eq(contentItem.slug, base), like(contentItem.slug, `${base}-%`)),
+          ),
         ),
-      );
+      db
+        .select({ slug: slugRedirect.slug })
+        .from(slugRedirect)
+        .where(
+          and(
+            eq(slugRedirect.primaryArea, item.primaryArea),
+            or(eq(slugRedirect.slug, base), like(slugRedirect.slug, `${base}-%`)),
+          ),
+        ),
+    ]);
+    const taken = new Set([...current, ...redirected].map((row) => row.slug));
     try {
-      return await insertContentItem(db, item, firstFreeSlug(base, new Set(taken.map((row) => row.slug))));
+      return await insertContentItem(db, item, firstFreeSlug(base, taken));
     } catch (error) {
       if (attempt >= 2 || !String(error).includes("content_item.slug")) throw error;
     }

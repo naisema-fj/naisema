@@ -5,6 +5,7 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
+import { pagesShowing, purgePublicPages } from "~/lib/public-cache.server";
 import { archive, eligibilityFor, publishRevision, withdraw } from "~/lib/publication.server";
 import {
   assignedReviewerIds,
@@ -115,7 +116,8 @@ const DONE_MESSAGES: Record<string, string> = {
 };
 
 export async function action({ request, params, context }: Route.ActionArgs) {
-  const { db, actor, review } = await requireRevision(request, context.get(cloudflareContext).env, params);
+  const { env } = context.get(cloudflareContext);
+  const { db, actor, review, article } = await requireRevision(request, env, params);
   const form = await request.formData();
   const field = (name: string) => String(form.get(name) ?? "").trim();
   const intent = field("intent");
@@ -161,6 +163,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   })();
 
   if (!result.ok) return data({ error: result.error }, { status: 400 });
+  if (intent === "publish" || intent === "withdraw" || intent === "archive") {
+    await purgePublicPages(env, pagesShowing({ area: article.primaryArea, slug: article.slug }));
+  }
   throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
 }
 

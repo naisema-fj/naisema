@@ -196,11 +196,28 @@ export const contentItem = sqliteTable(
     currentPublishedRevisionId: text("current_published_revision_id").references((): AnySQLiteColumn => revision.id),
     /** unpublished → published → withdrawn → archived (docs/phase-1a-defaults.md §3). */
     publicationState: text("publication_state").notNull().default("unpublished"),
+    /** When the item first went public, and when its current published Revision was published. */
+    firstPublishedAt: integer("first_published_at", { mode: "timestamp_ms" }),
+    lastPublishedAt: integer("last_published_at", { mode: "timestamp_ms" }),
     createdBy: text("created_by").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [uniqueIndex("content_item_area_slug_idx").on(table.primaryArea, table.slug)],
+);
+
+/** An old URL of a Content Item, kept when its slug changes so the old address answers with a 301. */
+export const slugRedirect = sqliteTable(
+  "slug_redirect",
+  {
+    primaryArea: text("primary_area").notNull(),
+    slug: text("slug").notNull(),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references((): AnySQLiteColumn => contentItem.id),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.primaryArea, table.slug] })],
 );
 
 /**

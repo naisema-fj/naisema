@@ -16,12 +16,20 @@ export function createNonce() {
  * Only an environment that sets ALLOW_INDEXING = "true" (production) may be indexed;
  * staging, previews and local builds are always kept out of search engines.
  */
-export function applySecurityHeaders(headers: Headers, nonce: string, { allowIndexing }: { allowIndexing: boolean }) {
+/**
+ * `nonce` is null for a page that ships no client JavaScript: it then allows no scripts at all,
+ * which also means a cached public page carries no reusable nonce.
+ */
+export function applySecurityHeaders(
+  headers: Headers,
+  nonce: string | null,
+  { allowIndexing }: { allowIndexing: boolean },
+) {
   headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      `script-src 'self' 'nonce-${nonce}'`,
+      nonce ? `script-src 'self' 'nonce-${nonce}'` : "script-src 'none'",
       "style-src 'self'",
       "img-src 'self' data:",
       "connect-src 'self'",

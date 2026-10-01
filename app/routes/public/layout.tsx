@@ -1,0 +1,104 @@
+import { isRouteErrorResponse, Link, Outlet, useLocation } from "react-router";
+import { AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
+import { INFO_PAGES } from "~/lib/info-pages";
+import type { Route } from "./+types/layout";
+import "~/styles/public.css";
+
+export const handle = { hydrate: false };
+
+function AreaLinks() {
+  const { pathname } = useLocation();
+  const current = pathname.split("/")[1];
+  return (
+    <ul className="area-links">
+      {PRIMARY_AREAS.map((area) => (
+        <li key={area}>
+          <Link to={`/${area}`} aria-current={current === area ? "page" : undefined}>
+            {AREA_NAMES[area]}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function SiteHeader() {
+  return (
+    <header className="site-header">
+      <div className="airmail-band" />
+      <div className="site-header-inner">
+        <Link to="/" className="wordmark">
+          Na iSema
+        </Link>
+        <nav aria-label="Areas" className="site-nav">
+          <AreaLinks />
+        </nav>
+        {/* A native disclosure, so the menu works on phones without any JavaScript. */}
+        <details className="site-menu">
+          <summary>Menu</summary>
+          <nav aria-label="Areas menu">
+            <AreaLinks />
+          </nav>
+        </details>
+      </div>
+    </header>
+  );
+}
+
+function SiteFooter() {
+  return (
+    <footer className="site-footer">
+      <div className="masi-strip" />
+      <div className="site-footer-inner">
+        <nav aria-label="About Na iSema">
+          <ul className="footer-links">
+            {INFO_PAGES.map((page) => (
+              <li key={page.path}>
+                <Link to={`/${page.path}`}>{page.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <p className="footer-note">
+          Na iSema connects Fijians abroad, and everyone else, with Fijian language and culture. The pattern above is a
+          placeholder in the spirit of masi, until commissioned and culturally reviewed artwork arrives.
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+export default function PublicLayout() {
+  return (
+    <div className="public">
+      <SiteHeader />
+      <Outlet />
+      <SiteFooter />
+    </div>
+  );
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const status = isRouteErrorResponse(error) ? error.status : 500;
+  const [title, text] =
+    status === 410
+      ? ["This has been withdrawn", "It is no longer published on Na iSema."]
+      : status === 404
+        ? ["We couldn't find that page", "It may have moved, or it may not be published yet."]
+        : ["Something went wrong", "Something went wrong on our side. Please try again in a moment."];
+  return (
+    <div className="public">
+      <SiteHeader />
+      <main id="main">
+        <article className="letter letter-narrow">
+          <h1>{title}</h1>
+          <p>{text}</p>
+          <p>
+            <Link to="/">Go to the Na iSema home page</Link>
+          </p>
+        </article>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+}

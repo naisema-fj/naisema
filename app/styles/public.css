@@ -1,0 +1,870 @@
+/*
+ * The public site: "Letters home" (direction in .impeccable/surfaces/app-routes-home-tsx.md).
+ * Every page is a letter from home: off-white sheets on a sand ground, deep teal ink, an airmail
+ * edge in teal and masi brown, and flat postmark lines for dates and Review Labels.
+ * Loaded only by the public layout; no inline styles anywhere (the CSP allows none).
+ */
+@import "@fontsource-variable/jost";
+@import "@fontsource-variable/literata";
+
+.public {
+  /* Palette */
+  --sand: #eee7d9;
+  --sheet: #fbf9f4;
+  --ink: #1e1c19;
+  --ink-soft: #4a4640;
+  --teal-950: #062e36;
+  --teal-900: #0a3d47;
+  --teal-700: #0b5563;
+  --teal-200: #b9d6d8;
+  --teal-100: #e1eeee;
+  --masi: #6b3a22;
+  --masi-200: #e8d7c7;
+  --rule: rgb(10 61 71 / 0.22);
+
+  /* Type */
+  --font-ui: "Jost Variable", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-read: "Literata Variable", Georgia, "Times New Roman", serif;
+  --step--1: 0.8125rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: clamp(1.4rem, 1.2rem + 0.8vw, 1.75rem);
+  --step-3: clamp(1.9rem, 1.5rem + 1.8vw, 2.6rem);
+  --step-4: clamp(2.3rem, 1.6rem + 3.2vw, 3.9rem);
+
+  /* Space and motion */
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
+  --measure: 68ch;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The airmail edge: teal and masi brown stripes on the sheet colour. */
+  --airmail: repeating-linear-gradient(
+    -45deg,
+    var(--teal-700) 0 10px,
+    var(--sheet) 10px 14px,
+    var(--masi) 14px 24px,
+    var(--sheet) 24px 28px
+  );
+  /* The same stripe at envelope scale, fine enough to read as slanted bars on a thin edge. */
+  --airmail-fine: repeating-linear-gradient(
+    -45deg,
+    var(--teal-700) 0 7px,
+    var(--sheet) 7px 10px,
+    var(--masi) 10px 17px,
+    var(--sheet) 17px 20px
+  );
+  --airmail-fine-dark: repeating-linear-gradient(
+    -45deg,
+    var(--teal-950) 0 7px,
+    var(--sheet) 7px 10px,
+    var(--masi) 10px 17px,
+    var(--sheet) 17px 20px
+  );
+  --airmail-dark: repeating-linear-gradient(
+    -45deg,
+    var(--teal-950) 0 10px,
+    var(--sheet) 10px 14px,
+    var(--masi) 14px 24px,
+    var(--sheet) 24px 28px
+  );
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sand);
+  color: var(--ink);
+  font-family: var(--font-read);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+/* The page's own scrollbar, in the site's ink on its ground. */
+html:has(.public) {
+  scrollbar-color: #0b5563 #eee7d9;
+}
+
+.public ::selection {
+  background: var(--teal-200);
+  color: var(--ink);
+}
+
+.public a {
+  color: var(--teal-700);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-thickness 160ms var(--ease-out);
+}
+
+.public a:hover {
+  color: var(--teal-900);
+  text-decoration-thickness: 2px;
+}
+
+.public :focus-visible {
+  outline: 3px solid var(--masi);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.public h1,
+.public h2,
+.public h3,
+.public h4 {
+  font-family: var(--font-ui);
+  color: var(--teal-900);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+/* Margins reset at zero specificity, so each layout's own spacing rules win. */
+:where(.public) :is(h1, h2, h3, h4, p) {
+  margin: 0;
+}
+
+.public h1 {
+  font-size: var(--step-4);
+  font-weight: 600;
+}
+
+.public h2 {
+  font-size: var(--step-2);
+  font-weight: 600;
+}
+
+.public h3 {
+  font-size: var(--step-1);
+  font-weight: 600;
+}
+
+/* The page column shares its edges with the header and footer: 76rem inside one gutter. */
+.public main {
+  flex: 1;
+  width: 100%;
+  max-width: calc(76rem + 2 * var(--gutter));
+  margin-inline: auto;
+  box-sizing: border-box;
+  padding: clamp(1.5rem, 1rem + 2vw, 3rem) var(--gutter) clamp(3rem, 2rem + 4vw, 5rem);
+}
+
+/* Header */
+
+.airmail-band {
+  height: 8px;
+  background: var(--airmail);
+}
+
+.site-header {
+  background: var(--sheet);
+  border-bottom: 1px solid var(--rule);
+  position: relative;
+}
+
+.site-header-inner {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 0.85rem var(--gutter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.public .wordmark {
+  font-family: var(--font-ui);
+  font-weight: 650;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  color: var(--teal-900);
+  text-decoration: none;
+}
+
+.area-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.area-links a {
+  color: var(--ink);
+  text-decoration: none;
+  padding: 0.35rem 0;
+  border-bottom: 2px solid transparent;
+  display: inline-block;
+}
+
+.area-links a:hover {
+  color: var(--teal-700);
+  border-bottom-color: var(--teal-200);
+}
+
+.area-links a[aria-current="page"] {
+  color: var(--teal-900);
+  border-bottom-color: var(--masi);
+}
+
+.site-menu {
+  display: none;
+}
+
+.site-menu > summary {
+  list-style: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--teal-900);
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.site-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Three drawn bars, not a glyph. */
+.site-menu > summary::before {
+  content: "";
+  width: 18px;
+  height: 12px;
+  background:
+    linear-gradient(var(--teal-900), var(--teal-900)) top / 100% 2px no-repeat,
+    linear-gradient(var(--teal-900), var(--teal-900)) center / 100% 2px no-repeat,
+    linear-gradient(var(--teal-900), var(--teal-900)) bottom / 100% 2px no-repeat;
+}
+
+.site-menu[open] > summary {
+  background: var(--teal-100);
+}
+
+.site-menu > nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  z-index: 10;
+  background: var(--sheet);
+  border-bottom: 1px solid var(--rule);
+  box-shadow: 0 16px 32px -20px rgb(6 46 54 / 0.4);
+  padding: 0.5rem var(--gutter) 1rem;
+}
+
+.site-menu .area-links {
+  flex-direction: column;
+  gap: 0;
+  font-size: 1.15rem;
+}
+
+.site-menu .area-links a {
+  display: block;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+@media (max-width: 52rem) {
+  .site-nav {
+    display: none;
+  }
+
+  .site-menu {
+    display: block;
+  }
+}
+
+/* Letters */
+
+.letter {
+  max-width: 46rem;
+  margin: 0 auto;
+  background: var(--sheet);
+  position: relative;
+  padding: clamp(1.75rem, 1.2rem + 2.5vw, 3.5rem) clamp(1.25rem, 0.8rem + 3vw, 3.75rem);
+  box-shadow:
+    0 1px 2px rgb(30 28 25 / 0.06),
+    0 22px 48px -30px rgb(6 46 54 / 0.35);
+  box-sizing: border-box;
+}
+
+.letter::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 6px;
+  background: var(--airmail);
+}
+
+.letter-narrow {
+  max-width: 40rem;
+}
+
+.letter > * + * {
+  margin-top: 1rem;
+}
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.from {
+  font-size: var(--step-0);
+}
+
+.from-label {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--masi);
+  margin-right: 0.4rem;
+}
+
+/* Postmarks: flat, ruled, factual lines. Never seals or badges. */
+
+.postmarks {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal-700);
+  font-variant-numeric: tabular-nums;
+}
+
+.postmarks li {
+  border-block: 1px solid var(--rule);
+  padding: 0.2rem 0;
+}
+
+.review-labels .postmarks li {
+  border-block-color: var(--teal-700);
+}
+
+/* Review Labels sit under their own label, apart from the format and dates. */
+.review-labels {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.public .review-labels-heading {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--masi);
+}
+
+.review-labels .postmarks {
+  margin-top: 0.6rem;
+}
+
+.no-review {
+  margin-top: 0.4rem;
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+/* A letter's dateline: one flat postmark line. */
+.dateline {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--teal-700);
+  font-variant-numeric: tabular-nums;
+  justify-self: start;
+  border-block: 1px solid var(--rule);
+  padding: 0.2rem 0;
+}
+
+/* Reading */
+
+.letter-body {
+  max-width: var(--measure);
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.letter-body > * + * {
+  margin-top: 1.1em;
+}
+
+.letter-body h2 {
+  margin-top: 2em;
+}
+
+.letter-body h3,
+.letter-body h4 {
+  margin-top: 1.6em;
+}
+
+/* Less space below a heading than above it, so it belongs to what follows. */
+.letter-body :is(h2, h3, h4) + * {
+  margin-top: 0.5em;
+}
+
+.letter-body blockquote {
+  margin: 1.5em 0;
+  padding: 0 0 0 1.25rem;
+  border-left: 1px solid var(--masi);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+.letter-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.letter-body ul,
+.letter-body ol {
+  padding-left: 1.4rem;
+}
+
+.public .callout {
+  border-left: 0;
+  background: var(--teal-100);
+  padding: 1rem 1.25rem;
+  margin: 1.5em 0;
+}
+
+.public .embedded-item {
+  border: 4px solid transparent;
+  background:
+    linear-gradient(var(--sheet), var(--sheet)) padding-box,
+    var(--airmail) border-box;
+  padding: 0.9rem 1.1rem;
+  margin: 1.5em 0;
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.letter-head {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.letter-foot {
+  border-top: 1px solid var(--rule);
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.sources {
+  white-space: pre-line;
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+/* Breadcrumbs */
+
+.breadcrumb {
+  max-width: 46rem;
+  margin: 0 auto 1rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+}
+
+.breadcrumb ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+}
+
+.breadcrumb li + li::before {
+  content: "/";
+  color: var(--ink-soft);
+  margin-right: 0.5rem;
+}
+
+.breadcrumb [aria-current="page"] {
+  color: var(--ink-soft);
+}
+
+/* Homepage */
+
+.home {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(3rem, 2rem + 4vw, 5.5rem) clamp(2rem, 1rem + 3vw, 4.5rem);
+}
+
+/* The welcome letter spans the column; its text keeps a reading measure, dated top right. */
+.welcome {
+  max-width: none;
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 2rem;
+}
+
+.public .welcome > * {
+  grid-column: 1 / -1;
+}
+
+.welcome .dateline {
+  grid-column: 2;
+  grid-row: 1;
+  margin: 0;
+}
+
+.welcome .letter-body {
+  max-width: 40rem;
+  font-size: clamp(1.2rem, 1.05rem + 0.6vw, 1.45rem);
+  line-height: 1.6;
+  margin-top: 1.25rem;
+}
+
+/* Signed at the left; the way in sits at the sheet's right edge, under the dateline. */
+.sign-off {
+  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.signature {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: var(--masi);
+}
+
+.public .primary-link {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  background: var(--teal-900);
+  color: var(--sheet);
+  text-decoration: none;
+  padding: 0.8rem 1.4rem;
+  border-radius: 3px;
+  min-height: 44px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 6px 16px -10px rgb(6 46 54 / 0.6);
+  transition:
+    background-color 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.public .primary-link:hover {
+  background: var(--teal-950);
+  color: var(--sheet);
+  transform: translateY(-1px);
+}
+
+.areas h2,
+.latest h2,
+.participate h2,
+.updates h2 {
+  margin-bottom: 1.25rem;
+}
+
+.notices {
+  display: grid;
+  align-content: start;
+  gap: 2.5rem;
+}
+
+@media (min-width: 60rem) {
+  .home {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .welcome,
+  .areas {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 40rem) {
+  .welcome .dateline {
+    grid-column: 1;
+    grid-row: auto;
+    margin-top: 1rem;
+  }
+}
+
+/*
+ * Envelope fronts: a thin airmail edge, the area's name set as the address in the lower half,
+ * and a stamp corner at top right where any availability line sits like a cancellation.
+ */
+
+.envelopes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 0.6rem + 1.5vw, 1.75rem);
+}
+
+.public .envelope {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr;
+  grid-template-areas:
+    "mark stamp"
+    "address address";
+  column-gap: 0.75rem;
+  aspect-ratio: 8 / 5;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1rem 1.4rem;
+  border: 5px solid transparent;
+  background:
+    linear-gradient(var(--sheet), var(--sheet)) padding-box,
+    var(--airmail-fine) border-box;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 2px 4px rgb(30 28 25 / 0.05);
+  transition:
+    transform 260ms var(--ease-out),
+    box-shadow 260ms var(--ease-out);
+}
+
+.public .envelope:hover,
+.public .envelope:focus-visible {
+  transform: translateY(-3px);
+  background:
+    linear-gradient(var(--sheet), var(--sheet)) padding-box,
+    var(--airmail-fine-dark) border-box;
+  box-shadow: 0 18px 30px -18px rgb(6 46 54 / 0.45);
+  color: var(--ink);
+}
+
+.envelope-address {
+  grid-area: address;
+  align-self: end;
+  display: grid;
+  gap: 0.35rem;
+  padding-inline-start: clamp(0.25rem, 12%, 3rem);
+}
+
+.envelope-name {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step-2);
+  color: var(--teal-900);
+  line-height: 1.1;
+}
+
+.envelope-description {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+/* An empty stamp box, ruled twice: no stamp art until commissioned work exists. */
+.envelope-stamp {
+  grid-area: stamp;
+  width: 2.75rem;
+  height: 3.25rem;
+  border: 1px solid var(--teal-700);
+  outline: 1px solid var(--rule);
+  outline-offset: 3px;
+  margin: 4px;
+}
+
+.envelope-mark,
+.list-mark {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--masi);
+}
+
+.envelope-mark {
+  grid-area: mark;
+  justify-self: end;
+  align-self: center;
+  text-align: end;
+  border-block: 1px solid currentColor;
+  padding: 0.15rem 0;
+}
+
+.list-mark {
+  color: var(--teal-700);
+}
+
+@media (max-width: 60rem) {
+  .envelopes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 34rem) {
+  .envelopes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .public .envelope {
+    aspect-ratio: auto;
+    min-height: 11rem;
+  }
+
+  .envelope-address {
+    padding-inline-start: 0;
+    margin-top: 1.25rem;
+  }
+}
+
+/* Lists of pieces */
+
+.letter-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 46rem;
+  display: grid;
+}
+
+.public .letter-list li {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.25rem 0;
+  border-top: 1px solid var(--rule);
+}
+
+.public .letter-list li:last-child {
+  border-bottom: 1px solid var(--rule);
+}
+
+.public .letter-list a {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step-1);
+  line-height: 1.25;
+}
+
+.participate,
+.updates {
+  max-width: 46rem;
+}
+
+.public .notices > * + * {
+  border-top: 1px solid var(--rule);
+  padding-top: 2.5rem;
+}
+
+/* Area pages */
+
+.public .area-letter > .letter-list {
+  margin-top: 2rem;
+}
+
+/* What isn't open yet: a ruled postmark line, stated plainly. */
+.not-open {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--teal-900);
+  border-block: 1px solid var(--masi);
+  padding: 0.6rem 0;
+}
+
+.empty {
+  color: var(--ink-soft);
+}
+
+/* Footer: a restrained masi strip, then a deep teal field. */
+
+.masi-strip {
+  height: 18px;
+  background-color: var(--sheet);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18' viewBox='0 0 36 18'%3E%3Cpath d='M0 18 9 0l9 18z' fill='%236b3a22'/%3E%3Cpath d='M18 18 27 0l9 18z' fill='%231e1c19'/%3E%3Cpath d='M9 18 13.5 9 18 18z' fill='%23fbf9f4'/%3E%3Cpath d='M27 18l4.5-9 4.5 9z' fill='%23fbf9f4'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 36px 18px;
+}
+
+.site-footer {
+  background: var(--teal-900);
+  color: var(--sheet);
+}
+
+.site-footer-inner {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2rem var(--gutter) 2.5rem;
+  display: grid;
+  gap: 1.25rem;
+  font-family: var(--font-ui);
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+}
+
+.public .site-footer a {
+  color: var(--sheet);
+}
+
+.public .site-footer a:hover {
+  color: var(--masi-200);
+}
+
+.public .site-footer :focus-visible {
+  outline-color: var(--masi-200);
+}
+
+.footer-note {
+  max-width: 60ch;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--teal-100);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public a,
+  .public .envelope,
+  .public .primary-link {
+    transition: none;
+  }
+
+  .public .envelope:hover,
+  .public .envelope:focus-visible,
+  .public .primary-link:hover {
+    transform: none;
+  }
+}

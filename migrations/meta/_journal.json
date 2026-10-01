@@ -36,6 +36,13 @@
       "when": 1790803625110,
       "tag": "0004_rights_records",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790818181499,
+      "tag": "0005_public_site",
+      "breakpoints": true
     }
   ]
 }

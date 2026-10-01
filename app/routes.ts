@@ -1,7 +1,16 @@
-import { index, prefix, type RouteConfig, route } from "@react-router/dev/routes";
+import { index, layout, prefix, type RouteConfig, route } from "@react-router/dev/routes";
+import { INFO_PAGES } from "./lib/info-pages";
 
 export default [
-  index("routes/home.tsx"),
+  // The public site: edge-cached, no client JavaScript, eligible content only (ADR-0007).
+  layout("routes/public/layout.tsx", [
+    index("routes/home.tsx"),
+    ...INFO_PAGES.map((page) => route(page.path, "routes/public/info.tsx", { id: `info-${page.path}` })),
+    route(":area", "routes/public/area.tsx"),
+    route(":area/:slug", "routes/public/article.tsx"),
+  ]),
+  route("sitemap.xml", "routes/public/sitemap.ts"),
+  route("robots.txt", "routes/public/robots.ts"),
   // Staff tools, served only on the admin host (workers/app.ts, ADR-0005).
   ...prefix("admin", [
     index("routes/admin/home.tsx"),

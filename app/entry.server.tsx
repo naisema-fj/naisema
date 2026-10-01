@@ -42,7 +42,18 @@ export default async function handleRequest(
   // Vite's dev server injects its own inline scripts, so the policy applies to builds only.
   if (!import.meta.env.DEV) {
     const { env } = loadContext.get(cloudflareContext);
-    applySecurityHeaders(responseHeaders, nonce, { allowIndexing: env.ALLOW_INDEXING === "true" });
+    // Staff pages are never indexed, whatever the environment.
+    const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
+    applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
+      allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost,
+    });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
+}
+
+/** Whether the page will load client JavaScript: routes opt out with `handle = { hydrate: false }` (root.tsx). */
+function hydrates(context: EntryContext) {
+  const leaf = context.staticHandlerContext.matches.at(-1);
+  const handle = leaf ? (context.routeModules[leaf.route.id]?.handle as { hydrate?: boolean } | undefined) : undefined;
+  return handle?.hydrate !== false;
 }

@@ -49,6 +49,9 @@ Administrators may grant roles to themselves (decided 29 September 2026). With o
 
 - **Rights evidence before the scan pipeline (1a-06, 30 September 2026):** until the quarantine and ClamAV pipeline exists (issue #14, ADR-0010), rights evidence is stored straight in the private `EVIDENCE` bucket. To limit the risk it must be a PDF, JPEG, PNG or WebP of at most 10 MB whose first bytes, declared type and file extension agree; it is served only to editors, only as a sandboxed download that is never cached; and every download is audited. #14 must route rights evidence through quarantine like every other upload.
 - **What a Rights Record covers before the media library (1a-06):** a Content Item's own Rights Record covers everything in it, including images in an Article body. Media assets get their own Rights Records, checked by `isEligible`, when the media library arrives (#14).
+- **Public site design (1a-07, 1 October 2026):** the "Letters home" direction (`DESIGN.md`) follows PRD §28. It adds two self-hosted typefaces, Jost and Literata (SIL Open Font License 1.1). **Founder approval of these components under MOU §5 is still to be recorded here.** The footer's masi-style strip is a labelled placeholder until commissioned, culturally reviewed artwork replaces it.
+- **Production origin (1a-07):** cache purges for production assume the public site is served at `https://naisema.com` (`PUBLIC_ORIGINS` in `wrangler.jsonc`). Change it if production uses another hostname, such as `www.naisema.com`.
+- **Edge cache freshness (1a-07):** until a zone purge token is set (runbook, "Public site"), a withdrawn page can still be served from another Cloudflare data centre for up to 5 minutes. Eligibility is still checked on every uncached request.
 
 ## Agreed amendments to the Founding Developer Agreement / MOU
 

@@ -17,6 +17,7 @@ export default defineConfig({
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
           BETTER_AUTH_SECRET: "test-only-secret-at-least-32-characters-long",
+          PUBLIC_ORIGINS: "https://naisema.test",
         },
       },
     })),

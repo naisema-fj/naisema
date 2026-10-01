@@ -27,3 +27,25 @@ INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
 INSERT INTO topic (id, slug, name, created_by, created_at) VALUES
   ('e2e-topic-ceremonies', 'e2e-ceremonies', 'E2E Ceremonies', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;
+
+-- One published, eligible article for the public pages: submitted, no flags (so no reviews
+-- needed) and a current Rights Record granting Publish.
+INSERT INTO content_item (id, type, slug, primary_area, created_by, created_at, updated_at,
+  publication_state, first_published_at, last_published_at)
+VALUES ('e2e-article', 'article', 'e2e-letter-from-home', 'ezine', 'e2e-seed', 0, 0, 'published',
+  1790000000000, 1790000000000)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO revision (id, content_item_id, number, snapshot, fingerprints, created_by, created_at)
+VALUES ('e2e-article-r1', 'e2e-article', 1,
+  '{"title":"A letter from home","summary":"How the village greets a visitor who has been away a long time.","credit":"Words by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Arriving"}]},{"type":"paragraph","content":[{"type":"text","text":"You are met at the road and walked to the house."}]},{"type":"paragraph","content":[{"type":"text","text":"Someone older speaks for you, and the family answers. Nobody hurries."}]},{"type":"heading","attrs":{"level":2},"content":[{"type":"text","text":"Staying"}]},{"type":"paragraph","content":[{"type":"text","text":"You eat when you are told to, and you sleep where you are put."}]},{"type":"callout","content":[{"type":"paragraph","content":[{"type":"text","text":"Bring something to share."}]}]}]},"sources":"","flags":["opinion"],"languageVariety":null}',
+  '{}', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+UPDATE content_item SET current_draft_revision_id = 'e2e-article-r1', current_published_revision_id = 'e2e-article-r1'
+WHERE id = 'e2e-article';
+INSERT INTO revision_submission (revision_id, submitted_by, submitted_at) VALUES ('e2e-article-r1', 'e2e-seed', 0)
+ON CONFLICT(revision_id) DO NOTHING;
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-article-rights', 'content_item', 'e2e-article', 'E2E Storyteller', '["publish"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
