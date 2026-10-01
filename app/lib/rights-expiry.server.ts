@@ -1,5 +1,5 @@
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
-import { contentItem, revision, rightsExpiryWarning, rightsRecord } from "~db/schema";
+import { contentItem, mediaAsset, revision, rightsExpiryWarning, rightsRecord } from "~db/schema";
 import { auditInsert } from "./audit.server";
 import { getDb } from "./db.server";
 import { sendEmail } from "./email.server";
@@ -9,10 +9,11 @@ import { activeHolders } from "./staff-roles.server";
 
 const LONGEST_WINDOW_DAYS = Math.max(...EXPIRY_WARNING_DAYS);
 
-/** Where staff open a Content Item's Rights Records, on this environment's admin host. */
-function rightsPageUrl(env: Env, contentItemId: string) {
+/** Where staff open a Content Item's or media file's Rights Records, on this environment's admin host. */
+function rightsPageUrl(env: Env, record: { subjectType: string; subjectId: string }) {
   const scheme = env.ADMIN_HOSTNAME.endsWith("localhost") ? "http" : "https";
-  return `${scheme}://${env.ADMIN_HOSTNAME}/admin/articles/${contentItemId}/rights`;
+  const page = record.subjectType === "media_asset" ? `media/${record.subjectId}` : `articles/${record.subjectId}`;
+  return `${scheme}://${env.ADMIN_HOSTNAME}/admin/${page}/rights`;
 }
 
 /**
@@ -24,13 +25,14 @@ function rightsPageUrl(env: Env, contentItemId: string) {
 export async function sendExpiryWarnings(env: Env, now: Date) {
   const db = getDb(env.DB);
   const expiring = await db
-    .select({ record: rightsRecord, title: revision.snapshot })
+    .select({ record: rightsRecord, title: revision.snapshot, fileName: mediaAsset.name })
     .from(rightsRecord)
     .leftJoin(
       contentItem,
       and(eq(rightsRecord.subjectType, "content_item"), eq(contentItem.id, rightsRecord.subjectId)),
     )
     .leftJoin(revision, eq(revision.id, contentItem.currentDraftRevisionId))
+    .leftJoin(mediaAsset, and(eq(rightsRecord.subjectType, "media_asset"), eq(mediaAsset.id, rightsRecord.subjectId)))
     .where(
       and(
         isNull(rightsRecord.withdrawnAt),
@@ -61,13 +63,13 @@ export async function sendExpiryWarnings(env: Env, now: Date) {
   type Letter = { to: string; withinDays: number; warnings: ExpiryWarning[]; lines: string[] };
   const letters = new Map<string, Letter>();
   for (const warning of due) {
-    const { record, title } = byRecord.get(warning.recordId) as (typeof expiring)[number];
+    const { record, title, fileName } = byRecord.get(warning.recordId) as (typeof expiring)[number];
     const recorder = editors.find((editor) => editor.id === record.createdBy);
     const recipients = recorder ? [recorder.email] : editors.map((editor) => editor.email);
-    const itemTitle = (title as { title?: string } | null)?.title ?? "An item";
+    const itemTitle = fileName ? `The file ${fileName}` : ((title as { title?: string } | null)?.title ?? "An item");
     const line = [
       `${itemTitle}: the Rights Record from ${record.rightsHolder} expires on ${formatDay(record.expiresAt as Date)}.`,
-      `  ${rightsPageUrl(env, record.subjectId)}`,
+      `  ${rightsPageUrl(env, record)}`,
     ].join("\n");
     for (const to of recipients) {
       const key = `${to}|${warning.withinDays}`;

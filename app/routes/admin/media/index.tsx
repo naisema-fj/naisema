@@ -4,7 +4,10 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { listMedia, setAltText } from "~/lib/media.server";
 import { requireUploader } from "~/lib/media-access.server";
 import { filePath, imagePath } from "~/lib/media-delivery.server";
+import { can } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
+import { mediaRightsFacts } from "~/lib/rights.server";
+import { assetRightsProblems } from "~/lib/rights-rules";
 import { formatBytes, type MediaStatus, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import type { Route } from "./+types/index";
 
@@ -23,14 +26,21 @@ const STATUS_NAMES: Record<MediaStatus, string> = {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db } = await requireUploader(env, request);
-  // Ready files open on the public site, where they are delivered.
+  const { db, actor } = await requireUploader(env, request);
+  // Ready files open on the public site, where they are delivered once their rights allow it.
   const publicOrigin = primaryPublicOrigin(env);
   const assets = await listMedia(db);
+  const readyIds = assets.filter((asset) => asset.status === "ready").map((asset) => asset.id);
+  const rights = await mediaRightsFacts(db, readyIds);
+  const recordsOf = new Map(readyIds.map((id, index) => [id, rights[index].records]));
+  const now = new Date();
+  const canManageRights = can(actor, { action: "rights.manage" });
   return {
     assets: assets.map((asset) => {
       const isImage = asset.type.startsWith("image/");
       const ready = asset.status === "ready";
+      const records = recordsOf.get(asset.id) ?? [];
+      const publishable = ready && !assetRightsProblems([{ name: asset.name, records }], now).length;
       return {
         id: asset.id,
         name: asset.name,
@@ -42,10 +52,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         // Alt text describes an image people can see, so only a ready image takes it.
         takesAltText: isImage && ready,
         altText: asset.altText,
+        // A file is shown publicly, and can be used, only while a Rights Record of its own grants Publish.
+        rights: !ready
+          ? null
+          : publishable
+            ? "Current, granting Publish"
+            : records.length
+              ? "None current: it can't be shown or published"
+              : "None yet: it can't be shown or published",
+        rightsPage: ready && canManageRights ? `/admin/media/${asset.id}/rights` : null,
         link:
-          ready && isImage
+          publishable && isImage
             ? `${publicOrigin}${imagePath(asset.id, 960)}`
-            : ready && asset.type === "application/pdf"
+            : publishable && asset.type === "application/pdf"
               ? `${publicOrigin}${filePath(asset.id)}`
               : null,
       };
@@ -133,7 +152,17 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
                       "Not needed"
                     )}
                   </td>
-                  <td>Not recorded yet (media Rights Records are coming)</td>
+                  <td>
+                    {asset.rights ?? "Once it passes its scan"}
+                    {asset.rightsPage && (
+                      <>
+                        {" "}
+                        <a href={asset.rightsPage}>
+                          Rights Records<span className="visually-hidden"> for {asset.name}</span>
+                        </a>
+                      </>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

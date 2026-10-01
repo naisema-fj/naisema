@@ -40,11 +40,14 @@ describe("the media library", () => {
 
     expect(page).toContain("PNG image");
     expect(page).toContain("1 KB");
-    expect(page).toContain(`/media/images/${clean}/960`);
+    // Until a Rights Record of its own grants Publish, a clean file isn't shown publicly.
+    expect(page).toContain("None yet: it can&#x27;t be shown or published");
+    expect(page).not.toContain(`/media/images/${clean}/960`);
+    // Educators upload, but only editors manage rights.
+    expect(page).not.toContain(`/admin/media/${clean}/rights`);
     expect(page).toContain("Blocked: a virus was found");
     expect(page).toContain("The virus scanner found Eicar-Test-Signature.");
     expect(page).toContain("Being scanned for viruses");
-    expect(page).toContain("Not recorded yet");
     expect(page).not.toContain(`/media/images/${infected}/`);
     expect(page).not.toContain(`/media/images/${waiting}/`);
   });

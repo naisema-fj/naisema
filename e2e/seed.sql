@@ -127,6 +127,12 @@ INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitte
 VALUES ('e2e-episode-rights', 'content_item', 'e2e-episode', 'E2E Voices', '["publish"]', 0,
   'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;
+-- The audio file's own Rights Record: every media library file an item uses needs one (#17).
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-episode-audio-rights', 'media_asset', 'e2e-episode-audio', 'E2E Voices', '["publish"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
 INSERT INTO search_entry (content_item_id, primary_area, format, title, summary, topic_names, published_at)
 VALUES ('e2e-episode', 'voices', 'episode', 'Talanoa: coming home to Levuka',
   'Two cousins talk about the first visit home in twenty years.', 'E2E Ceremonies', 1790000000000)

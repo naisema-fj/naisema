@@ -6,8 +6,8 @@ import { readyDownload, readyEpisodeAudio } from "./media-delivery.server";
 import { type Actor, can } from "./permissions";
 import { loadReview, type Review, type ReviewActionResult } from "./review.server";
 import { requirementName } from "./review-names";
-import { rightsFactsFor } from "./rights.server";
-import { rightsProblems } from "./rights-rules";
+import { mediaRightsFacts, rightsFactsFor } from "./rights.server";
+import { assetRightsProblems, rightsProblems } from "./rights-rules";
 
 export type Eligibility = { eligible: true } | { eligible: false; reasons: string[] };
 
@@ -16,9 +16,9 @@ export type Eligibility = { eligible: true } | { eligible: false; reasons: strin
  * must have been submitted, every review its Content Flags require must be approved on it, and its
  * rights must be current at this moment: a current Rights Record granting Publish, plus current
  * guardian permission when it shows identifiable children. Because it is evaluated on every call,
- * an expiry or withdrawal takes effect immediately. Until the media library arrives (#14), the
- * item's own Rights Record covers everything in its body, images included; media assets' own
- * Rights Records then join this check.
+ * an expiry or withdrawal takes effect immediately. Each media library file the Revision uses
+ * needs a current Rights Record of its own too; the item's record covers its words and anything
+ * from other sites.
  */
 export async function isEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
   const review = await loadReview(db, revisionId);
@@ -53,6 +53,7 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
       now,
     }),
   );
+  reasons.push(...assetRightsProblems(await mediaRightsFacts(db, review.mediaAssetIds), now));
   return reasons.length ? { eligible: false, reasons } : { eligible: true };
 }
 

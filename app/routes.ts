@@ -35,6 +35,7 @@ export default [
     route("articles/:id/rights", "routes/admin/articles/rights.tsx"),
     route("contributors", "routes/admin/contributors.tsx"),
     route("media", "routes/admin/media/index.tsx"),
+    route("media/:id/rights", "routes/admin/media/rights.tsx"),
     route("media/uploads", "routes/admin/media/uploads.ts"),
     route("media/uploads/:id", "routes/admin/media/upload.ts"),
     route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),

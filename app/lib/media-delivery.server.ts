@@ -1,7 +1,8 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { mediaAsset } from "~db/schema";
+import { mediaAsset, rightsRecord } from "~db/schema";
 import { parseRange } from "./byte-range";
 import type { Database } from "./db.server";
+import { assetRightsProblems } from "./rights-rules";
 import {
   DOWNLOADABLE_TYPES,
   downloadName,
@@ -18,8 +19,8 @@ import {
  * through its Resource, and an Episode's audio is streamed through its Episode, each checking
  * eligibility first. Video is delivered by its own player later (#16).
  *
- * Note: a media asset's own Rights Records arrive later (the library shows a placeholder); until
- * then a ready file is served to anyone with its unguessable address.
+ * A file is delivered only while it has a current Rights Record of its own granting Publish (#17),
+ * so withdrawing or letting that lapse stops it, within the 5-minute edge-cache limit at most.
  */
 
 /** The widths images are served at, for `srcset`. */
@@ -28,6 +29,9 @@ export const IMAGE_WIDTHS = [320, 640, 960, 1280, 1920] as const;
 export const imagePath = (id: string, width: number) => `/media/images/${id}/${width}`;
 export const filePath = (id: string) => `/media/files/${id}`;
 
+/** Every public address a media library file can be delivered at, for purging. */
+export const mediaPaths = (id: string) => [...IMAGE_WIDTHS.map((width) => imagePath(id, width)), filePath(id)];
+
 /** A media library file that has passed its scan, or null. */
 export function readyMedia(db: Database, id: string) {
   return db
@@ -35,6 +39,21 @@ export function readyMedia(db: Database, id: string) {
     .from(mediaAsset)
     .where(and(eq(mediaAsset.id, id), eq(mediaAsset.purpose, "media"), eq(mediaAsset.status, "ready")))
     .get();
+}
+
+/**
+ * A media library file that may be delivered publicly right now: it passed its scan and a current
+ * Rights Record of its own grants Publish (#17). Checked on every request, so a withdrawal or
+ * expiry stops delivery as soon as the edge cache lets go.
+ */
+export async function publishableMedia(db: Database, id: string, now = new Date()) {
+  const asset = await readyMedia(db, id);
+  if (!asset) return undefined;
+  const records = await db
+    .select()
+    .from(rightsRecord)
+    .where(and(eq(rightsRecord.subjectType, "media_asset"), eq(rightsRecord.subjectId, id)));
+  return assetRightsProblems([{ name: asset.name, records }], now).length ? undefined : asset;
 }
 
 /** A media library file of one of these types that has passed its scan. */

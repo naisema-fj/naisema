@@ -13,8 +13,8 @@ import {
 } from "./rights-rules";
 import { checkContent, checkDeclared, HEAD_BYTES, storedName, type UploadType } from "./upload-rules";
 
-/** What a Rights Record covers. Only whole Content Items for now; media assets get their own later. */
-export type RightsSubject = { type: "content_item"; id: string };
+/** What a Rights Record covers: a Content Item (or one part of it), or a media library file. */
+export type RightsSubject = { type: "content_item" | "media_asset"; id: string };
 
 type RecordRow = typeof rightsRecord.$inferSelect;
 
@@ -41,10 +41,29 @@ export async function rightsFactsFor(db: Database, subject: RightsSubject): Prom
   return rows.map(toFacts);
 }
 
+/** Each media library file's name and Rights Records, for deciding whether items using them are eligible. */
+export async function mediaRightsFacts(db: Database, assetIds: string[]) {
+  if (!assetIds.length) return [];
+  const [assets, rows] = await Promise.all([
+    db.select({ id: mediaAsset.id, name: mediaAsset.name }).from(mediaAsset).where(inArray(mediaAsset.id, assetIds)),
+    db
+      .select()
+      .from(rightsRecord)
+      .where(and(eq(rightsRecord.subjectType, "media_asset"), inArray(rightsRecord.subjectId, assetIds)))
+      .orderBy(asc(rightsRecord.createdAt)),
+  ]);
+  return assetIds.map((id) => ({
+    name: assets.find((asset) => asset.id === id)?.name ?? "that is no longer in the media library",
+    records: rows.filter((row) => row.subjectId === id).map(toFacts),
+  }));
+}
+
 export type RightsStatus = "current" | "expired" | "withdrawn";
 
 const statusOf = (record: RecordRow, now: Date): RightsStatus =>
   record.withdrawnAt ? "withdrawn" : isCurrent(toFacts(record), now) ? "current" : "expired";
+
+export type RightsListEntry = Awaited<ReturnType<typeof listRights>>[number];
 
 /** Every Rights Record on a subject, newest first, with its contributors and whether it is current. */
 export async function listRights(db: Database, subject: RightsSubject, now = new Date()) {

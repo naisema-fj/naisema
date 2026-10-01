@@ -10,9 +10,11 @@ import {
   roleAssignment,
   user,
 } from "~db/schema";
+import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { type EpisodeDetails, episodeParts } from "./episode-fields";
+import { mediaAssetIdsIn } from "./media-in-use";
 import { type Actor, can, type ReviewType } from "./permissions";
 import { type PublicationState, REVIEW_NAMES } from "./review-names";
 import {
@@ -230,6 +232,8 @@ export async function loadReview(db: Database, revisionId: string) {
     flags,
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
+    /** The media library files the Revision shows or offers; each needs rights of its own. */
+    mediaAssetIds: mediaAssetIdsIn(row.revision.snapshot as ArticleSnapshot),
     episode: snapshot.episode
       ? {
           audioAssetId: snapshot.episode.audioAssetId,

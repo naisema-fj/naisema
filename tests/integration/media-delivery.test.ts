@@ -4,6 +4,7 @@ import { getDb } from "~/lib/db.server";
 import { type Scanner, scanUpload } from "~/lib/scan.server";
 import { staff } from "./support/articles";
 import { completeUpload, sendPart, startUpload } from "./support/media";
+import { recordMediaRights } from "./support/rights";
 
 /** A 1×1 PNG. */
 const PNG = Uint8Array.from(
@@ -40,8 +41,11 @@ const cleanScanner: Scanner = async ({ body }) => {
   return { verdict: "clean" };
 };
 
-/** Uploads a file to the media library; scanned clean unless `scan` is false. */
-async function uploaded(name: string, type: string, bytes: Uint8Array, { scan = true } = {}) {
+/**
+ * Uploads a file to the media library, scanned clean unless `scan` is false and with a Rights
+ * Record of its own granting Publish unless `rights` is false.
+ */
+async function uploaded(name: string, type: string, bytes: Uint8Array, { scan = true, rights = true } = {}) {
   const editor = await staff("editor", { role: "editor" });
   const { id } = (await (
     await startUpload(editor.browser, { name, type, size: bytes.length, head: bytes })
@@ -51,14 +55,15 @@ async function uploaded(name: string, type: string, bytes: Uint8Array, { scan = 
   await sendPart(editor.browser, id, 1, bytes);
   await completeUpload(editor.browser, id);
   if (scan) await scanUpload(env, getDb(env.DB), id, cleanScanner);
-  return id;
+  if (scan && rights) expect((await recordMediaRights(editor.browser, id)).status).toBe(302);
+  return { id, editor };
 }
 
 const visit = (path: string) => SELF.fetch(`https://naisema.test${path}`);
 
 describe("delivering media library files", () => {
   it("serves a scanned image through Cloudflare Images, re-encoded as WebP", async () => {
-    const id = await uploaded("photo.png", "image/png", PNG);
+    const { id } = await uploaded("photo.png", "image/png", PNG);
 
     const response = await visit(`/media/images/${id}/320`);
 
@@ -70,7 +75,7 @@ describe("delivering media library files", () => {
   it("strips the image's metadata, location included", async () => {
     const original = pngWithLocation();
     expect(new TextDecoder().decode(original)).toContain("Kadavu");
-    const id = await uploaded("photo.png", "image/png", original);
+    const { id } = await uploaded("photo.png", "image/png", original);
 
     const response = await visit(`/media/images/${id}/640`);
 
@@ -83,13 +88,13 @@ describe("delivering media library files", () => {
   });
 
   it("serves only the agreed widths", async () => {
-    const id = await uploaded("photo.png", "image/png", PNG);
+    const { id } = await uploaded("photo.png", "image/png", PNG);
 
     expect((await visit(`/media/images/${id}/321`)).status).toBe(404);
   });
 
   it("serves a PDF only as a sandboxed download", async () => {
-    const id = await uploaded("reading list.pdf", "application/pdf", PDF);
+    const { id } = await uploaded("reading list.pdf", "application/pdf", PDF);
 
     const response = await visit(`/media/files/${id}`);
 
@@ -100,9 +105,28 @@ describe("delivering media library files", () => {
   });
 
   it("serves nothing that hasn't passed its scan", async () => {
-    const image = await uploaded("photo.png", "image/png", PNG, { scan: false });
-    const file = await uploaded("list.pdf", "application/pdf", PDF, { scan: false });
+    const { id: image } = await uploaded("photo.png", "image/png", PNG, { scan: false });
+    const { id: file } = await uploaded("list.pdf", "application/pdf", PDF, { scan: false });
 
+    expect((await visit(`/media/images/${image}/320`)).status).toBe(404);
+    expect((await visit(`/media/files/${file}`)).status).toBe(404);
+  });
+
+  it("serves nothing without a current Rights Record of the file's own granting Publish", async () => {
+    const { id: image } = await uploaded("photo.png", "image/png", PNG, { rights: false });
+    const { id: file, editor } = await uploaded("list.pdf", "application/pdf", PDF);
+    expect((await visit(`/media/files/${file}`)).status).toBe(200);
+
+    const record = await env.DB.prepare(
+      "SELECT id FROM rights_record WHERE subject_type = 'media_asset' AND subject_id = ?1",
+    )
+      .bind(file)
+      .first<{ id: string }>();
+    const withdrawn = await editor.browser.fetch(`/admin/media/${file}/rights`, {
+      form: { intent: "withdraw", recordId: record?.id as string, reason: "The author asked us to stop." },
+    });
+
+    expect(withdrawn.status).toBe(302);
     expect((await visit(`/media/images/${image}/320`)).status).toBe(404);
     expect((await visit(`/media/files/${file}`)).status).toBe(404);
   });

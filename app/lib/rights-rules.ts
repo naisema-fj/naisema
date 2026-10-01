@@ -116,6 +116,20 @@ export function rightsProblems(input: {
 }
 
 /**
+ * Why the media library files an item uses can't be published with it: each needs its own current
+ * Rights Record granting Publish (#17). The item's own record doesn't stand in for a file's.
+ */
+export function assetRightsProblems(assets: { name: string; records: RightsFacts[] }[], now: Date): string[] {
+  return assets.flatMap(({ name, records }) => {
+    const lapse = lapseOf(records, now);
+    if (lapse === null) return [];
+    if (lapse === "withdrawn") return [`The Rights Record for the file ${name} was withdrawn.`];
+    if (lapse === "none") return [`The file ${name} has no current Rights Record granting Publish.`];
+    return [`The Rights Record for the file ${name} expired on ${formatDay(lapse)}.`];
+  });
+}
+
+/**
  * Whether records lack a current Publish grant, and how the latest one lapsed: null when one is
  * current, then "withdrawn", the expiry date, or "none" when nothing ever granted Publish.
  */

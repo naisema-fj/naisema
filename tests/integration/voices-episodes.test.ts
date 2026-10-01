@@ -4,7 +4,7 @@ import { getDb } from "~/lib/db.server";
 import { type Scanner, scanUpload } from "~/lib/scan.server";
 import { act, approve, articleForm, currentRevision, post, type Staff, staff, topic } from "./support/articles";
 import { completeUpload, sendPart, startUpload } from "./support/media";
-import { recordRights } from "./support/rights";
+import { recordMediaRights, recordRights } from "./support/rights";
 
 const PUBLIC = "https://naisema.test";
 const visit = (path: string, init: RequestInit = {}) => SELF.fetch(`${PUBLIC}${path}`, { redirect: "manual", ...init });
@@ -24,7 +24,10 @@ async function libraryMp3(editor: Staff, { scan = true } = {}) {
   ).json()) as { id: string };
   await sendPart(editor.browser, id, 1, bytes);
   await completeUpload(editor.browser, id);
-  if (scan) await scanUpload(env, getDb(env.DB), id, clean);
+  if (scan) {
+    await scanUpload(env, getDb(env.DB), id, clean);
+    expect((await recordMediaRights(editor.browser, id)).status).toBe(302);
+  }
   return id;
 }
 

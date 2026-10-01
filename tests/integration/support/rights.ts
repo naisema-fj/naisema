@@ -16,6 +16,8 @@ export function recordRights(
     evidence?: File;
     rightsHolder?: string;
     part?: { kind: string; name: string };
+    /** The rights page to post to; an article's by default. */
+    page?: string;
   } = {},
 ) {
   const form = new FormData();
@@ -26,5 +28,10 @@ export function recordRights(
   if (fields.guardianPermission) form.set("guardianPermission", "on");
   if (fields.expiresOn) form.set("expiresOn", fields.expiresOn);
   form.set("evidence", fields.evidence ?? pdfEvidence());
-  return browser.fetch(`/admin/articles/${articleId}/rights`, { multipart: form });
+  return browser.fetch(fields.page ?? `/admin/articles/${articleId}/rights`, { multipart: form });
+}
+
+/** Records a Rights Record granting Publish on a media library file, through its rights page. */
+export function recordMediaRights(browser: Browser, assetId: string, fields: Parameters<typeof recordRights>[2] = {}) {
+  return recordRights(browser, assetId, { ...fields, page: `/admin/media/${assetId}/rights` });
 }

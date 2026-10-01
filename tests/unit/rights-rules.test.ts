@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expiryWarningsDue, type RightsFacts, rightsProblems } from "~/lib/rights-rules";
+import { assetRightsProblems, expiryWarningsDue, type RightsFacts, rightsProblems } from "~/lib/rights-rules";
 
 const now = new Date("2026-10-01T00:00:00Z");
 const days = (count: number) => new Date(now.getTime() + count * 86_400_000);
@@ -131,6 +131,26 @@ describe("rightsProblems with records for parts of an item", () => {
 
     expect(check(record({ part: guest, guardianPermission: true }))).toEqual([]);
     expect(check(record({ part: music, guardianPermission: true }))).toHaveLength(1);
+  });
+});
+
+describe("assetRightsProblems: the media library files an item uses", () => {
+  it("needs each file to have its own current Record granting Publish, and names the file", () => {
+    expect(
+      assetRightsProblems(
+        [
+          { name: "harbour.jpg", records: [record()] },
+          { name: "talanoa.mp3", records: [] },
+          { name: "map.pdf", records: [record({ expiresAt: days(-2) })] },
+          { name: "dance.jpg", records: [record({ withdrawnAt: days(-1) })] },
+        ],
+        now,
+      ),
+    ).toEqual([
+      "The file talanoa.mp3 has no current Rights Record granting Publish.",
+      "The Rights Record for the file map.pdf expired on 29 Sept 2026.",
+      "The Rights Record for the file dance.jpg was withdrawn.",
+    ]);
   });
 });
 

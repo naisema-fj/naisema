@@ -1,7 +1,8 @@
-import { eq, inArray, or } from "drizzle-orm";
+import { eq, inArray, like, or } from "drizzle-orm";
 import { contentItem, revision, topic } from "~db/schema";
 import type { ArticleSnapshot } from "./article-fields";
 import type { Database } from "./db.server";
+import { mediaPaths } from "./media-delivery.server";
 import { pagesShowing, purgePublicPages } from "./public-cache.server";
 import { indexItem } from "./search.server";
 
@@ -49,4 +50,22 @@ export async function publicItemChanged(env: Env, db: Database, itemId: string, 
     ...topicPaths,
     ...alsoPurge,
   ]);
+}
+
+/**
+ * Call after a media library file's Rights Records change. Its own addresses are purged, and every
+ * item whose current published or draft Revision uses it is brought up to date, since its
+ * eligibility depends on the file's rights (#17).
+ */
+export async function mediaAssetChanged(env: Env, db: Database, assetId: string) {
+  const using = await db
+    .selectDistinct({ id: contentItem.id })
+    .from(contentItem)
+    .innerJoin(
+      revision,
+      or(eq(revision.id, contentItem.currentPublishedRevisionId), eq(revision.id, contentItem.currentDraftRevisionId)),
+    )
+    .where(like(revision.snapshot, `%${assetId}%`));
+  await purgePublicPages(env, mediaPaths(assetId));
+  for (const { id } of using) await publicItemChanged(env, db, id);
 }
