@@ -11,10 +11,30 @@ async function expectNoHorizontalScroll(page: Page) {
 }
 
 test("the homepage, an area, an article and the not-found page pass axe", async ({ page }) => {
-  for (const path of ["/", "/ezine", "/learn", ARTICLE, "/about", "/nowhere"]) {
+  for (const path of ["/", "/ezine", "/learn", ARTICLE, "/about", "/nowhere", "/search?q=village", "/search?q=zzzz"]) {
     await page.goto(path);
     await expectNoAxeViolations(page);
   }
+});
+
+test("a visitor searches, narrows by area, finds nothing, and starts again", async ({ page }) => {
+  await page.goto("/search");
+
+  await page.getByLabel("Search for").fill("village greets");
+  await page.getByRole("button", { name: "Search" }).click();
+  await expect(page.getByRole("link", { name: "A letter from home" })).toBeVisible();
+
+  await page.getByLabel("Area").selectOption("learn");
+  await page.getByRole("button", { name: "Search" }).click();
+  await expect(page).toHaveURL(/q=village\+greets&area=learn/);
+  await expect(page.getByText("Nothing matched your search.")).toBeVisible();
+
+  await page.getByRole("link", { name: "Search all areas, topics and formats" }).click();
+  await expect(page.getByRole("link", { name: "A letter from home" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Clear the search and filters" }).click();
+  await expect(page).toHaveURL(/\/search$/);
+  await expect(page.getByLabel("Search for")).toHaveValue("");
 });
 
 test("a visitor reads an article: who it is from, when, and what it was reviewed for", async ({ page }) => {
@@ -35,7 +55,7 @@ test("the menu works by keyboard on a phone-width screen", async ({ page }) => {
   const menu = page.getByText("Menu", { exact: true });
   await menu.focus();
   await page.keyboard.press("Enter");
-  const areas = page.getByRole("navigation", { name: "Areas menu" });
+  const areas = page.getByRole("navigation", { name: "Main menu" });
   await expect(areas.getByRole("link", { name: "Voices" })).toBeVisible();
   await areas.getByRole("link", { name: "Voices" }).focus();
   await page.keyboard.press("Enter");

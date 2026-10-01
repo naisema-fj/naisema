@@ -5,7 +5,7 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
-import { pagesShowing, purgePublicPages } from "~/lib/public-cache.server";
+import { publicItemChanged } from "~/lib/public-change.server";
 import { archive, eligibilityFor, publishRevision, withdraw } from "~/lib/publication.server";
 import {
   assignedReviewerIds,
@@ -165,7 +165,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (!result.ok) return data({ error: result.error }, { status: 400 });
   // Publishing, withdrawing and archiving change what is public, and so can a review decision
   // recorded on the published Revision; purging after every action keeps that rule in one place.
-  await purgePublicPages(env, pagesShowing({ area: article.primaryArea, slug: article.slug }));
+  await publicItemChanged(env, db, article);
   throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
 }
 

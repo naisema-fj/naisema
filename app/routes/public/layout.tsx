@@ -18,6 +18,11 @@ function AreaLinks() {
           </Link>
         </li>
       ))}
+      <li className="search-item">
+        <Link to="/search" aria-current={current === "search" ? "page" : undefined}>
+          Search
+        </Link>
+      </li>
     </ul>
   );
 }
@@ -30,13 +35,13 @@ function SiteHeader() {
         <Link to="/" className="wordmark">
           Na iSema
         </Link>
-        <nav aria-label="Areas" className="site-nav">
+        <nav aria-label="Main" className="site-nav">
           <AreaLinks />
         </nav>
         {/* A native disclosure, so the menu works on phones without any JavaScript. */}
         <details className="site-menu">
           <summary>Menu</summary>
-          <nav aria-label="Areas menu">
+          <nav aria-label="Main menu">
             <AreaLinks />
           </nav>
         </details>

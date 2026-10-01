@@ -6,6 +6,7 @@ export default [
   layout("routes/public/layout.tsx", [
     index("routes/home.tsx"),
     ...INFO_PAGES.map((page) => route(page.path, "routes/public/info.tsx", { id: `info-${page.path}` })),
+    route("search", "routes/public/search.tsx"),
     route(":area", "routes/public/area.tsx"),
     route(":area/:slug", "routes/public/article.tsx"),
   ]),

@@ -803,6 +803,131 @@ html:has(.public) {
   color: var(--ink-soft);
 }
 
+/* Search: a plain form on a letter sheet; results are the same ruled list as an area's. */
+
+.area-links .search-item {
+  padding-left: 1.5rem;
+  border-left: 1px solid var(--rule);
+}
+
+.site-menu .area-links .search-item {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.search-form {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.search-form label,
+.search-filters legend {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--teal-900);
+}
+
+.search-words {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.4rem 0.75rem;
+}
+
+.search-words label {
+  grid-column: 1 / -1;
+}
+
+.public .search-form input,
+.public .search-form select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--teal-700);
+  border-radius: 3px;
+  padding: 0.55rem 0.75rem;
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.public .search-form button {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  background: var(--teal-900);
+  color: var(--sheet);
+  border: 0;
+  border-radius: 3px;
+  padding: 0 1.4rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.public .search-form button:hover {
+  background: var(--teal-950);
+}
+
+.search-filters {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.search-filters legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--masi);
+}
+
+.search-filters p {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.search-reset {
+  font-family: var(--font-ui);
+}
+
+.public .search-results {
+  margin-top: 2.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.no-results {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.no-results ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  font-family: var(--font-ui);
+}
+
+@media (max-width: 40rem) {
+  .search-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* Footer: a restrained masi strip, then a deep teal field. */
 
 .masi-strip {

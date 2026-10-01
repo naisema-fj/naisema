@@ -49,3 +49,10 @@ INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitte
 VALUES ('e2e-article-rights', 'content_item', 'e2e-article', 'E2E Storyteller', '["publish"]', 0,
   'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;
+-- Its search entry, as publishing would write it (app/lib/search.server.ts).
+INSERT INTO search_entry (content_item_id, primary_area, format, title, summary, tags, published_at)
+VALUES ('e2e-article', 'ezine', 'article', 'A letter from home',
+  'How the village greets a visitor who has been away a long time.', 'E2E Ceremonies', 1790000000000)
+ON CONFLICT(content_item_id) DO NOTHING;
+INSERT INTO search_entry_topic (content_item_id, topic_id) VALUES ('e2e-article', 'e2e-topic-ceremonies')
+ON CONFLICT DO NOTHING;

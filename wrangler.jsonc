@@ -32,6 +32,8 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_dev_events" }],
   // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   "r2_buckets": [
@@ -65,6 +67,8 @@
           "migrations_dir": "migrations"
         }
       ],
+      // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
+      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_staging_events" }],
       // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
       "r2_buckets": [
@@ -90,6 +94,8 @@
           "migrations_dir": "migrations"
         }
       ],
+      // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
+      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_production_events" }],
       // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
       "r2_buckets": [

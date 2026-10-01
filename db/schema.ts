@@ -367,3 +367,44 @@ export const rightsExpiryWarning = sqliteTable(
   },
   (table) => [primaryKey({ columns: [table.rightsRecordId, table.withinDays] })],
 );
+
+/**
+ * The public search index (PUB-03, ADR-0007): one row per item whose published Revision was
+ * eligible when it was last indexed, mirrored into the `search_fts` full-text table by triggers
+ * (migrations/0006). Every hit is checked for eligibility again before it is shown.
+ */
+export const searchEntry = sqliteTable(
+  "search_entry",
+  {
+    /** The full-text index's rowid; kept stable by being declared. */
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .unique()
+      .references(() => contentItem.id),
+    primaryArea: text("primary_area").notNull(),
+    format: text("format").notNull(),
+    title: text("title").notNull(),
+    summary: text("summary").notNull(),
+    /** The item's Topic names, so a search for a topic's name finds what it tags. */
+    tags: text("tags").notNull(),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("search_entry_area_idx").on(table.primaryArea, table.format)],
+);
+
+export const searchEntryTopic = sqliteTable(
+  "search_entry_topic",
+  {
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    topicId: text("topic_id")
+      .notNull()
+      .references(() => topic.id),
+  },
+  (table) => [
+    primaryKey({ columns: [table.contentItemId, table.topicId] }),
+    index("search_entry_topic_topic_idx").on(table.topicId),
+  ],
+);

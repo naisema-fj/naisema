@@ -4,7 +4,7 @@ import { articleFingerprints, embeddableArticles, getArticle, readArticleForm } 
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { publicPath } from "~/lib/public.server";
-import { pagesShowing, purgePublicPages } from "~/lib/public-cache.server";
+import { publicItemChanged } from "~/lib/public-change.server";
 import { appendRevision } from "~/lib/revisions.server";
 import { changeSlug } from "~/lib/slugs.server";
 import { listTopics } from "~/lib/topics.server";
@@ -40,8 +40,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { errors: {}, values: null, error: null, baseRevisionId: null, slugError: changed.error },
         { status: 400 },
       );
-    await purgePublicPages(env, [
-      ...pagesShowing({ area: changed.area, slug: changed.newSlug }),
+    await publicItemChanged(env, db, { id: params.id, primaryArea: changed.area, slug: changed.newSlug }, [
       publicPath(changed.area, changed.oldSlug),
     ]);
     throw redirect(`/admin/articles/${params.id}?slug=changed`);

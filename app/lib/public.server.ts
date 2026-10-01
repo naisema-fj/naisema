@@ -24,7 +24,7 @@ type ItemRow = typeof contentItem.$inferSelect;
  * right now. `eligibilityFor` leaves out the publication state because publishing itself asks it;
  * public code asks this instead, never `eligibilityFor` alone.
  */
-async function eligiblePublished(db: Database, item: ItemRow, now: Date) {
+export async function eligiblePublished(db: Database, item: ItemRow, now: Date) {
   if (item.publicationState !== "published" || !item.currentPublishedRevisionId) return null;
   const review = await loadReview(db, item.currentPublishedRevisionId);
   if (!review) return null;

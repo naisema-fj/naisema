@@ -43,6 +43,13 @@
       "when": 1790818181499,
       "tag": "0005_public_site",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790820719040,
+      "tag": "0006_search",
+      "breakpoints": true
     }
   ]
 }
