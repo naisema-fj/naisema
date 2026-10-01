@@ -37,9 +37,33 @@
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_dev_events" }],
   // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  // The Scanner container's Durable Object class (workers/scanner.ts).
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scanner"] }],
+  // Building the scanner image needs Docker; local development and tests don't build it
+  // (docs/handover/runbook.md, upload safety).
+  "dev": { "enable_containers": false },
+  // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
+  "queues": {
+    "producers": [{ "binding": "UPLOAD_SCANS", "queue": "naisema-dev-upload-scans" }],
+    "consumers": [{ "queue": "naisema-dev-upload-scans", "max_batch_size": 1, "max_retries": 5 }]
+  },
+  // ClamAV in Cloudflare Containers (ADR-0010; containers/scanner), reached through its Durable Object.
+  "containers": [
+    {
+      "class_name": "Scanner",
+      "image": "./containers/scanner/Dockerfile",
+      "instance_type": "standard-1",
+      "max_instances": 2
+    }
+  ],
+  "durable_objects": { "bindings": [{ "name": "SCANNER", "class_name": "Scanner" }] },
+  // Image delivery: re-encoded on the way out, which strips metadata (docs/phase-1a-defaults.md §1).
+  "images": { "binding": "IMAGES" },
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "naisema-dev-media" },
-    { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" }
+    { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" },
+    // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
+    { "binding": "QUARANTINE", "bucket_name": "naisema-dev-quarantine" }
   ],
   "env": {
     "staging": {
@@ -72,9 +96,28 @@
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_staging_events" }],
       // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
+      "queues": {
+        "producers": [{ "binding": "UPLOAD_SCANS", "queue": "naisema-staging-upload-scans" }],
+        "consumers": [{ "queue": "naisema-staging-upload-scans", "max_batch_size": 1, "max_retries": 5 }]
+      },
+      // ClamAV in Cloudflare Containers (ADR-0010; containers/scanner), reached through its Durable Object.
+      "containers": [
+        {
+          "class_name": "Scanner",
+          "image": "./containers/scanner/Dockerfile",
+          "instance_type": "standard-1",
+          "max_instances": 2
+        }
+      ],
+      "durable_objects": { "bindings": [{ "name": "SCANNER", "class_name": "Scanner" }] },
+      // Image delivery: re-encoded on the way out, which strips metadata (docs/phase-1a-defaults.md §1).
+      "images": { "binding": "IMAGES" },
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "naisema-staging-media" },
-        { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" }
+        { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" },
+        // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
+        { "binding": "QUARANTINE", "bucket_name": "naisema-staging-quarantine" }
       ]
     },
     "production": {
@@ -99,9 +142,28 @@
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_production_events" }],
       // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
+      "queues": {
+        "producers": [{ "binding": "UPLOAD_SCANS", "queue": "naisema-production-upload-scans" }],
+        "consumers": [{ "queue": "naisema-production-upload-scans", "max_batch_size": 1, "max_retries": 5 }]
+      },
+      // ClamAV in Cloudflare Containers (ADR-0010; containers/scanner), reached through its Durable Object.
+      "containers": [
+        {
+          "class_name": "Scanner",
+          "image": "./containers/scanner/Dockerfile",
+          "instance_type": "standard-1",
+          "max_instances": 2
+        }
+      ],
+      "durable_objects": { "bindings": [{ "name": "SCANNER", "class_name": "Scanner" }] },
+      // Image delivery: re-encoded on the way out, which strips metadata (docs/phase-1a-defaults.md §1).
+      "images": { "binding": "IMAGES" },
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "naisema-production-media" },
-        { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" }
+        { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" },
+        // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
+        { "binding": "QUARANTINE", "bucket_name": "naisema-production-quarantine" }
       ]
     }
   }

@@ -332,6 +332,8 @@ export const rightsRecord = sqliteTable(
     evidenceKey: text("evidence_key").notNull(),
     evidenceName: text("evidence_name").notNull(),
     evidenceType: text("evidence_type").notNull(),
+    /** The scanned upload behind the evidence; null for evidence stored before the scan pipeline (#14). */
+    evidenceAssetId: text("evidence_asset_id").references((): AnySQLiteColumn => mediaAsset.id),
     expiresAt: integer("expires_at", { mode: "timestamp_ms" }),
     withdrawnAt: integer("withdrawn_at", { mode: "timestamp_ms" }),
     withdrawnBy: text("withdrawn_by"),
@@ -408,4 +410,58 @@ export const searchEntryTopic = sqliteTable(
     primaryKey({ columns: [table.contentItemId, table.topicId] }),
     index("search_entry_topic_topic_idx").on(table.topicId),
   ],
+);
+
+/**
+ * An uploaded file (docs/phase-1a-defaults.md §1, ADR-0010). Every upload lands in the private
+ * quarantine bucket; only once ClamAV passes it is it copied to its destination (the media
+ * library, or a Rights Record's private evidence) and marked ready.
+ *
+ * Status: uploading → scanning → ready, or → infected / failed (kept in quarantine, shown to
+ * staff with the reason) → removed after 30 days.
+ */
+export const mediaAsset = sqliteTable(
+  "media_asset",
+  {
+    id: text("id").primaryKey(),
+    /** "media" (the media library) or "evidence" (a Rights Record's private evidence). */
+    purpose: text("purpose").notNull(),
+    /** The accepted file type (app/lib/upload-rules.ts). */
+    type: text("type").notNull(),
+    name: text("name").notNull(),
+    size: integer("size").notNull(),
+    status: text("status").notNull(),
+    /** Why an upload was refused or failed, or which signature ClamAV found, for staff to read. */
+    statusReason: text("status_reason"),
+    quarantineKey: text("quarantine_key").notNull(),
+    /** The R2 multipart upload, while the file is still arriving. */
+    multipartUploadId: text("multipart_upload_id"),
+    /** Where a clean file is copied, in MEDIA or EVIDENCE according to its purpose. */
+    destinationKey: text("destination_key").notNull(),
+    altText: text("alt_text").notNull().default(""),
+    uploadedBy: text("uploaded_by")
+      .notNull()
+      .references(() => user.id),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    scannedAt: integer("scanned_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    index("media_asset_purpose_idx").on(table.purpose, table.createdAt),
+    index("media_asset_status_idx").on(table.status, table.updatedAt),
+  ],
+);
+
+/** The parts of a multipart upload received so far, so an interrupted upload can resume. */
+export const mediaUploadPart = sqliteTable(
+  "media_upload_part",
+  {
+    assetId: text("asset_id")
+      .notNull()
+      .references(() => mediaAsset.id),
+    partNumber: integer("part_number").notNull(),
+    etag: text("etag").notNull(),
+    size: integer("size").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.assetId, table.partNumber] })],
 );

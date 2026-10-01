@@ -53,6 +53,11 @@ export type Check =
   | { action: "content.withdraw" }
   /** Recording and withdrawing Rights Records, and reading the private evidence behind them. */
   | { action: "rights.manage" | "rightsEvidence.read" }
+  /**
+   * Uploading files and managing the media library (alt text). There is no public upload path
+   * (docs/phase-1a-defaults.md §1).
+   */
+  | { action: "media.upload" }
   /** Seeing the Revisions waiting on your review. */
   | { action: "reviewQueue.view" }
   /** Reading a Revision in the staff area: editors, and the reviewers assigned to it. */
@@ -100,6 +105,9 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "rights.manage":
     case "rightsEvidence.read":
       return hasRole("editor");
+
+    case "media.upload":
+      return hasRole("editor") || hasRole("educator");
 
     case "reviewQueue.view":
       return hasRole("reviewer");

@@ -2,10 +2,14 @@ import { createRequestHandler, RouterContextProvider } from "react-router";
 import { AUTH_BASE_PATH, createAuth } from "~/lib/auth.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
+import type { ScanMessage } from "~/lib/media.server";
 import { servePublic } from "~/lib/public-cache.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 import { DAY_MS } from "~/lib/rights-rules";
+import { containerScanner, handleScanBatch, tidyQuarantine } from "~/lib/scan.server";
 import { reindexExpiredRights } from "~/lib/search.server";
+
+export { Scanner } from "./scanner";
 
 const requestHandler = createRequestHandler(() => import("virtual:react-router/server-build"), import.meta.env.MODE);
 
@@ -75,11 +79,18 @@ export default {
   /**
    * The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings, then reindexing items
    * whose rights expired in the last two days (overlapping, in case a run was missed). Awaited, so
-   * a failed run shows as failed.
+   * a failed run shows as failed. Then the quarantine is tidied: old failures removed, abandoned
+   * uploads dropped and lost scans queued again.
    */
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
     await sendExpiryWarnings(env, now);
     await reindexExpiredRights(getDb(env.DB), new Date(now.getTime() - 2 * DAY_MS), now);
+    await tidyQuarantine(env, getDb(env.DB), now);
+  },
+
+  /** Upload scans (ADR-0010): each finished upload is scanned by ClamAV before it leaves quarantine. */
+  async queue(batch, env) {
+    await handleScanBatch(batch as MessageBatch<ScanMessage>, env, containerScanner(env));
   },
 } satisfies ExportedHandler<Env>;

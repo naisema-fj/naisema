@@ -137,6 +137,11 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["educator cannot publish", educator, { action: "revision.publish" }, false],
   ["educator cannot withdraw content", educator, { action: "content.withdraw" }, false],
   ["educator cannot manage Rights Records", educator, { action: "rights.manage" }, false],
+  ["educator uploads to the media library", educator, { action: "media.upload" }, true],
+  ["editor uploads to the media library", editor, { action: "media.upload" }, true],
+  ["administrator cannot upload by role alone", administrator, { action: "media.upload" }, false],
+  ["safeguarding lead cannot upload by role alone", safeguardingLead, { action: "media.upload" }, false],
+  ["a signed-in person without a staff role cannot upload", learner("me"), { action: "media.upload" }, false],
   [
     "educator cannot read learner records",
     educator,

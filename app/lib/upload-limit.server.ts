@@ -27,3 +27,23 @@ export async function readLimitedFormData(request: Request, maxBytes: number): P
     throw error;
   }
 }
+
+/** Reads a raw request body, refusing it as soon as it passes `maxBytes`. */
+export async function readLimitedBytes(request: Request, maxBytes: number): Promise<Uint8Array> {
+  if (Number(request.headers.get("Content-Length") ?? 0) > maxBytes) throw new UploadTooLarge();
+  if (!request.body) return new Uint8Array();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+  for await (const chunk of request.body) {
+    received += chunk.byteLength;
+    if (received > maxBytes) throw new UploadTooLarge();
+    chunks.push(chunk);
+  }
+  const bytes = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return bytes;
+}
