@@ -10,7 +10,7 @@ import {
   recordRights,
   withdrawRights,
 } from "./rights.server";
-import { RIGHTS_PART_NAMES, type RightsPart } from "./rights-rules";
+import { partLabel, type RightsPart, rightsPagePath } from "./rights-rules";
 import { readLimitedFormData, UploadTooLarge } from "./upload-limit.server";
 import { EVIDENCE_MAX_BYTES } from "./upload-rules";
 
@@ -21,15 +21,10 @@ export type RightsActionData = {
   withdraw: { recordId: string; error: string } | null;
 };
 
-const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-
 /** What a rights page shows: the subject's records, the parts a record may cover, the contributors. */
 export async function rightsPageData(db: Database, subject: RightsSubject, parts: RightsPart[] = []) {
   return {
-    parts: parts.map((part) => ({
-      value: partValue(part),
-      label: `${capitalise(RIGHTS_PART_NAMES[part.kind])}: ${part.name}`,
-    })),
+    parts: parts.map((part) => ({ value: partValue(part), label: partLabel(part) })),
     records: await listRights(db, subject),
     contributors: await listContributors(db),
   };
@@ -37,14 +32,14 @@ export async function rightsPageData(db: Database, subject: RightsSubject, parts
 
 /**
  * A rights page's form: records or withdraws a Rights Record on `subject`, then calls `changed` so
- * whatever the record decides is brought up to date, and returns to `page`.
+ * whatever the record decides is brought up to date, and returns to the subject's rights page.
  */
 export async function rightsAction(
   env: Env,
   db: Database,
   actorId: string,
   request: Request,
-  options: { subject: RightsSubject; parts?: RightsPart[]; page: string; changed: () => Promise<unknown> },
+  options: { subject: RightsSubject; parts?: RightsPart[]; changed: () => Promise<unknown> },
 ) {
   let form: FormData;
   try {
@@ -73,7 +68,7 @@ export async function rightsAction(
     }
     // What relied on the record may have just become ineligible.
     await options.changed();
-    throw redirect(`${options.page}?done=withdrawn`);
+    throw redirect(`${rightsPagePath(options.subject)}?done=withdrawn`);
   }
 
   const result = await readRightsForm(db, form, options.parts ?? []);
@@ -83,5 +78,5 @@ export async function rightsAction(
   await recordRights(env, db, actorId, options.subject, result.rights);
   // A new record can make what relies on it eligible again.
   await options.changed();
-  throw redirect(`${options.page}?done=recorded`);
+  throw redirect(`${rightsPagePath(options.subject)}?done=recorded`);
 }

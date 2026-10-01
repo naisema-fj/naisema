@@ -1,8 +1,11 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
+import { publishableMedia } from "~/lib/media-delivery.server";
+import { eligiblePublished } from "~/lib/public.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 import { type Scanner, scanUpload } from "~/lib/scan.server";
+import { reindexExpiredRights } from "~/lib/search.server";
 import { act, articleForm, post, type Staff, staff, topic } from "./support/articles";
 import { completeUpload, sendPart, startUpload } from "./support/media";
 import { recordMediaRights, recordRights } from "./support/rights";
@@ -31,12 +34,12 @@ async function scannedImage(editor: Staff, name = "harbour.png") {
 }
 
 /** An Article whose body shows a media library image, with its own Rights Record, submitted. */
-async function articleShowing(editor: Staff, imageId: string) {
+async function articleShowing(editor: Staff, imageId: string, { src = `${PUBLIC}/media/images/${imageId}/960` } = {}) {
   const image = {
     type: "doc",
     content: [
-      { type: "paragraph", content: [{ type: "text", text: "Levuka at dawn." }] },
-      { type: "image", attrs: { src: `${PUBLIC}/media/images/${imageId}/960`, alt: "Boats in Levuka harbour" } },
+      { type: "paragraph", content: [{ type: "text", text: `Levuka at dawn ${imageId}.` }] },
+      { type: "image", attrs: { src, alt: "Boats in Levuka harbour" } },
     ],
   };
   const response = await post(
@@ -131,5 +134,43 @@ describe("Rights Records for media library files (#17)", () => {
     const warning = (await emailsTo(address)).find((email) => email.subject.startsWith("Rights Records expiring"));
     expect(warning?.text).toContain(`The file ${name}`);
     expect(warning?.text).toContain(`http://admin.localhost/admin/media/${imageId}/rights`);
+  });
+
+  it("count a media library image given as a path on this site", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const imageId = await scannedImage(editor);
+    const id = await articleShowing(editor, imageId, { src: `/media/images/${imageId}/640` });
+
+    const refused = await act(editor, id, 1, { intent: "publish" });
+
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("has no current Rights Record granting Publish");
+  });
+
+  it("stop the file and every item using it once the file's record expires, and the daily job drops them from search", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const imageId = await scannedImage(editor);
+    const id = await articleShowing(editor, imageId);
+    const soon = new Date(Date.now() + 2 * 86_400_000);
+    const expiresOn = soon.toISOString().slice(0, 10);
+    expect((await recordMediaRights(editor.browser, imageId, { expiresOn })).status).toBe(302);
+    expect((await act(editor, id, 1, { intent: "publish" })).status).toBe(302);
+    const indexed = () =>
+      env.DB.prepare("SELECT COUNT(*) AS n FROM search_entry WHERE content_item_id = ?1")
+        .bind(id)
+        .first<{ n: number }>();
+    expect((await indexed())?.n).toBe(1);
+
+    // Two days on, as the daily job sees it.
+    const later = new Date(`${expiresOn}T00:00:01Z`);
+    await reindexExpiredRights(getDb(env.DB), new Date(later.getTime() - 2 * 86_400_000), later);
+
+    expect((await indexed())?.n).toBe(0);
+    // The checks each request makes, asked at that later moment: neither the file nor the item is public.
+    const db = getDb(env.DB);
+    const item = await db.query.contentItem.findFirst({ where: (row, { eq }) => eq(row.id, id) });
+    expect(await publishableMedia(db, imageId, later)).toBeUndefined();
+    expect(await eligiblePublished(db, item as NonNullable<typeof item>, later)).toBeNull();
+    expect(await publishableMedia(db, imageId)).toBeDefined();
   });
 });

@@ -7,7 +7,7 @@ import { filePath, imagePath } from "~/lib/media-delivery.server";
 import { can } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import { mediaRightsFacts } from "~/lib/rights.server";
-import { assetRightsProblems } from "~/lib/rights-rules";
+import { isPublishable, rightsPagePath } from "~/lib/rights-rules";
 import { formatBytes, type MediaStatus, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import type { Route } from "./+types/index";
 
@@ -40,7 +40,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       const isImage = asset.type.startsWith("image/");
       const ready = asset.status === "ready";
       const records = recordsOf.get(asset.id) ?? [];
-      const publishable = ready && !assetRightsProblems([{ name: asset.name, records }], now).length;
+      const publishable = ready && isPublishable(records, now);
       return {
         id: asset.id,
         name: asset.name,
@@ -60,7 +60,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             : records.length
               ? "None current: it can't be shown or published"
               : "None yet: it can't be shown or published",
-        rightsPage: ready && canManageRights ? `/admin/media/${asset.id}/rights` : null,
+        rightsPage: ready && canManageRights ? rightsPagePath({ type: "media_asset", id: asset.id }) : null,
         link:
           publishable && isImage
             ? `${publicOrigin}${imagePath(asset.id, 960)}`

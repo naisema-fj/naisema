@@ -4,16 +4,23 @@ import { auditInsert } from "./audit.server";
 import { getDb } from "./db.server";
 import { sendEmail } from "./email.server";
 import { toFacts } from "./rights.server";
-import { DAY_MS, EXPIRY_WARNING_DAYS, type ExpiryWarning, expiryWarningsDue, formatDay } from "./rights-rules";
+import {
+  DAY_MS,
+  EXPIRY_WARNING_DAYS,
+  type ExpiryWarning,
+  expiryWarningsDue,
+  formatDay,
+  type RightsSubject,
+  rightsPagePath,
+} from "./rights-rules";
 import { activeHolders } from "./staff-roles.server";
 
 const LONGEST_WINDOW_DAYS = Math.max(...EXPIRY_WARNING_DAYS);
 
-/** Where staff open a Content Item's or media file's Rights Records, on this environment's admin host. */
-function rightsPageUrl(env: Env, record: { subjectType: string; subjectId: string }) {
+/** Where staff open a subject's Rights Records, on this environment's admin host. */
+function rightsPageUrl(env: Env, subject: RightsSubject) {
   const scheme = env.ADMIN_HOSTNAME.endsWith("localhost") ? "http" : "https";
-  const page = record.subjectType === "media_asset" ? `media/${record.subjectId}` : `articles/${record.subjectId}`;
-  return `${scheme}://${env.ADMIN_HOSTNAME}/admin/${page}/rights`;
+  return `${scheme}://${env.ADMIN_HOSTNAME}${rightsPagePath(subject)}`;
 }
 
 /**
@@ -69,7 +76,7 @@ export async function sendExpiryWarnings(env: Env, now: Date) {
     const itemTitle = fileName ? `The file ${fileName}` : ((title as { title?: string } | null)?.title ?? "An item");
     const line = [
       `${itemTitle}: the Rights Record from ${record.rightsHolder} expires on ${formatDay(record.expiresAt as Date)}.`,
-      `  ${rightsPageUrl(env, record)}`,
+      `  ${rightsPageUrl(env, { type: record.subjectType as RightsSubject["type"], id: record.subjectId })}`,
     ].join("\n");
     for (const to of recipients) {
       const key = `${to}|${warning.withinDays}`;

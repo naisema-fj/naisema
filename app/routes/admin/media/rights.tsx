@@ -34,7 +34,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const { db, actor, asset } = await requireMediaRights(request, env, params.id);
   return rightsAction(env, db, actor.userId, request, {
     subject: { type: "media_asset", id: asset.id },
-    page: `/admin/media/${asset.id}/rights`,
     changed: () => mediaAssetChanged(env, db, asset.id),
   });
 }

@@ -3,11 +3,9 @@ import { Form } from "react-router";
 import type { RightsListEntry } from "~/lib/rights.server";
 import { PERMITTED_USE_NAMES } from "~/lib/rights-names";
 import type { RightsActionData } from "~/lib/rights-page.server";
-import { formatDay, PERMITTED_USES, RIGHTS_PART_NAMES } from "~/lib/rights-rules";
+import { formatDay, PERMITTED_USES, partLabel } from "~/lib/rights-rules";
 
 const STATUS_NAMES = { current: "Current", expired: "Expired", withdrawn: "Withdrawn" } as const;
-
-const capitalise = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /**
  * A subject's Rights Records and the form to record another, for a Content Item or a media library
@@ -59,11 +57,7 @@ export function RightsRecords({
               <h2>{`${record.rightsHolder}: ${STATUS_NAMES[record.status]}`}</h2>
               <dl>
                 <dt>Covers</dt>
-                <dd>
-                  {record.part
-                    ? `${capitalise(RIGHTS_PART_NAMES[record.part.kind])}: ${record.part.name}`
-                    : "The whole item"}
-                </dd>
+                <dd>{record.part ? partLabel(record.part) : "The whole item"}</dd>
                 <dt>Permitted Uses</dt>
                 <dd>{record.permittedUses.map((use) => PERMITTED_USE_NAMES[use]).join(", ")}</dd>
                 {record.guardianPermission && (

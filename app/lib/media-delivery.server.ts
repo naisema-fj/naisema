@@ -2,7 +2,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { mediaAsset, rightsRecord } from "~db/schema";
 import { parseRange } from "./byte-range";
 import type { Database } from "./db.server";
-import { assetRightsProblems } from "./rights-rules";
+import { isPublishable } from "./rights-rules";
 import {
   DOWNLOADABLE_TYPES,
   downloadName,
@@ -47,13 +47,14 @@ export function readyMedia(db: Database, id: string) {
  * expiry stops delivery as soon as the edge cache lets go.
  */
 export async function publishableMedia(db: Database, id: string, now = new Date()) {
-  const asset = await readyMedia(db, id);
-  if (!asset) return undefined;
-  const records = await db
-    .select()
-    .from(rightsRecord)
-    .where(and(eq(rightsRecord.subjectType, "media_asset"), eq(rightsRecord.subjectId, id)));
-  return assetRightsProblems([{ name: asset.name, records }], now).length ? undefined : asset;
+  const [asset, records] = await Promise.all([
+    readyMedia(db, id),
+    db
+      .select()
+      .from(rightsRecord)
+      .where(and(eq(rightsRecord.subjectType, "media_asset"), eq(rightsRecord.subjectId, id))),
+  ]);
+  return asset && isPublishable(records, now) ? asset : undefined;
 }
 
 /** A media library file of one of these types that has passed its scan. */

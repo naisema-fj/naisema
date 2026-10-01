@@ -39,6 +39,29 @@ describe("mediaAssetIdsIn: the media library files a Revision shows or offers", 
     expect(mediaAssetIdsIn(snapshot({ body: body as ArticleSnapshot["body"] }))).toEqual([A, B]);
   });
 
+  it("finds media library addresses written as paths on this site, and files linked from text", () => {
+    const body = {
+      type: "doc" as const,
+      content: [
+        image(`/media/images/${A}/640`),
+        {
+          type: "paragraph" as const,
+          content: [
+            { type: "text", text: "the map", marks: [{ type: "link", attrs: { href: `/media/files/${B}` } }] },
+            {
+              type: "text",
+              text: "a photo",
+              marks: [{ type: "link", attrs: { href: `https://naisema.com/media/images/${C}/1920` } }],
+            },
+            { type: "text", text: "elsewhere", marks: [{ type: "link", attrs: { href: "https://example.org/x" } }] },
+          ],
+        },
+      ],
+    };
+
+    expect(mediaAssetIdsIn(snapshot({ body: body as ArticleSnapshot["body"] }))).toEqual([A, B, C]);
+  });
+
   it("includes a Resource's file and an Episode's audio", () => {
     expect(mediaAssetIdsIn(snapshot({ resource: { source: { kind: "file", assetId: C } } as never }))).toEqual([C]);
     expect(mediaAssetIdsIn(snapshot({ episode: { audioAssetId: C } as never }))).toEqual([C]);

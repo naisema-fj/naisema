@@ -194,7 +194,8 @@ export async function loadReview(db: Database, revisionId: string) {
     .get();
   if (!row) return null;
 
-  const snapshot = row.revision.snapshot as Reviewable;
+  const content = row.revision.snapshot as ArticleSnapshot;
+  const snapshot: Reviewable = content;
   const flags = snapshot.flags ?? [];
   const languageVariety = snapshot.languageVariety ?? null;
   const [approvals, assignments, authorIds] = await Promise.all([
@@ -233,7 +234,7 @@ export async function loadReview(db: Database, revisionId: string) {
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
     /** The media library files the Revision shows or offers; each needs rights of its own. */
-    mediaAssetIds: mediaAssetIdsIn(row.revision.snapshot as ArticleSnapshot),
+    mediaAssetIds: mediaAssetIdsIn(content),
     episode: snapshot.episode
       ? {
           audioAssetId: snapshot.episode.audioAssetId,

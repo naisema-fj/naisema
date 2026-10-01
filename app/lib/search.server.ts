@@ -5,6 +5,7 @@ import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import type { Database } from "./db.server";
 import { formatDuration } from "./episode-fields";
 import { FORMAT_NAMES, isContentFormat } from "./formats";
+import { itemsUsingMedia } from "./media-usage.server";
 import { eligiblePublished, itemPath } from "./public.server";
 import { matchExpression, type SearchFilters } from "./search-query";
 
@@ -263,19 +264,17 @@ export function sitemapEntries(db: Database, now = new Date()) {
 
 /**
  * The daily job's part: reindex items whose Rights Records expired in the window, so expiries the
- * SQL pre-filter doesn't cover (guardian permission, say) leave the index too. The caller's window
- * overlaps the previous run's.
+ * SQL pre-filter doesn't cover (guardian permission, a part's or a media file's record) leave the
+ * index too. An expired media file record reindexes every item using the file. The caller's
+ * window overlaps the previous run's.
  */
 export async function reindexExpiredRights(db: Database, since: Date, now: Date) {
   const expired = await db
-    .selectDistinct({ id: rightsRecord.subjectId })
+    .selectDistinct({ type: rightsRecord.subjectType, id: rightsRecord.subjectId })
     .from(rightsRecord)
-    .where(
-      and(
-        eq(rightsRecord.subjectType, "content_item"),
-        gt(rightsRecord.expiresAt, since),
-        lte(rightsRecord.expiresAt, now),
-      ),
-    );
-  for (const { id } of expired) await indexItem(db, id, now);
+    .where(and(gt(rightsRecord.expiresAt, since), lte(rightsRecord.expiresAt, now)));
+  for (const { type, id } of expired) {
+    const items = type === "media_asset" ? await itemsUsingMedia(db, id) : [id];
+    for (const itemId of items) await indexItem(db, itemId, now);
+  }
 }

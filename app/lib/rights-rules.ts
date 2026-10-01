@@ -33,6 +33,19 @@ export const RIGHTS_PART_NAMES: Record<RightsPartKind, string> = {
   archive: "archive clip",
 };
 
+/** A part as staff read it: "Music: Isa Lei (1962 recording)". */
+export const partLabel = (part: RightsPart) => {
+  const kind = RIGHTS_PART_NAMES[part.kind];
+  return `${kind.charAt(0).toUpperCase()}${kind.slice(1)}: ${part.name}`;
+};
+
+/** What a Rights Record can cover: a Content Item (or one part of it), or a media library file. */
+export type RightsSubject = { type: "content_item" | "media_asset"; id: string };
+
+/** Where staff manage a subject's Rights Records, on the admin host. */
+export const rightsPagePath = (subject: RightsSubject) =>
+  subject.type === "media_asset" ? `/admin/media/${subject.id}/rights` : `/admin/articles/${subject.id}/rights`;
+
 export const isRightsPartKind = (value: string): value is RightsPartKind =>
   (RIGHTS_PART_KINDS as readonly string[]).includes(value);
 
@@ -119,15 +132,20 @@ export function rightsProblems(input: {
  * Why the media library files an item uses can't be published with it: each needs its own current
  * Rights Record granting Publish (#17). The item's own record doesn't stand in for a file's.
  */
-export function assetRightsProblems(assets: { name: string; records: RightsFacts[] }[], now: Date): string[] {
+export function assetRightsProblems(assets: { name: string | null; records: RightsFacts[] }[], now: Date): string[] {
   return assets.flatMap(({ name, records }) => {
     const lapse = lapseOf(records, now);
     if (lapse === null) return [];
+    // A file removed from the library since the Revision was written has no rights left.
+    if (name === null) return ["It uses a file that is no longer in the media library."];
     if (lapse === "withdrawn") return [`The Rights Record for the file ${name} was withdrawn.`];
     if (lapse === "none") return [`The file ${name} has no current Rights Record granting Publish.`];
     return [`The Rights Record for the file ${name} expired on ${formatDay(lapse)}.`];
   });
 }
+
+/** Whether records include a current one granting Publish: what a media library file needs to be shown. */
+export const isPublishable = (records: RightsFacts[], now: Date) => lapseOf(records, now) === null;
 
 /**
  * Whether records lack a current Publish grant, and how the latest one lapsed: null when one is

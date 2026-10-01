@@ -39,7 +39,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   return rightsAction(env, db, actor.userId, request, {
     subject: { type: "content_item", id: article.id },
     parts: partsOf(article.currentRevision.snapshot),
-    page: `/admin/articles/${article.id}/rights`,
     changed: () => publicItemChanged(env, db, article.id),
   });
 }

@@ -10,11 +10,11 @@ import {
   type PermittedUse,
   type RightsFacts,
   type RightsPart,
+  type RightsSubject,
 } from "./rights-rules";
 import { checkContent, checkDeclared, HEAD_BYTES, storedName, type UploadType } from "./upload-rules";
 
-/** What a Rights Record covers: a Content Item (or one part of it), or a media library file. */
-export type RightsSubject = { type: "content_item" | "media_asset"; id: string };
+export type { RightsSubject } from "./rights-rules";
 
 type RecordRow = typeof rightsRecord.$inferSelect;
 
@@ -41,20 +41,34 @@ export async function rightsFactsFor(db: Database, subject: RightsSubject): Prom
   return rows.map(toFacts);
 }
 
-/** Each media library file's name and Rights Records, for deciding whether items using them are eligible. */
+/** D1 binds at most 100 parameters to a statement, so long ID lists are read in chunks. */
+const ID_CHUNK = 90;
+
+/**
+ * Each media library file's name (null once it has left the library) and Rights Records, in the
+ * order asked, for deciding whether the files, and the items using them, may be public.
+ */
 export async function mediaRightsFacts(db: Database, assetIds: string[]) {
-  if (!assetIds.length) return [];
-  const [assets, rows] = await Promise.all([
-    db.select({ id: mediaAsset.id, name: mediaAsset.name }).from(mediaAsset).where(inArray(mediaAsset.id, assetIds)),
-    db
-      .select()
-      .from(rightsRecord)
-      .where(and(eq(rightsRecord.subjectType, "media_asset"), inArray(rightsRecord.subjectId, assetIds)))
-      .orderBy(asc(rightsRecord.createdAt)),
-  ]);
+  const chunks = Array.from({ length: Math.ceil(assetIds.length / ID_CHUNK) }, (_, index) =>
+    assetIds.slice(index * ID_CHUNK, (index + 1) * ID_CHUNK),
+  );
+  const read = await Promise.all(
+    chunks.map((ids) =>
+      Promise.all([
+        db.select({ id: mediaAsset.id, name: mediaAsset.name }).from(mediaAsset).where(inArray(mediaAsset.id, ids)),
+        db
+          .select()
+          .from(rightsRecord)
+          .where(and(eq(rightsRecord.subjectType, "media_asset"), inArray(rightsRecord.subjectId, ids)))
+          .orderBy(asc(rightsRecord.createdAt)),
+      ]),
+    ),
+  );
+  const assets = read.flatMap(([rows]) => rows);
+  const records = read.flatMap(([, rows]) => rows);
   return assetIds.map((id) => ({
-    name: assets.find((asset) => asset.id === id)?.name ?? "that is no longer in the media library",
-    records: rows.filter((row) => row.subjectId === id).map(toFacts),
+    name: assets.find((asset) => asset.id === id)?.name ?? null,
+    records: records.filter((row) => row.subjectId === id).map(toFacts),
   }));
 }
 
