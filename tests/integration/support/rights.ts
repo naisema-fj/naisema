@@ -20,10 +20,7 @@ export function recordRights(
 ) {
   const form = new FormData();
   form.set("intent", "record");
-  if (fields.part) {
-    form.set("partKind", fields.part.kind);
-    form.set("partName", fields.part.name);
-  }
+  if (fields.part) form.set("part", `${fields.part.kind}|${fields.part.name}`);
   form.set("rightsHolder", fields.rightsHolder ?? "Sera Vula");
   for (const use of fields.uses ?? ["publish"]) form.append("use", use);
   if (fields.guardianPermission) form.set("guardianPermission", "on");

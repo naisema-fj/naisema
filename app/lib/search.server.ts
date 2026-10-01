@@ -3,6 +3,7 @@ import { type AnySQLiteColumn, integer, sqliteTable } from "drizzle-orm/sqlite-c
 import { contentItem, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import type { Database } from "./db.server";
+import { formatDuration } from "./episode-fields";
 import { FORMAT_NAMES, isContentFormat } from "./formats";
 import { eligiblePublished, itemPath } from "./public.server";
 import { matchExpression, type SearchFilters } from "./search-query";
@@ -87,6 +88,7 @@ export type SearchResult = {
   title: string;
   summary: string;
   areaName: string;
+  /** What kind of item it is, with an Episode's length: "Article", "Episode · 32 min". */
   formatName: string;
   publishedAt: Date | null;
 };
@@ -165,7 +167,12 @@ async function recheckHits(
         title: published.snapshot.title,
         summary: published.snapshot.summary,
         areaName: area ? AREA_NAMES[area] : "Na iSema",
-        formatName: isContentFormat(format) ? FORMAT_NAMES[format] : format,
+        // An Episode's listing says how long it is: "Episode · 32 min".
+        formatName: published.snapshot.episode
+          ? `${FORMAT_NAMES.episode} · ${formatDuration(published.snapshot.episode.durationSeconds)}`
+          : isContentFormat(format)
+            ? FORMAT_NAMES[format]
+            : format,
         publishedAt: item.lastPublishedAt,
       } satisfies SearchResult;
     }),

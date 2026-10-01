@@ -6,7 +6,13 @@ import { type ArticleBody, embeddedItemIds } from "./article-body";
 import type { ArticleSnapshot } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
-import { type EpisodeDetails, formatDuration, isoDuration, transcriptParagraphs } from "./episode-fields";
+import {
+  type EpisodeDetails,
+  episodeSpeakers,
+  formatDuration,
+  isoDuration,
+  transcriptParagraphs,
+} from "./episode-fields";
 import { eligibilityFor } from "./publication.server";
 import { AGE_GUIDANCE, linkHost, type ResourceDetails } from "./resource-fields";
 import { loadReview } from "./review.server";
@@ -63,6 +69,8 @@ export type PublicEpisode = {
   audioType: string;
   host: string;
   guests: string[];
+  music: string[];
+  archiveClips: string[];
   recordedOn: string;
   duration: string;
   isoDuration: string;
@@ -226,10 +234,12 @@ async function publicEpisode(db: Database, itemId: string, details: EpisodeDetai
     audioType: asset?.type ?? "audio/mpeg",
     host: details.host,
     guests: details.guests,
+    music: details.music ?? [],
+    archiveClips: details.archiveClips ?? [],
     recordedOn: details.recordedOn,
     duration: formatDuration(details.durationSeconds),
     isoDuration: isoDuration(details.durationSeconds),
-    transcript: transcriptParagraphs(details.transcript),
+    transcript: transcriptParagraphs(details.transcript, episodeSpeakers(details)),
     distribution: details.distribution.map((link) => ({ ...link, host: linkHost(link.url) })),
   };
 }

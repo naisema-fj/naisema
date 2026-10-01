@@ -60,53 +60,71 @@ export const DAY_MS = 86_400_000;
 export const formatDay = (date: Date | string) =>
   new Date(date).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
 
+/** The same part, however its name was spaced or capitalised. */
+const partKey = (part: RightsPart) => `${part.kind}|${part.name.trim().toLowerCase()}`;
+
 /**
  * Why an item's rights don't allow publishing right now, or nothing if they do. Evaluated at the
  * moment of asking, so an expiry or withdrawal takes effect on the next request (ADR-0007).
+ *
+ * The item needs a current record granting Publish. `parts` are the parts the Revision itself
+ * lists (an Episode's speakers, music and archive clips): each of those with records of its own
+ * needs one of them current too. Records for parts the Revision doesn't list are set aside, so
+ * cutting a clip from an Episode also lifts its rights.
  */
 export function rightsProblems(input: {
   records: RightsFacts[];
   needsGuardianPermission: boolean;
+  parts?: RightsPart[];
   now: Date;
 }): string[] {
   const { now } = input;
-  const publishable = input.records.filter(grantsPublish);
+  const present = new Map((input.parts ?? []).map((part) => [partKey(part), part]));
   const problems: string[] = [];
 
-  const whole = publishable.filter((record) => !record.part);
-  if (!whole.some((record) => isCurrent(record, now))) {
-    const latest = whole.at(-1);
-    if (latest?.withdrawnAt) problems.push("Its Rights Record granting Publish was withdrawn.");
-    else if (latest?.expiresAt) {
-      problems.push(`Its Rights Record granting Publish expired on ${formatDay(latest.expiresAt)}.`);
-    } else problems.push("No current Rights Record grants Publish.");
-  }
-  // Each part with records of its own needs one of them current, granting Publish.
-  const parts = new Map<string, { part: RightsPart; records: RightsFacts[] }>();
+  const whole = input.records.filter((record) => !record.part);
+  const lapse = lapseOf(whole, now);
+  if (lapse === "withdrawn") problems.push("Its Rights Record granting Publish was withdrawn.");
+  else if (lapse === "none") problems.push("No current Rights Record grants Publish.");
+  else if (lapse) problems.push(`Its Rights Record granting Publish expired on ${formatDay(lapse)}.`);
+
+  const byPart = new Map<string, RightsFacts[]>();
   for (const record of input.records) {
-    if (!record.part) continue;
-    const key = `${record.part.kind}|${record.part.name.trim().toLowerCase()}`;
-    const entry = parts.get(key) ?? { part: record.part, records: [] };
-    entry.records.push(record);
-    parts.set(key, entry);
+    const key = record.part && partKey(record.part);
+    if (key && present.has(key)) byPart.set(key, [...(byPart.get(key) ?? []), record]);
   }
-  for (const { part, records } of parts.values()) {
-    const granting = records.filter(grantsPublish);
-    if (granting.some((record) => isCurrent(record, now))) continue;
+  for (const [key, records] of byPart) {
+    const part = present.get(key) as RightsPart;
     const label = `${RIGHTS_PART_NAMES[part.kind]}: ${part.name.trim()}`;
-    const latest = granting.at(-1);
-    if (latest?.withdrawnAt) problems.push(`The Rights Record for ${label} was withdrawn.`);
-    else if (latest?.expiresAt)
-      problems.push(`The Rights Record for ${label} expired on ${formatDay(latest.expiresAt)}.`);
-    else problems.push(`No current Rights Record for ${label} grants Publish.`);
+    const partLapse = lapseOf(records, now);
+    if (partLapse === "withdrawn") problems.push(`The Rights Record for ${label} was withdrawn.`);
+    else if (partLapse === "none") problems.push(`No current Rights Record for ${label} grants Publish.`);
+    else if (partLapse) problems.push(`The Rights Record for ${label} expired on ${formatDay(partLapse)}.`);
   }
+
+  // Guardian permission comes with the item's own record or a listed speaker's, never with music.
+  const guardianRecords = input.records.filter(
+    (record) => !record.part || (record.part.kind === "speaker" && present.has(partKey(record.part))),
+  );
   if (
     input.needsGuardianPermission &&
-    !publishable.some((record) => record.guardianPermission && isCurrent(record, now))
+    !guardianRecords.some((record) => grantsPublish(record) && record.guardianPermission && isCurrent(record, now))
   ) {
     problems.push("Identifiable children need current, documented guardian permission granting Publish.");
   }
   return problems;
+}
+
+/**
+ * Whether records lack a current Publish grant, and how the latest one lapsed: null when one is
+ * current, then "withdrawn", the expiry date, or "none" when nothing ever granted Publish.
+ */
+function lapseOf(records: RightsFacts[], now: Date): null | "withdrawn" | "none" | Date {
+  const granting = records.filter(grantsPublish);
+  if (granting.some((record) => isCurrent(record, now))) return null;
+  const latest = granting.at(-1);
+  if (latest?.withdrawnAt) return "withdrawn";
+  return latest?.expiresAt ?? "none";
 }
 
 /** Warnings go out as a record enters each window before it expires, tightest first. */

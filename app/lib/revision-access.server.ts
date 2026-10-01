@@ -12,7 +12,7 @@ export async function requireRevision(request: Request, env: Env, params: { id: 
   if (!article) throw new Response("Not found", { status: 404 });
   const assigned = await assignedReviewerIds(staff.db, article.id);
   if (!can(staff.actor, { action: "revision.view", revision: { assignedReviewerIds: assigned } })) {
-    throw new Response("Only editors and this article's reviewers can open its revisions.", { status: 403 });
+    throw new Response("Only editors and this item's reviewers can open its revisions.", { status: 403 });
   }
   const revision = await getRevision<ArticleSnapshot>(staff.db, article.id, Number(params.number));
   const review = revision && (await loadReview(staff.db, revision.id));

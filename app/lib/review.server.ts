@@ -12,6 +12,7 @@ import {
 } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { type EpisodeDetails, episodeParts } from "./episode-fields";
 import { type Actor, can, type ReviewType } from "./permissions";
 import { type PublicationState, REVIEW_NAMES } from "./review-names";
 import {
@@ -32,7 +33,7 @@ export type Reviewable = {
   /** A Resource's download, which must have passed its scan for the Revision to be public. */
   resource?: { source: { kind: "file"; assetId: string } | { kind: "link" } };
   /** An Episode's recording, whose transcript is reviewed for accessibility and needed to publish. */
-  episode?: { audioAssetId: string; transcript: string };
+  episode?: EpisodeDetails;
 };
 
 type ApprovalRow = typeof reviewApproval.$inferSelect;
@@ -210,7 +211,7 @@ export async function loadReview(db: Database, revisionId: string) {
     approvals.map(({ approval }) => approval.carriedForwardFromId).filter((id): id is string => id !== null),
   );
 
-  const requirements = requiredReviewsSince({ flags, languageVariety, recording: !!snapshot.episode }, lastSubmitted);
+  const requirements = requiredReviewsSince({ flags, languageVariety, episode: !!snapshot.episode }, lastSubmitted);
   const progress = reviewProgress(
     requirements,
     approvals.map(({ approval }) => toRecordedDecision(approval)),
@@ -230,7 +231,11 @@ export async function loadReview(db: Database, revisionId: string) {
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
     episode: snapshot.episode
-      ? { audioAssetId: snapshot.episode.audioAssetId, hasTranscript: snapshot.episode.transcript.trim() !== "" }
+      ? {
+          audioAssetId: snapshot.episode.audioAssetId,
+          hasTranscript: snapshot.episode.transcript.trim() !== "",
+          parts: episodeParts(snapshot.episode),
+        }
       : null,
     requirements,
     progress,
@@ -267,7 +272,7 @@ async function lastSubmittedBefore(db: Database, contentItemId: string, number: 
     number: row.number,
     flags: snapshot.flags ?? [],
     languageVariety: snapshot.languageVariety ?? null,
-    recording: !!snapshot.episode,
+    episode: !!snapshot.episode,
   };
 }
 

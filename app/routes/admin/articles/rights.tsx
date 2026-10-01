@@ -1,12 +1,14 @@
 import { data, Form, redirect } from "react-router";
+import type { ArticleSnapshot } from "~/lib/article-fields";
 import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireRightsManager } from "~/lib/content.server";
 import { listContributors } from "~/lib/contributors.server";
+import { episodeParts } from "~/lib/episode-fields";
 import { publicItemChanged } from "~/lib/public-change.server";
-import { listRights, readRightsForm, recordRights, withdrawRights } from "~/lib/rights.server";
+import { listRights, partValue, readRightsForm, recordRights, withdrawRights } from "~/lib/rights.server";
 import { PERMITTED_USE_NAMES } from "~/lib/rights-names";
-import { formatDay, PERMITTED_USES, RIGHTS_PART_KINDS, RIGHTS_PART_NAMES } from "~/lib/rights-rules";
+import { formatDay, PERMITTED_USES, RIGHTS_PART_NAMES } from "~/lib/rights-rules";
 import { readLimitedFormData, UploadTooLarge } from "~/lib/upload-limit.server";
 import { EVIDENCE_MAX_BYTES } from "~/lib/upload-rules";
 import type { Route } from "./+types/rights";
@@ -28,6 +30,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { db, article } = await requireArticleRights(request, context.get(cloudflareContext).env, params.id);
   return {
     article: { id: article.id, title: article.currentRevision.snapshot.title },
+    parts: partsOf(article.currentRevision.snapshot).map((part) => ({
+      value: partValue(part),
+      label: `${capitalise(RIGHTS_PART_NAMES[part.kind])}: ${part.name}`,
+    })),
     records: await listRights(db, { type: "content_item", id: article.id }),
     contributors: await listContributors(db),
     done: new URL(request.url).searchParams.get("done"),
@@ -67,7 +73,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     throw redirect(`/admin/articles/${article.id}/rights?done=withdrawn`);
   }
 
-  const result = await readRightsForm(db, form);
+  const result = await readRightsForm(db, form, partsOf(article.currentRevision.snapshot));
   if (!result.ok) return data({ errors: result.errors, values: result.values, withdraw: null }, { status: 400 });
   await recordRights(env, db, actor.userId, subject, result.rights);
   // A new record can make a published item eligible again.
@@ -75,10 +81,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   throw redirect(`/admin/articles/${article.id}/rights?done=recorded`);
 }
 
+/** The parts with rights of their own that the current draft lists: an Episode's; none otherwise. */
+const partsOf = (snapshot: ArticleSnapshot) => (snapshot.episode ? episodeParts(snapshot.episode) : []);
+
 const STATUS_NAMES = { current: "Current", expired: "Expired", withdrawn: "Withdrawn" } as const;
 
 export default function Rights({ loaderData, actionData }: Route.ComponentProps) {
-  const { article, records, contributors, done } = loaderData;
+  const { article, parts, records, contributors, done } = loaderData;
   const errors: Record<string, string> = actionData?.errors ?? {};
   const values = actionData?.values;
   const withdrawError = actionData?.withdraw;
@@ -107,10 +116,13 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
         separately. Records are never edited: to correct one, withdraw it and record it again. Until the media library
         arrives, a Rights Record covers everything in the article, including its images.
       </p>
-      <p>
-        A speaker or guest, a piece of music or an archive clip can have Rights Records of its own as well. Once a part
-        has one, the item can be published only while that part has a current record granting Publish too.
-      </p>
+      {parts.length > 0 && (
+        <p>
+          A speaker or guest, a piece of music or an archive clip this Episode lists can have Rights Records of its own
+          as well. While the published revision lists a part that has records, it needs one of them current, granting
+          Publish, too; a part cut from the Episode no longer counts.
+        </p>
+      )}
 
       {records.length === 0 ? (
         <p>No Rights Records yet.</p>
@@ -196,31 +208,26 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
       <h2>Record a Rights Record</h2>
       <Form method="post" encType="multipart/form-data" className="article-form">
         <input type="hidden" name="intent" value="record" />
-        <label htmlFor="partKind">What it covers</label>
-        <select
-          id="partKind"
-          name="partKind"
-          defaultValue={values?.partKind ?? ""}
-          aria-describedby={describedBy("partKind")}
-        >
-          <option value="">The whole item</option>
-          {RIGHTS_PART_KINDS.map((kind) => (
-            <option key={kind} value={kind}>
-              {`One ${RIGHTS_PART_NAMES[kind]}`}
-            </option>
-          ))}
-        </select>
-        {fieldError("partKind")}
-        <label htmlFor="partName">Which one, if it covers a part</label>
-        <input
-          id="partName"
-          name="partName"
-          maxLength={200}
-          defaultValue={values?.partName}
-          aria-describedby={describedBy("partName") ?? "part-name-hint"}
-        />
-        <p id="part-name-hint">For example the guest's name, the song and recording, or the archive and clip.</p>
-        {fieldError("partName")}
+        {parts.length > 0 && (
+          <>
+            <label htmlFor="part">What it covers</label>
+            <p id="part-hint">The speakers, music and archive clips listed in the current draft.</p>
+            <select
+              id="part"
+              name="part"
+              defaultValue={values?.part ?? ""}
+              aria-describedby={errors.part ? "part-hint part-error" : "part-hint"}
+            >
+              <option value="">The whole item</option>
+              {parts.map((part) => (
+                <option key={part.value} value={part.value}>
+                  {part.label}
+                </option>
+              ))}
+            </select>
+            {fieldError("part")}
+          </>
+        )}
 
         <label htmlFor="rightsHolder">Rights holder</label>
         <input
@@ -233,7 +240,7 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
         />
         {fieldError("rightsHolder")}
 
-        <fieldset aria-describedby={describedBy("permittedUses") ?? "uses-hint"}>
+        <fieldset aria-describedby={errors.permittedUses ? "uses-hint permittedUses-error" : "uses-hint"}>
           <legend>Permitted Uses</legend>
           <p id="uses-hint">Tick only what the evidence grants. AI training is never assumed.</p>
           {PERMITTED_USES.map((use) => (

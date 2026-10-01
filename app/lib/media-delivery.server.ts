@@ -91,15 +91,19 @@ export async function fileDownload(
 
 /**
  * Audio for a native `<audio>` player, with byte ranges so it starts at once and can seek. The
- * caller has already decided the visitor may hear it.
+ * caller has already decided the visitor may hear it. A media library file never changes once
+ * scanned, so its ID is its validator: an `If-Range` naming another version gets the whole file.
  */
 export async function audioResponse(
   env: Env,
   request: Request,
-  asset: { destinationKey: string; size: number; type: string },
+  asset: { id: string; destinationKey: string; size: number; type: string },
   cacheControl: string,
 ) {
+  const etag = `"${asset.id}"`;
+  const ifRange = request.headers.get("If-Range");
   const headers = new Headers({
+    ETag: etag,
     "Content-Type": asset.type,
     "Content-Disposition": "inline",
     "Content-Security-Policy": "default-src 'none'; sandbox",
@@ -107,7 +111,7 @@ export async function audioResponse(
     "Accept-Ranges": "bytes",
     "Cache-Control": cacheControl,
   });
-  const range = parseRange(request.headers.get("Range"), asset.size);
+  const range = ifRange && ifRange !== etag ? null : parseRange(request.headers.get("Range"), asset.size);
   if (range === "unsatisfiable") {
     headers.set("Content-Range", `bytes */${asset.size}`);
     return new Response(null, { status: 416, headers });

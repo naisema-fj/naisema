@@ -62,11 +62,15 @@ export default function Area({ loaderData }: Route.ComponentProps) {
               <li key={item.path}>
                 <Link to={item.path}>{item.title}</Link>
                 <p>{item.summary}</p>
-                {item.publishedAt && (
-                  <p className="list-mark">
-                    <DateMark label="Published" date={item.publishedAt} />
-                  </p>
-                )}
+                <p className="list-mark">
+                  {item.formatName}
+                  {item.publishedAt && (
+                    <>
+                      {" · "}
+                      <DateMark label="Published" date={item.publishedAt} />
+                    </>
+                  )}
+                </p>
               </li>
             ))}
           </ul>

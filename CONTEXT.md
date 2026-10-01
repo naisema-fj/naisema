@@ -15,7 +15,7 @@ _Avoid_: Cultural item, post, page (for content other than a Page)
 A Content Item a visitor downloads (a scanned PDF or audio file) or follows (an external link with a last-checked date), shown with its language, age guidance, accessibility and usage terms first.
 
 **Episode**:
-A Na iSema Voices recording published as a Content Item in the Voices area: its audio, host, guests, recording date, length, approved distribution links and a reviewed transcript. Video Episodes follow the video pipeline.
+A Na iSema Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes follow the video pipeline.
 _Avoid_: Podcast (until distribution to podcast apps is approved), show
 
 **Usage Terms**:
@@ -92,7 +92,7 @@ _Avoid_: Badge, verified
 A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
 
 **Rights Record**:
-The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses. A record can cover the whole item or one part of it with rights of its own (a speaker or guest, a piece of music, an archive clip).
+The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses. A record can cover the whole item or one part an Episode lists with rights of its own (a speaker or guest, a piece of music, an archive clip).
 _Avoid_: Licence (for the record), consent (for rights)
 
 **Permitted Use**:

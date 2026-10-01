@@ -27,19 +27,19 @@ describe("requiredReviews", () => {
     expect(requiredReviews([], null)).toEqual([]);
   });
 
-  it("needs an accessibility review of a recording's transcript, whatever the flags (A11Y-03)", () => {
-    expect(requiredReviews([], null, { recording: true })).toEqual([{ reviewType: "accessibility", transcript: true }]);
-    expect(requiredReviews(["disabilityAdvice", "historicalClaims"], null, { recording: true })).toEqual([
+  it("needs an accessibility review of an Episode's transcript, whatever the flags (A11Y-03)", () => {
+    expect(requiredReviews([], null, { episode: true })).toEqual([{ reviewType: "accessibility", transcript: true }]);
+    expect(requiredReviews(["disabilityAdvice", "historicalClaims"], null, { episode: true })).toEqual([
       { reviewType: "editorial" },
       { reviewType: "accessibility", transcript: true },
     ]);
     expect(
       requiredReviewsSince(
-        { flags: [], languageVariety: null, recording: true },
+        { flags: [], languageVariety: null, episode: true },
         {
           flags: [],
           languageVariety: null,
-          recording: true,
+          episode: true,
           number: 1,
         },
       ),

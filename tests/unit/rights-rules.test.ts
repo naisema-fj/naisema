@@ -70,22 +70,25 @@ describe("rightsProblems", () => {
 describe("rightsProblems with records for parts of an item", () => {
   const music = { kind: "music", name: "Isa Lei (1962 recording)" } as const;
   const guest = { kind: "speaker", name: "Ratu Joni" } as const;
+  const clip = { kind: "archive", name: "1970 radio clip" } as const;
+  const parts = [music, guest, clip];
 
   it("still needs a record for the whole item; a part's record doesn't stand in for it", () => {
-    expect(rightsProblems({ records: [record({ part: music })], needsGuardianPermission: false, now })).toEqual([
+    expect(rightsProblems({ records: [record({ part: music })], needsGuardianPermission: false, parts, now })).toEqual([
       "No current Rights Record grants Publish.",
     ]);
   });
 
-  it("needs each part that has records to have a current one granting Publish", () => {
+  it("needs each listed part that has records to have a current one granting Publish", () => {
     const problems = rightsProblems({
       records: [
         record(),
         record({ part: music, expiresAt: days(-2) }),
         record({ part: guest, withdrawnAt: days(-1) }),
-        record({ part: { kind: "archive", name: "1970 radio clip" }, permittedUses: ["excerpt"] }),
+        record({ part: clip, permittedUses: ["excerpt"] }),
       ],
       needsGuardianPermission: false,
+      parts,
       now,
     });
 
@@ -94,6 +97,17 @@ describe("rightsProblems with records for parts of an item", () => {
       "The Rights Record for speaker or guest: Ratu Joni was withdrawn.",
       "No current Rights Record for archive clip: 1970 radio clip grants Publish.",
     ]);
+  });
+
+  it("sets aside records for parts the Revision no longer lists, so a cut clip lifts its rights", () => {
+    expect(
+      rightsProblems({
+        records: [record(), record({ part: music, withdrawnAt: days(-1) })],
+        needsGuardianPermission: false,
+        parts: [guest],
+        now,
+      }),
+    ).toEqual([]);
   });
 
   it("is satisfied once a part's withdrawn record is replaced, matching its name loosely", () => {
@@ -105,9 +119,18 @@ describe("rightsProblems with records for parts of an item", () => {
           record({ part: { kind: "speaker", name: " ratu joni " } }),
         ],
         needsGuardianPermission: false,
+        parts,
         now,
       }),
     ).toEqual([]);
+  });
+
+  it("takes guardian permission from the item's record or a listed speaker's, never from music", () => {
+    const check = (guardianOn: RightsFacts) =>
+      rightsProblems({ records: [record(), guardianOn], needsGuardianPermission: true, parts, now });
+
+    expect(check(record({ part: guest, guardianPermission: true }))).toEqual([]);
+    expect(check(record({ part: music, guardianPermission: true }))).toHaveLength(1);
   });
 });
 

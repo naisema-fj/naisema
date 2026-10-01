@@ -115,6 +115,7 @@ describe("public search", () => {
     expect(await search(`?q=${term}&format=article`)).toContain(`Voices ${term}`);
   });
 
+  // Publishing 21 items one by one takes most of the default 5 seconds on its own.
   it("pages through results, keeping the search and filters in each page's address", async () => {
     const editor = await staff("editor", { role: "editor" });
     const term = word();
@@ -134,7 +135,7 @@ describe("public search", () => {
     const area = await (await visit("/ezine")).text();
     expect(area.match(new RegExp(`Paged ${term} \\d+`, "g"))).toHaveLength(20);
     expect(area).toContain('href="/search?area=ezine"');
-  });
+  }, 20_000);
 
   it("drops an item from search and listings once the daily job sees its rights expired", async () => {
     const editor = await staff("editor", { role: "editor" });

@@ -3,11 +3,14 @@ import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType } from "~/lib/content-types";
-import { EPISODE_LIMITS } from "~/lib/episode-fields";
+import { clockDuration, EPISODE_LIMITS } from "~/lib/episode-fields";
 import { AGE_GUIDANCE, RESOURCE_LIMITS } from "~/lib/resource-fields";
 import { FLAG_NAMES } from "~/lib/review-names";
 import { CONTENT_FLAGS } from "~/lib/review-rules";
 import { BodyEditor, type EmbeddableItem } from "./body-editor";
+
+/** A media library file offered in a choice: its name and what kind of file it is. */
+export type MediaChoice = { id: string; name: string; typeName: string };
 
 type Props = {
   type: ContentType;
@@ -25,9 +28,9 @@ type Props = {
     | { choose: "page"; pages: { path: string; title: string }[] }
     | { choose: false; current: PrimaryArea | null };
   /** Media library files a Resource can offer for download. */
-  files?: { id: string; name: string; typeName: string }[];
+  files?: MediaChoice[];
   /** Media library audio an Episode can play. */
-  audio?: { id: string; name: string; typeName: string }[];
+  audio?: MediaChoice[];
   /** The Revision this form was opened from, so a save can't silently replace a newer one. */
   baseRevisionId?: string;
   submitLabel: string;
@@ -47,12 +50,13 @@ export function ArticleForm({
 }: Props) {
   const resource = values.resource;
   const source = resource?.source;
-  const episode = values.episode;
-  // Room for every saved distribution link, and at least two empty rows to add one.
-  const linkRows = [
-    ...(episode?.distribution ?? []),
-    ...Array.from({ length: EPISODE_LIMITS.distribution }, () => ({ label: "", url: "" })),
-  ].slice(0, Math.max(EPISODE_LIMITS.distribution, (episode?.distribution.length ?? 0) + 2));
+  // A refused form brings back the length as it was typed.
+  const episode = values.episode as (ArticleSnapshot["episode"] & { durationEntered?: string }) | undefined;
+  // One row per distribution link the limit allows: the saved ones, then empty rows.
+  const linkRows = Array.from(
+    { length: EPISODE_LIMITS.distribution },
+    (_, index) => episode?.distribution[index] ?? { label: "", url: "" },
+  );
   const describedBy = (field: keyof FieldErrors) => (errors[field] ? `${field}-error` : undefined);
   const fieldError = (field: keyof FieldErrors) =>
     errors[field] && (
@@ -335,7 +339,7 @@ export function ArticleForm({
           <input
             id="episodeHost"
             name="episodeHost"
-            maxLength={EPISODE_LIMITS.name}
+            maxLength={EPISODE_LIMITS.partName}
             defaultValue={episode?.host ?? ""}
             aria-describedby={describedBy("episodeHost")}
           />
@@ -349,6 +353,25 @@ export function ArticleForm({
             aria-describedby={describedBy("episodeGuests")}
           />
           {fieldError("episodeGuests")}
+          <label htmlFor="episodeMusic">Music used, one piece per line</label>
+          <textarea
+            id="episodeMusic"
+            name="episodeMusic"
+            rows={2}
+            placeholder="Isa Lei, 1962 recording"
+            defaultValue={episode?.music?.join("\n") ?? ""}
+            aria-describedby={describedBy("episodeMusic")}
+          />
+          {fieldError("episodeMusic")}
+          <label htmlFor="episodeArchiveClips">Archive clips used, one per line</label>
+          <textarea
+            id="episodeArchiveClips"
+            name="episodeArchiveClips"
+            rows={2}
+            defaultValue={episode?.archiveClips?.join("\n") ?? ""}
+            aria-describedby={describedBy("episodeArchiveClips")}
+          />
+          {fieldError("episodeArchiveClips")}
           <label htmlFor="episodeRecordedOn">Recorded on</label>
           <input
             id="episodeRecordedOn"
@@ -364,11 +387,17 @@ export function ArticleForm({
             name="episodeDuration"
             inputMode="numeric"
             placeholder="32:10"
-            defaultValue={episode?.durationSeconds ? clock(episode.durationSeconds) : ""}
+            defaultValue={
+              episode?.durationEntered ?? (episode?.durationSeconds ? clockDuration(episode.durationSeconds) : "")
+            }
             aria-describedby={describedBy("episodeDuration")}
           />
           {fieldError("episodeDuration")}
-          <fieldset aria-describedby={describedBy("episodeDistribution") ?? "distribution-hint"}>
+          <fieldset
+            aria-describedby={
+              errors.episodeDistribution ? "distribution-hint episodeDistribution-error" : "distribution-hint"
+            }
+          >
             <legend>Also available on</legend>
             <p id="distribution-hint">Only places approved for distribution, such as a podcast app.</p>
             {linkRows.map((link, index) => (
@@ -441,12 +470,4 @@ export function ArticleForm({
       <button type="submit">{submitLabel}</button>
     </Form>
   );
-}
-
-/** Seconds as the form takes them back: "32:10", "1:05:00". */
-function clock(seconds: number) {
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  return hours ? `${hours}:${pad(minutes)}:${pad(seconds % 60)}` : `${minutes}:${pad(seconds % 60)}`;
 }

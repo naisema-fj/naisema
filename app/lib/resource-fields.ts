@@ -1,3 +1,5 @@
+import { latestToday } from "./calendar";
+
 /**
  * What a Resource adds to a Content Item (docs/phase-1a-defaults.md, resource behaviour): a file
  * from the media library or an external link, and what a visitor needs to know before downloading
@@ -67,7 +69,7 @@ export function readResourceFields(form: FormData, today = new Date()): Resource
     const checked = /^\d{4}-\d{2}-\d{2}$/.test(checkedOn) ? new Date(`${checkedOn}T00:00:00Z`) : null;
     if (!checked || Number.isNaN(checked.getTime())) {
       errors.resourceCheckedOn = "Enter the date you last checked the link works.";
-    } else if (checkedOn > today.toISOString().slice(0, 10)) {
+    } else if (checkedOn > latestToday(today)) {
       errors.resourceCheckedOn = "That date is in the future.";
     }
     source = { kind: "link", url, checkedOn };

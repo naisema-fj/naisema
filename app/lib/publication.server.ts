@@ -48,6 +48,8 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
     ...rightsProblems({
       records: await rightsFactsFor(db, { type: "content_item", id: review.contentItem.id }),
       needsGuardianPermission: review.flags.includes("identifiableChildren"),
+      // Only parts this Revision lists can be held up by their own records.
+      parts: review.episode?.parts ?? [],
       now,
     }),
   );

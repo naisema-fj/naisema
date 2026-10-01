@@ -1,6 +1,9 @@
 import type { ArticleSnapshot } from "~/lib/article-fields";
-import { formatDuration, transcriptParagraphs } from "~/lib/episode-fields";
+import { distributionText, episodeSpeakers, formatDuration, transcriptParagraphs } from "~/lib/episode-fields";
 import { AGE_GUIDANCE } from "~/lib/resource-fields";
+import { TranscriptParagraphs } from "./transcript-paragraphs";
+
+const MISSING_FILE = "A file no longer in the media library";
 
 /**
  * What a Resource or an Episode adds to a Revision, as its reviewers see it: everything a visitor
@@ -25,7 +28,7 @@ export function RevisionTypeDetails({
           {source.kind === "file" ? (
             <>
               <dt>File</dt>
-              <dd>{fileName ?? "A file no longer in the media library"}</dd>
+              <dd>{fileName ?? MISSING_FILE}</dd>
             </>
           ) : (
             <>
@@ -48,38 +51,33 @@ export function RevisionTypeDetails({
     );
   }
   if (!episode) return null;
-  const transcript = transcriptParagraphs(episode.transcript);
+  const transcript = transcriptParagraphs(episode.transcript, episodeSpeakers(episode));
   return (
     <section aria-labelledby="type-details-heading">
       <h2 id="type-details-heading">Episode</h2>
       {/* biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the transcript below (WCAG 1.2.1). */}
-      <audio controls preload="none" src={audioPath} />
+      <audio controls preload="none" src={audioPath} aria-label="Audio of this revision" />
       <dl>
         <dt>Audio file</dt>
-        <dd>{fileName ?? "A file no longer in the media library"}</dd>
+        <dd>{fileName ?? MISSING_FILE}</dd>
         <dt>Host</dt>
         <dd>{episode.host}</dd>
         <dt>Guests</dt>
         <dd>{episode.guests.join(", ") || "None"}</dd>
+        <dt>Music</dt>
+        <dd>{episode.music?.join("; ") || "None"}</dd>
+        <dt>Archive clips</dt>
+        <dd>{episode.archiveClips?.join("; ") || "None"}</dd>
         <dt>Recorded on</dt>
         <dd>{episode.recordedOn}</dd>
         <dt>Length</dt>
         <dd>{formatDuration(episode.durationSeconds)}</dd>
         <dt>Also available on</dt>
-        <dd>
-          {episode.distribution.length
-            ? episode.distribution.map((link) => `${link.label} (${link.url})`).join(", ")
-            : "Nowhere else"}
-        </dd>
+        <dd>{episode.distribution.length ? distributionText(episode.distribution) : "Nowhere else"}</dd>
       </dl>
       <h3>Transcript</h3>
       {transcript.length ? (
-        transcript.map((paragraph, index) => (
-          <p key={`p-${index.toString()}`}>
-            {paragraph.speaker && <strong>{`${paragraph.speaker}: `}</strong>}
-            {paragraph.text}
-          </p>
-        ))
+        <TranscriptParagraphs paragraphs={transcript} />
       ) : (
         <p>No transcript yet. It is needed before publishing.</p>
       )}

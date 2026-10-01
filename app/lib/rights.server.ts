@@ -104,8 +104,8 @@ export type RightsForm = {
 
 /** What was typed into the form, to show it again when the form is refused (the file can't be kept). */
 export type RightsFormValues = {
-  partKind: string;
-  partName: string;
+  /** The part chosen, as the form sends it ("music|Isa Lei"), or "" for the whole item. */
+  part: string;
   rightsHolder: string;
   permittedUses: string[];
   expiresOn: string;
@@ -116,19 +116,25 @@ export type RightsFormResult =
   | { ok: true; rights: RightsForm }
   | { ok: false; errors: Record<string, string>; values: RightsFormValues };
 
-/** Reads the Rights Record form, including the evidence file, which must be a PDF or image. */
-export async function readRightsForm(db: Database, form: FormData, now = new Date()): Promise<RightsFormResult> {
+/** A part as the rights form sends it. */
+export const partValue = (part: RightsPart) => `${part.kind}|${part.name}`;
+
+/**
+ * Reads the Rights Record form, including the evidence file, which must be a PDF or image.
+ * `parts` are the parts the item's current draft lists that a record may cover instead of the
+ * whole item (an Episode's speakers, music and archive clips).
+ */
+export async function readRightsForm(
+  db: Database,
+  form: FormData,
+  parts: RightsPart[] = [],
+  now = new Date(),
+): Promise<RightsFormResult> {
   const errors: Record<string, string> = {};
-  // Blank: the record covers the whole item. Otherwise one named speaker, piece of music or clip.
-  const partKind = String(form.get("partKind") ?? "");
-  const partName = String(form.get("partName") ?? "").trim();
-  let part: RightsPart | null = null;
-  if (partKind && !isRightsPartKind(partKind)) errors.partKind = "Choose what this record covers.";
-  else if (isRightsPartKind(partKind)) {
-    if (!partName) errors.partName = "Name the speaker, music or clip this record covers.";
-    else if (partName.length > 200) errors.partName = "The name can be at most 200 characters.";
-    else part = { kind: partKind, name: partName };
-  }
+  // Blank: the record covers the whole item. Otherwise one of the parts the item lists.
+  const chosen = String(form.get("part") ?? "");
+  const part = chosen ? (parts.find((candidate) => partValue(candidate) === chosen) ?? null) : null;
+  if (chosen && !part) errors.part = "Choose a part this item's current draft lists, or the whole item.";
   const rightsHolder = String(form.get("rightsHolder") ?? "").trim();
   if (!rightsHolder) errors.rightsHolder = "Enter who holds the rights.";
   else if (rightsHolder.length > 300) errors.rightsHolder = "The rights holder can be at most 300 characters.";
@@ -172,7 +178,7 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
     return {
       ok: false,
       errors,
-      values: { partKind, partName, rightsHolder, permittedUses, expiresOn: expiry, contributorIds },
+      values: { part: chosen, rightsHolder, permittedUses, expiresOn: expiry, contributorIds },
     };
   }
   return {

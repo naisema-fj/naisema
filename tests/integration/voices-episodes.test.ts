@@ -105,8 +105,11 @@ describe("Voices Episodes", () => {
     expect(page).toContain('href="https://open.spotify.com/episode/abc"');
     expect(page).toContain("open.spotify.com, another website");
     expect(page).toContain("<li>Episode</li>");
+    expect(page).toContain('aria-label="Audio of Talanoa with Ratu Joni"');
     expect(page).toContain("Transcript reviewed for accessibility");
-    expect(await read("/voices")).toContain("Talanoa with Ratu Joni");
+    const voices = await read("/voices");
+    expect(voices).toContain("Talanoa with Ratu Joni");
+    expect(voices).toContain("Episode · 32 min");
   });
 
   it("can't be published without a transcript, and always need its accessibility review", async () => {
@@ -205,6 +208,7 @@ describe("Episode audio", () => {
     const part = await visit(audio, { headers: { Range: "bytes=4-13" } });
     const tail = await visit(audio, { headers: { Range: "bytes=-6" } });
     const beyond = await visit(audio, { headers: { Range: "bytes=999-" } });
+    const stale = await visit(audio, { headers: { Range: "bytes=4-13", "If-Range": '"another-version"' } });
 
     expect(whole.status).toBe(200);
     expect(whole.headers.get("Accept-Ranges")).toBe("bytes");
@@ -217,6 +221,9 @@ describe("Episode audio", () => {
     expect(await tail.text()).toBe("uvwxyz");
     expect(beyond.status).toBe(416);
     expect(beyond.headers.get("Content-Range")).toBe(`bytes */${4 + SOUND.length}`);
+    // A range against a version the player no longer has gets the whole file.
+    expect(whole.headers.get("ETag")).toMatch(/^".+"$/);
+    expect(stale.status).toBe(200);
   });
 
   it("stops the moment the Episode is withdrawn, and isn't served for drafts", async () => {
@@ -234,38 +241,79 @@ describe("Episode audio", () => {
 });
 
 describe("Rights Records for an Episode's parts", () => {
-  it("cover a guest, music or archive clip apart from the Episode, and each must stay current", async () => {
+  const isaLei = "Isa Lei (1962 recording)";
+
+  it("cover a listed guest, music or archive clip apart from the Episode, and each must stay current", async () => {
     const editor = await staff("editor", { role: "editor" });
-    const id = await createEpisode(editor);
+    const id = await createEpisode(editor, { episodeMusic: isaLei });
     const music = await recordRights(editor.browser, id, {
-      part: { kind: "music", name: "Isa Lei (1962 recording)" },
+      part: { kind: "music", name: isaLei },
       rightsHolder: "Fiji Broadcasting archive",
     });
     expect(music.status).toBe(302);
     await publishEpisode(editor, id);
     const rightsPage = await (await editor.browser.fetch(`/admin/articles/${id}/rights`)).text();
-    expect(rightsPage).toContain("Music: Isa Lei (1962 recording)");
+    expect(rightsPage).toContain(`Music: ${isaLei}`);
+    expect(rightsPage).toContain("Speaker or guest: Ratu Joni");
     expect(rightsPage).toContain("The whole item");
     expect(await read(await pathOf(id))).toContain("Talanoa with Ratu Joni");
 
-    const record = await env.DB.prepare("SELECT id FROM rights_record WHERE subject_id = ?1 AND part_kind = 'music'")
-      .bind(id)
-      .first<{ id: string }>();
-    await editor.browser.fetch(`/admin/articles/${id}/rights`, {
-      form: { intent: "withdraw", recordId: record?.id as string, reason: "The archive withdrew the licence." },
-    });
+    await withdrawMusic(editor, id);
 
     expect((await visit(await pathOf(id))).status).toBe(404);
     expect((await visit(`/episodes/${id}/audio`)).status).toBe(404);
   });
 
-  it("need a name for the part they cover", async () => {
+  it("stop counting once the part is cut from the Episode", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const id = await createEpisode(editor, { episodeMusic: isaLei });
+    await recordRights(editor.browser, id, { part: { kind: "music", name: isaLei } });
+    await publishEpisode(editor, id);
+    await withdrawMusic(editor, id);
+    expect((await visit(await pathOf(id))).status).toBe(404);
+
+    // Revision 2 cuts the music; nothing else changes, so the accessibility approval carries forward.
+    const first = await currentRevision(id);
+    const audioId = (
+      await env.DB.prepare("SELECT json_extract(snapshot, '$.episode.audioAssetId') AS id FROM revision WHERE id = ?1")
+        .bind(first.id)
+        .first<{ id: string }>()
+    )?.id as string;
+    const topicId = (
+      await env.DB.prepare("SELECT json_extract(snapshot, '$.topicIds[0]') AS id FROM revision WHERE id = ?1")
+        .bind(first.id)
+        .first<{ id: string }>()
+    )?.id as string;
+    const saved = await post(
+      editor,
+      `/admin/articles/${id}`,
+      articleForm(topicId, { ...episodeFields(audioId, { episodeMusic: "" }), baseRevisionId: first.id }),
+    );
+    expect(saved.status, await saved.clone().text()).toBe(302);
+    expect((await act(editor, id, 2, { intent: "submit" })).status).toBe(302);
+    const published = await act(editor, id, 2, { intent: "publish" });
+
+    expect(published.status, await published.clone().text()).toBe(302);
+    expect((await visit(await pathOf(id))).status).toBe(200);
+  });
+
+  it("can only cover a part the current draft lists", async () => {
     const editor = await staff("editor", { role: "editor" });
     const id = await createEpisode(editor);
 
-    const response = await recordRights(editor.browser, id, { part: { kind: "speaker", name: " " } });
+    const response = await recordRights(editor.browser, id, { part: { kind: "music", name: "Not in this Episode" } });
 
     expect(response.status).toBe(400);
-    expect(await response.text()).toContain("Name the speaker, music or clip");
+    expect(await response.text()).toContain("Choose a part this item");
   });
 });
+
+async function withdrawMusic(editor: Staff, id: string) {
+  const record = await env.DB.prepare("SELECT id FROM rights_record WHERE subject_id = ?1 AND part_kind = 'music'")
+    .bind(id)
+    .first<{ id: string }>();
+  const response = await editor.browser.fetch(`/admin/articles/${id}/rights`, {
+    form: { intent: "withdraw", recordId: record?.id as string, reason: "The archive withdrew the licence." },
+  });
+  expect(response.status).toBe(302);
+}

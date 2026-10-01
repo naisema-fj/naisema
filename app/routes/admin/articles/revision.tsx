@@ -28,7 +28,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 /** The media library file a Resource offers or an Episode plays, if any. */
-const typeAssetId = (snapshot: ArticleSnapshot) =>
+const mediaAssetIdOf = (snapshot: ArticleSnapshot) =>
   snapshot.episode?.audioAssetId ??
   (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);
 
@@ -54,7 +54,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     revision,
     topics: topicNames(revision.snapshot.topicIds),
     embeds: await embedsFor(db, revision.snapshot.body),
-    fileName: await mediaName(db, typeAssetId(revision.snapshot)),
+    fileName: await mediaName(db, mediaAssetIdOf(revision.snapshot)),
     review: {
       state: review.state,
       flags: review.flags,

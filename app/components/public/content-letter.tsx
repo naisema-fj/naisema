@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { DateMark, Postmarks } from "~/components/public/postmarks";
+import { TranscriptParagraphs } from "~/components/transcript-paragraphs";
 import type { PublicArticle } from "~/lib/public.server";
 
 const sameDay = (a: Date | string, b: Date | string) =>
@@ -54,7 +55,7 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
       </section>
 
       {item.resource && <ResourceDetails id={item.id} resource={item.resource} />}
-      {item.episode && <EpisodePlayer episode={item.episode} />}
+      {item.episode && <EpisodePlayer title={item.title} episode={item.episode} />}
 
       <div className="letter-body">
         <ArticleBodyView body={item.body} embeds={item.embeds} />
@@ -110,12 +111,12 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
  * An Episode's native audio player and who is speaking. Nothing plays until the visitor presses
  * play (`preload="none"`), the page has one player, and the transcript below doesn't depend on it.
  */
-function EpisodePlayer({ episode }: { episode: NonNullable<PublicArticle["episode"]> }) {
+function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable<PublicArticle["episode"]> }) {
   return (
     <section className="episode" aria-labelledby="listen-heading">
       <h2 id="listen-heading">Listen</h2>
       {/* biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the full transcript on this page (WCAG 1.2.1). */}
-      <audio controls preload="none" className="episode-player">
+      <audio controls preload="none" className="episode-player" aria-label={`Audio of ${title}`}>
         <source src={episode.audioPath} type={episode.audioType} />
         <a href={episode.audioPath}>Open the audio</a>
       </audio>
@@ -131,9 +132,21 @@ function EpisodePlayer({ episode }: { episode: NonNullable<PublicArticle["episod
             <dd>{episode.guests.join(", ")}</dd>
           </>
         )}
+        {episode.music.length > 0 && (
+          <>
+            <dt>Music</dt>
+            <dd>{episode.music.join("; ")}</dd>
+          </>
+        )}
+        {episode.archiveClips.length > 0 && (
+          <>
+            <dt>Archive</dt>
+            <dd>{episode.archiveClips.join("; ")}</dd>
+          </>
+        )}
         <dt>Recorded</dt>
         <dd>
-          <DateMark label="" date={episode.recordedOn} />
+          <DateMark date={episode.recordedOn} />
         </dd>
         <dt>Length</dt>
         <dd>
@@ -144,8 +157,9 @@ function EpisodePlayer({ episode }: { episode: NonNullable<PublicArticle["episod
         <>
           <h3>Also available on</h3>
           <ul className="distribution">
-            {episode.distribution.map((link) => (
-              <li key={link.url}>
+            {episode.distribution.map((link, index) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: the links are in the order the editor saved them.
+              <li key={index}>
                 <a href={link.url} rel="external noopener noreferrer">
                   {link.label}
                 </a>
@@ -164,12 +178,7 @@ function Transcript({ paragraphs }: { paragraphs: NonNullable<PublicArticle["epi
   return (
     <section id="transcript" className="transcript" aria-labelledby="transcript-heading">
       <h2 id="transcript-heading">Transcript</h2>
-      {paragraphs.map((paragraph, index) => (
-        <p key={`p-${index.toString()}`}>
-          {paragraph.speaker && <strong className="speaker">{`${paragraph.speaker}: `}</strong>}
-          {paragraph.text}
-        </p>
-      ))}
+      <TranscriptParagraphs paragraphs={paragraphs} />
     </section>
   );
 }
@@ -191,7 +200,7 @@ function ResourceDetails({ id, resource }: { id: string; resource: NonNullable<P
             <dd>{`${resource.host}, another website`}</dd>
             <dt>Link last checked</dt>
             <dd>
-              <DateMark label="" date={resource.checkedOn} />
+              <DateMark date={resource.checkedOn} />
             </dd>
           </>
         )}

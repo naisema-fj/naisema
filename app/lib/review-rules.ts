@@ -26,7 +26,7 @@ export type ReviewRequirement = {
   languageVariety?: string;
   /** Only a Knowledge Holder Approval satisfies this cultural review. */
   knowledgeHolder?: true;
-  /** Accessibility reviews only: it covers a recording's transcript (A11Y-03). */
+  /** Accessibility reviews only: it covers an Episode's transcript (A11Y-03). */
   transcript?: true;
   /**
    * Set when this Revision no longer has the flag that requires the review, but the last
@@ -49,18 +49,18 @@ const FLAG_REVIEWS: Record<ContentFlag, (languageVariety: string | null) => Revi
 };
 
 /**
- * The reviews a Revision needs. A recording (a Voices Episode) always needs its transcript
+ * The reviews a Revision needs. An Episode always needs its transcript
  * reviewed for accessibility before it is published (A11Y-03), whatever its flags.
  */
 export function requiredReviews(
   flags: readonly ContentFlag[],
   languageVariety: string | null,
-  { recording = false }: { recording?: boolean } = {},
+  { episode = false }: { episode?: boolean } = {},
 ): ReviewRequirement[] {
   const requirements = CONTENT_FLAGS.filter((flag) => flags.includes(flag))
     .map((flag) => FLAG_REVIEWS[flag](languageVariety))
     .filter((requirement): requirement is ReviewRequirement => requirement !== null);
-  if (recording) {
+  if (episode) {
     const accessibility = requirements.find((requirement) => requirement.reviewType === "accessibility");
     if (accessibility) accessibility.transcript = true;
     else requirements.push({ reviewType: "accessibility", transcript: true });
@@ -68,8 +68,13 @@ export function requiredReviews(
   return REVIEW_TYPES.flatMap((type) => requirements.filter((requirement) => requirement.reviewType === type));
 }
 
-type Flagged = { flags: readonly ContentFlag[]; languageVariety: string | null; recording?: boolean };
+type Flagged = { flags: readonly ContentFlag[]; languageVariety: string | null; episode?: boolean };
 
+/**
+ * What makes two requirements the same review. `transcript` is left out on purpose: an Episode's
+ * single accessibility review covers its transcript and any disability advice, so removing that
+ * flag from an Episode needs no second accessibility review.
+ */
 const requirementKey = (requirement: ReviewRequirement) =>
   [requirement.reviewType, requirement.languageVariety ?? "", requirement.knowledgeHolder ? "kh" : ""].join("|");
 
@@ -83,7 +88,7 @@ export function requiredReviewsSince(
   revision: Flagged,
   lastSubmitted: (Flagged & { number: number }) | null,
 ): ReviewRequirement[] {
-  const own = requiredReviews(revision.flags, revision.languageVariety, { recording: revision.recording });
+  const own = requiredReviews(revision.flags, revision.languageVariety, { episode: revision.episode });
   if (!lastSubmitted) return own;
   const keys = new Set(own.map(requirementKey));
   const removed = requiredReviews(

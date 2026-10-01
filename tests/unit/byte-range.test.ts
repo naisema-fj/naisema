@@ -7,6 +7,7 @@ describe("parseRange: the Range header an audio player sends", () => {
     expect(parseRange("items=0-10", 1000)).toBeNull();
     expect(parseRange("bytes=0-10, 20-30", 1000)).toBeNull();
     expect(parseRange("bytes=abc", 1000)).toBeNull();
+    expect(parseRange("bytes=50-10", 1000)).toBeNull();
   });
 
   it("reads a start and end, an open end and a suffix", () => {
@@ -20,9 +21,8 @@ describe("parseRange: the Range header an audio player sends", () => {
     expect(parseRange("bytes=-5000", 1000)).toEqual({ offset: 0, length: 1000 });
   });
 
-  it("can't be satisfied when it starts past the end, ends before it starts, or asks for nothing", () => {
+  it("can't be satisfied when it starts past the end, or asks for nothing", () => {
     expect(parseRange("bytes=1000-", 1000)).toBe("unsatisfiable");
-    expect(parseRange("bytes=50-10", 1000)).toBe("unsatisfiable");
     expect(parseRange("bytes=-0", 1000)).toBe("unsatisfiable");
   });
 });

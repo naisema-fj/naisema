@@ -51,17 +51,30 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   const related = snapshot.relatedIds?.length ? { relatedIds: snapshot.relatedIds } : {};
   const resource = snapshot.resource ? { resource: snapshot.resource } : {};
   const resourceAccess = snapshot.resource ? { resourceAccessibility: snapshot.resource.accessibility } : {};
-  // An Episode's recording and transcript are its words, so every review covers them; who speaks is
-  // source and context; the date, length and distribution links are editorial facts.
+  // An Episode's recording and transcript are its words, so every review covers them; who speaks
+  // and the music and clips it uses are source and context; the date, length and distribution links
+  // are editorial facts.
   const episode = snapshot.episode;
   const recording = episode ? { audioAssetId: episode.audioAssetId, transcript: episode.transcript } : {};
   const speakers = episode ? { host: episode.host, guests: episode.guests } : {};
+  const sourcesUsed = episode ? { music: episode.music ?? [], archiveClips: episode.archiveClips ?? [] } : {};
   const episodeFacts = episode
     ? { recordedOn: episode.recordedOn, durationSeconds: episode.durationSeconds, distribution: episode.distribution }
     : {};
   return {
     language: { title, summary, body, languageVariety, ...recording },
-    cultural: { title, summary, body, credit, topicIds, sources, ...resource, ...recording, ...speakers },
+    cultural: {
+      title,
+      summary,
+      body,
+      credit,
+      topicIds,
+      sources,
+      ...resource,
+      ...recording,
+      ...speakers,
+      ...sourcesUsed,
+    },
     editorial: {
       title,
       summary,
@@ -73,6 +86,7 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
       ...resource,
       ...recording,
       ...speakers,
+      ...sourcesUsed,
       ...episodeFacts,
     },
     accessibility: { title, body, ...resourceAccess, ...recording },

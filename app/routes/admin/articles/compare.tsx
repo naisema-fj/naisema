@@ -2,7 +2,8 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
-import { type EpisodeDetails, formatDuration } from "~/lib/episode-fields";
+import { distributionText, type EpisodeDetails, formatDuration } from "~/lib/episode-fields";
+import { mediaName } from "~/lib/media.server";
 import { bodyLines, type DiffLine, diffLines } from "~/lib/revision-diff";
 import { getRevision } from "~/lib/revisions.server";
 import { topicNamer } from "~/lib/topics.server";
@@ -33,7 +34,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     { label: "Summary", before: from.snapshot.summary, after: to.snapshot.summary },
     { label: "Topics", before: topics(from.snapshot.topicIds), after: topics(to.snapshot.topicIds) },
     { label: "Credit", before: from.snapshot.credit, after: to.snapshot.credit },
-    ...episodeFields(from.snapshot.episode, to.snapshot.episode),
+    ...episodeFields(from.snapshot.episode, to.snapshot.episode, {
+      before: await mediaName(db, from.snapshot.episode?.audioAssetId ?? null),
+      after: await mediaName(db, to.snapshot.episode?.audioAssetId ?? null),
+    }),
   ];
   const transcript = (snapshot: ArticleSnapshot) =>
     (snapshot.episode?.transcript ?? "")
@@ -53,25 +57,37 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   };
 }
 
-/** An Episode's facts as compared fields; its transcript is compared line by line below. */
-function episodeFields(before: EpisodeDetails | undefined, after: EpisodeDetails | undefined) {
+/**
+ * An Episode's facts as compared fields; its transcript is compared line by line below. The audio
+ * is named by its file, and by its ID too when two files share a name.
+ */
+function episodeFields(
+  before: EpisodeDetails | undefined,
+  after: EpisodeDetails | undefined,
+  audioNames: { before: string | null; after: string | null },
+) {
   if (!before && !after) return [];
+  const audio = (episode: EpisodeDetails | undefined, name: string | null) =>
+    episode ? `${name ?? "A file no longer in the media library"} (${episode.audioAssetId})` : "";
   const facts = (episode: EpisodeDetails | undefined) => ({
-    audio: episode?.audioAssetId ?? "",
     host: episode?.host ?? "",
     guests: episode?.guests.join(", ") ?? "",
+    music: episode?.music?.join("; ") ?? "",
+    archiveClips: episode?.archiveClips?.join("; ") ?? "",
     recordedOn: episode?.recordedOn ?? "",
     length: episode ? formatDuration(episode.durationSeconds) : "",
-    links: episode?.distribution.map((link) => `${link.label} (${link.url})`).join(", ") ?? "",
+    links: episode ? distributionText(episode.distribution) : "",
   });
-  const [was, now] = [facts(before), facts(after)];
+  const [earlier, later] = [facts(before), facts(after)];
   return [
-    { label: "Audio file (media library ID)", before: was.audio, after: now.audio },
-    { label: "Host", before: was.host, after: now.host },
-    { label: "Guests", before: was.guests, after: now.guests },
-    { label: "Recorded on", before: was.recordedOn, after: now.recordedOn },
-    { label: "Length", before: was.length, after: now.length },
-    { label: "Also available on", before: was.links, after: now.links },
+    { label: "Audio file", before: audio(before, audioNames.before), after: audio(after, audioNames.after) },
+    { label: "Host", before: earlier.host, after: later.host },
+    { label: "Guests", before: earlier.guests, after: later.guests },
+    { label: "Music", before: earlier.music, after: later.music },
+    { label: "Archive clips", before: earlier.archiveClips, after: later.archiveClips },
+    { label: "Recorded on", before: earlier.recordedOn, after: later.recordedOn },
+    { label: "Length", before: earlier.length, after: later.length },
+    { label: "Also available on", before: earlier.links, after: later.links },
   ];
 }
 
