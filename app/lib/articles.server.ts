@@ -1,25 +1,36 @@
-import { desc, eq, inArray } from "drizzle-orm";
-import { contentItem, revision } from "~db/schema";
+import { and, desc, eq, inArray } from "drizzle-orm";
+import { contentItem, mediaAsset, revision } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody } from "./article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
+import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
+import { INFO_PAGES } from "./info-pages";
 import { toLanguageVariety } from "./language-variety";
+import { readResourceFields } from "./resource-fields";
 import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
 import { existingTopicIds } from "./topics.server";
+import { DOWNLOADABLE_TYPES } from "./upload-rules";
 
 export type ArticleFormResult =
   | { ok: true; snapshot: ArticleSnapshot }
   /** On failure, `values` holds what was submitted, so the form can be shown again as it was. */
   | { ok: false; errors: FieldErrors; values: ArticleSnapshot };
 
+/** At most this many related items, chosen by hand (docs/phase-1a-defaults.md §5). */
+export const RELATED_LIMIT = 6;
+
 /**
- * Reads the article form. Title, summary, credit and at least one Topic are required on every
+ * Reads the content form. Title, summary, credit and at least one Topic are required on every
  * save, the body must pass the allowlist, and flagging language instruction needs the Language
- * Variety taught.
+ * Variety taught. A Resource also needs its file or link and what visitors read before using it.
  */
-export async function readArticleForm(db: Database, form: FormData): Promise<ArticleFormResult> {
+export async function readArticleForm(
+  db: Database,
+  form: FormData,
+  { type, itemId }: { type: ContentType; itemId?: string } = { type: "article" },
+): Promise<ArticleFormResult> {
   const errors: FieldErrors = {};
   const text = (field: keyof typeof ARTICLE_LIMITS, label: string) => {
     const value = String(form.get(field) ?? "").trim();
@@ -66,16 +77,81 @@ export async function readArticleForm(db: Database, form: FormData): Promise<Art
     errors.body = "The body embeds a Content Item that doesn't exist.";
   }
 
+  const relatedIds = [...new Set(form.getAll("relatedId").map(String))].filter((id) => id && id !== itemId);
+  if (relatedIds.length > RELATED_LIMIT) errors.relatedIds = `Choose at most ${RELATED_LIMIT} related items.`;
+  else if (await anyMissing(db, relatedIds)) errors.relatedIds = "One of those related items no longer exists.";
+
+  let resource: ArticleSnapshot["resource"];
+  if (type === "resource") {
+    const read = readResourceFields(form);
+    if (!read.ok) {
+      Object.assign(errors, read.errors);
+      resource = read.values as ArticleSnapshot["resource"];
+    } else {
+      resource = read.details;
+      if (read.details.source.kind === "file" && !(await isDownloadable(db, read.details.source.assetId))) {
+        errors.resourceAssetId = "Choose a PDF or audio file that has passed its virus scan.";
+      }
+    }
+  }
+  const extras = { ...(relatedIds.length ? { relatedIds } : {}), ...(resource ? { resource } : {}) };
+
   if (!parsed.ok || Object.keys(errors).length) {
     // A body the allowlist refused goes back as sent, so the writer can fix it rather than lose it;
     // it is only ever loaded into the editor, never rendered as HTML.
     const body = parsed.ok ? parsed.body : isDoc(submittedBody) ? (submittedBody as ArticleBody) : EMPTY_ARTICLE_BODY;
-    return { ok: false, errors, values: { title, summary, credit, topicIds, body, sources, flags, languageVariety } };
+    return {
+      ok: false,
+      errors,
+      values: { title, summary, credit, topicIds, body, sources, flags, languageVariety, ...extras },
+    };
   }
   return {
     ok: true,
-    snapshot: { title, summary, credit, topicIds, body: parsed.body, sources, flags, languageVariety },
+    snapshot: { title, summary, credit, topicIds, body: parsed.body, sources, flags, languageVariety, ...extras },
   };
+}
+
+/** Whether a media library file can be a Resource's download: a document or audio that passed its scan. */
+async function isDownloadable(db: Database, assetId: string) {
+  const asset = await db
+    .select({ id: mediaAsset.id })
+    .from(mediaAsset)
+    .where(
+      and(
+        eq(mediaAsset.id, assetId),
+        eq(mediaAsset.purpose, "media"),
+        eq(mediaAsset.status, "ready"),
+        inArray(mediaAsset.type, [...DOWNLOADABLE_TYPES]),
+      ),
+    )
+    .get();
+  return Boolean(asset);
+}
+
+/** The footer pages (info-pages.ts) that have no Page yet, for creating one. */
+export async function availablePages(db: Database) {
+  const existing = await db
+    .select({ slug: contentItem.slug })
+    .from(contentItem)
+    .where(and(eq(contentItem.type, "page"), eq(contentItem.primaryArea, PAGE_AREA)));
+  const taken = new Set(existing.map((row) => row.slug));
+  return INFO_PAGES.filter((page) => !taken.has(page.path)).map(({ path, title }) => ({ path, title }));
+}
+
+/** Media library files a Resource can offer, for the form's file choice. */
+export function downloadableFiles(db: Database) {
+  return db
+    .select({ id: mediaAsset.id, name: mediaAsset.name, type: mediaAsset.type })
+    .from(mediaAsset)
+    .where(
+      and(
+        eq(mediaAsset.purpose, "media"),
+        eq(mediaAsset.status, "ready"),
+        inArray(mediaAsset.type, [...DOWNLOADABLE_TYPES]),
+      ),
+    )
+    .orderBy(desc(mediaAsset.createdAt));
 }
 
 /** The primary area chosen when an Article is created, or null if none of the six was chosen. */
@@ -96,12 +172,15 @@ async function anyMissing(db: Database, contentItemIds: string[]): Promise<boole
 /** An Article snapshot's fingerprints, one per Review Type, for storing with its Revision. */
 export const articleFingerprints = (snapshot: ArticleSnapshot) => fingerprintsOf(articleReviewFields(snapshot));
 
-export const getArticle = (db: Database, id: string) => getContentItem<ArticleSnapshot>(db, id, "article");
+/** Any Content Item with its current draft; the staff content pages handle every type. */
+export const getArticle = (db: Database, id: string) => getContentItem<ArticleSnapshot>(db, id);
 
+/** Every Content Item, newest change first, for the staff content list and item choosers. */
 export async function listArticles(db: Database) {
   const rows = await db
     .select({
       id: contentItem.id,
+      type: contentItem.type,
       primaryArea: contentItem.primaryArea,
       publicationState: contentItem.publicationState,
       snapshot: revision.snapshot,
@@ -109,19 +188,21 @@ export async function listArticles(db: Database) {
     })
     .from(contentItem)
     .innerJoin(revision, eq(revision.id, contentItem.currentDraftRevisionId))
-    .where(eq(contentItem.type, "article"))
     .orderBy(desc(contentItem.updatedAt));
   return rows.map(({ snapshot, ...row }) => ({
     ...row,
+    type: row.type as ContentType,
+    typeName: CONTENT_TYPE_NAMES[row.type as ContentType] ?? row.type,
     title: (snapshot as ArticleSnapshot).title,
-    areaName: AREA_NAMES[row.primaryArea as PrimaryArea],
+    topicIds: (snapshot as ArticleSnapshot).topicIds ?? [],
+    areaName: isPrimaryArea(row.primaryArea) ? AREA_NAMES[row.primaryArea] : "Site page",
   }));
 }
 
-/** Articles another article's body may embed: every one except itself. */
+/** Content Items another item may embed or name as related: every one except itself. */
 export async function embeddableArticles(db: Database, exceptId?: string) {
-  const articles = await listArticles(db);
-  return articles.filter(({ id }) => id !== exceptId).map(({ id, title }) => ({ id, title }));
+  const items = await listArticles(db);
+  return items.filter(({ id }) => id !== exceptId).map(({ id, title, typeName }) => ({ id, title, typeName }));
 }
 
 /** Titles and admin links for the Content Items a body embeds, keyed by ID, for the renderer. */

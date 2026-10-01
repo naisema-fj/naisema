@@ -2,7 +2,7 @@ import type { Editor } from "@tiptap/core";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { type ArticleBody, HEADING_LEVELS } from "~/lib/article-body";
 
-export type EmbeddableItem = { id: string; title: string };
+export type EmbeddableItem = { id: string; title: string; typeName?: string };
 
 const LABEL_ID = "body-label";
 const ERROR_ID = "body-error";

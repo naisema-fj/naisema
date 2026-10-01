@@ -1,14 +1,81 @@
 import { eq, inArray, like, or } from "drizzle-orm";
-import { topic } from "~db/schema";
+import { contentItem, topic } from "~db/schema";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
 import { firstFreeSlug, slugify } from "./slug";
-import { TOPIC_NAME_LIMIT } from "./topics";
+import { TOPIC_DESCRIPTION_LIMIT, TOPIC_NAME_LIMIT } from "./topics";
 
 export type TopicResult = { ok: true } | { ok: false; error: string };
 
 export async function listTopics(db: Database) {
-  return db.select({ id: topic.id, name: topic.name, slug: topic.slug }).from(topic).orderBy(topic.name);
+  return db
+    .select({
+      id: topic.id,
+      name: topic.name,
+      slug: topic.slug,
+      description: topic.description,
+      parentTopicId: topic.parentTopicId,
+      leadItemId: topic.leadItemId,
+    })
+    .from(topic)
+    .orderBy(topic.name);
+}
+
+/**
+ * Sets what a Topic's page shows: its description, the broader Topic it sits under (one level of
+ * subtopics, so a Topic with subtopics can't become one) and its lead feature.
+ */
+export async function updateTopic(
+  db: Database,
+  updatedBy: string,
+  id: string,
+  changes: { description: string; parentTopicId: string | null; leadItemId: string | null },
+): Promise<TopicResult & { slugs?: string[] }> {
+  const description = changes.description.trim();
+  if (description.length > TOPIC_DESCRIPTION_LIMIT) {
+    return { ok: false, error: `The description can be at most ${TOPIC_DESCRIPTION_LIMIT} characters.` };
+  }
+  const all = await listTopics(db);
+  const current = all.find((row) => row.id === id);
+  if (!current) return { ok: false, error: "That topic doesn't exist." };
+  const parent = changes.parentTopicId ? all.find((row) => row.id === changes.parentTopicId) : null;
+  if (changes.parentTopicId) {
+    if (!parent || parent.id === id) return { ok: false, error: "Choose another topic to sit under." };
+    if (parent.parentTopicId)
+      return { ok: false, error: `${parent.name} is itself a subtopic; choose a broader topic.` };
+    if (all.some((row) => row.parentTopicId === id)) {
+      return { ok: false, error: `${current.name} has its own subtopics, so it can't become a subtopic.` };
+    }
+  }
+  if (changes.leadItemId) {
+    const lead = await db
+      .select({ id: contentItem.id })
+      .from(contentItem)
+      .where(eq(contentItem.id, changes.leadItemId))
+      .get();
+    if (!lead) return { ok: false, error: "That lead feature no longer exists." };
+  }
+  await db.batch([
+    db
+      .update(topic)
+      .set({ description, parentTopicId: parent?.id ?? null, leadItemId: changes.leadItemId })
+      .where(eq(topic.id, id)),
+    auditInsert(db, { actorId: updatedBy, action: "topic.updated", objectType: "topic", objectId: id }),
+  ]);
+  // The pages that show this topic: its own, and its old and new parents' (which list subtopics).
+  const previousParent = all.find((row) => row.id === current.parentTopicId);
+  return {
+    ok: true,
+    slugs: [current.slug, previousParent?.slug, parent?.slug].filter((slug): slug is string => !!slug),
+  };
+}
+
+/** A Topic by its address, with its subtopics, for its public page. */
+export async function topicBySlug(db: Database, slug: string) {
+  const all = await listTopics(db);
+  const found = all.find((row) => row.slug === slug);
+  if (!found) return null;
+  return { ...found, subtopics: all.filter((row) => row.parentTopicId === found.id) };
 }
 
 /** Turns Topic IDs into names, for showing what a Revision was tagged with. */

@@ -1,13 +1,23 @@
 import { data, Form, redirect } from "react-router";
 import { ArticleForm } from "~/components/article-form";
-import { articleFingerprints, embeddableArticles, getArticle, readArticleForm } from "~/lib/articles.server";
+import { isPrimaryArea } from "~/lib/areas";
+import {
+  articleFingerprints,
+  downloadableFiles,
+  embeddableArticles,
+  getArticle,
+  readArticleForm,
+} from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
+import { CONTENT_TYPE_NAMES } from "~/lib/content-types";
+import { reportsSince } from "~/lib/link-reports.server";
 import { publicPath } from "~/lib/public.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { appendRevision } from "~/lib/revisions.server";
 import { changeSlug } from "~/lib/slugs.server";
 import { listTopics } from "~/lib/topics.server";
+import { UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import type { Route } from "./+types/edit";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -23,8 +33,21 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     article,
     saved: saved === String(article.currentRevision.number) ? article.currentRevision.number : null,
     slugChanged: new URL(request.url).searchParams.get("slug") === "changed",
+    // Visitors' broken-link reports since the editor last checked the link.
+    linkReports:
+      article.currentRevision.snapshot.resource?.source.kind === "link"
+        ? await reportsSince(db, article.id, article.currentRevision.snapshot.resource.source.checkedOn)
+        : 0,
     topics: await listTopics(db),
     embeddable: await embeddableArticles(db, article.id),
+    files:
+      article.type === "resource"
+        ? (await downloadableFiles(db)).map((file) => ({
+            id: file.id,
+            name: file.name,
+            typeName: UPLOAD_TYPE_NAMES[file.type],
+          }))
+        : [],
   };
 }
 
@@ -40,16 +63,16 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { errors: {}, values: null, error: null, baseRevisionId: null, slugError: changed.error },
         { status: 400 },
       );
-    await publicItemChanged(env, db, { id: params.id, primaryArea: changed.area, slug: changed.newSlug }, [
-      publicPath(changed.area, changed.oldSlug),
-    ]);
+    await publicItemChanged(env, db, params.id, [publicPath(changed.area, changed.oldSlug)]);
     throw redirect(`/admin/articles/${params.id}?slug=changed`);
   }
 
   // A refused form keeps the revision it was opened from, so sending it again is refused again
   // instead of quietly landing on top of someone else's newer revision.
   const baseRevisionId = String(form.get("baseRevisionId") ?? "");
-  const result = await readArticleForm(db, form);
+  const item = await getArticle(db, params.id);
+  if (!item) throw new Response("Not found", { status: 404 });
+  const result = await readArticleForm(db, form, { type: item.type, itemId: item.id });
   if (!result.ok) {
     return data(
       { errors: result.errors, values: result.values, error: null, baseRevisionId, slugError: null },
@@ -59,7 +82,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
   const saved = await appendRevision(db, {
     contentItemId: params.id,
-    type: "article",
+    type: item.type,
     baseRevisionId,
     snapshot: result.snapshot,
     fingerprints: await articleFingerprints(result.snapshot),
@@ -80,14 +103,22 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
   return (
     <main id="main" className="page">
       <p>
-        <a href="/admin/articles">Back to articles</a>
+        <a href="/admin/articles">Back to content</a>
       </p>
       <h1>{current.snapshot.title}</h1>
+      <p>{CONTENT_TYPE_NAMES[article.type]}</p>
       {loaderData.saved && !actionData && <p role="status">{`Saved as revision ${loaderData.saved}.`}</p>}
       {loaderData.slugChanged && !actionData && (
         <p role="status">The address changed. The old address now redirects to the new one.</p>
       )}
       {actionData?.error && <p role="alert">{actionData.error}</p>}
+      {loaderData.linkReports > 0 && (
+        <p role="status">
+          Visitors have reported this link broken {loaderData.linkReports}{" "}
+          {loaderData.linkReports === 1 ? "time" : "times"} since you last checked it. Check it, then save with the new
+          date.
+        </p>
+      )}
       <p>
         Editing revision {current.number}. Every save adds a new revision.{" "}
         <a href={`/admin/articles/${article.id}/revisions/${current.number}`}>
@@ -100,36 +131,47 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
       </p>
       <ArticleForm
         key={current.id}
+        type={article.type}
+        files={loaderData.files}
         values={actionData?.values ?? current.snapshot}
         errors={actionData?.errors}
         topics={loaderData.topics}
         embeddable={loaderData.embeddable}
-        area={{ choose: false, current: article.primaryArea }}
+        area={{ choose: false, current: isPrimaryArea(article.primaryArea) ? article.primaryArea : null }}
         baseRevisionId={actionData?.baseRevisionId ?? current.id}
         submitLabel="Save new revision"
       />
 
-      <h2>Web address</h2>
-      <Form method="post" className="article-form">
-        <input type="hidden" name="intent" value="slug" />
-        <label htmlFor="slug">
-          Address after /{article.primaryArea}/ (the old address keeps working and redirects here)
-        </label>
-        <input
-          id="slug"
-          name="slug"
-          defaultValue={article.slug}
-          required
-          pattern="[a-z0-9]+(-[a-z0-9]+)*"
-          aria-describedby={actionData?.slugError ? "slug-error" : undefined}
-        />
-        {actionData?.slugError && (
-          <p id="slug-error" className="field-error" role="alert">
-            {actionData.slugError}
-          </p>
-        )}
-        <button type="submit">Change address</button>
-      </Form>
+      {article.type === "page" ? (
+        <p>
+          This Page is at <a href={`/${article.slug}`}>/{article.slug}</a>, a fixed address linked from the site's
+          footer.
+        </p>
+      ) : (
+        <>
+          <h2>Web address</h2>
+          <Form method="post" className="article-form">
+            <input type="hidden" name="intent" value="slug" />
+            <label htmlFor="slug">
+              Address after /{article.primaryArea}/ (the old address keeps working and redirects here)
+            </label>
+            <input
+              id="slug"
+              name="slug"
+              defaultValue={article.slug}
+              required
+              pattern="[a-z0-9]+(-[a-z0-9]+)*"
+              aria-describedby={actionData?.slugError ? "slug-error" : undefined}
+            />
+            {actionData?.slugError && (
+              <p id="slug-error" className="field-error" role="alert">
+                {actionData.slugError}
+              </p>
+            )}
+            <button type="submit">Change address</button>
+          </Form>
+        </>
+      )}
     </main>
   );
 }

@@ -1,7 +1,7 @@
 import { PRIMARY_AREAS } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { publicPath } from "~/lib/public.server";
+import { itemPath } from "~/lib/public.server";
 import { PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
 import { sitemapEntries } from "~/lib/search.server";
 import type { Route } from "./+types/sitemap";
@@ -17,7 +17,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     { loc: `${origin}/` },
     ...PRIMARY_AREAS.map((area) => ({ loc: `${origin}/${area}` })),
     ...items.map((item) => ({
-      loc: `${origin}${publicPath(item.area, item.slug)}`,
+      loc: `${origin}${itemPath(item)}`,
       lastmod: item.publishedAt ? new Date(item.publishedAt).toISOString().slice(0, 10) : undefined,
     })),
   ];

@@ -1,3 +1,6 @@
+import { eq, inArray } from "drizzle-orm";
+import { contentItem, revision, topic } from "~db/schema";
+import type { ArticleSnapshot } from "./article-fields";
 import type { Database } from "./db.server";
 import { pagesShowing, purgePublicPages } from "./public-cache.server";
 import { indexItem } from "./search.server";
@@ -5,14 +8,44 @@ import { indexItem } from "./search.server";
 /**
  * Call after anything that may change what the public sees of an item: publishing, withdrawing,
  * archiving, a review decision, a rights change or a new address. Its search entry is rebuilt and
- * the pages showing it are purged from the edge cache (ADR-0007), together, in one place.
+ * the pages showing it (its own, its area or site page, its Topic pages, the homepage and the
+ * sitemap) are purged from the edge cache (ADR-0007), together, in one place.
  */
-export async function publicItemChanged(
-  env: Env,
-  db: Database,
-  item: { id: string; primaryArea: string; slug: string },
-  alsoPurge: string[] = [],
-) {
-  await indexItem(db, item.id);
-  await purgePublicPages(env, [...pagesShowing({ area: item.primaryArea, slug: item.slug }), ...alsoPurge]);
+export async function publicItemChanged(env: Env, db: Database, itemId: string, alsoPurge: string[] = []) {
+  await indexItem(db, itemId);
+  const item = await db.select().from(contentItem).where(eq(contentItem.id, itemId)).get();
+  if (!item) return;
+  // Its Topics as last published and as now drafted: either may list it.
+  const revisionIds = [item.currentPublishedRevisionId, item.currentDraftRevisionId].filter(
+    (id): id is string => id !== null,
+  );
+  const snapshots = revisionIds.length
+    ? await db.select({ snapshot: revision.snapshot }).from(revision).where(inArray(revision.id, revisionIds))
+    : [];
+  const topicIds = [...new Set(snapshots.flatMap(({ snapshot }) => (snapshot as ArticleSnapshot).topicIds ?? []))];
+  const topics = topicIds.length
+    ? await db
+        .select({ slug: topic.slug, parentId: topic.parentTopicId })
+        .from(topic)
+        .where(inArray(topic.id, topicIds))
+    : [];
+  // A subtopic's items also show on its broader Topic's page, whole and filtered to the subtopic.
+  const parentIds = topics.map((row) => row.parentId).filter((id): id is string => id !== null);
+  const parents = parentIds.length
+    ? await db.select({ id: topic.id, slug: topic.slug }).from(topic).where(inArray(topic.id, parentIds))
+    : [];
+  const topicPaths = topics.flatMap((row) => {
+    const parent = parents.find((candidate) => candidate.id === row.parentId);
+    return parent ? [`/topics/${parent.slug}`, `/topics/${parent.slug}/${row.slug}`] : [];
+  });
+  await purgePublicPages(env, [
+    ...pagesShowing({
+      type: item.type,
+      area: item.primaryArea,
+      slug: item.slug,
+      topicSlugs: topics.map((row) => row.slug),
+    }),
+    ...topicPaths,
+    ...alsoPurge,
+  ]);
 }

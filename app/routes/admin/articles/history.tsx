@@ -22,9 +22,11 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { db, actor } = await requireEditor(context.get(cloudflareContext).env, request);
   const form = await request.formData();
+  const item = await getArticle(db, params.id);
+  if (!item) throw new Response("Not found", { status: 404 });
   const restored = await restoreRevision(db, {
     contentItemId: params.id,
-    type: "article",
+    type: item.type,
     baseRevisionId: String(form.get("baseRevisionId") ?? ""),
     revisionId: String(form.get("revisionId") ?? ""),
     savedBy: actor.userId,

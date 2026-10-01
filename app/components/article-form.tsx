@@ -2,24 +2,47 @@ import { Form } from "react-router";
 import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
+import { CONTENT_TYPE_NAMES, type ContentType } from "~/lib/content-types";
+import { AGE_GUIDANCE, RESOURCE_LIMITS } from "~/lib/resource-fields";
 import { FLAG_NAMES } from "~/lib/review-names";
 import { CONTENT_FLAGS } from "~/lib/review-rules";
 import { BodyEditor, type EmbeddableItem } from "./body-editor";
 
 type Props = {
+  type: ContentType;
   /** What the fields start with: the current revision, or what the editor just submitted. */
   values: ArticleSnapshot;
   errors?: FieldErrors;
   topics: { id: string; name: string }[];
   embeddable: EmbeddableItem[];
-  /** New Articles choose their area; afterwards it is fixed, because it is part of the URL. */
-  area: { choose: true } | { choose: false; current: PrimaryArea };
+  /**
+   * New items choose their area (a new Page chooses which site page it is); afterwards it is
+   * fixed, because it is part of the URL.
+   */
+  area:
+    | { choose: true }
+    | { choose: "page"; pages: { path: string; title: string }[] }
+    | { choose: false; current: PrimaryArea | null };
+  /** Media library files a Resource can offer for download. */
+  files?: { id: string; name: string; typeName: string }[];
   /** The Revision this form was opened from, so a save can't silently replace a newer one. */
   baseRevisionId?: string;
   submitLabel: string;
 };
 
-export function ArticleForm({ values, errors = {}, topics, embeddable, area, baseRevisionId, submitLabel }: Props) {
+export function ArticleForm({
+  type,
+  values,
+  errors = {},
+  topics,
+  embeddable,
+  area,
+  files = [],
+  baseRevisionId,
+  submitLabel,
+}: Props) {
+  const resource = values.resource;
+  const source = resource?.source;
   const describedBy = (field: keyof FieldErrors) => (errors[field] ? `${field}-error` : undefined);
   const fieldError = (field: keyof FieldErrors) =>
     errors[field] && (
@@ -31,7 +54,9 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
   return (
     <Form method="post" className="article-form">
       {Object.keys(errors).length > 0 && (
-        <p role="alert">This article wasn't saved. Fix the fields marked below and save again.</p>
+        <p role="alert">
+          This {CONTENT_TYPE_NAMES[type].toLowerCase()} wasn't saved. Fix the fields marked below and save again.
+        </p>
       )}
       {baseRevisionId && <input type="hidden" name="baseRevisionId" value={baseRevisionId} />}
 
@@ -58,7 +83,19 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
       />
       {fieldError("summary")}
 
-      {area.choose ? (
+      {area.choose === "page" ? (
+        <>
+          <label htmlFor="page">Which page</label>
+          <select id="page" name="page" required aria-describedby={describedBy("page")}>
+            {area.pages.map((page) => (
+              <option key={page.path} value={page.path}>
+                {page.title} (/{page.path})
+              </option>
+            ))}
+          </select>
+          {fieldError("page")}
+        </>
+      ) : area.choose ? (
         <>
           <label htmlFor="primaryArea">Primary area</label>
           <select
@@ -76,11 +113,11 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
           </select>
           {fieldError("primaryArea")}
         </>
-      ) : (
+      ) : area.current ? (
         <p>
           Primary area: <strong>{AREA_NAMES[area.current]}</strong>
         </p>
-      )}
+      ) : null}
 
       <fieldset aria-describedby={describedBy("topicIds")}>
         <legend>Topics</legend>
@@ -151,7 +188,141 @@ export function ArticleForm({ values, errors = {}, topics, embeddable, area, bas
         {fieldError("sources")}
       </fieldset>
 
+      {type === "resource" && (
+        <fieldset aria-describedby="resource-hint">
+          <legend>The resource</legend>
+          <p id="resource-hint">Visitors see all of this before they download the file or follow the link.</p>
+          <fieldset aria-describedby={describedBy("resourceKind")}>
+            <legend>File or link</legend>
+            <div className="choice">
+              <input
+                type="radio"
+                id="resource-kind-file"
+                name="resourceKind"
+                value="file"
+                defaultChecked={source?.kind !== "link"}
+              />
+              <label htmlFor="resource-kind-file">A file from the media library</label>
+            </div>
+            <div className="choice">
+              <input
+                type="radio"
+                id="resource-kind-link"
+                name="resourceKind"
+                value="link"
+                defaultChecked={source?.kind === "link"}
+              />
+              <label htmlFor="resource-kind-link">A link to another site</label>
+            </div>
+            {fieldError("resourceKind")}
+          </fieldset>
+          <label htmlFor="resourceAssetId">File (for a file)</label>
+          <select
+            id="resourceAssetId"
+            name="resourceAssetId"
+            defaultValue={source?.kind === "file" ? source.assetId : ""}
+            aria-describedby={describedBy("resourceAssetId")}
+          >
+            <option value="">Choose a file</option>
+            {files.map((file) => (
+              <option key={file.id} value={file.id}>
+                {file.name} ({file.typeName})
+              </option>
+            ))}
+          </select>
+          {fieldError("resourceAssetId")}
+          <label htmlFor="resourceUrl">Web address (for a link)</label>
+          <input
+            id="resourceUrl"
+            name="resourceUrl"
+            type="url"
+            placeholder="https://"
+            maxLength={RESOURCE_LIMITS.url}
+            defaultValue={source?.kind === "link" ? source.url : ""}
+            aria-describedby={describedBy("resourceUrl")}
+          />
+          {fieldError("resourceUrl")}
+          <label htmlFor="resourceCheckedOn">Link last checked on (for a link)</label>
+          <input
+            id="resourceCheckedOn"
+            name="resourceCheckedOn"
+            type="date"
+            defaultValue={source?.kind === "link" ? source.checkedOn : ""}
+            aria-describedby={describedBy("resourceCheckedOn")}
+          />
+          {fieldError("resourceCheckedOn")}
+          <label htmlFor="resourceLanguage">Language</label>
+          <input
+            id="resourceLanguage"
+            name="resourceLanguage"
+            placeholder="Standard Fijian and English"
+            maxLength={RESOURCE_LIMITS.language}
+            defaultValue={resource?.language ?? ""}
+            aria-describedby={describedBy("resourceLanguage")}
+          />
+          {fieldError("resourceLanguage")}
+          <label htmlFor="resourceAgeGuidance">Suitable for</label>
+          <select
+            id="resourceAgeGuidance"
+            name="resourceAgeGuidance"
+            defaultValue={resource?.ageGuidance ?? ""}
+            aria-describedby={describedBy("resourceAgeGuidance")}
+          >
+            <option value="">Choose</option>
+            {Object.entries(AGE_GUIDANCE).map(([value, name]) => (
+              <option key={value} value={value}>
+                {name}
+              </option>
+            ))}
+          </select>
+          {fieldError("resourceAgeGuidance")}
+          <label htmlFor="resourceAccessibility">Accessibility features</label>
+          <textarea
+            id="resourceAccessibility"
+            name="resourceAccessibility"
+            rows={2}
+            placeholder="Tagged PDF with headings; large print available."
+            maxLength={RESOURCE_LIMITS.accessibility}
+            defaultValue={resource?.accessibility ?? ""}
+            aria-describedby={describedBy("resourceAccessibility")}
+          />
+          {fieldError("resourceAccessibility")}
+          <label htmlFor="resourcePermittedUse">What visitors may do with it</label>
+          <textarea
+            id="resourcePermittedUse"
+            name="resourcePermittedUse"
+            rows={2}
+            placeholder="Free to print and share for teaching. Not for sale."
+            maxLength={RESOURCE_LIMITS.permittedUse}
+            defaultValue={resource?.permittedUse ?? ""}
+            aria-describedby={describedBy("resourcePermittedUse")}
+          />
+          {fieldError("resourcePermittedUse")}
+        </fieldset>
+      )}
+
       <BodyEditor initial={values.body as ArticleBody} embeddable={embeddable} error={errors.body} />
+
+      <label htmlFor="relatedId">Related items (up to 6, in the order chosen)</label>
+      <p id="related-hint" className="hint">
+        Shown under this {CONTENT_TYPE_NAMES[type].toLowerCase()} on the public site, when they are published.
+      </p>
+      <select
+        id="relatedId"
+        name="relatedId"
+        multiple
+        size={Math.min(8, Math.max(3, embeddable.length))}
+        defaultValue={values.relatedIds ?? []}
+        aria-describedby={errors.relatedIds ? "related-hint relatedIds-error" : "related-hint"}
+      >
+        {embeddable.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.title}
+            {item.typeName ? ` (${item.typeName})` : ""}
+          </option>
+        ))}
+      </select>
+      {fieldError("relatedIds")}
 
       <button type="submit">{submitLabel}</button>
     </Form>

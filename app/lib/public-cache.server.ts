@@ -47,10 +47,10 @@ export async function servePublic(request: Request, env: Env, ctx: ExecutionCont
 }
 
 /** The public pages an item appears on: its own page, its area, the homepage and the sitemap. */
-export const pagesShowing = (item: { area: string; slug: string }) => [
+export const pagesShowing = (item: { type: string; area: string; slug: string; topicSlugs?: string[] }) => [
   "/",
-  `/${item.area}`,
-  `/${item.area}/${item.slug}`,
+  ...(item.type === "page" ? [`/${item.slug}`] : [`/${item.area}`, `/${item.area}/${item.slug}`]),
+  ...(item.topicSlugs ?? []).map((slug) => `/topics/${slug}`),
   "/sitemap.xml",
 ];
 

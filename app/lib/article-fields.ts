@@ -1,8 +1,12 @@
 import type { ArticleBody } from "./article-body";
 import type { ReviewType } from "./permissions";
+import type { ResourceDetails, ResourceField } from "./resource-fields";
 import type { ContentFlag } from "./review-rules";
 
-/** Everything an editor writes on an Article; each save stores one of these as a Revision. */
+/**
+ * Everything an editor writes on a Content Item; each save stores one of these as a Revision.
+ * Articles, Resources and Pages share it (content-types.ts); a Resource also has `resource`.
+ */
 export type ArticleSnapshot = {
   title: string;
   summary: string;
@@ -15,9 +19,13 @@ export type ArticleSnapshot = {
   flags: ContentFlag[];
   /** The Language Variety a language-instruction Article teaches; null when not flagged. */
   languageVariety: string | null;
+  /** Related items, curated by hand across types and in order (docs/phase-1a-defaults.md §5). */
+  relatedIds?: string[];
+  /** A Resource's file or link and what a visitor reads before using it. */
+  resource?: ResourceDetails;
 };
 
-export type ArticleField = keyof ArticleSnapshot | "primaryArea";
+export type ArticleField = keyof ArticleSnapshot | "primaryArea" | "page" | ResourceField;
 export type FieldErrors = Partial<Record<ArticleField, string>>;
 
 /** Maximum lengths of the article's text fields, shared by the form and the server check. */
@@ -34,11 +42,16 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   const { title, summary, credit, body, languageVariety } = snapshot;
   const sources = snapshot.sources ?? "";
   const topicIds = [...snapshot.topicIds].sort();
+  // Covered only when present, so items that have none keep the fingerprints their approvals had.
+  // Related items are an editorial choice; a Resource's details are what a visitor relies on.
+  const related = snapshot.relatedIds?.length ? { relatedIds: snapshot.relatedIds } : {};
+  const resource = snapshot.resource ? { resource: snapshot.resource } : {};
+  const resourceAccess = snapshot.resource ? { resourceAccessibility: snapshot.resource.accessibility } : {};
   return {
     language: { title, summary, body, languageVariety },
-    cultural: { title, summary, body, credit, topicIds, sources },
-    editorial: { title, summary, body, credit, topicIds, sources },
-    accessibility: { title, body },
+    cultural: { title, summary, body, credit, topicIds, sources, ...resource },
+    editorial: { title, summary, body, credit, topicIds, sources, ...related, ...resource },
+    accessibility: { title, body, ...resourceAccess },
     safeguarding: { title, summary, body },
   };
 }

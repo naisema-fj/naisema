@@ -1,13 +1,16 @@
 import { and, eq, inArray } from "drizzle-orm";
 import type { EmbeddedItem } from "~/components/article-body-view";
-import { contentItem, revision, slugRedirect, topic } from "~db/schema";
-import { AREA_NAMES, type PrimaryArea } from "./areas";
+import { contentItem, mediaAsset, revision, slugRedirect, topic } from "~db/schema";
+import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, embeddedItemIds } from "./article-body";
 import type { ArticleSnapshot } from "./article-fields";
+import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
 import { eligibilityFor } from "./publication.server";
+import { AGE_GUIDANCE, linkHost, type ResourceDetails } from "./resource-fields";
 import { loadReview } from "./review.server";
 import { reviewLabels } from "./review-labels";
+import { formatBytes, UPLOAD_TYPE_NAMES } from "./upload-rules";
 
 /**
  * What the public site may show (ADR-0007). Every item goes through the eligibility decision at
@@ -38,20 +41,40 @@ export async function eligiblePublished(db: Database, item: ItemRow, now: Date) 
 const isTakenDown = (item: ItemRow) =>
   (item.publicationState === "withdrawn" || item.publicationState === "archived") && item.firstPublishedAt !== null;
 
+/** A content type's public address: /{area}/{slug}, or /{slug} for a Page. */
+export const itemPath = (item: { type: string; primaryArea: string; slug: string }) =>
+  item.type === "page" ? `/${item.slug}` : publicPath(item.primaryArea, item.slug);
+
+/** A Resource as a visitor sees it before downloading the file or following the link. */
+export type PublicResource = {
+  language: string;
+  ageGuidance: string;
+  accessibility: string;
+  permittedUse: string;
+} & (
+  | { kind: "file"; fileType: string; size: string; downloadPath: string }
+  | { kind: "link"; url: string; host: string; checkedOn: string }
+);
+
+export type RelatedItem = { title: string; path: string; typeName: string; summary: string };
+
 export type PublicArticle = {
   id: string;
-  area: PrimaryArea;
-  areaName: string;
+  type: ContentType;
+  area: PrimaryArea | null;
+  areaName: string | null;
   slug: string;
-  format: "Article";
+  format: string;
   title: string;
   summary: string;
   credit: string;
   sources: string;
-  topics: string[];
+  topics: { name: string; slug: string }[];
   body: ArticleBody;
   embeds: Record<string, EmbeddedItem>;
   labels: string[];
+  resource: PublicResource | null;
+  related: RelatedItem[];
   firstPublishedAt: Date | null;
   lastPublishedAt: Date | null;
 };
@@ -62,9 +85,12 @@ export type PublicLookup =
   | { kind: "withdrawn" }
   | { kind: "missing" };
 
+/** Types that live at /{area}/{slug}. */
+const AREA_TYPES = ["article", "resource"] as const;
+
 /**
- * The item at /{area}/{slug}: the published, eligible Article; a redirect from an old slug; a
- * withdrawn notice; or nothing. An ineligible item answers "missing", never its draft.
+ * The item at /{area}/{slug}: the published, eligible Article or Resource; a redirect from an old
+ * slug; a withdrawn notice; or nothing. An ineligible item answers "missing", never its draft.
  */
 export async function findPublicArticle(
   db: Database,
@@ -75,7 +101,9 @@ export async function findPublicArticle(
   const item = await db
     .select()
     .from(contentItem)
-    .where(and(eq(contentItem.primaryArea, area), eq(contentItem.slug, slug), eq(contentItem.type, "article")))
+    .where(
+      and(eq(contentItem.primaryArea, area), eq(contentItem.slug, slug), inArray(contentItem.type, [...AREA_TYPES])),
+    )
     .get();
 
   if (!item) {
@@ -89,39 +117,106 @@ export async function findPublicArticle(
     // An old address answers as the item's own address would.
     if (isTakenDown(redirect.item)) return { kind: "withdrawn" };
     if (!(await eligiblePublished(db, redirect.item, now))) return { kind: "missing" };
-    return { kind: "moved", to: publicPath(redirect.item.primaryArea, redirect.item.slug) };
+    return { kind: "moved", to: itemPath(redirect.item) };
   }
 
   if (isTakenDown(item)) return { kind: "withdrawn" };
   const published = await eligiblePublished(db, item, now);
   if (!published) return { kind: "missing" };
-  const { snapshot, review } = published;
+  return { kind: "found", article: await publicView(db, item, published, now) };
+}
 
+/** The published, eligible Page at /{slug}, if there is one: About, Privacy and the other site pages. */
+export async function findPublicPage(db: Database, slug: string, now = new Date()): Promise<PublicArticle | null> {
+  const item = await db
+    .select()
+    .from(contentItem)
+    .where(and(eq(contentItem.type, "page"), eq(contentItem.primaryArea, PAGE_AREA), eq(contentItem.slug, slug)))
+    .get();
+  if (!item) return null;
+  const published = await eligiblePublished(db, item, now);
+  return published ? publicView(db, item, published, now) : null;
+}
+
+/** Everything a public page shows of a published Revision. */
+async function publicView(
+  db: Database,
+  item: ItemRow,
+  { snapshot, review }: NonNullable<Awaited<ReturnType<typeof eligiblePublished>>>,
+  now: Date,
+): Promise<PublicArticle> {
+  const type = item.type as ContentType;
+  const area = isPrimaryArea(item.primaryArea) ? item.primaryArea : null;
   const topicRows = snapshot.topicIds.length
-    ? await db.select({ id: topic.id, name: topic.name }).from(topic).where(inArray(topic.id, snapshot.topicIds))
+    ? await db
+        .select({ id: topic.id, name: topic.name, slug: topic.slug })
+        .from(topic)
+        .where(inArray(topic.id, snapshot.topicIds))
     : [];
   return {
-    kind: "found",
-    article: {
-      id: item.id,
-      area,
-      areaName: AREA_NAMES[area],
-      slug: item.slug,
-      format: "Article",
-      title: snapshot.title,
-      summary: snapshot.summary,
-      credit: snapshot.credit,
-      sources: snapshot.sources ?? "",
-      topics: snapshot.topicIds
-        .map((id) => topicRows.find((row) => row.id === id)?.name)
-        .filter((name): name is string => Boolean(name)),
-      body: snapshot.body,
-      embeds: await publicEmbeds(db, snapshot.body, now),
-      labels: reviewLabels({ progress: review.progress, flags: review.flags }),
-      firstPublishedAt: item.firstPublishedAt,
-      lastPublishedAt: item.lastPublishedAt,
-    },
+    id: item.id,
+    type,
+    area,
+    areaName: area ? AREA_NAMES[area] : null,
+    slug: item.slug,
+    format: CONTENT_TYPE_NAMES[type],
+    title: snapshot.title,
+    summary: snapshot.summary,
+    credit: snapshot.credit,
+    sources: snapshot.sources ?? "",
+    topics: snapshot.topicIds
+      .map((id) => topicRows.find((row) => row.id === id))
+      .filter((row) => row !== undefined)
+      .map(({ name, slug }) => ({ name, slug })),
+    body: snapshot.body,
+    embeds: await publicEmbeds(db, snapshot.body, now),
+    labels: reviewLabels({ progress: review.progress, flags: review.flags }),
+    resource: snapshot.resource ? await publicResource(db, item.id, snapshot.resource) : null,
+    related: await relatedItems(db, snapshot.relatedIds ?? [], now),
+    firstPublishedAt: item.firstPublishedAt,
+    lastPublishedAt: item.lastPublishedAt,
   };
+}
+
+async function publicResource(db: Database, itemId: string, details: ResourceDetails): Promise<PublicResource> {
+  const common = {
+    language: details.language,
+    ageGuidance: AGE_GUIDANCE[details.ageGuidance],
+    accessibility: details.accessibility,
+    permittedUse: details.permittedUse,
+  };
+  if (details.source.kind === "link") {
+    const { url, checkedOn } = details.source;
+    return { ...common, kind: "link", url, host: linkHost(url), checkedOn };
+  }
+  const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, details.source.assetId)).get();
+  return {
+    ...common,
+    kind: "file",
+    fileType: asset ? UPLOAD_TYPE_NAMES[asset.type] : "File",
+    size: asset ? formatBytes(asset.size) : "",
+    downloadPath: `/resources/${itemId}/download`,
+  };
+}
+
+/** The curated related items that are public right now, in the order chosen. */
+async function relatedItems(db: Database, ids: string[], now: Date): Promise<RelatedItem[]> {
+  if (!ids.length) return [];
+  const items = await db.select().from(contentItem).where(inArray(contentItem.id, ids));
+  const shown = await Promise.all(
+    ids.map(async (id) => {
+      const item = items.find((candidate) => candidate.id === id);
+      const published = item ? await eligiblePublished(db, item, now) : null;
+      if (!item || !published) return null;
+      return {
+        title: published.snapshot.title,
+        summary: published.snapshot.summary,
+        path: itemPath(item),
+        typeName: CONTENT_TYPE_NAMES[item.type as ContentType] ?? item.type,
+      };
+    }),
+  );
+  return shown.filter((entry) => entry !== null);
 }
 
 /** Embedded Content Items that are themselves public right now, linked to their public pages. */
@@ -132,9 +227,7 @@ async function publicEmbeds(db: Database, body: ArticleBody, now: Date) {
   const entries = await Promise.all(
     items.map(async (item) => {
       const published = await eligiblePublished(db, item, now);
-      return published
-        ? ([item.id, { title: published.snapshot.title, href: publicPath(item.primaryArea, item.slug) }] as const)
-        : null;
+      return published ? ([item.id, { title: published.snapshot.title, href: itemPath(item) }] as const) : null;
     }),
   );
   return Object.fromEntries(entries.filter((entry) => entry !== null));

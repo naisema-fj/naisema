@@ -1,10 +1,10 @@
-import { and, asc, count, desc, eq, gt, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, lte, ne, sql } from "drizzle-orm";
 import { type AnySQLiteColumn, integer, sqliteTable } from "drizzle-orm/sqlite-core";
 import { contentItem, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
-import { AREA_NAMES, type PrimaryArea } from "./areas";
+import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import type { Database } from "./db.server";
 import { FORMAT_NAMES, isContentFormat } from "./formats";
-import { eligiblePublished, publicPath } from "./public.server";
+import { eligiblePublished, itemPath } from "./public.server";
 import { matchExpression, type SearchFilters } from "./search-query";
 
 /**
@@ -81,7 +81,8 @@ function countIndexed(db: Database, match: string | null) {
 
 export type SearchResult = {
   id: string;
-  area: PrimaryArea;
+  /** Null for a Page, which sits outside the six areas. */
+  area: PrimaryArea | null;
   path: string;
   title: string;
   summary: string;
@@ -156,14 +157,14 @@ async function recheckHits(
         await indexItem(db, item.id, now);
         return null;
       }
-      const area = item.primaryArea as PrimaryArea;
+      const area = isPrimaryArea(item.primaryArea) ? item.primaryArea : null;
       return {
         id: item.id,
         area,
-        path: publicPath(area, item.slug),
+        path: itemPath(item),
         title: published.snapshot.title,
         summary: published.snapshot.summary,
-        areaName: AREA_NAMES[area],
+        areaName: area ? AREA_NAMES[area] : "Na iSema",
         formatName: isContentFormat(format) ? FORMAT_NAMES[format] : format,
         publishedAt: item.lastPublishedAt,
       } satisfies SearchResult;
@@ -183,7 +184,8 @@ export async function listPublic(
 ) {
   const where = and(
     hasPublishRights(searchEntry.contentItemId, now),
-    area ? eq(searchEntry.primaryArea, area) : undefined,
+    // Listings show what was published in an area; site pages (About, Privacy...) aren't news.
+    area ? eq(searchEntry.primaryArea, area) : ne(searchEntry.format, "page"),
   );
   const [rows, [{ total }]] = await Promise.all([
     indexedItems(db, null)
@@ -195,6 +197,35 @@ export async function listPublic(
   return { listings: (await recheckHits(db, rows, now)).slice(0, limit), total };
 }
 
+/** The newest public items in any of these Topics, for a Topic's page, and how many there are. */
+export async function listByTopics(db: Database, topicIds: string[], limit: number, now = new Date()) {
+  if (!topicIds.length) return { listings: [], total: 0 };
+  const where = and(
+    hasPublishRights(searchEntry.contentItemId, now),
+    inArray(
+      searchEntry.contentItemId,
+      db
+        .select({ id: searchEntryTopic.contentItemId })
+        .from(searchEntryTopic)
+        .where(inArray(searchEntryTopic.topicId, topicIds)),
+    ),
+  );
+  const [rows, [{ total }]] = await Promise.all([
+    indexedItems(db, null)
+      .where(where)
+      .orderBy(desc(searchEntry.publishedAt))
+      .limit(limit + LISTING_SPARES),
+    countIndexed(db, null).where(where),
+  ]);
+  return { listings: (await recheckHits(db, rows, now)).slice(0, limit), total };
+}
+
+/** One item as a card, if it is public right now: a Topic's lead feature. */
+export async function publicCard(db: Database, itemId: string, now = new Date()) {
+  const rows = await indexedItems(db, null).where(eq(searchEntry.contentItemId, itemId));
+  return (await recheckHits(db, rows, now))[0] ?? null;
+}
+
 /**
  * Every indexed item with current Publish rights, for the sitemap. Items aren't put through the
  * full decision one by one: a sitemap only suggests addresses, each page decides eligibility when
@@ -202,7 +233,12 @@ export async function listPublic(
  */
 export function sitemapEntries(db: Database, now = new Date()) {
   return db
-    .select({ area: contentItem.primaryArea, slug: contentItem.slug, publishedAt: searchEntry.publishedAt })
+    .select({
+      type: contentItem.type,
+      primaryArea: contentItem.primaryArea,
+      slug: contentItem.slug,
+      publishedAt: searchEntry.publishedAt,
+    })
     .from(searchEntry)
     .innerJoin(contentItem, eq(contentItem.id, searchEntry.contentItemId))
     .where(hasPublishRights(searchEntry.contentItemId, now))

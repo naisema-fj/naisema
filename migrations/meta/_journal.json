@@ -57,6 +57,13 @@
       "when": 1790826008008,
       "tag": "0007_media",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790838443599,
+      "tag": "0008_resources_pages_topics",
+      "breakpoints": true
     }
   ]
 }

@@ -178,6 +178,12 @@ export const topic = sqliteTable("topic", {
   id: text("id").primaryKey(),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  /** Shown at the top of the Topic's page (FOR-06). */
+  description: text("description").notNull().default(""),
+  /** A broader Topic this one sits under, as a subtopic; filters on the parent's page. */
+  parentTopicId: text("parent_topic_id").references((): AnySQLiteColumn => topic.id),
+  /** The Content Item featured first on the Topic's page, chosen by an editor. */
+  leadItemId: text("lead_item_id").references((): AnySQLiteColumn => contentItem.id),
   createdBy: text("created_by").notNull(),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
 });
@@ -466,4 +472,20 @@ export const mediaUploadPart = sqliteTable(
     size: integer("size").notNull(),
   },
   (table) => [primaryKey({ columns: [table.assetId, table.partNumber] })],
+);
+
+/**
+ * A visitor's report that a Resource's link is broken. No personal details: the reporter is only a
+ * keyed hash of their address and the day, so one person counts once a day.
+ */
+export const linkReport = sqliteTable(
+  "link_report",
+  {
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    reporterKey: text("reporter_key").notNull(),
+    reportedAt: integer("reported_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.contentItemId, table.reporterKey] })],
 );

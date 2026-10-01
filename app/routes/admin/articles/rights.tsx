@@ -63,7 +63,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       );
     }
     // The item may have just become ineligible.
-    await publicItemChanged(env, db, article);
+    await publicItemChanged(env, db, article.id);
     throw redirect(`/admin/articles/${article.id}/rights?done=withdrawn`);
   }
 
@@ -71,7 +71,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (!result.ok) return data({ errors: result.errors, values: result.values, withdraw: null }, { status: 400 });
   await recordRights(env, db, actor.userId, subject, result.rights);
   // A new record can make a published item eligible again.
-  await publicItemChanged(env, db, article);
+  await publicItemChanged(env, db, article.id);
   throw redirect(`/admin/articles/${article.id}/rights?done=recorded`);
 }
 

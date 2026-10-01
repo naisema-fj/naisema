@@ -934,6 +934,117 @@ html:has(.public) {
   }
 }
 
+/* Resources: what a visitor reads before downloading, set as a ruled card on the letter. */
+
+.resource-details {
+  margin-top: 1.5rem;
+  padding: 1.25rem 1.25rem 1.4rem;
+  border-block: 1px solid var(--masi);
+  background: var(--sand);
+}
+
+.resource-details h2 {
+  font-size: var(--step-1);
+}
+
+.resource-details dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.4rem 1.25rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.resource-details dt {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--masi);
+  padding-top: 0.2rem;
+}
+
+.resource-details dd {
+  margin: 0;
+}
+
+.public .report-link {
+  margin-top: 0.75rem;
+}
+
+.public .report-link button {
+  font: inherit;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  background: none;
+  border: 0;
+  padding: 0.5rem 0;
+  min-height: 44px;
+  color: var(--teal-700);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  cursor: pointer;
+}
+
+@media (max-width: 34rem) {
+  .resource-details dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.15rem;
+  }
+
+  .resource-details dd {
+    margin-bottom: 0.6rem;
+  }
+}
+
+/* The view beacon (content_opened): an image no one sees. */
+.beacon {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.public .related {
+  margin-top: 1rem;
+}
+
+/* Topic pages: subtopic filters as a row of ruled postmark links. */
+
+.subtopics ul {
+  list-style: none;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.public .subtopics a {
+  display: inline-block;
+  padding: 0.35rem 0;
+  border-bottom: 2px solid transparent;
+  text-decoration: none;
+}
+
+.public .subtopics a[aria-current="page"] {
+  color: var(--teal-900);
+  border-bottom-color: var(--masi);
+}
+
+.public .topic-letter > section {
+  margin-top: 2rem;
+}
+
+.topic-index {
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
 /* Footer: a restrained masi strip, then a deep teal field. */
 
 .masi-strip {

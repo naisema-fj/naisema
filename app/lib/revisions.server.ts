@@ -2,6 +2,7 @@ import { and, desc, eq, like, or } from "drizzle-orm";
 import { contentItem, revision, slugRedirect, user } from "~db/schema";
 import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
+import type { ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
 import { carryForwardInserts } from "./review.server";
 import type { Fingerprints } from "./review-rules";
@@ -13,7 +14,7 @@ import { firstFreeSlug, slugify } from "./slug";
  * contains is up to each content type (articles.server.ts for Articles).
  */
 
-export type ContentType = "article";
+export type { ContentType } from "./content-types";
 
 export type Revision<Snapshot> = {
   id: string;
@@ -33,8 +34,15 @@ function toRevision<Snapshot>(row: typeof revision.$inferSelect): Revision<Snaps
   };
 }
 
-/** Creates a Content Item and its first Revision. Returns the new Content Item's ID. */
-export async function createContentItem(db: Database, item: NewItem & { title: string }): Promise<string> {
+/**
+ * Creates a Content Item and its first Revision. Returns the new Content Item's ID. Its slug comes
+ * from the title, unless one is given (a Page's fixed address), which must then be free.
+ */
+export async function createContentItem(
+  db: Database,
+  item: NewItem & { title: string; slug?: string },
+): Promise<string> {
+  if (item.slug) return insertContentItem(db, item, item.slug);
   const base = slugify(item.title);
   // Two items created at the same moment can pick the same free slug; the loser tries the next one.
   for (let attempt = 0; ; attempt++) {
@@ -70,7 +78,7 @@ export async function createContentItem(db: Database, item: NewItem & { title: s
 
 type NewItem = {
   type: ContentType;
-  primaryArea: PrimaryArea;
+  primaryArea: PrimaryArea | typeof PAGE_AREA;
   snapshot: unknown;
   /** One per Review Type, over the fields it covers (review-rules.ts). */
   fingerprints: Fingerprints;
@@ -114,17 +122,18 @@ async function insertContentItem(db: Database, item: NewItem, slug: string) {
   return id;
 }
 
-/** A Content Item of the given type with its current draft Revision, or null. */
-export async function getContentItem<Snapshot>(db: Database, id: string, type: ContentType) {
+/** A Content Item (of the given type, if one is given) with its current draft Revision, or null. */
+export async function getContentItem<Snapshot>(db: Database, id: string, type?: ContentType) {
   const row = await db
     .select({ item: contentItem, currentRevision: revision })
     .from(contentItem)
     .innerJoin(revision, eq(revision.id, contentItem.currentDraftRevisionId))
-    .where(and(eq(contentItem.id, id), eq(contentItem.type, type)))
+    .where(and(eq(contentItem.id, id), type ? eq(contentItem.type, type) : undefined))
     .get();
   if (!row) return null;
   return {
     id: row.item.id,
+    type: row.item.type as ContentType,
     slug: row.item.slug,
     primaryArea: row.item.primaryArea as PrimaryArea,
     currentRevision: toRevision<Snapshot>(row.currentRevision),

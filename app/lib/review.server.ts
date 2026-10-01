@@ -26,7 +26,12 @@ import {
 } from "./review-rules";
 
 /** What every content type's snapshot carries for review: its Content Flags and Language Variety. */
-export type Reviewable = { flags?: ContentFlag[]; languageVariety?: string | null };
+export type Reviewable = {
+  flags?: ContentFlag[];
+  languageVariety?: string | null;
+  /** A Resource's download, which must have passed its scan for the Revision to be public. */
+  resource?: { source: { kind: "file"; assetId: string } | { kind: "link" } };
+};
 
 type ApprovalRow = typeof reviewApproval.$inferSelect;
 
@@ -221,6 +226,7 @@ export async function loadReview(db: Database, revisionId: string) {
     },
     flags,
     languageVariety,
+    resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
     requirements,
     progress,
     submitted,

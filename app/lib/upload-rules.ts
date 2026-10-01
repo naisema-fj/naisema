@@ -59,6 +59,9 @@ const EVIDENCE_TYPES: readonly UploadType[] = ["application/pdf", "image/jpeg", 
 const VIDEO_BRANDS = ["isom", "iso2", "iso4", "iso5", "iso6", "mp41", "mp42", "avc1", "M4V ", "dash", "mmp4", "qt  "];
 const AUDIO_BRANDS = ["M4A ", "M4B ", "mp42", "isom", "iso2", "dash"];
 
+/** Media library files a Resource can offer for download: documents and audio. */
+export const DOWNLOADABLE_TYPES: readonly UploadType[] = ["application/pdf", "audio/mpeg", "audio/mp4"];
+
 /** How many leading bytes the content check reads. */
 export const HEAD_BYTES = 16;
 

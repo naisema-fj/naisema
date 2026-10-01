@@ -165,7 +165,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (!result.ok) return data({ error: result.error }, { status: 400 });
   // Publishing, withdrawing and archiving change what is public, and so can a review decision
   // recorded on the published Revision; purging after every action keeps that rule in one place.
-  await publicItemChanged(env, db, article);
+  await publicItemChanged(env, db, article.id);
   throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
 }
 

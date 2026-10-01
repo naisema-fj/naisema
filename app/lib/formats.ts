@@ -1,8 +1,8 @@
-/**
- * Content Item types as visitors see them. Each type that gets a public page joins this list.
- */
-export const FORMAT_NAMES = { article: "Article" } as const;
+import { CONTENT_TYPE_NAMES, type ContentType, isContentType } from "./content-types";
 
-export type ContentFormat = keyof typeof FORMAT_NAMES;
+/** Content Item types as visitors see them, for search filters and listings. */
+export const FORMAT_NAMES = CONTENT_TYPE_NAMES;
 
-export const isContentFormat = (value: string): value is ContentFormat => Object.hasOwn(FORMAT_NAMES, value);
+export type ContentFormat = ContentType;
+
+export const isContentFormat = isContentType;

@@ -7,6 +7,10 @@ export default [
     index("routes/home.tsx"),
     ...INFO_PAGES.map((page) => route(page.path, "routes/public/info.tsx", { id: `info-${page.path}` })),
     route("search", "routes/public/search.tsx"),
+    route("topics", "routes/public/topics.tsx"),
+    route("topics/:slug", "routes/public/topic.tsx", { id: "topic" }),
+    route("topics/:slug/:subtopic", "routes/public/topic.tsx", { id: "topic-filtered" }),
+    route("resources/:id/report-link", "routes/public/report-link.tsx"),
     route(":area", "routes/public/area.tsx"),
     route(":area/:slug", "routes/public/article.tsx"),
   ]),
@@ -15,6 +19,8 @@ export default [
   // Media library files that passed their scan (app/lib/media-delivery.server.ts).
   route("media/images/:id/:width", "routes/media/image.ts"),
   route("media/files/:id", "routes/media/file.ts"),
+  route("resources/:id/download", "routes/public/resource-download.ts"),
+  route("e/opened/:id", "routes/public/opened.ts"),
   // Staff tools, served only on the admin host (workers/app.ts, ADR-0005).
   ...prefix("admin", [
     index("routes/admin/home.tsx"),
