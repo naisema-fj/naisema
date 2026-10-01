@@ -233,6 +233,8 @@ export async function loadReview(db: Database, revisionId: string) {
     flags,
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
+    /** A Creator Profile's free sample, which must itself be public for the profile to be. */
+    creatorSampleId: content.creator?.sampleItemId ?? null,
     /** The media library files the Revision shows or offers; each needs rights of its own. */
     mediaAssetIds: mediaAssetIdsIn(content),
     episode: snapshot.episode

@@ -3,7 +3,7 @@ import { contentItem, revision, topic } from "~db/schema";
 import type { ArticleSnapshot } from "./article-fields";
 import type { Database } from "./db.server";
 import { mediaPaths } from "./media-delivery.server";
-import { itemsUsingMedia } from "./media-usage.server";
+import { itemsMentioning } from "./mentions.server";
 import { pagesShowing, purgePublicPages } from "./public-cache.server";
 import { indexItem } from "./search.server";
 
@@ -11,10 +11,24 @@ import { indexItem } from "./search.server";
  * Call after anything that may change what the public sees of an item: publishing, withdrawing,
  * archiving, a review decision, a rights change or a new address. Its search entry is rebuilt and
  * the pages showing it (its own, its area or site page, its Topic pages and any it leads, the
- * homepage and the sitemap) are purged from the edge cache (ADR-0007), together, in one place.
+ * homepage and the sitemap) are purged from the edge cache (ADR-0007), together, in one place; so
+ * are the items that show it in turn.
  */
-export async function publicItemChanged(env: Env, db: Database, itemId: string, alsoPurge: string[] = []) {
+export async function publicItemChanged(
+  env: Env,
+  db: Database,
+  itemId: string,
+  alsoPurge: string[] = [],
+  { mentions = true }: { mentions?: boolean } = {},
+) {
   await indexItem(db, itemId);
+  // Items that show this one (a Creator's free sample, a related or embedded item) change with it.
+  // One level only, so items that mention each other can't loop.
+  if (mentions) {
+    for (const id of await itemsMentioning(db, itemId)) {
+      if (id !== itemId) await publicItemChanged(env, db, id, [], { mentions: false });
+    }
+  }
   const item = await db.select().from(contentItem).where(eq(contentItem.id, itemId)).get();
   if (!item) return;
   // Its Topics as last published and as now drafted: either may list it.
@@ -60,5 +74,5 @@ export async function publicItemChanged(env: Env, db: Database, itemId: string, 
  */
 export async function mediaAssetChanged(env: Env, db: Database, assetId: string) {
   await purgePublicPages(env, mediaPaths(assetId));
-  for (const id of await itemsUsingMedia(db, assetId)) await publicItemChanged(env, db, id);
+  for (const id of await itemsMentioning(db, assetId)) await publicItemChanged(env, db, id);
 }

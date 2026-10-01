@@ -62,6 +62,9 @@ const AUDIO_BRANDS = ["M4A ", "M4B ", "mp42", "isom", "iso2", "dash"];
 /** Media library files a Resource can offer for download: documents and audio. */
 export const DOWNLOADABLE_TYPES: readonly UploadType[] = ["application/pdf", "audio/mpeg", "audio/mp4"];
 
+/** The images a media library offers for use in content, such as a Creator's portrait. */
+export const IMAGE_TYPES: readonly UploadType[] = ["image/jpeg", "image/png", "image/webp"];
+
 /** The audio a Voices Episode can play (docs/phase-1a-defaults.md §9). */
 export const EPISODE_AUDIO_TYPES: readonly UploadType[] = ["audio/mpeg", "audio/mp4"];
 

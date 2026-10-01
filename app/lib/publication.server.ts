@@ -53,8 +53,21 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
       now,
     }),
   );
+  if (review.creatorSampleId && !(await isPublicNow(db, review.creatorSampleId, now))) {
+    reasons.push("Its free sample isn't published right now.");
+  }
   reasons.push(...assetRightsProblems(await mediaRightsFacts(db, review.mediaAssetIds), now));
   return reasons.length ? { eligible: false, reasons } : { eligible: true };
+}
+
+/**
+ * Whether a Content Item is public right now: published, and its published Revision eligible. A
+ * Creator Profile's sample can't itself be a Creator Profile, so this never recurses further.
+ */
+async function isPublicNow(db: Database, contentItemId: string, now: Date) {
+  const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
+  if (item?.publicationState !== "published" || !item.currentPublishedRevisionId) return false;
+  return (await isEligible(db, item.currentPublishedRevisionId, now)).eligible;
 }
 
 const setState = (db: Database, contentItemId: string, values: Partial<typeof contentItem.$inferInsert>) =>

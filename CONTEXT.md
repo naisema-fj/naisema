@@ -8,7 +8,7 @@ _Avoid_: NAISEMA, Naisema, NaiSema
 ## Content and learning
 
 **Content Item**:
-A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area. Its type is Article, Resource, Episode or Page; all share Revisions and review.
+A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area. Its type is Article, Resource, Episode, Creator Profile or Page; all share Revisions and review.
 _Avoid_: Cultural item, post, page (for content other than a Page)
 
 **Resource**:
@@ -116,7 +116,7 @@ Anyone whose story, recording or knowledge appears in Na iSema content; a rights
 _Avoid_: Author (for non-staff), participant
 
 **Creator**:
-A Contributor with a public Creator Profile and their own channel of work.
+A Contributor with a public Creator Profile and their own channel of work. A Creator Profile is a Content Item in Connect: their chosen public name, biography, a general location, languages, kinds of work, a consented portrait and one free sample.
 _Avoid_: Influencer, channel owner
 
 **Learner**:
@@ -165,7 +165,7 @@ Any organisation or person whose learning Offering is listed on Na iSema. Listin
 _Avoid_: Partner (unless an agreement exists)
 
 **Partner**:
-A Provider with a recorded Partnership Agreement.
+A Provider with a recorded Partnership Agreement in force. Only then is "Partner" shown, and only a Partner's Offering can be shown or hosted on Na iSema.
 
 **Offering**:
 A listed programme, course, resource or class belonging to a Provider, with one explicit access mode.

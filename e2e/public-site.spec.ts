@@ -3,6 +3,8 @@ import { expectNoAxeViolations } from "./support";
 
 const ARTICLE = "/ezine/e2e-letter-from-home";
 const EPISODE = "/voices/e2e-talanoa";
+const PROVIDER = "/connect/providers/e2e-lami-language-school";
+const CREATOR = "/connect/creators/e2e-litia-vula";
 
 async function expectNoHorizontalScroll(page: Page) {
   const overflow = await page.evaluate(
@@ -26,6 +28,13 @@ test("the homepage, an area, an article and the not-found page pass axe", async 
     "/topics",
     "/voices",
     EPISODE,
+    "/connect",
+    "/connect/providers",
+    PROVIDER,
+    "/connect/offerings",
+    "/connect/offerings?cost=paid",
+    "/connect/creators",
+    CREATOR,
   ]) {
     await page.goto(path);
     await expectNoAxeViolations(page);
@@ -80,6 +89,21 @@ test("a visitor opens a Voices Episode: nothing plays until they choose, and the
   await expect(page.getByText("open.spotify.com, another website")).toBeVisible();
 });
 
+test("a visitor finds a class under Connect, sees who offers it and where its link goes", async ({ page }) => {
+  await page.goto("/connect");
+  await page.getByRole("link", { name: "Classes and courses" }).click();
+  await page.getByLabel("Cost").selectOption("paid");
+  await page.getByRole("button", { name: "Show" }).click();
+
+  await expect(page).toHaveURL(/cost=paid/);
+  const offering = page.getByRole("region", { name: "Conversational Fijian, evenings" });
+  await expect(offering).toContainText("AUD 120");
+  await expect(offering).toContainText("lami.example, another website");
+  await offering.getByRole("link", { name: "Lami Language School" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Lami Language School" })).toBeVisible();
+  await expect(page.getByText("A Na iSema Partner, under a recorded Partnership Agreement.")).toBeVisible();
+});
+
 test("the menu works by keyboard on a phone-width screen", async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await page.goto("/");
@@ -98,7 +122,16 @@ test("pages reflow at 320 px and at 200% zoom without sideways scrolling", async
   // 320 CSS px is WCAG's reflow width; 640 px is a 1280 px window at 200% zoom.
   for (const width of [320, 640]) {
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ["/", "/learn", ARTICLE, "/resources/e2e-dictionary-link", "/topics/e2e-ceremonies", EPISODE]) {
+    for (const path of [
+      "/",
+      "/learn",
+      ARTICLE,
+      "/resources/e2e-dictionary-link",
+      "/topics/e2e-ceremonies",
+      EPISODE,
+      PROVIDER,
+      CREATOR,
+    ]) {
       await page.goto(path);
       await expectNoHorizontalScroll(page);
     }

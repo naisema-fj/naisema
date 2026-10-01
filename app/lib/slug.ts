@@ -18,3 +18,14 @@ export function firstFreeSlug(base: string, taken: ReadonlySet<string>): string 
   while (taken.has(`${base}-${suffix}`)) suffix += 1;
   return `${base}-${suffix}`;
 }
+
+/**
+ * Slugs an area's own pages use, which no Content Item in that area may take: Connect lists
+ * Providers, their Offerings and Creators at /connect/providers, /connect/offerings and
+ * /connect/creators.
+ */
+export const RESERVED_SLUGS: Readonly<Record<string, readonly string[]>> = {
+  connect: ["providers", "offerings", "creators"],
+};
+
+export const isReservedSlug = (area: string, slug: string) => (RESERVED_SLUGS[area] ?? []).includes(slug);

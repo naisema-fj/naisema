@@ -2,10 +2,11 @@ import { and, asc, count, desc, eq, gt, inArray, lte, ne, sql } from "drizzle-or
 import { type AnySQLiteColumn, integer, sqliteTable } from "drizzle-orm/sqlite-core";
 import { contentItem, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
+import { MEDIA_TYPES, type MediaType } from "./creator-fields";
 import type { Database } from "./db.server";
 import { formatDuration } from "./episode-fields";
 import { FORMAT_NAMES, isContentFormat } from "./formats";
-import { itemsUsingMedia } from "./media-usage.server";
+import { itemsMentioning } from "./mentions.server";
 import { eligiblePublished, itemPath } from "./public.server";
 import { matchExpression, type SearchFilters } from "./search-query";
 
@@ -237,6 +238,39 @@ export async function listByTopics(
   return { listings: (await recheckHits(db, rows, now)).slice(0, limit), total };
 }
 
+/**
+ * The public Creator Profiles, A to Z, with what they make, narrowed to one kind of media when
+ * asked. Like every listing, each is checked again before it is shown.
+ */
+export async function listCreators(db: Database, mediaType: MediaType | null, now = new Date()) {
+  const rows = await indexedItems(db, null)
+    .where(and(hasPublishRights(searchEntry.contentItemId, now), eq(searchEntry.format, "creator")))
+    .orderBy(asc(searchEntry.title))
+    .limit(CREATOR_LIST_LIMIT);
+  const checked = await Promise.all(
+    rows.map(async ({ item }) => {
+      const published = await eligiblePublished(db, item, now);
+      const creator = published?.snapshot.creator;
+      if (!published || !creator) {
+        await indexItem(db, item.id, now);
+        return null;
+      }
+      if (mediaType && !creator.mediaTypes.includes(mediaType)) return null;
+      return {
+        name: published.snapshot.title,
+        summary: published.snapshot.summary,
+        path: itemPath(item),
+        location: creator.location,
+        mediaTypes: creator.mediaTypes.map((type) => MEDIA_TYPES[type]),
+      };
+    }),
+  );
+  return checked.filter((creator) => creator !== null);
+}
+
+/** Connect lists this many Creators; search pages through the rest. */
+const CREATOR_LIST_LIMIT = 200;
+
 /** One item as a card, if it is public right now: a Topic's lead feature. */
 export async function publicCard(db: Database, itemId: string, now = new Date()) {
   const rows = await indexedItems(db, null).where(eq(searchEntry.contentItemId, itemId));
@@ -265,8 +299,8 @@ export function sitemapEntries(db: Database, now = new Date()) {
 /**
  * The daily job's part: reindex items whose Rights Records expired in the window, so expiries the
  * SQL pre-filter doesn't cover (guardian permission, a part's or a media file's record) leave the
- * index too. An expired media file record reindexes every item using the file. The caller's
- * window overlaps the previous run's.
+ * index too, with the items that show them (using a file, or offering an item as a Creator's
+ * sample). The caller's window overlaps the previous run's.
  */
 export async function reindexExpiredRights(db: Database, since: Date, now: Date) {
   const expired = await db
@@ -274,7 +308,9 @@ export async function reindexExpiredRights(db: Database, since: Date, now: Date)
     .from(rightsRecord)
     .where(and(gt(rightsRecord.expiresAt, since), lte(rightsRecord.expiresAt, now)));
   for (const { type, id } of expired) {
-    const items = type === "media_asset" ? await itemsUsingMedia(db, id) : [id];
+    // An item that lapses takes down those that show it (a Creator's sample); a file, those using it.
+    const mentioning = await itemsMentioning(db, id);
+    const items = type === "media_asset" ? mentioning : [id, ...mentioning.filter((other) => other !== id)];
     for (const itemId of items) await indexItem(db, itemId, now);
   }
 }

@@ -950,7 +950,8 @@ html:has(.public) {
 }
 
 .resource-details dl,
-.episode dl {
+.episode dl,
+.creator dl {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 0.4rem 1.25rem;
@@ -958,7 +959,8 @@ html:has(.public) {
 }
 
 .resource-details dt,
-.episode dt {
+.episode dt,
+.creator dt {
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--step--1);
@@ -969,7 +971,8 @@ html:has(.public) {
 }
 
 .resource-details dd,
-.episode dd {
+.episode dd,
+.creator dd {
   margin: 0;
 }
 
@@ -993,13 +996,15 @@ html:has(.public) {
 
 @media (max-width: 34rem) {
   .resource-details dl,
-  .episode dl {
+  .episode dl,
+  .creator dl {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.15rem;
   }
 
   .resource-details dd,
-  .episode dd {
+  .episode dd,
+  .creator dd {
     margin-bottom: 0.6rem;
   }
 }
@@ -1048,7 +1053,8 @@ html:has(.public) {
 
 /* Topic pages: subtopic filters as a row of ruled postmark links. */
 
-.subtopics ul {
+.subtopics ul,
+.area-sections ul {
   list-style: none;
   margin: 1.25rem 0 0;
   padding: 0;
@@ -1059,7 +1065,8 @@ html:has(.public) {
   font-weight: 600;
 }
 
-.public .subtopics a {
+.public .subtopics a,
+.public .area-sections a {
   display: inline-block;
   padding: 0.35rem 0;
   border-bottom: 2px solid transparent;
@@ -1144,5 +1151,81 @@ html:has(.public) {
   .public .envelope:focus-visible,
   .public .primary-link:hover {
     transform: none;
+  }
+}
+
+/* Connect: Providers, Offerings and Creators. */
+
+.public .area-sections {
+  margin-top: 1.5rem;
+}
+
+.public .filters {
+  margin: 1.5rem 0 0.5rem;
+}
+
+.offering {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+}
+
+.offering h3 {
+  font-size: var(--step-1);
+}
+
+.facts {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.facts dt {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--masi);
+  padding-top: 0.2rem;
+}
+
+.facts dd {
+  margin: 0;
+}
+
+/* Sponsorship and editorial features, always disclosed in the same plain voice. */
+.disclosure {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  color: var(--masi);
+}
+
+.creator {
+  margin-top: 1.5rem;
+}
+
+.portrait {
+  display: block;
+  width: min(16rem, 60%);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 1px solid var(--rule);
+}
+
+.creator .sample {
+  margin-top: 1.25rem;
+}
+
+@media (max-width: 40rem) {
+  .facts div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.15rem;
   }
 }

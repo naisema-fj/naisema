@@ -27,10 +27,7 @@ export const AREA_INFO: Record<PrimaryArea, { description: string; notYetOpen?: 
     description: "Na iSema Voices: conversations with Fijians at home and abroad, each with a full transcript.",
   },
   discover: { description: "Places, history and the ways things are done." },
-  connect: {
-    description: "Classes, courses and people who teach.",
-    notYetOpen: "Listings of classes, courses and teachers are being prepared.",
-  },
+  connect: { description: "Classes, courses and people who teach." },
   ezine: { description: "Articles, essays and reflections." },
   resources: {
     description: "Guides and materials to use and share.",

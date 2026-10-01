@@ -3,6 +3,8 @@ import { DateMark } from "~/components/public/postmarks";
 import { AREA_INFO, AREA_NAMES, isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
+import { providerPath, sponsorsText } from "~/lib/listing-fields";
+import { featuredListings } from "~/lib/providers.server";
 import { publicHeaders } from "~/lib/public-cache.server";
 import { listPublic } from "~/lib/search.server";
 import type { Route } from "./+types/area";
@@ -16,8 +18,30 @@ export const headers = publicHeaders;
 export async function loader({ params, context }: Route.LoaderArgs) {
   if (!isPrimaryArea(params.area)) throw new Response("Not found", { status: 404 });
   const db = getDb(context.get(cloudflareContext).env.DB);
-  const { listings, total } = await listPublic(db, { area: params.area, limit: AREA_PAGE_LIMIT });
-  return { area: params.area, items: listings, total };
+  const [{ listings, total }, featured] = await Promise.all([
+    listPublic(db, { area: params.area, limit: AREA_PAGE_LIMIT }),
+    // Connect also lists Providers, their Offerings and Creators, with what editors feature.
+    params.area === "connect" ? featuredListings(db) : null,
+  ]);
+  return {
+    area: params.area,
+    items: listings,
+    total,
+    featured: featured && {
+      providers: featured.providers.map((row) => ({
+        name: row.name,
+        path: providerPath(row.slug),
+        rationale: row.featureRationale,
+        sponsors: sponsorsText(row.sponsoredBy),
+      })),
+      offerings: featured.offerings.map((row) => ({
+        name: `${row.title}, from ${row.providerName}`,
+        path: providerPath(row.providerSlug),
+        rationale: row.featureRationale,
+        sponsors: sponsorsText(row.sponsoredBy, row.providerSponsoredBy),
+      })),
+    },
+  };
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -29,7 +53,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 export default function Area({ loaderData }: Route.ComponentProps) {
-  const { area, items, total } = loaderData;
+  const { area, items, total, featured } = loaderData;
   const info = AREA_INFO[area];
   return (
     <main id="main" className="area-page">
@@ -56,6 +80,8 @@ export default function Area({ loaderData }: Route.ComponentProps) {
             <span className="from-label">Not open yet</span> {info.notYetOpen}
           </p>
         )}
+        {featured && <ConnectListings featured={featured} />}
+        {featured && items.length > 0 && <h2>Newest in {AREA_NAMES[area]}</h2>}
         {items.length ? (
           <ul className="letter-list">
             {items.map((item) => (
@@ -86,5 +112,43 @@ export default function Area({ loaderData }: Route.ComponentProps) {
         )}
       </article>
     </main>
+  );
+}
+
+type Featured = NonNullable<Route.ComponentProps["loaderData"]["featured"]>;
+
+/** Connect's own listings, and the ones editors feature, each with why (PUB-04). */
+function ConnectListings({ featured }: { featured: Featured }) {
+  const chosen = [...featured.providers, ...featured.offerings];
+  return (
+    <>
+      <nav aria-label="Connect listings" className="area-sections">
+        <ul>
+          <li>
+            <Link to="/connect/offerings">Classes and courses</Link>
+          </li>
+          <li>
+            <Link to="/connect/providers">Providers</Link>
+          </li>
+          <li>
+            <Link to="/connect/creators">Creators</Link>
+          </li>
+        </ul>
+      </nav>
+      {chosen.length > 0 && (
+        <section aria-labelledby="featured-heading">
+          <h2 id="featured-heading">Featured by our editors</h2>
+          <ul className="letter-list">
+            {chosen.map((row) => (
+              <li key={`${row.path}|${row.name}`}>
+                <Link to={row.path}>{row.name}</Link>
+                <p>{`Why: ${row.rationale}`}</p>
+                {row.sponsors && <p className="disclosure">{row.sponsors}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </>
   );
 }

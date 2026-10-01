@@ -1,4 +1,5 @@
 import type { ArticleSnapshot } from "~/lib/article-fields";
+import { MEDIA_TYPES } from "~/lib/creator-fields";
 import { distributionText, episodeSpeakers, formatDuration, transcriptParagraphs } from "~/lib/episode-fields";
 import { AGE_GUIDANCE } from "~/lib/resource-fields";
 import { TranscriptParagraphs } from "./transcript-paragraphs";
@@ -13,12 +14,34 @@ export function RevisionTypeDetails({
   snapshot,
   fileName,
   audioPath,
+  sampleTitle = null,
 }: {
   snapshot: ArticleSnapshot;
   fileName: string | null;
   audioPath: string;
+  /** A Creator Profile's free sample, by its current title. */
+  sampleTitle?: string | null;
 }) {
-  const { resource, episode } = snapshot;
+  const { resource, episode, creator } = snapshot;
+  if (creator) {
+    return (
+      <section aria-labelledby="type-details-heading">
+        <h2 id="type-details-heading">Creator Profile</h2>
+        <dl>
+          <dt>Portrait</dt>
+          <dd>{fileName ?? MISSING_FILE}</dd>
+          <dt>Based in</dt>
+          <dd>{creator.location}</dd>
+          <dt>Languages</dt>
+          <dd>{creator.languages.join(", ") || "None given"}</dd>
+          <dt>Works in</dt>
+          <dd>{creator.mediaTypes.map((type) => MEDIA_TYPES[type]).join(", ")}</dd>
+          <dt>Free sample</dt>
+          <dd>{sampleTitle ?? "An item that no longer exists"}</dd>
+        </dl>
+      </section>
+    );
+  }
   if (resource) {
     const { source } = resource;
     return (

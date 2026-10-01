@@ -56,6 +56,7 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
 
       {item.resource && <ResourceDetails id={item.id} resource={item.resource} />}
       {item.episode && <EpisodePlayer title={item.title} episode={item.episode} />}
+      {item.creator && <CreatorDetails creator={item.creator} />}
 
       <div className="letter-body">
         <ArticleBodyView body={item.body} embeds={item.embeds} />
@@ -168,6 +169,49 @@ function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable
             ))}
           </ul>
         </>
+      )}
+    </section>
+  );
+}
+
+/**
+ * A Creator Profile's portrait (consented, with its own Rights Record), where they are at a level
+ * that can't find their door, what they make, and their free sample (CRE-01).
+ */
+function CreatorDetails({ creator }: { creator: NonNullable<PublicArticle["creator"]> }) {
+  return (
+    <section className="creator" aria-labelledby="creator-heading">
+      <h2 id="creator-heading" className="visually-hidden">
+        About the creator
+      </h2>
+      <img
+        className="portrait"
+        src={creator.portrait.src}
+        srcSet={creator.portrait.srcSet}
+        sizes="(min-width: 40rem) 16rem, 60vw"
+        alt={creator.portrait.alt}
+      />
+      <dl>
+        <dt>Based in</dt>
+        <dd>{creator.location}</dd>
+        {creator.languages.length > 0 && (
+          <>
+            <dt>Languages</dt>
+            <dd>{creator.languages.join(", ")}</dd>
+          </>
+        )}
+        <dt>Works in</dt>
+        <dd>{creator.mediaTypes.join(", ")}</dd>
+      </dl>
+      {creator.sample && (
+        <div className="sample">
+          <h3>A free sample of their work</h3>
+          <p>
+            <Link to={creator.sample.path}>{creator.sample.title}</Link>
+            {` · ${creator.sample.typeName}`}
+          </p>
+          <p>{creator.sample.summary}</p>
+        </div>
       )}
     </section>
   );

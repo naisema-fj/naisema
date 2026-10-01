@@ -1,3 +1,5 @@
+import { itemPath } from "./item-paths";
+
 /**
  * Edge caching for public pages (ADR-0007): public HTML is cached for at most five minutes, and
  * publishing, withdrawing or moving an item purges the pages it appears on. Together with the
@@ -49,7 +51,9 @@ export async function servePublic(request: Request, env: Env, ctx: ExecutionCont
 /** The public pages an item appears on: its own page, its area, the homepage and the sitemap. */
 export const pagesShowing = (item: { type: string; area: string; slug: string; topicSlugs?: string[] }) => [
   "/",
-  ...(item.type === "page" ? [`/${item.slug}`] : [`/${item.area}`, `/${item.area}/${item.slug}`]),
+  itemPath({ type: item.type, primaryArea: item.area, slug: item.slug }),
+  ...(item.type === "page" ? [] : [`/${item.area}`]),
+  ...(item.type === "creator" ? ["/connect/creators"] : []),
   ...(item.topicSlugs ?? []).map((slug) => `/topics/${slug}`),
   "/sitemap.xml",
 ];

@@ -3,7 +3,7 @@ import { contentItem, slugRedirect } from "~db/schema";
 import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
-import { slugify } from "./slug";
+import { isReservedSlug, slugify } from "./slug";
 
 export type SlugChange =
   | { ok: true; area: PrimaryArea; oldSlug: string; newSlug: string }
@@ -29,6 +29,8 @@ export async function changeSlug(
     return { ok: false, error: `Use lower-case letters, digits and hyphens, for example "${slug}".` };
   }
   if (slug === item.slug) return { ok: false, error: "That is already its slug." };
+  if (isReservedSlug(item.primaryArea, slug))
+    return { ok: false, error: "That address is one of the area's own pages." };
 
   const area = item.primaryArea;
   const [takenByItem, takenByRedirect] = await Promise.all([

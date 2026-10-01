@@ -71,6 +71,13 @@
       "when": 1790840101250,
       "tag": "0009_rights_parts_and_episodes",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790897317329,
+      "tag": "0010_providers_offerings",
+      "breakpoints": true
     }
   ]
 }

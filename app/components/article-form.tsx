@@ -3,6 +3,7 @@ import { AREA_NAMES, PRIMARY_AREAS, type PrimaryArea } from "~/lib/areas";
 import type { ArticleBody } from "~/lib/article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, type FieldErrors } from "~/lib/article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType } from "~/lib/content-types";
+import { CREATOR_LIMITS, MEDIA_TYPES } from "~/lib/creator-fields";
 import { clockDuration, EPISODE_LIMITS } from "~/lib/episode-fields";
 import { AGE_GUIDANCE, RESOURCE_LIMITS } from "~/lib/resource-fields";
 import { FLAG_NAMES } from "~/lib/review-names";
@@ -31,6 +32,8 @@ type Props = {
   files?: MediaChoice[];
   /** Media library audio an Episode can play. */
   audio?: MediaChoice[];
+  /** Media library images, for a Creator's portrait. */
+  images?: MediaChoice[];
   /** The Revision this form was opened from, so a save can't silently replace a newer one. */
   baseRevisionId?: string;
   submitLabel: string;
@@ -45,12 +48,14 @@ export function ArticleForm({
   area,
   files = [],
   audio = [],
+  images = [],
   baseRevisionId,
   submitLabel,
 }: Props) {
   const resource = values.resource;
   const source = resource?.source;
   // A refused form brings back the length as it was typed.
+  const creator = values.creator;
   const episode = values.episode as (ArticleSnapshot["episode"] & { durationEntered?: string }) | undefined;
   // One row per distribution link the limit allows: the saved ones, then empty rows.
   const linkRows = Array.from(
@@ -422,6 +427,85 @@ export function ArticleForm({
             ))}
             {fieldError("episodeDistribution")}
           </fieldset>
+        </fieldset>
+      )}
+
+      {type === "creator" && (
+        <fieldset>
+          <legend>Creator Profile</legend>
+          <p>
+            The title is the name they chose to be known by, and the body their biography. Their consent to the profile
+            is this item's Rights Record; the portrait needs a Rights Record of its own.
+          </p>
+          <label htmlFor="creatorPortraitAssetId">Portrait</label>
+          <select
+            id="creatorPortraitAssetId"
+            name="creatorPortraitAssetId"
+            defaultValue={creator?.portraitAssetId ?? ""}
+            aria-describedby={describedBy("creatorPortraitAssetId")}
+          >
+            <option value="">Choose an image</option>
+            {images.map((file) => (
+              <option key={file.id} value={file.id}>
+                {file.name}
+              </option>
+            ))}
+          </select>
+          {fieldError("creatorPortraitAssetId")}
+          <label htmlFor="creatorLocation">Based in (a town, island or country)</label>
+          <input
+            id="creatorLocation"
+            name="creatorLocation"
+            maxLength={CREATOR_LIMITS.location}
+            defaultValue={creator?.location ?? ""}
+            aria-describedby={describedBy("creatorLocation")}
+          />
+          {fieldError("creatorLocation")}
+          <label htmlFor="creatorLanguages">Languages, one per line</label>
+          <textarea
+            id="creatorLanguages"
+            name="creatorLanguages"
+            rows={2}
+            defaultValue={creator?.languages?.join("\n") ?? ""}
+            aria-describedby={describedBy("creatorLanguages")}
+          />
+          {fieldError("creatorLanguages")}
+          <fieldset aria-describedby={describedBy("creatorMediaType")}>
+            <legend>Works in</legend>
+            {Object.entries(MEDIA_TYPES).map(([mediaType, name]) => (
+              <div key={mediaType} className="choice">
+                <input
+                  type="checkbox"
+                  id={`creatorMediaType-${mediaType}`}
+                  name="creatorMediaType"
+                  value={mediaType}
+                  defaultChecked={(creator?.mediaTypes as string[] | undefined)?.includes(mediaType)}
+                />
+                <label htmlFor={`creatorMediaType-${mediaType}`}>{name}</label>
+              </div>
+            ))}
+            {fieldError("creatorMediaType")}
+          </fieldset>
+          <label htmlFor="creatorSampleItemId">Free sample of their work</label>
+          <select
+            id="creatorSampleItemId"
+            name="creatorSampleItemId"
+            defaultValue={creator?.sampleItemId ?? ""}
+            aria-describedby={describedBy("creatorSampleItemId")}
+          >
+            <option value="">Choose a published item</option>
+            {embeddable
+              .filter(
+                (item) => item.typeName !== CONTENT_TYPE_NAMES.creator && item.typeName !== CONTENT_TYPE_NAMES.page,
+              )
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                  {item.typeName ? ` (${item.typeName})` : ""}
+                </option>
+              ))}
+          </select>
+          {fieldError("creatorSampleItemId")}
         </fieldset>
       )}
 

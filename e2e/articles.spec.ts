@@ -5,7 +5,7 @@ test("an editor writes an article, revises it, compares revisions and restores o
   const title = `Sevusevu ${testInfo.project.name} ${Date.now()}`;
   await followSignInLink(page, `e2e-editor-${testInfo.project.name}@naisema.test`);
   await confirmTwoFactorCode(page, await startTwoFactorSetup(page));
-  await page.getByRole("link", { name: "Articles" }).click();
+  await page.getByRole("link", { name: "Content", exact: true }).click();
   await page.getByRole("link", { name: "Write a new article" }).click();
   await expect(page.getByRole("heading", { name: "New article" })).toBeVisible();
 

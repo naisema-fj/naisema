@@ -11,9 +11,9 @@ import {
 } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
-import { CONTENT_TYPE_NAMES, type ContentType, EPISODE_AREA, isContentType, PAGE_AREA } from "~/lib/content-types";
+import { CONTENT_TYPE_NAMES, type ContentType, FIXED_AREAS, isContentType, PAGE_AREA } from "~/lib/content-types";
 import type { Database } from "~/lib/db.server";
-import { downloadChoices, episodeAudioChoices } from "~/lib/media-delivery.server";
+import { downloadChoices, episodeAudioChoices, imageChoices } from "~/lib/media-delivery.server";
 import { createContentItem } from "~/lib/revisions.server";
 import { listTopics } from "~/lib/topics.server";
 import type { Route } from "./+types/new";
@@ -31,14 +31,15 @@ export function meta({ loaderData }: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { db } = await requireEditor(context.get(cloudflareContext).env, request);
   const type = typeOf(request);
-  const [topics, embeddable, files, audio, pages] = await Promise.all([
+  const [topics, embeddable, files, audio, images, pages] = await Promise.all([
     listTopics(db),
     embeddableArticles(db),
     type === "resource" ? downloadChoices(db) : [],
     type === "episode" ? episodeAudioChoices(db) : [],
+    type === "creator" ? imageChoices(db) : [],
     type === "page" ? availablePages(db) : [],
   ]);
-  return { type, topics, embeddable, pages, files, audio };
+  return { type, topics, embeddable, pages, files, audio, images };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -68,11 +69,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 /**
- * Where a new item goes: its primary area; Voices for an Episode; or for a Page, which site page it
- * is (its fixed address).
+ * Where a new item goes: its primary area; the area its type always sits in (FIXED_AREAS); or for
+ * a Page, which site page it is (its fixed address).
  */
 async function readPlacement(db: Database, type: ContentType, form: FormData) {
-  if (type === "episode") return { ok: true as const, value: { primaryArea: EPISODE_AREA as typeof EPISODE_AREA } };
+  const fixed = FIXED_AREAS[type];
+  if (fixed) return { ok: true as const, value: { primaryArea: fixed } };
   if (type === "page") {
     const path = String(form.get("page") ?? "");
     const page = (await availablePages(db)).find((candidate) => candidate.path === path);
@@ -115,11 +117,12 @@ export default function NewContent({ loaderData, actionData }: Route.ComponentPr
           embeddable={loaderData.embeddable}
           files={loaderData.files}
           audio={loaderData.audio}
+          images={loaderData.images}
           area={
             type === "page"
               ? { choose: "page", pages: loaderData.pages }
-              : type === "episode"
-                ? { choose: false, current: EPISODE_AREA }
+              : FIXED_AREAS[type]
+                ? { choose: false, current: FIXED_AREAS[type] }
                 : { choose: true }
           }
           submitLabel="Save first revision"

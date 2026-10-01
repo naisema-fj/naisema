@@ -1,4 +1,5 @@
 import type { ArticleBody } from "./article-body";
+import type { CreatorDetails, CreatorField } from "./creator-fields";
 import type { EpisodeDetails, EpisodeField } from "./episode-fields";
 import type { ReviewType } from "./permissions";
 import type { ResourceDetails, ResourceField } from "./resource-fields";
@@ -27,9 +28,11 @@ export type ArticleSnapshot = {
   resource?: ResourceDetails;
   /** An Episode's recording, speakers, transcript and distribution links. */
   episode?: EpisodeDetails;
+  /** A Creator Profile's location, languages, media, portrait and free sample. */
+  creator?: CreatorDetails;
 };
 
-export type ArticleField = keyof ArticleSnapshot | "primaryArea" | "page" | ResourceField | EpisodeField;
+export type ArticleField = keyof ArticleSnapshot | "primaryArea" | "page" | ResourceField | EpisodeField | CreatorField;
 export type FieldErrors = Partial<Record<ArticleField, string>>;
 
 /** Maximum lengths of the article's text fields, shared by the form and the server check. */
@@ -58,6 +61,9 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   const recording = episode ? { audioAssetId: episode.audioAssetId, transcript: episode.transcript } : {};
   const speakers = episode ? { host: episode.host, guests: episode.guests } : {};
   const sourcesUsed = episode ? { music: episode.music ?? [], archiveClips: episode.archiveClips ?? [] } : {};
+  // A Creator Profile's portrait shows a person, so safeguarding covers it with the editorial facts.
+  const creator = snapshot.creator ? { creator: snapshot.creator } : {};
+  const portrait = snapshot.creator ? { portraitAssetId: snapshot.creator.portraitAssetId } : {};
   const episodeFacts = episode
     ? { recordedOn: episode.recordedOn, durationSeconds: episode.durationSeconds, distribution: episode.distribution }
     : {};
@@ -88,8 +94,9 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
       ...speakers,
       ...sourcesUsed,
       ...episodeFacts,
+      ...creator,
     },
     accessibility: { title, body, ...resourceAccess, ...recording },
-    safeguarding: { title, summary, body, ...recording, ...speakers },
+    safeguarding: { title, summary, body, ...recording, ...speakers, ...portrait },
   };
 }

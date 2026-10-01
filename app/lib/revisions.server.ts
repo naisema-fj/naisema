@@ -6,7 +6,7 @@ import type { ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
 import { carryForwardInserts } from "./review.server";
 import type { Fingerprints } from "./review-rules";
-import { firstFreeSlug, slugify } from "./slug";
+import { firstFreeSlug, RESERVED_SLUGS, slugify } from "./slug";
 
 /**
  * The Content Item / Revision model every content type shares (ADR-0006): a stable parent row
@@ -67,7 +67,10 @@ export async function createContentItem(
           ),
         ),
     ]);
-    const taken = new Set([...current, ...redirected].map((row) => row.slug));
+    const taken = new Set([
+      ...[...current, ...redirected].map((row) => row.slug),
+      ...(RESERVED_SLUGS[item.primaryArea] ?? []),
+    ]);
     try {
       return await insertContentItem(db, item, firstFreeSlug(base, taken));
     } catch (error) {

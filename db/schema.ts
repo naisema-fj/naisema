@@ -8,6 +8,16 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type {
+  AccessMode,
+  AgeSuitability,
+  Cost,
+  HandledBy,
+  Level,
+  OfferingAccess,
+  OfferingFormat,
+  OrganisationType,
+} from "../app/lib/listing-fields";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
 
@@ -492,4 +502,91 @@ export const linkReport = sqliteTable(
     reportedAt: integer("reported_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.contentItemId, table.reporterKey] })],
+);
+
+// --- Providers, Offerings and Partnership Agreements (PART-01–03) ---
+
+/**
+ * An organisation or person whose learning Offerings are listed (CONTEXT.md, Provider). A plain
+ * listing editors keep: empty text means not known. Listing implies no partnership or endorsement.
+ */
+export const provider = sqliteTable("provider", {
+  id: text("id").primaryKey(),
+  /** Its address under /connect/providers/; fixed when the Provider is added. */
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  organisationType: text("organisation_type").$type<OrganisationType>().notNull(),
+  location: text("location").notNull().default(""),
+  website: text("website").notNull().default(""),
+  contactRoute: text("contact_route").notNull().default(""),
+  lastCheckedOn: text("last_checked_on").notNull(),
+  /** Shown on the public site. */
+  listed: integer("listed", { mode: "boolean" }).notNull().default(false),
+  /** Who sponsors this listing, disclosed wherever it is shown; null when nobody does. */
+  sponsoredBy: text("sponsored_by"),
+  /** Why editors feature it (PUB-04); featured exactly when this is set. */
+  featureRationale: text("feature_rationale"),
+  createdBy: text("created_by").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/** A programme, course, resource or class a Provider offers, with exactly one access mode (PART-02). */
+export const offering = sqliteTable(
+  "offering",
+  {
+    id: text("id").primaryKey(),
+    providerId: text("provider_id")
+      .notNull()
+      .references(() => provider.id),
+    title: text("title").notNull(),
+    summary: text("summary").notNull().default(""),
+    languageVariety: text("language_variety").notNull().default(""),
+    level: text("level").$type<Level>().notNull(),
+    ageSuitability: text("age_suitability").$type<AgeSuitability>().notNull(),
+    accessibility: text("accessibility").notNull().default(""),
+    format: text("format").$type<OfferingFormat>().notNull(),
+    cost: text("cost", { mode: "json" }).$type<Cost>().notNull(),
+    /** Kept beside `cost` so the listing can filter on it. */
+    costKind: text("cost_kind").$type<Cost["kind"]>().notNull(),
+    startsOn: text("starts_on").notNull().default(""),
+    endsOn: text("ends_on").notNull().default(""),
+    access: text("access", { mode: "json" }).$type<OfferingAccess>().notNull(),
+    /** Kept beside `access` so the listing can filter on it. */
+    accessMode: text("access_mode").$type<AccessMode>().notNull(),
+    enrolmentBy: text("enrolment_by").$type<HandledBy>().notNull(),
+    supportBy: text("support_by").$type<HandledBy>().notNull(),
+    listed: integer("listed", { mode: "boolean" }).notNull().default(false),
+    sponsoredBy: text("sponsored_by"),
+    featureRationale: text("feature_rationale"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("offering_provider_idx").on(table.providerId)],
+);
+
+/**
+ * A recorded Partnership Agreement (CONTEXT.md, Partner): while one is in force, and only then,
+ * the Provider is shown as a Partner. Ended early by setting `endedAt`, never deleted.
+ */
+export const partnershipAgreement = sqliteTable(
+  "partnership_agreement",
+  {
+    id: text("id").primaryKey(),
+    providerId: text("provider_id")
+      .notNull()
+      .references(() => provider.id),
+    /** Where the signed agreement is kept, in words: "MOU signed 3 Sept 2026, founder's files". */
+    reference: text("reference").notNull(),
+    startsOn: text("starts_on").notNull(),
+    /** Its last day, or null when it runs until ended. */
+    endsOn: text("ends_on"),
+    endedAt: integer("ended_at", { mode: "timestamp_ms" }),
+    endedBy: text("ended_by"),
+    recordedBy: text("recorded_by").notNull(),
+    recordedAt: integer("recorded_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("partnership_agreement_provider_idx").on(table.providerId)],
 );

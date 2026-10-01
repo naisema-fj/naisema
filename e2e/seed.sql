@@ -139,3 +139,57 @@ VALUES ('e2e-episode', 'voices', 'episode', 'Talanoa: coming home to Levuka',
 ON CONFLICT(content_item_id) DO NOTHING;
 INSERT INTO search_entry_topic (content_item_id, topic_id) VALUES ('e2e-episode', 'e2e-topic-ceremonies')
 ON CONFLICT DO NOTHING;
+
+-- A listed Provider with an Offering and a Partnership Agreement, for Connect's pages.
+INSERT INTO provider (id, slug, name, description, organisation_type, location, website, contact_route,
+  last_checked_on, listed, sponsored_by, feature_rationale, created_by, created_at, updated_at)
+VALUES ('e2e-provider', 'e2e-lami-language-school', 'Lami Language School', 'Evening Fijian classes for adults.',
+  'school', 'Lami, Fiji', 'https://lami.example', 'Email enrol@lami.example', '2026-09-30', 1, NULL,
+  'Small classes, taught online for Fijians abroad.', 'e2e-seed', 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO offering (id, provider_id, title, summary, language_variety, level, age_suitability, accessibility,
+  format, cost, cost_kind, starts_on, ends_on, access, access_mode, enrolment_by, support_by, listed,
+  created_by, created_at, updated_at)
+VALUES ('e2e-offering', 'e2e-provider', 'Conversational Fijian, evenings', 'Ten weeks of talking practice.',
+  'Standard Fijian', 'beginner', 'adults', '', 'online', '{"kind":"paid","amount":"120","currency":"AUD"}', 'paid',
+  '2026-11-02', '', '{"mode":"external_link","url":"https://lami.example/enrol"}', 'external_link', 'provider',
+  'unknown', 1, 'e2e-seed', 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO partnership_agreement (id, provider_id, reference, starts_on, ends_on, recorded_by, recorded_at)
+VALUES ('e2e-agreement', 'e2e-provider', 'MOU, founder''s files', '2026-01-01', NULL, 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+
+-- A published Creator Profile whose free sample is the seeded article, with a consented portrait.
+INSERT INTO media_asset (id, purpose, type, name, size, status, quarantine_key, destination_key, alt_text,
+  uploaded_by, created_at, updated_at, scanned_at)
+VALUES ('e2e-portrait', 'media', 'image/png', 'litia.png', 1000, 'ready', 'quarantine/e2e-portrait',
+  'media/e2e-portrait', 'Litia smiling outside a church in Taveuni', 'e2e-seed', 0, 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-portrait-rights', 'media_asset', 'e2e-portrait', 'Litia Vula', '["publish"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO content_item (id, type, slug, primary_area, created_by, created_at, updated_at,
+  publication_state, first_published_at, last_published_at)
+VALUES ('e2e-creator', 'creator', 'e2e-litia-vula', 'connect', 'e2e-seed', 0, 0, 'published',
+  1790000000000, 1790000000000)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO revision (id, content_item_id, number, snapshot, fingerprints, created_by, created_at)
+VALUES ('e2e-creator-r1', 'e2e-creator', 1,
+  '{"title":"Litia Vula","summary":"Sings and makes short films about home.","credit":"Profile by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Litia grew up in Taveuni and now lives in Brisbane."}]}]},"sources":"","flags":[],"languageVariety":null,"creator":{"location":"Brisbane","languages":["Standard Fijian","English"],"mediaTypes":["music","video"],"portraitAssetId":"e2e-portrait","sampleItemId":"e2e-article"}}',
+  '{}', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+UPDATE content_item SET current_draft_revision_id = 'e2e-creator-r1', current_published_revision_id = 'e2e-creator-r1'
+WHERE id = 'e2e-creator';
+INSERT INTO revision_submission (revision_id, submitted_by, submitted_at) VALUES ('e2e-creator-r1', 'e2e-seed', 0)
+ON CONFLICT(revision_id) DO NOTHING;
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-creator-rights', 'content_item', 'e2e-creator', 'Litia Vula', '["publish"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO search_entry (content_item_id, primary_area, format, title, summary, topic_names, published_at)
+VALUES ('e2e-creator', 'connect', 'creator', 'Litia Vula', 'Sings and makes short films about home.',
+  'E2E Ceremonies', 1790000000000)
+ON CONFLICT(content_item_id) DO NOTHING;

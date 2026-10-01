@@ -7,6 +7,7 @@ import {
   DOWNLOADABLE_TYPES,
   downloadName,
   EPISODE_AUDIO_TYPES,
+  IMAGE_TYPES,
   UPLOAD_TYPE_NAMES,
   type UploadType,
 } from "./upload-rules";
@@ -86,6 +87,10 @@ export const downloadChoices = (db: Database) => choicesOf(db, DOWNLOADABLE_TYPE
 /** The audio an Episode can play (an MP3 or M4A that has passed its scan), or undefined. */
 export const readyEpisodeAudio = (db: Database, id: string) => readyOf(db, id, EPISODE_AUDIO_TYPES);
 export const episodeAudioChoices = (db: Database) => choicesOf(db, EPISODE_AUDIO_TYPES);
+
+/** An image that has passed its scan, such as a Creator's portrait, or undefined. */
+export const readyImage = (db: Database, id: string) => readyOf(db, id, IMAGE_TYPES);
+export const imageChoices = (db: Database) => choicesOf(db, IMAGE_TYPES);
 
 /**
  * A ready file as a download, sandboxed by its own content security policy so it can never run in

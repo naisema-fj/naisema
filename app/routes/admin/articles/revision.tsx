@@ -3,7 +3,7 @@ import { ArticleBodyView } from "~/components/article-body-view";
 import { ReviewPanel } from "~/components/review-panel";
 import { RevisionTypeDetails } from "~/components/revision-type-details";
 import type { ArticleSnapshot } from "~/lib/article-fields";
-import { embedsFor } from "~/lib/articles.server";
+import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { mediaName } from "~/lib/media.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
@@ -30,6 +30,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 /** The media library file a Resource offers or an Episode plays, if any. */
 const mediaAssetIdOf = (snapshot: ArticleSnapshot) =>
   snapshot.episode?.audioAssetId ??
+  snapshot.creator?.portraitAssetId ??
   (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -55,6 +56,9 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     topics: topicNames(revision.snapshot.topicIds),
     embeds: await embedsFor(db, revision.snapshot.body),
     fileName: await mediaName(db, mediaAssetIdOf(revision.snapshot)),
+    sampleTitle: revision.snapshot.creator
+      ? ((await getArticle(db, revision.snapshot.creator.sampleItemId))?.currentRevision.snapshot.title ?? null)
+      : null,
     review: {
       state: review.state,
       flags: review.flags,
@@ -195,6 +199,7 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
         <RevisionTypeDetails
           snapshot={snapshot}
           fileName={loaderData.fileName}
+          sampleTitle={loaderData.sampleTitle}
           audioPath={`/admin/articles/${article.id}/revisions/${revision.number}/audio`}
         />
       </article>

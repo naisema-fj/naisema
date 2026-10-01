@@ -4,11 +4,12 @@ import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody } from "./article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
+import { readCreatorFields } from "./creator-fields";
 import type { Database } from "./db.server";
 import { readEpisodeFields } from "./episode-fields";
 import { INFO_PAGES } from "./info-pages";
 import { toLanguageVariety } from "./language-variety";
-import { readyDownload, readyEpisodeAudio } from "./media-delivery.server";
+import { readyDownload, readyEpisodeAudio, readyImage } from "./media-delivery.server";
 import { readResourceFields } from "./resource-fields";
 import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
@@ -110,10 +111,31 @@ export async function readArticleForm(
       }
     }
   }
+  let creator: ArticleSnapshot["creator"];
+  if (type === "creator") {
+    const read = readCreatorFields(form);
+    if (!read.ok) Object.assign(errors, read.errors);
+    creator = (read.ok ? read.details : read.values) as ArticleSnapshot["creator"];
+    // What was chosen is checked even when other fields need fixing, so every problem shows at once.
+    if (creator?.portraitAssetId && !(await readyImage(db, creator.portraitAssetId))) {
+      errors.creatorPortraitAssetId = "Choose an image that has passed its virus scan.";
+    }
+    if (creator?.sampleItemId) {
+      const sample = await db
+        .select({ id: contentItem.id, type: contentItem.type })
+        .from(contentItem)
+        .where(eq(contentItem.id, creator.sampleItemId))
+        .get();
+      if (!sample || sample.id === itemId || sample.type === "creator" || sample.type === "page") {
+        errors.creatorSampleItemId = "Choose an Article, Resource or Episode that shows their work.";
+      }
+    }
+  }
   const extras = {
     ...(relatedIds.length ? { relatedIds } : {}),
     ...(resource ? { resource } : {}),
     ...(episode ? { episode } : {}),
+    ...(creator ? { creator } : {}),
   };
 
   if (!parsed.ok || Object.keys(errors).length) {

@@ -5,6 +5,7 @@ import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, embeddedItemIds } from "./article-body";
 import type { ArticleSnapshot } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
+import { type CreatorDetails, MEDIA_TYPES } from "./creator-fields";
 import type { Database } from "./db.server";
 import {
   type EpisodeDetails,
@@ -13,6 +14,8 @@ import {
   isoDuration,
   transcriptParagraphs,
 } from "./episode-fields";
+import { itemPath } from "./item-paths";
+import { imagePath } from "./media-delivery.server";
 import { eligibilityFor } from "./publication.server";
 import { AGE_GUIDANCE, linkHost, type ResourceDetails } from "./resource-fields";
 import { loadReview } from "./review.server";
@@ -25,7 +28,7 @@ import { formatBytes, UPLOAD_TYPE_NAMES } from "./upload-rules";
  * never render, and nothing needs unpublishing.
  */
 
-export const publicPath = (area: string, slug: string) => `/${area}/${slug}`;
+export { creatorPath, itemPath, publicPath } from "./item-paths";
 
 type ItemRow = typeof contentItem.$inferSelect;
 
@@ -47,10 +50,6 @@ export async function eligiblePublished(db: Database, item: ItemRow, now: Date) 
 /** Withdrawn or archived after being published; an item never published stays unknown to visitors. */
 const isTakenDown = (item: ItemRow) =>
   (item.publicationState === "withdrawn" || item.publicationState === "archived") && item.firstPublishedAt !== null;
-
-/** A content type's public address: /{area}/{slug}, or /{slug} for a Page. */
-export const itemPath = (item: { type: string; primaryArea: string; slug: string }) =>
-  item.type === "page" ? `/${item.slug}` : publicPath(item.primaryArea, item.slug);
 
 /** A Resource as a visitor sees it before downloading the file or following the link. */
 export type PublicResource = {
@@ -78,6 +77,15 @@ export type PublicEpisode = {
   distribution: { label: string; url: string; host: string }[];
 };
 
+/** A Creator Profile as visitors see it: their portrait, where they are, what they make, a free sample. */
+export type PublicCreator = {
+  portrait: { src: string; srcSet: string; alt: string };
+  location: string;
+  languages: string[];
+  mediaTypes: string[];
+  sample: RelatedItem | null;
+};
+
 export type RelatedItem = { title: string; path: string; typeName: string; summary: string };
 
 export type PublicArticle = {
@@ -97,6 +105,7 @@ export type PublicArticle = {
   labels: string[];
   resource: PublicResource | null;
   episode: PublicEpisode | null;
+  creator: PublicCreator | null;
   related: RelatedItem[];
   firstPublishedAt: Date | null;
   lastPublishedAt: Date | null;
@@ -120,13 +129,12 @@ export async function findPublicArticle(
   area: PrimaryArea,
   slug: string,
   now = new Date(),
+  types: readonly ContentType[] = AREA_TYPES,
 ): Promise<PublicLookup> {
   const item = await db
     .select()
     .from(contentItem)
-    .where(
-      and(eq(contentItem.primaryArea, area), eq(contentItem.slug, slug), inArray(contentItem.type, [...AREA_TYPES])),
-    )
+    .where(and(eq(contentItem.primaryArea, area), eq(contentItem.slug, slug), inArray(contentItem.type, [...types])))
     .get();
 
   if (!item) {
@@ -196,6 +204,7 @@ async function publicView(
     labels: reviewLabels({ progress: review.progress, flags: review.flags }),
     resource: snapshot.resource ? await publicResource(db, item.id, snapshot.resource) : null,
     episode: snapshot.episode ? await publicEpisode(db, item.id, snapshot.episode) : null,
+    creator: snapshot.creator ? await publicCreator(db, snapshot.title, snapshot.creator, now) : null,
     related: await relatedItems(db, snapshot.relatedIds ?? [], now),
     firstPublishedAt: item.firstPublishedAt,
     lastPublishedAt: item.lastPublishedAt,
@@ -241,6 +250,26 @@ async function publicEpisode(db: Database, itemId: string, details: EpisodeDetai
     isoDuration: isoDuration(details.durationSeconds),
     transcript: transcriptParagraphs(details.transcript, episodeSpeakers(details)),
     distribution: details.distribution.map((link) => ({ ...link, host: linkHost(link.url) })),
+  };
+}
+
+async function publicCreator(db: Database, name: string, details: CreatorDetails, now: Date): Promise<PublicCreator> {
+  const portrait = await db
+    .select({ altText: mediaAsset.altText })
+    .from(mediaAsset)
+    .where(eq(mediaAsset.id, details.portraitAssetId))
+    .get();
+  const [sample] = await relatedItems(db, [details.sampleItemId], now);
+  return {
+    portrait: {
+      src: imagePath(details.portraitAssetId, 640),
+      srcSet: [320, 640, 960].map((width) => `${imagePath(details.portraitAssetId, width)} ${width}w`).join(", "),
+      alt: portrait?.altText || `Portrait of ${name}`,
+    },
+    location: details.location,
+    languages: details.languages,
+    mediaTypes: details.mediaTypes.map((type) => MEDIA_TYPES[type]),
+    sample: sample ?? null,
   };
 }
 

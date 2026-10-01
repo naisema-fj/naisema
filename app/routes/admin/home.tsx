@@ -41,13 +41,16 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
           <h2>Content</h2>
           <ul>
             <li>
-              <a href="/admin/articles">Articles</a>
+              <a href="/admin/articles">Content</a>
             </li>
             <li>
               <a href="/admin/topics">Topics</a>
             </li>
             <li>
               <a href="/admin/contributors">Contributors</a>
+            </li>
+            <li>
+              <a href="/admin/providers">Providers and offerings</a>
             </li>
           </ul>
         </>
