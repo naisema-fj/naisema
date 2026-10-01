@@ -50,6 +50,25 @@ const EVIDENCE_TYPES: readonly UploadType[] = ["application/pdf", "image/jpeg", 
 
 export const kindOf = (type: UploadType): UploadKind => TYPES[type].kind;
 
+/** How a type is named to staff. */
+export const UPLOAD_TYPE_NAMES: Record<UploadType, string> = {
+  "video/mp4": "MP4 video",
+  "video/quicktime": "MOV video",
+  "audio/mpeg": "MP3 audio",
+  "audio/mp4": "M4A audio",
+  "application/pdf": "PDF",
+  "image/jpeg": "JPEG image",
+  "image/png": "PNG image",
+  "image/webp": "WebP image",
+};
+
+/** A file size as staff read it: "820 KB", "12.5 MB", "1.2 GB". */
+export function formatBytes(bytes: number) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, "")} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1).replace(/\.0$/, "")} GB`;
+}
+
 export const isUploadType = (value: string): value is UploadType => Object.hasOwn(TYPES, value);
 
 /** A file name's extension, as typed, for the accept list of a file input. */

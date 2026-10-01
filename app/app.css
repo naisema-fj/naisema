@@ -198,3 +198,69 @@ a {
 .sources {
   white-space: pre-line;
 }
+
+/* Media library */
+.page-wide {
+  max-width: 64rem;
+}
+
+.hint {
+  margin: 0.25rem 0;
+  color: #4a4a4a;
+}
+
+.upload-form button[type="submit"] {
+  margin-top: 1rem;
+}
+
+.upload-form progress {
+  width: 12rem;
+  vertical-align: middle;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.table-scroll:focus-visible {
+  outline: 3px solid #0b4f5c;
+}
+
+.media-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 44rem;
+}
+
+.media-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+
+.media-table th,
+.media-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem;
+  border-bottom: 1px solid #d6d3cc;
+}
+
+.media-table .reason {
+  display: block;
+  color: #a4161a;
+}
+
+.alt-form {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.alt-form input[name="altText"] {
+  flex: 1;
+  min-width: 8rem;
+  font: inherit;
+  padding: 0.3rem;
+}

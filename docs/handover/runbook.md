@@ -61,12 +61,14 @@ pnpm wrangler login
 pnpm wrangler d1 create naisema-staging --location oc
 pnpm wrangler r2 bucket create naisema-staging-media --location oc
 pnpm wrangler r2 bucket create naisema-staging-evidence --location oc
+pnpm wrangler r2 bucket create naisema-staging-quarantine --location oc
+pnpm wrangler queues create naisema-staging-upload-scans
 ```
 
 - When `d1 create` or `r2 bucket create` asks whether to add the resource to your Wrangler configuration, answer **No**. Wrangler would add it to the top level as a *remote* binding, which makes local development and tests talk to real staging or production data.
 - Instead, copy the D1 `database_id` printed by `d1 create` into the matching `env.<name>.d1_databases` entry in `wrangler.jsonc` and commit it. Database IDs and the account ID are not secrets. (Staging and production were provisioned on 29 September 2026; their IDs are already in `wrangler.jsonc`.)
 - Leave D1 read replication off (the default) per ADR-0004.
-- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Account Settings: Read, limited to the Na iSema account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
+- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Queues: Edit, Containers: Edit, Cloudflare Images: Edit, Account Settings: Read, limited to the Na iSema account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
 - **Development** runs entirely in Miniflare on each developer's machine; there is no remote development Worker, database or bucket, and none is needed until a shared preview environment is wanted.
 
 ### Connect GitHub
@@ -142,6 +144,22 @@ The public site (`app/routes/public/`, styles in `app/styles/public.css`, design
 - **Rebuilding the whole index**, if it is ever lost or suspect: run `DELETE FROM search_entry_topic; DELETE FROM search_entry;` with `wrangler d1 execute`, then re-run the backfill statements at the end of `migrations/0006_search.sql`. The backfill approximates eligibility by requiring current Publish rights; re-checking each item shown drops anything else that isn't eligible.
 - **Load test** (#21: p95 ≤ 2 s with 5,000 items): run `pnpm search:load-test seed --env staging --count 5000`, then `run --url https://staging.naisema.com`, then `remove --env staging`. The script refuses production. The plan needs Workers Paid: a search page makes about 165 D1 queries, over the Free plan's 50. A local run measures one worker queueing every request, so its p95 overstates what staging will show; one search takes about 0.2 s locally.
 - **Backups:** Cloudflare documents that `wrangler d1 export` does not support virtual tables, which includes `search_fts`. Time Travel is unaffected. An export-based backup must drop `search_fts` first and rebuild it after import (see #34).
+
+## Upload safety
+
+Every upload follows the same path (docs/phase-1a-defaults.md §1, ADR-0010); the code is in `app/lib/upload-rules.ts`, `media.server.ts` and `scan.server.ts`.
+
+1. **Before it starts:** the file's extension, declared type and size are checked against the allowlist: MP4 and MOV up to 2 GB, MP3 and M4A up to 500 MB, PDF up to 50 MB, JPEG, PNG and WebP up to 25 MB, and Rights Record evidence (PDF or image) up to 10 MB. Only editors and Educators can upload, and only on the admin host; the public site has no upload path.
+2. **Upload:** the file arrives in 10 MiB parts, as an R2 multipart upload into the private `QUARANTINE` bucket. The first part's leading bytes must match the type, which stops a renamed executable. Choosing the same file again resumes an interrupted upload. Evidence arrives in one go with the Rights Record form.
+3. **Scan:** a finished upload is queued on `naisema-<env>-upload-scans`. The Worker consumes the queue, checks the type again, and streams the file to ClamAV running in Cloudflare Containers (`containers/scanner`, instance type `standard-1`, at most two instances). A clean file is copied to `MEDIA` (the media library) or `EVIDENCE` (Rights Record evidence) and marked ready. An infected or unscannable file stays in quarantine, and the media library or rights page shows why. A scanner that can't answer, for example while clamd is still loading its signatures, means a retry with a growing delay. After five deliveries the upload is marked failed. Every step is safe to repeat.
+4. **Daily tidy-up** (the 19:45 UTC cron): failed and infected files are deleted 30 days after the scan, uploads unfinished after 7 days are abandoned, and scans with no verdict after an hour are queued again.
+5. **Delivery:** ready images are served from `/media/images/<id>/<width>` (320, 640, 960, 1280 or 1920), re-encoded as WebP through the Cloudflare Images binding, which strips metadata. Ready PDFs are served from `/media/files/<id>`, always as a download with a sandboxing content security policy. Audio and video are delivered by their own players when those arrive (#16, #25).
+
+**The scanner image** is the official `clamav/clamav:stable` image, which includes a recent signature database, plus a small Go front end (`containers/scanner/main.go`). Inside the container, freshclam keeps the signatures current, so the container needs internet access. `wrangler deploy` builds the image with Docker, so the deploy runner needs Docker; GitHub's runners have it. To check the image, run `sh scripts/scanner-smoke.sh`, which needs Docker. It builds the image and checks that a clean file passes and the EICAR test file is caught. CI runs it on every pull request.
+
+**Locally and in tests** the container isn't built (`dev.enable_containers: false`), so uploads stay "Being scanned for viruses" while the local queue retries. Integration tests drive the scan step directly with a stand-in scanner. To scan for real locally, set `enable_containers` to `true` with Docker running.
+
+**If uploads stay in scanning:** look at the Worker's queue consumer logs ("Upload scan failed") and at the container's logs in the dashboard (Workers & Pages › Containers). The daily job re-queues stalled scans; to retry at once, re-upload the file.
 
 ## Custom domains
 

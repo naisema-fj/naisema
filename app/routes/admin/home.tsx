@@ -17,6 +17,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
     canEditContent: can(actor, { action: "content.edit" }),
+    canUpload: can(actor, { action: "media.upload" }),
     isReviewer: can(actor, { action: "reviewQueue.view" }),
     roles: actor.roles.map(describeRoleAssignment),
   };
@@ -50,6 +51,11 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
             </li>
           </ul>
         </>
+      )}
+      {loaderData.canUpload && (
+        <p>
+          <a href="/admin/media">Media library</a>
+        </p>
       )}
       {loaderData.isReviewer && (
         <p>

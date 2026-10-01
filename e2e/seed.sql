@@ -24,6 +24,16 @@ INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUE
 INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
   ('e2e-editor-desktop-role', 'e2e-editor-desktop', 'editor', 'e2e-seed', 0),
   ('e2e-editor-mobile-role', 'e2e-editor-mobile', 'editor', 'e2e-seed', 0);
+-- One Educator per browser project for the media library journey; their earlier uploads go first.
+DELETE FROM media_upload_part WHERE asset_id IN (SELECT id FROM media_asset WHERE uploaded_by LIKE 'e2e-educator-%');
+DELETE FROM media_asset WHERE uploaded_by LIKE 'e2e-educator-%';
+DELETE FROM user WHERE email LIKE 'e2e-educator-%@naisema.test';
+INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
+  ('e2e-educator-desktop', 'E2E Educator', 'e2e-educator-desktop-chromium@naisema.test', 0, 0, 0),
+  ('e2e-educator-mobile', 'E2E Educator', 'e2e-educator-mobile-chromium@naisema.test', 0, 0, 0);
+INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
+  ('e2e-educator-desktop-role', 'e2e-educator-desktop', 'educator', 'e2e-seed', 0),
+  ('e2e-educator-mobile-role', 'e2e-educator-mobile', 'educator', 'e2e-seed', 0);
 INSERT INTO topic (id, slug, name, created_by, created_at) VALUES
   ('e2e-topic-ceremonies', 'e2e-ceremonies', 'E2E Ceremonies', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;
