@@ -28,12 +28,7 @@ export function publicCacheKey(env: Env, url: string) {
 }
 
 /** Serves a public GET from the edge cache when it can, and caches cacheable answers. */
-export async function servePublic(
-  request: Request,
-  env: Env,
-  ctx: ExecutionContext,
-  render: () => Promise<Response>,
-) {
+export async function servePublic(request: Request, env: Env, ctx: ExecutionContext, render: () => Promise<Response>) {
   if (request.method !== "GET") return render();
   const cache = edgeCache();
   const key = publicCacheKey(env, request.url);
