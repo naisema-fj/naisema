@@ -2,6 +2,7 @@ import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
 import { isEligible } from "~/lib/publication.server";
+import { type Scanner, scanUpload } from "~/lib/scan.server";
 import {
   act,
   approve,
@@ -40,8 +41,20 @@ async function insertRecord(articleId: string, fields: { expiresAt?: number; use
   return id;
 }
 
+/** Passes a record's quarantined evidence through the scan step, as the queue consumer would. */
+async function scanEvidence(recordId: string) {
+  const row = await env.DB.prepare("SELECT evidence_asset_id AS assetId FROM rights_record WHERE id = ?1")
+    .bind(recordId)
+    .first<{ assetId: string }>();
+  const cleanScanner: Scanner = async ({ body }) => {
+    await body.cancel();
+    return { verdict: "clean" };
+  };
+  expect(await scanUpload(env, getDb(env.DB), row?.assetId as string, cleanScanner)).toBe("clean");
+}
+
 describe("Rights Records", () => {
-  it("records a Rights Record with its evidence in the private bucket, and audits it", async () => {
+  it("records a Rights Record and scans its evidence before it reaches the private bucket", async () => {
     const editor = await staff("editor", { role: "editor" });
     const article = await createArticle(editor);
 
@@ -54,6 +67,13 @@ describe("Rights Records", () => {
     const [record] = await rightsRecords(article.id);
     expect(record).toMatchObject({ rightsHolder: "Sera Vula" });
     expect(JSON.parse(record.uses)).toEqual(["publish", "excerpt"]);
+    expect(await env.EVIDENCE.head(record.evidenceKey)).toBeNull();
+    expect(await (await editor.browser.fetch(`/admin/articles/${article.id}/rights`)).text()).toContain(
+      "being scanned for viruses",
+    );
+
+    await scanEvidence(record.id);
+
     const stored = await env.EVIDENCE.get(record.evidenceKey);
     expect(await stored?.text()).toContain("%PDF-1.7");
     expect(await auditActions(editor.userId)).toContain("rights_record.recorded");
@@ -68,6 +88,10 @@ describe("Rights Records", () => {
     const article = await createArticle(editor);
     await recordRights(editor.browser, article.id);
     const [record] = await rightsRecords(article.id);
+    const early = await editor.browser.fetch(`/admin/rights/${record.id}/evidence`);
+    expect(early.status).toBe(409);
+    expect(await early.text()).toContain("still being scanned");
+    await scanEvidence(record.id);
 
     const download = await editor.browser.fetch(`/admin/rights/${record.id}/evidence`);
 
@@ -105,7 +129,7 @@ describe("Rights Records", () => {
     const response = await recordRights(editor.browser, article.id, { evidence: disguised });
 
     expect(response.status).toBe(400);
-    expect(await response.text()).toContain("Evidence must be a PDF, JPEG, PNG or WebP file.");
+    expect(await response.text()).toContain("The file&#x27;s contents don&#x27;t match its type");
     expect(await rightsRecords(article.id)).toEqual([]);
   });
 
@@ -139,7 +163,7 @@ describe("Rights Records", () => {
     const farOver = await recordRights(editor.browser, article.id, { evidence: pdfOfSize(11 * 1024 * 1024) });
 
     expect(justOver.status).toBe(400);
-    expect(await justOver.text()).toContain("Evidence files can be at most 10 MB.");
+    expect(await justOver.text()).toContain("the limit is 10 MB");
     expect(farOver.status).toBe(413);
     expect(await rightsRecords(article.id)).toEqual([]);
   });

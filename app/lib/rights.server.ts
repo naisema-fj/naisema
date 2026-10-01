@@ -1,17 +1,10 @@
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
-import { contributor, rightsRecord, rightsRecordContributor, user } from "~db/schema";
+import { contributor, mediaAsset, rightsRecord, rightsRecordContributor, user } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
-import {
-  EVIDENCE_MAX_BYTES,
-  type EvidenceType,
-  evidenceTypeOf,
-  isCurrent,
-  isPermittedUse,
-  matchesDeclared,
-  type PermittedUse,
-  type RightsFacts,
-} from "./rights-rules";
+import { quarantineFile } from "./media.server";
+import { isCurrent, isPermittedUse, type PermittedUse, type RightsFacts } from "./rights-rules";
+import { checkContent, checkDeclared, type UploadType } from "./upload-rules";
 
 /** What a Rights Record covers. Only whole Content Items for now; media assets join with #14. */
 export type RightsSubject = { type: "content_item"; id: string };
@@ -44,9 +37,15 @@ const statusOf = (record: RecordRow, now: Date): RightsStatus =>
 /** Every Rights Record on a subject, newest first, with its contributors and whether it is current. */
 export async function listRights(db: Database, subject: RightsSubject, now = new Date()) {
   const rows = await db
-    .select({ record: rightsRecord, recordedBy: user.email })
+    .select({
+      record: rightsRecord,
+      recordedBy: user.email,
+      evidenceStatus: mediaAsset.status,
+      evidenceReason: mediaAsset.statusReason,
+    })
     .from(rightsRecord)
     .leftJoin(user, eq(user.id, rightsRecord.createdBy))
+    .leftJoin(mediaAsset, eq(mediaAsset.id, rightsRecord.evidenceAssetId))
     .where(and(eq(rightsRecord.subjectType, subject.type), eq(rightsRecord.subjectId, subject.id)))
     .orderBy(asc(rightsRecord.createdAt));
   const links = rows.length
@@ -61,12 +60,15 @@ export async function listRights(db: Database, subject: RightsSubject, now = new
           ),
         )
     : [];
-  return rows.reverse().map(({ record, recordedBy }) => ({
+  return rows.reverse().map(({ record, recordedBy, evidenceStatus, evidenceReason }) => ({
     id: record.id,
     rightsHolder: record.rightsHolder,
     permittedUses: record.permittedUses,
     guardianPermission: record.guardianPermission,
     evidenceName: record.evidenceName,
+    // Evidence stored before the scan pipeline has no asset and counts as ready.
+    evidenceStatus: evidenceStatus ?? "ready",
+    evidenceReason: evidenceReason ?? null,
     expiresAt: record.expiresAt,
     withdrawnAt: record.withdrawnAt,
     withdrawalReason: record.withdrawalReason,
@@ -83,7 +85,7 @@ export type RightsForm = {
   guardianPermission: boolean;
   expiresAt: Date | null;
   contributorIds: string[];
-  evidence: { bytes: Uint8Array; name: string; type: EvidenceType };
+  evidence: { bytes: Uint8Array; name: string; type: UploadType };
 };
 
 /** What was typed into the form, to show it again when the form is refused (the file can't be kept). */
@@ -129,14 +131,15 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
   const file = form.get("evidence");
   let evidence: RightsForm["evidence"] | null = null;
   if (!(file instanceof File) || file.size === 0) errors.evidence = "Attach the evidence of this permission.";
-  else if (file.size > EVIDENCE_MAX_BYTES) errors.evidence = "Evidence files can be at most 10 MB.";
   else {
-    const bytes = new Uint8Array(await file.arrayBuffer());
-    const type = evidenceTypeOf(bytes);
-    if (!type) errors.evidence = "Evidence must be a PDF, JPEG, PNG or WebP file.";
-    else if (!matchesDeclared(type, file.type, file.name)) {
-      errors.evidence = "The file's name or type doesn't match what it contains. Check it is the right file.";
-    } else evidence = { bytes, name: file.name.slice(0, 200), type };
+    const declared = checkDeclared(file, "evidence");
+    if (!declared.ok) errors.evidence = declared.error;
+    else {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const content = checkContent(declared.type, bytes.subarray(0, 16));
+      if (!content.ok) errors.evidence = content.error;
+      else evidence = { bytes, name: file.name.slice(0, 200), type: declared.type };
+    }
   }
 
   if (Object.keys(errors).length || !evidence) {
@@ -156,8 +159,9 @@ export async function readRightsForm(db: Database, form: FormData, now = new Dat
 }
 
 /**
- * Records a Rights Record with its evidence. The evidence is stored first; if the record then
- * can't be written, the stored file is removed again so no orphaned evidence is left behind.
+ * Records a Rights Record with its evidence. The evidence goes into quarantine and is scanned like
+ * every upload (ADR-0010); it can be downloaded once it passes. If the record then can't be
+ * written, the quarantined file is refused so it never reaches the evidence bucket.
  */
 export async function recordRights(
   env: Env,
@@ -167,8 +171,7 @@ export async function recordRights(
   rights: RightsForm,
 ): Promise<string> {
   const id = crypto.randomUUID();
-  const evidenceKey = `rights/${id}/${crypto.randomUUID()}`;
-  await env.EVIDENCE.put(evidenceKey, rights.evidence.bytes, { httpMetadata: { contentType: rights.evidence.type } });
+  const evidence = await quarantineFile(env, db, recordedBy, rights.evidence, "evidence");
   try {
     await db.batch([
       db.insert(rightsRecord).values({
@@ -178,9 +181,10 @@ export async function recordRights(
         rightsHolder: rights.rightsHolder,
         permittedUses: rights.permittedUses,
         guardianPermission: rights.guardianPermission,
-        evidenceKey,
+        evidenceKey: evidence.destinationKey,
         evidenceName: rights.evidence.name,
         evidenceType: rights.evidence.type,
+        evidenceAssetId: evidence.id,
         expiresAt: rights.expiresAt,
         createdBy: recordedBy,
         createdAt: new Date(),
@@ -203,8 +207,12 @@ export async function recordRights(
       }),
     ]);
   } catch (error) {
-    // Remove the stored file, but never let a failed clean-up hide why the record wasn't written.
-    await env.EVIDENCE.delete(evidenceKey).catch(() => undefined);
+    // Refuse the quarantined file, but never let a failed clean-up hide why the record wasn't written.
+    await db
+      .update(mediaAsset)
+      .set({ status: "failed", statusReason: "Its Rights Record wasn't saved.", updatedAt: new Date() })
+      .where(eq(mediaAsset.id, evidence.id))
+      .catch(() => undefined);
     throw error;
   }
   return id;
@@ -244,10 +252,21 @@ export async function withdrawRights(
   return { ok: true };
 }
 
-/** A Rights Record's evidence file, for an editor to download. The read is audited. */
+/**
+ * A Rights Record's evidence file, for an editor to download, once its scan has passed. The read
+ * is audited.
+ */
 export async function readEvidence(env: Env, db: Database, readBy: string, recordId: string) {
   const record = await db.select().from(rightsRecord).where(eq(rightsRecord.id, recordId)).get();
   if (!record) return null;
+  if (record.evidenceAssetId) {
+    const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, record.evidenceAssetId)).get();
+    if (asset?.status !== "ready") {
+      return {
+        unavailable: asset?.statusReason ?? "This evidence is still being scanned for viruses. Try again shortly.",
+      };
+    }
+  }
   const object = await env.EVIDENCE.get(record.evidenceKey);
   if (!object) return null;
   await recordAudit(db, {

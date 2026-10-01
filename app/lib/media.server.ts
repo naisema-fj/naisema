@@ -206,7 +206,7 @@ export async function quarantineFile(
   uploadedBy: string,
   file: { name: string; type: UploadType; bytes: Uint8Array },
   purpose: UploadPurpose,
-): Promise<string> {
+): Promise<{ id: string; destinationKey: string }> {
   const id = crypto.randomUUID();
   const quarantineKey = `uploads/${id}`;
   await env.QUARANTINE.put(quarantineKey, file.bytes, { httpMetadata: { contentType: file.type } });
@@ -225,7 +225,7 @@ export async function quarantineFile(
     updatedAt: now,
   });
   await queueScan(env, db, id, uploadedBy);
-  return id;
+  return { id, destinationKey: destinationKey(purpose, id) };
 }
 
 /** Marks an asset as waiting for its scan and sends the scan request. */

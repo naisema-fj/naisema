@@ -12,6 +12,9 @@ export default [
   ]),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
+  // Media library files that passed their scan (app/lib/media-delivery.server.ts).
+  route("media/images/:id/:width", "routes/media/image.ts"),
+  route("media/files/:id", "routes/media/file.ts"),
   // Staff tools, served only on the admin host (workers/app.ts, ADR-0005).
   ...prefix("admin", [
     index("routes/admin/home.tsx"),

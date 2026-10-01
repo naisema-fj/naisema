@@ -16,6 +16,12 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   }
   const evidence = await readEvidence(env, db, actor.userId, params.recordId);
   if (!evidence) throw new Response("Not found", { status: 404 });
+  if ("unavailable" in evidence) {
+    return new Response(evidence.unavailable, {
+      status: 409,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store" },
+    });
+  }
   const filename = evidence.name.replace(/[^\w.-]+/g, "_");
   return new Response(evidence.object.body, {
     headers: {

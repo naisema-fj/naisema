@@ -93,38 +93,3 @@ export function expiryWarningsDue(input: {
     return [{ recordId: record.id, withinDays }];
   });
 }
-
-export const EVIDENCE_MAX_BYTES = 10 * 1024 * 1024;
-
-export type EvidenceType = "application/pdf" | "image/jpeg" | "image/png" | "image/webp";
-
-const EXTENSIONS: Record<EvidenceType, string[]> = {
-  "application/pdf": ["pdf"],
-  "image/jpeg": ["jpg", "jpeg"],
-  "image/png": ["png"],
-  "image/webp": ["webp"],
-};
-
-/**
- * Whether a file's name and declared type agree with what its bytes are (docs/phase-1a-defaults.md
- * §1), so a web page with a PDF header can't be stored as "evidence.html".
- */
-export function matchesDeclared(actual: EvidenceType, declaredType: string, name: string): boolean {
-  const extension = name.split(".").at(-1)?.toLowerCase() ?? "";
-  return (declaredType === "" || declaredType === actual) && EXTENSIONS[actual].includes(extension);
-}
-
-/**
- * The type of an evidence file, read from its first bytes rather than its name or declared type,
- * or null if it isn't one of the accepted kinds (docs/phase-1a-defaults.md §1).
- */
-export function evidenceTypeOf(bytes: Uint8Array): EvidenceType | null {
-  const startsWith = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte);
-  const ascii = (from: number, text: string) =>
-    [...text].every((char, index) => bytes[from + index] === char.charCodeAt(0));
-  if (ascii(0, "%PDF-")) return "application/pdf";
-  if (startsWith(0xff, 0xd8, 0xff)) return "image/jpeg";
-  if (startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image/png";
-  if (ascii(0, "RIFF") && ascii(8, "WEBP")) return "image/webp";
-  return null;
-}

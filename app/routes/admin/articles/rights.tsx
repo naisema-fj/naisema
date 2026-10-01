@@ -6,8 +6,9 @@ import { listContributors } from "~/lib/contributors.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { listRights, readRightsForm, recordRights, withdrawRights } from "~/lib/rights.server";
 import { PERMITTED_USE_NAMES } from "~/lib/rights-names";
-import { EVIDENCE_MAX_BYTES, formatDay, PERMITTED_USES } from "~/lib/rights-rules";
+import { formatDay, PERMITTED_USES } from "~/lib/rights-rules";
 import { readLimitedFormData, UploadTooLarge } from "~/lib/upload-limit.server";
+import { EVIDENCE_MAX_BYTES } from "~/lib/upload-rules";
 import type { Route } from "./+types/rights";
 
 export const handle = { hydrate: false };
@@ -137,7 +138,16 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
                 </dd>
                 <dt>Evidence</dt>
                 <dd>
-                  <a href={`/admin/rights/${record.id}/evidence`}>Download {record.evidenceName}</a>
+                  {record.evidenceStatus === "ready" ? (
+                    <a href={`/admin/rights/${record.id}/evidence`}>Download {record.evidenceName}</a>
+                  ) : record.evidenceStatus === "scanning" || record.evidenceStatus === "uploading" ? (
+                    <>{record.evidenceName}: being scanned for viruses</>
+                  ) : (
+                    <>
+                      {record.evidenceName}: refused. {record.evidenceReason} Record the permission again with a clean
+                      copy.
+                    </>
+                  )}
                 </dd>
                 {record.withdrawnAt && (
                   <>

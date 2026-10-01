@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evidenceTypeOf, expiryWarningsDue, type RightsFacts, rightsProblems } from "~/lib/rights-rules";
+import { expiryWarningsDue, type RightsFacts, rightsProblems } from "~/lib/rights-rules";
 
 const now = new Date("2026-10-01T00:00:00Z");
 const days = (count: number) => new Date(now.getTime() + count * 86_400_000);
@@ -97,22 +97,5 @@ describe("expiryWarningsDue", () => {
         now,
       }),
     ).toEqual([]);
-  });
-});
-
-describe("evidenceTypeOf", () => {
-  const bytes = (...values: number[]) => new Uint8Array([...values, ...new Array(16).fill(0)]);
-
-  it("recognises the allowed evidence files by their first bytes, not their name", () => {
-    expect(evidenceTypeOf(new TextEncoder().encode("%PDF-1.7 rest"))).toBe("application/pdf");
-    expect(evidenceTypeOf(bytes(0xff, 0xd8, 0xff))).toBe("image/jpeg");
-    expect(evidenceTypeOf(bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a))).toBe("image/png");
-    expect(evidenceTypeOf(new TextEncoder().encode("RIFF\0\0\0\0WEBPVP8 "))).toBe("image/webp");
-  });
-
-  it("refuses anything else", () => {
-    expect(evidenceTypeOf(new TextEncoder().encode("<html><script>"))).toBeNull();
-    expect(evidenceTypeOf(bytes(0x4d, 0x5a))).toBeNull();
-    expect(evidenceTypeOf(new Uint8Array())).toBeNull();
   });
 });
