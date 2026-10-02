@@ -81,6 +81,7 @@ async function coldStarts(browser, origin, clip) {
       .then((handle) => handle.jsonValue())
       .catch(() => null);
     runs.push(firstFrameMs === null ? null : Math.round(firstFrameMs));
+    console.log(`  run ${run + 1}: ${runs.at(-1)} ms`);
     await context.close();
   }
   return { runs, within5s: runs.filter((ms) => ms !== null && ms <= 5000).length, passes: runs.filter((ms) => ms !== null && ms <= 5000).length >= 4 };
@@ -89,6 +90,7 @@ async function coldStarts(browser, origin, clip) {
 async function loops(page) {
   const results = {};
   for (const speed of SPEEDS) {
+    console.log(`  ${speed}×`);
     const passes = await page.evaluate(
       async ({ segment, speed }) => {
         const video = document.getElementById("video");
