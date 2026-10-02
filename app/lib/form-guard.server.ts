@@ -1,4 +1,4 @@
-import { verifyTurnstile } from "./turnstile";
+import { verifyTurnstile } from "./turnstile.server";
 
 /**
  * What every public form checks before it reads anything (docs/phase-1a-defaults.md §4): that the

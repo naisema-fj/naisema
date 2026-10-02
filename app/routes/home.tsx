@@ -6,7 +6,11 @@ import { getDb } from "~/lib/db.server";
 import { publicHeaders } from "~/lib/public-cache.server";
 import { listPublic } from "~/lib/search.server";
 import { getSiteSettings } from "~/lib/site-settings.server";
+import { SUBMISSION_TYPES, type SubmissionType } from "~/lib/submission-fields";
 import type { Route } from "./+types/home";
+
+/** The public forms the homepage offers, in the order of the PRD's "ways to participate". */
+const PARTICIPATE_FORMS: SubmissionType[] = ["contribution", "educator_interest", "consultation_interest", "enquiry"];
 
 export const handle = { hydrate: false };
 export const headers = publicHeaders;
@@ -99,18 +103,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         <section className="participate" aria-labelledby="participate-heading">
           <h2 id="participate-heading">Ways to take part</h2>
           <ul className="participate-links">
-            <li>
-              <Link to="/forms/contribute">Offer a story, recording or piece of work</Link>
-            </li>
-            <li>
-              <Link to="/forms/teach">Offer to teach</Link>
-            </li>
-            <li>
-              <Link to="/forms/consultation">Take part in a consultation</Link>
-            </li>
-            <li>
-              <Link to="/forms/enquiry">Send us a message</Link>
-            </li>
+            {PARTICIPATE_FORMS.map((type) => (
+              <li key={type}>
+                <Link to={`/forms/${SUBMISSION_TYPES[type].path}`}>{SUBMISSION_TYPES[type].title}</Link>
+              </li>
+            ))}
           </ul>
         </section>
 

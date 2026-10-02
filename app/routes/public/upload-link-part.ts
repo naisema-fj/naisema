@@ -1,13 +1,13 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { PART_SIZE, uploadPart } from "~/lib/media.server";
 import { readLimitedBytes, UploadTooLarge } from "~/lib/upload-limit.server";
-import { requireLinkUpload } from "~/lib/upload-link-access.server";
+import { requireUploadLinkAsset } from "~/lib/upload-link-access.server";
 import type { Route } from "./+types/upload-link-part";
 
 /** PUT the bytes of one part of a contributor's upload. */
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, link } = await requireLinkUpload(env, params.token, params.id);
+  const { db, link } = await requireUploadLinkAsset(env, params.token, params.id);
   if (request.method !== "PUT") return Response.json({ error: "Use PUT." }, { status: 405 });
   let bytes: Uint8Array;
   try {

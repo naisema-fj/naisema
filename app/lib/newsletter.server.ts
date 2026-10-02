@@ -25,15 +25,25 @@ export async function subscribe(env: Env, email: string, tags: string[]): Promis
     await getDb(env.DB).insert(newsletterOutbox).values({ action: "subscribe", email, tags, createdAt: new Date() });
     return;
   }
+  const headers = buttondown(env);
   const response = await fetch(BUTTONDOWN, {
     method: "POST",
-    headers: buttondown(env),
+    headers,
     body: JSON.stringify({ email_address: email, tags }),
   });
-  // Someone already on the list who signs up again is still on it.
-  if (!response.ok && response.status !== 409) {
-    throw new Error(`The newsletter tool refused a subscription (${response.status})`);
-  }
+  if (response.ok) return;
+  if (response.status !== 409) throw new Error(`The newsletter tool refused a subscription (${response.status})`);
+  // Already on the list: add the new notice version's tag to the tags they have.
+  const subscriber = `${BUTTONDOWN}/${encodeURIComponent(email)}`;
+  const existing = await fetch(subscriber, { headers });
+  if (!existing.ok) throw new Error(`The newsletter tool didn't find a subscriber it reported (${existing.status})`);
+  const current = ((await existing.json()) as { tags?: string[] }).tags ?? [];
+  const updated = await fetch(subscriber, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ tags: [...new Set([...current, ...tags])] }),
+  });
+  if (!updated.ok) throw new Error(`The newsletter tool refused a tag update (${updated.status})`);
 }
 
 /** Takes an address off the list. One that isn't on it needs nothing more. */

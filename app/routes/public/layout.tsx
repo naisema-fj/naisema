@@ -3,6 +3,7 @@ import { AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { INFO_PAGES } from "~/lib/info-pages";
 import type { Route } from "./+types/layout";
 import "~/styles/public.css";
+import { SUBMISSION_TYPES } from "~/lib/submission-fields";
 
 export const handle = { hydrate: false };
 
@@ -63,7 +64,7 @@ function SiteFooter() {
               </li>
             ))}
             <li>
-              <Link to="/forms/enquiry">Send us a message</Link>
+              <Link to={`/forms/${SUBMISSION_TYPES.enquiry.path}`}>{SUBMISSION_TYPES.enquiry.title}</Link>
             </li>
             <li>
               <Link to="/newsletter">Newsletter</Link>

@@ -110,6 +110,19 @@ describe("public forms (PUB-05)", () => {
     expect(await outbox(email)).toHaveLength(1);
   });
 
+  it("answer a resend from what was stored, though Turnstile never takes a token twice", async () => {
+    const send = visitor();
+    const email = address();
+    const form = enquiry(email);
+    expect((await send("/forms/enquiry", form)).status).toBe(200);
+
+    const again = await send("/forms/enquiry", { ...form, "cf-turnstile-response": "" });
+
+    expect(again.status).toBe(200);
+    expect(await again.text()).toContain("it&#x27;s been sent");
+    expect(await rows("SELECT id FROM submission WHERE email = ?1", email)).toHaveLength(1);
+  });
+
   it("keep everything typed when refused, and store nothing", async () => {
     const send = visitor();
     const email = address();
@@ -344,6 +357,30 @@ describe("the newsletter (PUB-06)", () => {
     ]);
   });
 
+  it("is withdrawn from a form's emailed link, recorded as withdrawn by link", async () => {
+    const send = visitor();
+    const email = address();
+    await send(
+      "/forms/enquiry",
+      enquiry(email, { consent: ["reply", "newsletter"], "notice-newsletter": "notice-newsletter-1" }),
+    );
+    const links = [...(await outbox(email))[0].text.matchAll(/https:\/\/naisema\.test(\/consent\/\S+)/g)].map(
+      (match) => match[1],
+    );
+    const [newsletterRecord] = await rows<{ id: string }>(
+      "SELECT id FROM consent_record WHERE email = ?1 AND purpose = 'newsletter'",
+      email,
+    );
+    const link = links.find((each) => each.includes(newsletterRecord.id)) as string;
+
+    expect((await send(link, {})).status).toBe(200);
+
+    expect((await tags(email)).map((row) => row.action)).toEqual(["subscribe", "unsubscribe"]);
+    expect(await rows("SELECT withdrawn_via FROM consent_record WHERE id = ?1", newsletterRecord.id)).toEqual([
+      { withdrawn_via: "link" },
+    ]);
+  });
+
   it("unsubscribes, withdrawing every newsletter consent for the address", async () => {
     const send = visitor();
     const email = address();
@@ -391,6 +428,10 @@ describe("the staff Submission queue", () => {
       form: { status: "in_progress", ownerId: educator.userId, dueOn: "soon" },
     });
     expect(refused.status).toBe(400);
+    const impossible = await editor.browser.fetch(`/admin/submissions/${id}`, {
+      form: { status: "in_progress", ownerId: "", dueOn: "2026-02-31" },
+    });
+    expect(impossible.status).toBe(400);
     expect(await rows("SELECT action FROM audit_event WHERE object_id = ?1 ORDER BY created_at", id)).toEqual([
       { action: "submission.received" },
       { action: "submission.updated" },
@@ -486,6 +527,29 @@ describe("upload links for requested material", () => {
       .bind(Date.now() - 1000, id)
       .run();
     expect(await works(second.path)).toBe(false);
+  });
+
+  it("takes at most 20 files", async () => {
+    const { id, email } = await contribution();
+    const { path } = await sendLink(id, email);
+    const browser = new Browser();
+    const start = () =>
+      browser.fetch(`${PUBLIC}${path}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "meke.pdf",
+          type: "application/pdf",
+          size: pdf.length,
+          head: btoa(String.fromCharCode(...pdf.subarray(0, 16))),
+        }),
+      });
+    for (let file = 0; file < 20; file++) expect((await start()).status).toBe(201);
+
+    const refused = await start();
+
+    expect(refused.status).toBe(409);
+    expect(((await refused.json()) as { error: string }).error).toContain("at most 20 files");
   });
 
   it("only reaches the link's own uploads", async () => {

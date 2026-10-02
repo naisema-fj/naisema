@@ -19,7 +19,7 @@ export async function requireUploadLink(env: Env, token: string) {
 }
 
 /** The gate for one of a link's own uploads. */
-export async function requireLinkUpload(env: Env, token: string, assetId: string) {
+export async function requireUploadLinkAsset(env: Env, token: string, assetId: string) {
   const access = await requireUploadLink(env, token);
   if (!(await linkOwnsAsset(access.db, access.link.id, assetId))) {
     throw Response.json({ error: "That upload doesn't exist." }, { status: 404 });

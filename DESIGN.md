@@ -147,7 +147,7 @@ The photo hero over a grid of image cards is rejected for this world; areas are 
 - Postmark lines: small, uppercase, letter-spaced Jost between two hairline rules; flat and factual, never seals or badges.
 - Jost for interface and headings, Literata for reading.
 - An empty, double-ruled stamp box on every envelope; no stamp art until commissioned work exists.
-- No client JavaScript on public pages; interaction is CSS and native HTML only.
+- No client JavaScript on public pages; interaction is CSS and native HTML only. Two exceptions: a public form loads Cloudflare Turnstile's widget, the only script its page allows, and a contributor's private upload link page runs the resumable uploader. Both are uncached and work like every other page apart from that.
 
 ## Colors
 
@@ -174,7 +174,7 @@ Two inks on paper: deep teal does almost all the work, masi brown is the second 
 ### Named Rules
 **The Two Inks Rule.** Colour comes from deep teal and masi brown only. There is no third accent, no success green, no warning amber; state is said in words.
 
-**The Teal Speaks, Masi Signs Rule.** Teal carries headings, links and facts (dates, formats, Review Labels). Masi carries signatures, labels that introduce a value, availability marks and focus. Do not swap them.
+**The Teal Speaks, Masi Signs Rule.** Teal carries headings, links and facts (dates, formats, Review Labels). Masi carries signatures, labels that introduce a value, availability marks and focus. Do not swap them. A form's problems are written in masi, as a correction signed beside the field, and always said in words ("Nothing was sent"), never by colour alone.
 
 ## Typography
 

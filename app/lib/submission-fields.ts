@@ -143,6 +143,9 @@ export function formValues(form: FormData): FormValues {
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** An email address as stored and compared: trimmed and lower-case. */
+export const normaliseEmail = (email: string) => email.trim().toLowerCase();
+
 /** An email address as typed, or why it can't be used. */
 export function emailProblem(email: string) {
   if (!email) return "Enter your email address, so we can reply.";

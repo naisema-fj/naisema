@@ -10,3 +10,9 @@ export const latestToday = (now = new Date()) => new Date(now.getTime() + 14 * 3
  * agreements are dated in, so one starts and ends on Fiji's days.
  */
 export const fijiToday = (now = new Date()) => new Date(now.getTime() + 12 * 3_600_000).toISOString().slice(0, 10);
+
+/** A moment as a visitor reads the day it fell on in Fiji: "2 October 2026". */
+export const fijiDateText = (date: Date) =>
+  new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Pacific/Fiji" }).format(
+    date,
+  );

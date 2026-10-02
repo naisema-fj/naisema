@@ -11,7 +11,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { currentNotices, joinNewsletter } from "~/lib/consent.server";
 import { getDb } from "~/lib/db.server";
 import { guardForm } from "~/lib/form-guard.server";
-import { emailProblem, formValues, readConsents, SUBMISSION_LIMITS } from "~/lib/submission-fields";
+import { emailProblem, formValues, normaliseEmail, readConsents, SUBMISSION_LIMITS } from "~/lib/submission-fields";
 import type { Route } from "./+types/newsletter";
 
 /** Newsletter sign-up (PUB-06): the newsletter tool asks the person to confirm before anything is sent. */
@@ -43,13 +43,17 @@ export async function action({ request, context }: Route.ActionArgs) {
     return data({ sent: false as const, errors: errors as Errors, values }, { status: 400 });
   }
   const joined = await joinNewsletter(env, getDb(env.DB), email, consents[0], "newsletter");
-  if (!joined) {
+  if (joined !== "joined") {
+    const error =
+      joined === "bad-notice"
+        ? "Reload the page and sign up again."
+        : "We couldn't reach our newsletter service just now, so you aren't signed up. Please try again later.";
     return data(
-      { sent: false as const, errors: { form: "Reload the page and sign up again." } as Errors, values },
-      { status: 400 },
+      { sent: false as const, errors: { form: error } as Errors, values },
+      { status: joined === "bad-notice" ? 400 : 503 },
     );
   }
-  return { sent: true as const, email: email.toLowerCase() };
+  return { sent: true as const, email: normaliseEmail(email) };
 }
 
 export default function Newsletter({ loaderData, actionData }: Route.ComponentProps) {

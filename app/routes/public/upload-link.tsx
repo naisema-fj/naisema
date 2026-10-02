@@ -1,5 +1,6 @@
 import { Form } from "react-router";
 import { MediaUploader } from "~/components/media-uploader";
+import { fijiDateText } from "~/lib/calendar";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { finishUploadLink, linkFiles, openUploadLink } from "~/lib/submissions.server";
@@ -55,9 +56,6 @@ export async function action({ params, context }: Route.ActionArgs) {
   return { finished: true };
 }
 
-const dateText = (iso: string) =>
-  new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "long", timeZone: "Pacific/Fiji" }).format(new Date(iso));
-
 export default function UploadLink({ loaderData, actionData, params }: Route.ComponentProps) {
   if (actionData?.finished) {
     return (
@@ -91,7 +89,7 @@ export default function UploadLink({ loaderData, actionData, params }: Route.Com
         <h1>Upload your files</h1>
         <p className="standfirst">
           Bula {loaderData.name}. Send the material you offered us here. This link is only for you, and works until{" "}
-          {dateText(loaderData.expiresAt)} or until you say you've finished.
+          {fijiDateText(new Date(loaderData.expiresAt))} or until you say you've finished.
         </p>
         <MediaUploader
           endpoint={`/upload/${params.token}/files`}

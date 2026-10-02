@@ -23,7 +23,7 @@ import {
   type SubmissionType,
   submissionTypeAt,
 } from "~/lib/submission-fields";
-import { newFormKey, receiveSubmission } from "~/lib/submissions.server";
+import { alreadyReceived, newFormKey, type Received, receiveSubmission } from "~/lib/submissions.server";
 import type { Route } from "./+types/form";
 
 /** A public form (PUB-05): never cached, no client JavaScript but Turnstile's own. */
@@ -62,6 +62,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
   const type = formType(params.form);
   const form = await request.formData();
+  const db = getDb(env.DB);
+  // A form sent again (a double click, a refresh) is answered from what the first send stored,
+  // before Turnstile, which never accepts the same token twice.
+  const earlier = await alreadyReceived(db, String(form.get("formKey") ?? ""));
+  if (earlier) return sentResult(earlier);
   const guarded = await guardForm(env, request, form, type);
   const refuse = (status: number, errors: Errors, values: Values) =>
     data({ sent: false as const, errors, values }, { status });
@@ -70,14 +75,21 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   if (!read.ok) return refuse(400, read.errors, read.values);
   const received = await receiveSubmission(
     env,
-    getDb(env.DB),
+    db,
     read.submission,
     String(form.get("formKey") ?? ""),
     new URL(request.url).origin,
   );
   if (!received.ok) return refuse(400, { form: received.error }, formValues(form));
-  return { sent: true as const, email: read.submission.email, confirmed: received.confirmed };
+  return sentResult(received);
 }
+
+const sentResult = (received: Received) => ({
+  sent: true as const,
+  email: received.email,
+  confirmed: received.confirmed,
+  newsletter: received.newsletter,
+});
 
 export default function PublicForm({ loaderData, actionData }: Route.ComponentProps) {
   const { type, title, intro, formKey, siteKey, consents } = loaderData;
@@ -94,6 +106,12 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
               ? `We've emailed a copy to ${actionData.email}, with links to withdraw your agreement if you change your mind.`
               : "We couldn't email you a copy just now, but what you sent is safely stored."}
           </p>
+          {actionData.newsletter === false && (
+            <p>
+              We couldn't reach our newsletter service, so you aren't signed up for the newsletter.{" "}
+              <Link to="/newsletter">Try again on the newsletter page</Link>.
+            </p>
+          )}
           <p>
             <Link to="/">Back to Na iSema</Link>
           </p>

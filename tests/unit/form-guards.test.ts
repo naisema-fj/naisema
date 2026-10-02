@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import { hashToken, randomToken, signToken, verifyToken } from "~/lib/signed-tokens";
-import { TURNSTILE_TEST_KEYS, verifyTurnstile } from "~/lib/turnstile";
+import { hashToken, randomToken, signToken, verifyToken } from "~/lib/signed-tokens.server";
+import { TURNSTILE_TEST_KEYS } from "~/lib/turnstile";
+import { verifyTurnstile } from "~/lib/turnstile.server";
 
 describe("verifyTurnstile", () => {
   const unreachable = vi.fn(() => Promise.reject(new Error("no network")));

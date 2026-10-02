@@ -4,7 +4,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { unsubscribeAddress } from "~/lib/consent.server";
 import { getDb } from "~/lib/db.server";
 import { guardForm } from "~/lib/form-guard.server";
-import { emailProblem, formValues, SUBMISSION_LIMITS } from "~/lib/submission-fields";
+import { emailProblem, formValues, normaliseEmail, SUBMISSION_LIMITS } from "~/lib/submission-fields";
 import type { Route } from "./+types/newsletter-unsubscribe";
 
 /**
@@ -34,7 +34,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const problem = emailProblem(email);
   if (problem) return data({ done: false as const, errors: { email: problem } as Errors, values }, { status: 400 });
   await unsubscribeAddress(env, getDb(env.DB), email, "unsubscribe", null);
-  return { done: true as const, email: email.toLowerCase() };
+  return { done: true as const, email: normaliseEmail(email) };
 }
 
 export default function Unsubscribe({ loaderData, actionData }: Route.ComponentProps) {

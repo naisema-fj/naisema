@@ -4,9 +4,15 @@ import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
 import { noticeTag, subscribe, unsubscribe } from "./newsletter.server";
 import { can } from "./permissions";
-import { signToken, verifyToken } from "./signed-tokens";
+import { signToken, verifyToken } from "./signed-tokens.server";
 import { requireStaff } from "./staff.server";
-import { CONSENT_PURPOSES, type ConsentPurpose, type GivenConsent, SUBMISSION_LIMITS } from "./submission-fields";
+import {
+  CONSENT_PURPOSES,
+  type ConsentPurpose,
+  type GivenConsent,
+  normaliseEmail,
+  SUBMISSION_LIMITS,
+} from "./submission-fields";
 
 /**
  * Consent Records (CONTEXT.md; docs/phase-1a-defaults.md §4): one per purpose a person agrees to,
@@ -67,7 +73,7 @@ export function consentInserts(
         id,
         purpose: consent.purpose,
         noticeId: consent.noticeId,
-        email: given.email,
+        email: normaliseEmail(given.email),
         sourceForm: given.sourceForm,
         submissionId: given.submissionId,
         givenAt: given.at,
@@ -109,7 +115,7 @@ export async function withdrawConsent(
   const record = await db.select().from(consentRecord).where(eq(consentRecord.id, recordId)).get();
   if (!record) return null;
   if (record.purpose === "newsletter") {
-    await unsubscribeAddress(env, db, record.email, via === "link" ? "unsubscribe" : via, actorId, now);
+    await unsubscribeAddress(env, db, record.email, via, actorId, now);
     return { ...record, withdrawnAt: record.withdrawnAt ?? now };
   }
   if (record.withdrawnAt) return record;
@@ -134,11 +140,11 @@ export async function unsubscribeAddress(
   env: Env,
   db: Database,
   email: string,
-  via: "unsubscribe" | "staff",
+  via: "link" | "unsubscribe" | "staff",
   actorId: string | null,
   now = new Date(),
 ) {
-  const address = email.trim().toLowerCase();
+  const address = normaliseEmail(email);
   await unsubscribe(env, address);
   const active = await db
     .select({ id: consentRecord.id })
@@ -170,14 +176,36 @@ export async function unsubscribeAddress(
 }
 
 /**
- * Adds an address to the newsletter, after recording the consent it was given with. An address
- * that already agreed to this notice version isn't recorded again.
+ * Asks the newsletter tool to add an address whose newsletter consent was just recorded. If the
+ * tool can't be reached, that consent is removed again, so no record claims a sign-up that never
+ * happened; the person is told and can sign up later.
  */
-export async function joinNewsletter(env: Env, db: Database, email: string, consent: GivenConsent, sourceForm: string) {
-  const address = email.trim().toLowerCase();
-  const shown = await shownNotices(db, [consent]);
-  const shownNotice = shown?.get(consent.noticeId);
-  if (!shownNotice) return false;
+export async function subscribeOrForget(env: Env, db: Database, email: string, recordId: string, version: number) {
+  try {
+    await subscribe(env, email, [noticeTag(version)]);
+    return true;
+  } catch (error) {
+    console.error("Newsletter sign-up failed", recordId, error);
+    await db.delete(consentRecord).where(eq(consentRecord.id, recordId));
+    return false;
+  }
+}
+
+/**
+ * Adds an address to the newsletter, after recording the consent it was given with. An address
+ * that already agreed to this notice version isn't recorded again. "unavailable" means the
+ * newsletter tool couldn't be reached and nothing was kept.
+ */
+export async function joinNewsletter(
+  env: Env,
+  db: Database,
+  email: string,
+  consent: GivenConsent,
+  sourceForm: "newsletter",
+): Promise<"joined" | "bad-notice" | "unavailable"> {
+  const address = normaliseEmail(email);
+  const shownNotice = (await shownNotices(db, [consent]))?.get(consent.noticeId);
+  if (!shownNotice) return "bad-notice";
   const already = await db
     .select({ id: consentRecord.id })
     .from(consentRecord)
@@ -189,12 +217,26 @@ export async function joinNewsletter(env: Env, db: Database, email: string, cons
       ),
     )
     .get();
-  if (!already) {
-    const [record] = consentInserts(db, [consent], { email: address, sourceForm, submissionId: null, at: new Date() });
-    await record.insert;
+  if (already) {
+    return subscribe(env, address, [noticeTag(shownNotice.version)])
+      .then(() => "joined" as const)
+      .catch((error) => {
+        console.error("Newsletter sign-up failed", already.id, error);
+        return "unavailable" as const;
+      });
   }
-  await subscribe(env, address, [noticeTag(shownNotice.version)]);
-  return true;
+  const [record] = consentInserts(db, [consent], { email: address, sourceForm, submissionId: null, at: new Date() });
+  await db.batch([
+    record.insert,
+    auditInsert(db, {
+      actorId: null,
+      action: "consent.given",
+      objectType: "consent_record",
+      objectId: record.id,
+      details: { purpose: "newsletter" },
+    }),
+  ]);
+  return (await subscribeOrForget(env, db, address, record.id, shownNotice.version)) ? "joined" : "unavailable";
 }
 
 /** A person's Consent Records, newest first, with the notices they agreed to: for the privacy contact. */
@@ -203,7 +245,7 @@ export function consentsOf(db: Database, email: string) {
     .select({ record: consentRecord, notice })
     .from(consentRecord)
     .innerJoin(notice, eq(notice.id, consentRecord.noticeId))
-    .where(eq(consentRecord.email, email.trim().toLowerCase()))
+    .where(eq(consentRecord.email, normaliseEmail(email)))
     .orderBy(desc(consentRecord.givenAt));
 }
 

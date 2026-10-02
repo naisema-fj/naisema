@@ -2,17 +2,18 @@ import { and, asc, desc, eq, gt, inArray, isNull, ne } from "drizzle-orm";
 import { consentRecord, mediaAsset, notice, submission, uploadLink, uploadLinkFile, user } from "~db/schema";
 import { auditInsert } from "./audit.server";
 import { fijiToday } from "./calendar";
-import { consentInserts, shownNotices, withdrawalLink } from "./consent.server";
+import { consentInserts, shownNotices, subscribeOrForget, withdrawalLink } from "./consent.server";
 import type { Database } from "./db.server";
 import { sendEmail } from "./email.server";
-import { noticeTag, subscribe } from "./newsletter.server";
 import { can } from "./permissions";
 import { DAY_MS } from "./rights-rules";
-import { hashToken, randomToken } from "./signed-tokens";
+import { hashToken, randomToken } from "./signed-tokens.server";
 import { requireStaff } from "./staff.server";
 import { activeHolders } from "./staff-roles.server";
 import {
   CONSENT_PURPOSES,
+  type ConsentPurpose,
+  normaliseEmail,
   SUBMISSION_STATUSES,
   SUBMISSION_TYPES,
   type SubmissionInput,
@@ -39,12 +40,45 @@ const FORM_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$
 /** The key a form is rendered with; sending it twice stores one Submission. */
 export const newFormKey = () => crypto.randomUUID();
 
+/** Whether a YYYY-MM-DD is a day that exists (not 31 February, which Date would roll into March). */
+const isCalendarDay = (day: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  const date = new Date(`${day}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === day;
+};
+
 const addDays = (day: string, days: number) =>
   new Date(new Date(`${day}T00:00:00Z`).getTime() + days * DAY_MS).toISOString().slice(0, 10);
 
-export type ReceiveResult =
-  | { ok: true; id: string; duplicate: boolean; confirmed: boolean }
-  | { ok: false; error: string };
+export type Received = {
+  ok: true;
+  id: string;
+  email: string;
+  duplicate: boolean;
+  confirmed: boolean;
+  /** Whether asking to join the newsletter worked; null when it wasn't asked for. */
+  newsletter: boolean | null;
+};
+export type ReceiveResult = Received | { ok: false; error: string };
+
+/**
+ * The Submission a form key already stored, as the result of sending it. A form sent twice (a
+ * double click, a refresh) is answered from this before anything else is checked, because the
+ * second send's Turnstile token has already been spent.
+ */
+export async function alreadyReceived(db: Database, formKey: string): Promise<Received | null> {
+  if (!FORM_KEY.test(formKey)) return null;
+  const found = await db.select().from(submission).where(eq(submission.formKey, formKey)).get();
+  if (!found) return null;
+  return {
+    ok: true,
+    id: found.id,
+    email: found.email,
+    duplicate: true,
+    confirmed: Boolean(found.confirmedAt),
+    newsletter: null,
+  };
+}
 
 /**
  * Stores a Submission and its Consent Records, then (only then) joins the newsletter if asked and
@@ -59,11 +93,7 @@ export async function receiveSubmission(
   now = new Date(),
 ): Promise<ReceiveResult> {
   if (!FORM_KEY.test(formKey)) return { ok: false, error: "Reload the page and send the form again." };
-  const earlier = async () => {
-    const found = await db.select().from(submission).where(eq(submission.formKey, formKey)).get();
-    return found ? { ok: true as const, id: found.id, duplicate: true, confirmed: Boolean(found.confirmedAt) } : null;
-  };
-  const sent = await earlier();
+  const sent = await alreadyReceived(db, formKey);
   if (sent) return sent;
   const notices = await shownNotices(db, input.consents);
   if (!notices) {
@@ -71,7 +101,7 @@ export async function receiveSubmission(
   }
 
   const id = crypto.randomUUID();
-  const email = input.email.toLowerCase();
+  const email = normaliseEmail(input.email);
   const consents = consentInserts(db, input.consents, { email, sourceForm: input.type, submissionId: id, at: now });
   try {
     await db.batch([
@@ -91,18 +121,23 @@ export async function receiveSubmission(
     ]);
   } catch (error) {
     // The same form sent again while the first was still being stored.
-    const stored = await earlier();
+    const stored = await alreadyReceived(db, formKey);
     if (stored) return stored;
     throw error;
   }
 
-  const newsletter = input.consents.find((consent) => consent.purpose === "newsletter");
-  if (newsletter) {
-    const version = notices.get(newsletter.noticeId)?.version ?? 1;
-    await subscribe(env, email, [noticeTag(version)]).catch((error) =>
-      console.error("Newsletter sign-up failed", id, error),
-    );
-  }
+  const newsletterConsent = consents.find((consent) => consent.purpose === "newsletter");
+  const newsletterNotice = input.consents.find((consent) => consent.purpose === "newsletter");
+  const newsletter =
+    newsletterConsent && newsletterNotice
+      ? await subscribeOrForget(
+          env,
+          db,
+          email,
+          newsletterConsent.id,
+          notices.get(newsletterNotice.noticeId)?.version ?? 1,
+        )
+      : null;
 
   const confirmed = await sendConfirmation(env, input, consents, origin)
     .then(() => true)
@@ -111,13 +146,13 @@ export async function receiveSubmission(
       return false;
     });
   if (confirmed) await db.update(submission).set({ confirmedAt: new Date() }).where(eq(submission.id, id));
-  return { ok: true, id, duplicate: false, confirmed };
+  return { ok: true, id, email, duplicate: false, confirmed, newsletter };
 }
 
 async function sendConfirmation(
   env: Env,
   input: SubmissionInput,
-  consents: { id: string; purpose: keyof typeof CONSENT_PURPOSES }[],
+  consents: { id: string; purpose: ConsentPurpose }[],
   origin: string,
 ) {
   const type = SUBMISSION_TYPES[input.type];
@@ -207,8 +242,7 @@ export async function updateSubmission(db: Database, actorId: string, id: string
   if (change.ownerId && !owners.some((owner) => owner.id === change.ownerId)) {
     errors.ownerId = "Choose an editor, or nobody.";
   }
-  const due = /^\d{4}-\d{2}-\d{2}$/.test(change.dueOn) ? new Date(`${change.dueOn}T00:00:00Z`) : null;
-  if (!due || Number.isNaN(due.getTime())) errors.dueOn = "Enter the day it should be answered by.";
+  if (!isCalendarDay(change.dueOn)) errors.dueOn = "Enter the day it should be answered by.";
   if (Object.keys(errors).length) return { ok: false as const, errors };
   const status = change.status as SubmissionStatus;
   await db.batch([
@@ -230,8 +264,9 @@ export async function updateSubmission(db: Database, actorId: string, id: string
 // --- Upload links for requested material ---
 
 /**
- * Emails the contributor a single-use link to upload the material they proposed. Any earlier link
- * for the Submission stops working, so only the newest can be used.
+ * Emails the contributor a single-use link to upload the material they proposed. Once the email
+ * has gone, any earlier link for the Submission stops working, so only the newest can be used; if
+ * it can't be sent, the new link is dropped and the earlier one still works.
  */
 export async function sendUploadLink(
   env: Env,
@@ -246,36 +281,41 @@ export async function sendUploadLink(
   const token = randomToken();
   const linkId = crypto.randomUUID();
   const expiresAt = new Date(now.getTime() + UPLOAD_LINK_DAYS * DAY_MS);
+  await db.insert(uploadLink).values({
+    id: linkId,
+    submissionId: id,
+    tokenHash: await hashToken(token),
+    issuedBy: actorId,
+    issuedAt: now,
+    expiresAt,
+  });
+  try {
+    await sendEmail(env, {
+      to: found.email,
+      subject: "Your link to upload to Na iSema",
+      text: [
+        `Bula ${found.name},`,
+        "Thank you for offering to share your work with Na iSema. We'd like to see it. Upload your files with this private link:",
+        `${origin}/upload/${token}`,
+        `The link works until you tell us you've finished, or for ${UPLOAD_LINK_DAYS} days. Each file is checked for viruses before anyone opens it. Only send material you made, or have permission to share.`,
+        "Vinaka,\nNa iSema",
+      ].join("\n\n"),
+    });
+  } catch (error) {
+    await db.delete(uploadLink).where(eq(uploadLink.id, linkId));
+    throw error;
+  }
   await db.batch([
     db
       .update(uploadLink)
       .set({ finishedAt: now })
-      .where(and(eq(uploadLink.submissionId, id), isNull(uploadLink.finishedAt))),
-    db.insert(uploadLink).values({
-      id: linkId,
-      submissionId: id,
-      tokenHash: await hashToken(token),
-      issuedBy: actorId,
-      issuedAt: now,
-      expiresAt,
-    }),
+      .where(and(eq(uploadLink.submissionId, id), isNull(uploadLink.finishedAt), ne(uploadLink.id, linkId))),
     db
       .update(submission)
       .set({ status: found.status === "new" ? "in_progress" : found.status, updatedAt: now })
       .where(eq(submission.id, id)),
     auditInsert(db, { actorId, action: "upload_link.sent", objectType: "submission", objectId: id }),
   ]);
-  await sendEmail(env, {
-    to: found.email,
-    subject: "Your link to upload to Na iSema",
-    text: [
-      `Bula ${found.name},`,
-      "Thank you for offering to share your work with Na iSema. We'd like to see it. Upload your files with this private link:",
-      `${origin}/upload/${token}`,
-      `The link works until you tell us you've finished, or for ${UPLOAD_LINK_DAYS} days. Each file is checked for viruses before anyone opens it. Only send material you made, or have permission to share.`,
-      "Vinaka,\nNa iSema",
-    ].join("\n\n"),
-  });
   return { linkId, expiresAt };
 }
 
@@ -306,6 +346,18 @@ export async function linkFiles(db: Database, linkId: string) {
     .where(eq(uploadLinkFile.linkId, linkId))
     .orderBy(asc(mediaAsset.createdAt));
   return rows.map((row) => row.asset);
+}
+
+/** How many files one upload link takes, so a leaked link can't fill the quarantine. */
+export const UPLOAD_LINK_FILES = 20;
+
+/** How many uploads a link has started. */
+export async function linkFileCount(db: Database, linkId: string) {
+  const rows = await db
+    .select({ assetId: uploadLinkFile.assetId })
+    .from(uploadLinkFile)
+    .where(eq(uploadLinkFile.linkId, linkId));
+  return rows.length;
 }
 
 /** Whether an upload belongs to a link; a link's uploads are only reachable through it. */

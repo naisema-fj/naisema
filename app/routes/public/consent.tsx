@@ -1,4 +1,5 @@
 import { Form, Link } from "react-router";
+import { fijiDateText } from "~/lib/calendar";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { consentForLink, withdrawConsent } from "~/lib/consent.server";
 import { getDb } from "~/lib/db.server";
@@ -16,12 +17,7 @@ export function meta() {
   return [{ title: "Your agreement · Na iSema" }, { name: "robots", content: "noindex" }];
 }
 
-const dateText = (date: Date) =>
-  new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Pacific/Fiji" }).format(
-    date,
-  );
-
-async function found(env: Env, token: string) {
+async function consentOrNotFound(env: Env, token: string) {
   const consent = await consentForLink(env, getDb(env.DB), token);
   if (!consent) throw new Response("Not found", { status: 404 });
   return consent;
@@ -29,11 +25,11 @@ async function found(env: Env, token: string) {
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const { record, notice } = await found(env, params.token);
+  const { record, notice } = await consentOrNotFound(env, params.token);
   return {
     purpose: CONSENT_PURPOSES[record.purpose],
-    givenOn: dateText(record.givenAt),
-    withdrawnOn: record.withdrawnAt ? dateText(record.withdrawnAt) : null,
+    givenOn: fijiDateText(record.givenAt),
+    withdrawnOn: record.withdrawnAt ? fijiDateText(record.withdrawnAt) : null,
     wording: notice.wording,
     version: notice.version,
   };
@@ -41,7 +37,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
 export async function action({ params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const { record } = await found(env, params.token);
+  const { record } = await consentOrNotFound(env, params.token);
   await withdrawConsent(env, getDb(env.DB), record.id, "link", null);
   return { withdrawn: true };
 }
