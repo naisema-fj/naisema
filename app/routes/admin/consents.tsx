@@ -1,6 +1,7 @@
 import { Form } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { consentsOf, requireConsentStaff, withdrawConsent } from "~/lib/consent.server";
+import { can } from "~/lib/permissions";
 import { CONSENT_PURPOSES } from "~/lib/submission-fields";
 import type { Route } from "./+types/consents";
 
@@ -11,9 +12,21 @@ export function meta() {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db } = await requireConsentStaff(context.get(cloudflareContext).env, request, "consent.manage");
+  const { db, actor } = await requireConsentStaff(context.get(cloudflareContext).env, request, "consent.manage");
   const email = (new URL(request.url).searchParams.get("email") ?? "").trim();
-  return { email, records: email ? await consentsOf(db, email) : [] };
+  const records = email ? await consentsOf(db, email) : [];
+  // That someone sent a report is safeguarding information: only the case team for reports sees it.
+  const seesReports = can(actor, { action: "case.read", case: { kind: "report" } });
+  return {
+    email,
+    records: records.map((row) => ({
+      ...row,
+      record: {
+        ...row.record,
+        sourceForm: row.record.sourceForm === "report" && !seesReports ? "a restricted form" : row.record.sourceForm,
+      },
+    })),
+  };
 }
 
 /** Withdraws a consent at the person's request (a data request), recorded as done by staff. */

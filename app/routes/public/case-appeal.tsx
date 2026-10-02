@@ -1,6 +1,6 @@
 import { data, Form } from "react-router";
 import { type Errors, FormAlert, TextField, type Values } from "~/components/public/form-fields";
-import { appealOpen, CASE_KINDS, CASE_LIMITS, outcomesFor, readAppeal } from "~/lib/case-rules";
+import { APPEAL_DAYS, appealOpen, CASE_KINDS, CASE_LIMITS, outcomeText, readAppeal } from "~/lib/case-rules";
 import { appealCase, caseForAppealLink, caseReference } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
@@ -29,7 +29,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   return {
     kind: CASE_KINDS[found.kind].toLowerCase(),
     reference: caseReference(found.id),
-    outcome: found.outcome ? outcomesFor(found.kind)[found.outcome] : "",
+    outcome: found.outcome ? outcomeText(found.kind, found.outcome) : "",
     open: appealOpen(found, new Date()),
     appealed: Boolean(found.appealedAt),
   };
@@ -40,7 +40,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const found = await caseOrNotFound(env, params.token);
   const read = readAppeal(await request.formData());
   if (!read.ok) return data({ appealed: false as const, errors: read.errors, values: read.values }, { status: 400 });
-  const appealed = await appealCase(env, getDb(env.DB), found, read.reasons, null, new URL(request.url).origin);
+  const appealed = await appealCase(env, getDb(env.DB), found, read.reasons, null);
   if (!appealed.ok)
     return data({ appealed: false as const, errors: { form: appealed.error }, values: {} }, { status: 409 });
   return { appealed: true as const };
@@ -76,7 +76,7 @@ export default function CaseAppeal({ loaderData, actionData }: Route.ComponentPr
             <button type="submit">Send the appeal</button>
           </Form>
         ) : (
-          <p>This decision can no longer be appealed: appeals are taken within 30 days of a decision.</p>
+          <p>This decision can no longer be appealed: appeals are taken within {APPEAL_DAYS} days of a decision.</p>
         )}
       </article>
     </main>

@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { mediaAsset, rightsRecord } from "~db/schema";
 import { parseRange } from "./byte-range";
+import { usedByHeldItem } from "./content-holds.server";
 import type { Database } from "./db.server";
 import { isPublishable } from "./rights-rules";
 import {
@@ -45,17 +46,19 @@ export function readyMedia(db: Database, id: string) {
 /**
  * A media library file that may be delivered publicly right now: it passed its scan and a current
  * Rights Record of its own grants Publish (#17). Checked on every request, so a withdrawal or
- * expiry stops delivery as soon as the edge cache lets go.
+ * expiry stops delivery as soon as the edge cache lets go. A file a held item uses isn't delivered
+ * while the hold lasts (content-holds.server.ts).
  */
 export async function publishableMedia(db: Database, id: string, now = new Date()) {
-  const [asset, records] = await Promise.all([
+  const [asset, records, held] = await Promise.all([
     readyMedia(db, id),
     db
       .select()
       .from(rightsRecord)
       .where(and(eq(rightsRecord.subjectType, "media_asset"), eq(rightsRecord.subjectId, id))),
+    usedByHeldItem(db, id),
   ]);
-  return asset && isPublishable(records, now) ? asset : undefined;
+  return asset && !held && isPublishable(records, now) ? asset : undefined;
 }
 
 /** A media library file of one of these types that has passed its scan. */

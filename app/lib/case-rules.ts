@@ -1,5 +1,12 @@
 import type { CaseKind } from "./permissions";
-import { emailProblem, type FormValues, type GivenConsent, normaliseEmail, readConsents } from "./submission-fields";
+import {
+  emailProblem,
+  type FormValues,
+  type GivenConsent,
+  normaliseEmail,
+  readConsents,
+  SUBMISSION_LIMITS,
+} from "./submission-fields";
 
 /**
  * Cases (CONTEXT.md; SAFE-01–03, DATA-03): a restricted record of a report, rights concern or data
@@ -55,7 +62,7 @@ export type DataRequestReason = keyof typeof DATA_REQUESTS;
 export const CONTENT_OUTCOMES = {
   no_action: "We looked into it and decided no change was needed",
   content_changed: "The content has been changed",
-  content_removed: "The content has been taken down",
+  content_removed: "The content has been removed from Na iSema",
   other: "We acted on it in another way",
 } as const;
 
@@ -70,8 +77,33 @@ export const DATA_OUTCOMES = {
 
 export type CaseOutcome = keyof typeof CONTENT_OUTCOMES | keyof typeof DATA_OUTCOMES;
 
-export const outcomesFor = (kind: CaseKind): Record<string, string> =>
-  kind === "data_request" ? DATA_OUTCOMES : CONTENT_OUTCOMES;
+/**
+ * What differs by kind of Case: what the person could say was wrong or ask for, the outcomes they
+ * can be told, and the form their consent was given on.
+ */
+const KIND_RULES: Record<
+  CaseKind,
+  {
+    reasons: Record<string, string>;
+    outcomes: Partial<Record<CaseOutcome, string>>;
+    sourceForm: "report" | "data_request";
+  }
+> = {
+  report: { reasons: REPORT_REASONS, outcomes: CONTENT_OUTCOMES, sourceForm: "report" },
+  rights_concern: { reasons: REPORT_REASONS, outcomes: CONTENT_OUTCOMES, sourceForm: "report" },
+  data_request: { reasons: DATA_REQUESTS, outcomes: DATA_OUTCOMES, sourceForm: "data_request" },
+};
+
+export const outcomesFor = (kind: CaseKind) => KIND_RULES[kind].outcomes;
+
+/** The outcome as the person is told it. */
+export const outcomeText = (kind: CaseKind, outcome: CaseOutcome) => KIND_RULES[kind].outcomes[outcome] ?? outcome;
+
+/** What the person said was wrong, or asked for, in words. */
+export const reasonText = (kind: CaseKind, reason: string) => KIND_RULES[kind].reasons[reason] ?? reason;
+
+/** The public form a kind of Case arrives through, recorded on its Consent Records. */
+export const caseSourceForm = (kind: CaseKind) => KIND_RULES[kind].sourceForm;
 
 export const APPEAL_OUTCOMES = {
   upheld: "The decision stands",
@@ -82,7 +114,7 @@ export type AppealOutcome = keyof typeof APPEAL_OUTCOMES;
 /** Days after a decision in which it can be appealed (docs/decision-log.md). */
 export const APPEAL_DAYS = 30;
 
-export const CASE_LIMITS = { name: 100, text: 5000 } as const;
+export const CASE_LIMITS = { name: 100, text: 5000, email: SUBMISSION_LIMITS.email } as const;
 
 const MOVES: Record<CaseState, CaseState[]> = {
   received: ["triaged"],
@@ -143,7 +175,7 @@ export function readReport(form: FormData): Read<CaseReport, "report"> | Refused
   const details = text("details", CASE_LIMITS.text, "Tell us what is wrong, and where.");
   const contentItemId = text("item", 100, null);
   const name = text("name", CASE_LIMITS.name, null);
-  const email = text("email", 254, null);
+  const email = text("email", CASE_LIMITS.email, null);
   values.consent = form.getAll("consent").map(String);
   let consents: GivenConsent[] = [];
   if (email) {
@@ -181,7 +213,7 @@ export type CaseDataRequest = {
 export function readDataRequest(form: FormData): Read<CaseDataRequest, "request"> | Refused {
   const { errors, values, text, choice } = fieldReader(form);
   const name = text("name", CASE_LIMITS.name, "Enter your name.");
-  const email = text("email", 254, null);
+  const email = text("email", CASE_LIMITS.email, null);
   const problem = emailProblem(email);
   if (problem) errors.email = problem;
   const reason = choice("request", DATA_REQUESTS, "Choose what you'd like us to do.");
@@ -217,7 +249,11 @@ export function readDecision(
   kind: CaseKind,
 ): StaffRead<{ outcome: CaseOutcome; action: string; rationale: string }, "decision"> {
   const { errors, text, choice } = fieldReader(form);
-  const outcome = choice("outcome", outcomesFor(kind), "Choose the outcome.") as CaseOutcome;
+  const outcome = choice<CaseOutcome>(
+    "outcome",
+    outcomesFor(kind) as Record<CaseOutcome, string>,
+    "Choose the outcome.",
+  );
   const action = text("action", CASE_LIMITS.text, "Say what was done.");
   const rationale = text("rationale", CASE_LIMITS.text, "Say why.");
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, decision: { outcome, action, rationale } };

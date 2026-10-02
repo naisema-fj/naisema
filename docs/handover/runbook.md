@@ -199,11 +199,16 @@ A report, rights concern or data request becomes a restricted Case (`app/lib/cas
 - **Reporting:** every content page has a "Report a problem" link to `/report?item=<id>`, so the Case knows what it is about. The footer and the Community standards page link to `/report` too. A rights issue becomes a rights concern; anything else, a report. A report can be anonymous. With an email address, and the reply consent, the reporter is told the reference, the decision and how to appeal.
 - **Data requests:** `/privacy/request`, linked from the Privacy page, asks for a copy, a correction or a deletion. It needs a name, an email address and the reply consent.
 - **Both forms** work like the other public forms: Turnstile, the rate limit, nothing lost on a refusal, and a resend opens one Case.
-- **Who opens a Case:** the safeguarding lead opens reports and rights concerns, and the privacy contact opens data requests, at `/admin/cases`. Nobody else can, administrators included. Each view (`case.viewed`), each refusal (`case.refused`), each change and each evidence download is audited. The people who handle a kind are emailed when one arrives or is appealed, with a link but none of its contents.
+- **Who opens a Case:** the safeguarding lead opens reports and rights concerns, and the privacy contact opens data requests, at `/admin/cases`. Nobody else can, administrators included. Each look at the queue (`case.queue_viewed`) and at a Case (`case.viewed`), each refusal (`case.refused`), each change and each evidence download attempt is audited. Two people acting on a Case at once can't both succeed: the second is told someone changed it first. The privacy contact's consent lookup shows a Consent Record given on the report form only as "a restricted form", so it doesn't reveal that someone sent a report. The people who handle a kind are emailed when one arrives or is appealed, with a link but none of its contents.
 - **Working a Case:** received → triaged (a severity, an owner who handles the kind, who it affects) → actioned (an outcome, what was done, why) → closed.
   - The outcome is what the person is told, in fixed words.
   - What was done and why stay with the case team.
-- **Hiding content:** the safeguarding lead can hide a Case's content pending review. The hold makes the item ineligible, so it leaves the public site at once, and no editor can republish it until the lead shows it again. Editors see only that it is hidden while a report is reviewed. Holds are lifted, never deleted (a trigger).
+- **Hiding content:** the safeguarding lead can hide a Case's content pending review.
+  - The hold makes the item ineligible, so it leaves the public site at once, from its page, listings, search, Topic pages and the sitemap. No editor can republish it until the lead shows it again.
+  - The media library files it uses aren't delivered while the hold lasts, even where another item uses them too, because the harm may be the image.
+  - An item has at most one hold, lifted only from the Case that placed it.
+  - Editors see only that it is hidden while a Case is reviewed.
+  - Holds are lifted, never deleted (a trigger).
 - **Appeals:** the decision email carries a link to appeal, open for 30 days and usable once. The case team can also record an appeal that came another way.
   - Everyone who handles the kind is told, except whoever made the decision.
   - Only someone else can decide the appeal, which closes the Case. The person is told whether the decision stands.

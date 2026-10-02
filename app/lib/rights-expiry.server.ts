@@ -1,5 +1,6 @@
 import { and, eq, gt, inArray, isNull, lte } from "drizzle-orm";
 import { contentItem, mediaAsset, revision, rightsExpiryWarning, rightsRecord } from "~db/schema";
+import { adminUrl } from "./admin-url";
 import { auditInsert } from "./audit.server";
 import { getDb } from "./db.server";
 import { sendEmail } from "./email.server";
@@ -18,10 +19,7 @@ import { activeHolders } from "./staff-roles.server";
 const LONGEST_WINDOW_DAYS = Math.max(...EXPIRY_WARNING_DAYS);
 
 /** Where staff open a subject's Rights Records, on this environment's admin host. */
-function rightsPageUrl(env: Env, subject: RightsSubject) {
-  const scheme = env.ADMIN_HOSTNAME.endsWith("localhost") ? "http" : "https";
-  return `${scheme}://${env.ADMIN_HOSTNAME}${rightsPagePath(subject)}`;
-}
+const rightsPageUrl = (env: Env, subject: RightsSubject) => adminUrl(env, rightsPagePath(subject));
 
 /**
  * The daily job (ADR-0007): emails editors about Rights Records that expire within 30 days, once

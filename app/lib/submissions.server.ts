@@ -4,7 +4,7 @@ import { auditInsert } from "./audit.server";
 import { fijiToday } from "./calendar";
 import { consentInserts, shownNotices, subscribeOrForget, withdrawalLink } from "./consent.server";
 import type { Database } from "./db.server";
-import { sendEmail } from "./email.server";
+import { letterText, sendEmail } from "./email.server";
 import { can } from "./permissions";
 import { DAY_MS } from "./rights-rules";
 import { hashToken, randomToken } from "./signed-tokens.server";
@@ -165,15 +165,13 @@ async function sendConfirmation(
   await sendEmail(env, {
     to: input.email,
     subject: `We've received your ${type.name.toLowerCase()}`,
-    text: [
-      `Bula ${input.name},`,
+    text: letterText(input.name, [
       `Thank you. Na iSema has received your ${type.name.toLowerCase()}, and someone on our team will read it. This is what you sent:`,
       answers.join("\n\n"),
       "You agreed to:",
       withdrawals.join("\n"),
       "To withdraw an agreement, open its link. If you didn't send this, you can ignore this email, or withdraw with the links above.",
-      "Vinaka,\nNa iSema",
-    ].join("\n\n"),
+    ]),
   });
 }
 
@@ -293,13 +291,11 @@ export async function sendUploadLink(
     await sendEmail(env, {
       to: found.email,
       subject: "Your link to upload to Na iSema",
-      text: [
-        `Bula ${found.name},`,
+      text: letterText(found.name, [
         "Thank you for offering to share your work with Na iSema. We'd like to see it. Upload your files with this private link:",
         `${origin}/upload/${token}`,
         `The link works until you tell us you've finished, or for ${UPLOAD_LINK_DAYS} days. Each file is checked for viruses before anyone opens it. Only send material you made, or have permission to share.`,
-        "Vinaka,\nNa iSema",
-      ].join("\n\n"),
+      ]),
     });
   } catch (error) {
     await db.delete(uploadLink).where(eq(uploadLink.id, linkId));

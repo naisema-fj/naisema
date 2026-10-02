@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "c76a211a-1737-465c-8e3d-464dea6ea307",
+  "id": "361b8dec-eb8e-4037-b233-b89c6682389a",
   "prevId": "b0f643d7-ea21-44d9-9d7f-230d32029617",
   "tables": {
     "account": {
@@ -652,6 +652,14 @@
             "content_item_id"
           ],
           "isUnique": false
+        },
+        "content_hold_active_idx": {
+          "name": "content_hold_active_idx",
+          "columns": [
+            "content_item_id"
+          ],
+          "isUnique": true,
+          "where": "\"content_hold\".\"lifted_at\" IS NULL"
         }
       },
       "foreignKeys": {

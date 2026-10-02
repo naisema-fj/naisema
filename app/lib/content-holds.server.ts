@@ -1,5 +1,5 @@
-import { and, eq, isNull } from "drizzle-orm";
-import { contentHold } from "~db/schema";
+import { and, eq, isNull, like } from "drizzle-orm";
+import { contentHold, contentItem, revision } from "~db/schema";
 import type { Database } from "./db.server";
 
 /**
@@ -14,4 +14,20 @@ export async function activeHold(db: Database, contentItemId: string) {
       .where(and(eq(contentHold.contentItemId, contentItemId), isNull(contentHold.liftedAt)))
       .get()) ?? null
   );
+}
+
+/**
+ * Whether a media library file is used by a held item's published Revision. Such a file isn't
+ * delivered either, even where other items use it too: the harm a report is about may be the image.
+ * Matched in the snapshot as itemsMentioning does (mentions.server.ts).
+ */
+export async function usedByHeldItem(db: Database, assetId: string) {
+  const row = await db
+    .select({ id: contentHold.id })
+    .from(contentHold)
+    .innerJoin(contentItem, eq(contentItem.id, contentHold.contentItemId))
+    .innerJoin(revision, eq(revision.id, contentItem.currentPublishedRevisionId))
+    .where(and(isNull(contentHold.liftedAt), like(revision.snapshot, `%${assetId}%`)))
+    .get();
+  return Boolean(row);
 }

@@ -10,7 +10,7 @@ import {
   type Values,
 } from "~/components/public/form-fields";
 import { CASE_LIMITS, REPORT_REASONS, readReport } from "~/lib/case-rules";
-import { alreadyOpened, openCase } from "~/lib/cases.server";
+import { alreadyReceived, receiveCase } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { currentNotices } from "~/lib/consent.server";
 import { type Database, getDb } from "~/lib/db.server";
@@ -58,7 +58,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const db = getDb(env.DB);
   const formKey = String(form.get("formKey") ?? "");
   // A form sent again is answered from what the first send stored, before Turnstile (as for Submissions).
-  const earlier = await alreadyOpened(db, formKey);
+  const earlier = await alreadyReceived(db, formKey);
   if (earlier?.ok) return { sent: true as const, reference: earlier.reference };
   const refuse = (status: number, errors: Errors, values: Values) =>
     data({ sent: false as const, errors, values }, { status });
@@ -66,7 +66,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!guarded.ok) return refuse(guarded.status, { form: guarded.error }, formValues(form));
   const read = readReport(form);
   if (!read.ok) return refuse(400, read.errors, read.values);
-  const opened = await openCase(env, db, read.report, formKey, new URL(request.url).origin);
+  const opened = await receiveCase(env, db, read.report, formKey);
   if (!opened.ok) return refuse(400, { form: opened.error }, formValues(form));
   return { sent: true as const, reference: opened.reference };
 }
@@ -143,7 +143,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
               errors={errors}
               autoComplete="email"
               optional
-              maxLength={254}
+              maxLength={CASE_LIMITS.email}
             />
             <ConsentField purpose="reply" notice={notice} required={false} values={values} errors={errors} />
           </fieldset>

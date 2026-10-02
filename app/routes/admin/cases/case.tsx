@@ -3,13 +3,13 @@ import {
   APPEAL_OUTCOMES,
   CASE_KINDS,
   CASE_STATES,
-  DATA_REQUESTS,
   outcomesFor,
-  REPORT_REASONS,
+  outcomeText,
   readAppeal,
   readAppealDecision,
   readDecision,
   readTriage,
+  reasonText,
   SEVERITIES,
 } from "~/lib/case-rules";
 import {
@@ -17,17 +17,19 @@ import {
   appealCase,
   type CaseChange,
   caseDetail,
+  caseHandlers,
   closeCase,
   decideAppeal,
   decideCase,
+  handledCase,
   hideContent,
-  openCaseFor,
   requireCaseTeam,
   showContent,
   triageCase,
 } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
+import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import { CONSENT_PURPOSES } from "~/lib/submission-fields";
 import { formatBytes } from "~/lib/upload-rules";
 import type { Route } from "./+types/case";
@@ -39,7 +41,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const { db, actor } = await requireCaseTeam(context.get(cloudflareContext).env, request);
+  const { db, actor } = await requireCaseTeam(context.get(cloudflareContext).env, request, params.id);
   return caseDetail(db, actor, params.id);
 }
 
@@ -47,11 +49,11 @@ type Refusal = { intent: string; errors: Record<string, string> };
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, actor } = await requireCaseTeam(env, request);
+  const { db, actor } = await requireCaseTeam(env, request, params.id);
   const form = await request.formData();
   const intent = String(form.get("intent") ?? "");
   // Emails to the person link to the public site, never the staff host.
-  const origin = env.PUBLIC_ORIGINS.split(",")[0].trim();
+  const origin = primaryPublicOrigin(env);
   const refuse = (errors: Record<string, string>, status = 400) =>
     data({ intent, errors } satisfies Refusal, { status });
   const done = (result: CaseChange, saved: string) =>
@@ -59,10 +61,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
   switch (intent) {
     case "triage": {
-      const found = await caseDetail(db, actor, params.id);
+      const found = await handledCase(db, actor, params.id);
+      const handlers = await caseHandlers(db, found.kind);
       const read = readTriage(
         form,
-        found.handlers.map((handler) => handler.id),
+        handlers.map((handler) => handler.id),
       );
       if (!read.ok) return refuse(read.errors);
       const affectedPerson = String(form.get("affectedPerson") ?? "")
@@ -71,7 +74,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       return done(await triageCase(db, actor, params.id, { ...read.triage, affectedPerson }), "Triaged.");
     }
     case "decide": {
-      const found = await openCaseFor(db, actor, params.id);
+      const found = await handledCase(db, actor, params.id);
       const read = readDecision(form, found.kind);
       if (!read.ok) return refuse(read.errors);
       return done(await decideCase(env, db, actor, params.id, read.decision, origin), "Decision recorded.");
@@ -93,8 +96,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     case "appeal": {
       const read = readAppeal(form);
       if (!read.ok) return refuse(read.errors);
-      const found = await openCaseFor(db, actor, params.id);
-      return done(await appealCase(env, db, found, read.reasons, actor, origin), "Appeal recorded.");
+      const found = await handledCase(db, actor, params.id);
+      return done(await appealCase(env, db, found, read.reasons, actor), "Appeal recorded.");
     }
     case "decide-appeal": {
       const read = readAppealDecision(form);
@@ -117,15 +120,11 @@ function FieldError({ name, errors }: { name: string; errors: Record<string, str
 }
 
 export default function CasePage({ loaderData, actionData }: Route.ComponentProps) {
-  const { case: found, reference, item, hidden, evidence, handlers, held } = loaderData;
+  const { case: found, reference, item, hold, evidence, handlers, requesterData } = loaderData;
   const errorsFor = (intent: string): Record<string, string> =>
     actionData && "errors" in actionData && actionData.intent === intent ? actionData.errors : {};
   const formError = actionData && "errors" in actionData ? actionData.errors.form : undefined;
   const outcomes = outcomesFor(found.kind);
-  const reasonText =
-    found.kind === "data_request"
-      ? DATA_REQUESTS[found.reason as keyof typeof DATA_REQUESTS]
-      : REPORT_REASONS[found.reason as keyof typeof REPORT_REASONS];
   const triage = errorsFor("triage");
   const decide = errorsFor("decide");
   const evidenceErrors = errorsFor("evidence");
@@ -149,7 +148,7 @@ export default function CasePage({ loaderData, actionData }: Route.ComponentProp
         <dt>Received</dt>
         <dd>{found.receivedAt.toISOString().replace("T", " ").slice(0, 16)} UTC</dd>
         <dt>What they said</dt>
-        <dd>{reasonText}</dd>
+        <dd>{reasonText(found.kind, found.reason)}</dd>
         <dt>Details</dt>
         <dd className="preserve-lines">{found.details || "None given"}</dd>
         <dt>Content</dt>
@@ -157,7 +156,7 @@ export default function CasePage({ loaderData, actionData }: Route.ComponentProp
           {item ? (
             <>
               <a href={item.path}>{item.path}</a> ({item.state}
-              {hidden ? ", hidden pending review" : ""})
+              {hold ? ", hidden pending review" : ""})
             </>
           ) : (
             "Not about a piece of content"
@@ -179,7 +178,7 @@ export default function CasePage({ loaderData, actionData }: Route.ComponentProp
           <>
             <dt>Decision</dt>
             <dd>
-              {outcomes[found.outcome]} ({day(found.decidedAt)}, {loaderData.decidedByEmail})
+              {outcomeText(found.kind, found.outcome)} ({day(found.decidedAt)}, {loaderData.decidedByEmail})
             </dd>
             <dt>What was done</dt>
             <dd className="preserve-lines">{found.action}</dd>
@@ -206,17 +205,17 @@ export default function CasePage({ loaderData, actionData }: Route.ComponentProp
         )}
       </dl>
 
-      {held && (
-        <section aria-labelledby="held-heading">
-          <h2 id="held-heading">What Na iSema holds for this address</h2>
+      {requesterData && (
+        <section aria-labelledby="requester-data-heading">
+          <h2 id="requester-data-heading">What Na iSema holds for this address</h2>
           <p>
-            {held.submissions.length} Submission{held.submissions.length === 1 ? "" : "s"}
-            {held.submissions.length > 0 &&
-              `: ${held.submissions.map((row) => `${row.type} (${day(row.receivedAt)})`).join(", ")}`}
+            {requesterData.submissions.length} Submission{requesterData.submissions.length === 1 ? "" : "s"}
+            {requesterData.submissions.length > 0 &&
+              `: ${requesterData.submissions.map((row) => `${row.type} (${day(row.receivedAt)})`).join(", ")}`}
             .
           </p>
           <ul>
-            {held.consents.map((consent) => (
+            {requesterData.consents.map((consent) => (
               <li key={consent.id}>
                 {CONSENT_PURPOSES[consent.purpose]}, {day(consent.givenAt)}
                 {consent.withdrawnAt ? `, withdrawn ${day(consent.withdrawnAt)}` : ""}
@@ -269,18 +268,23 @@ export default function CasePage({ loaderData, actionData }: Route.ComponentProp
         </Form>
       )}
 
-      {loaderData.can.hide && (
-        <Form method="post">
-          <h2>The content</h2>
-          <input type="hidden" name="intent" value={hidden ? "show" : "hide"} />
+      {loaderData.can.hold &&
+        (hold === "another" ? (
           <p>
-            {hidden
-              ? "It is hidden from the public while this Case is reviewed."
-              : "Hide it from the public while this Case is reviewed. Nobody can republish it until you show it again."}
+            <strong>The content is already hidden</strong> while another Case about it is reviewed.
           </p>
-          <button type="submit">{hidden ? "Show it again" : "Hide pending review"}</button>
-        </Form>
-      )}
+        ) : (
+          <Form method="post">
+            <h2>The content</h2>
+            <input type="hidden" name="intent" value={hold ? "show" : "hide"} />
+            <p>
+              {hold
+                ? "It is hidden from the public, with its images and files, while this Case is reviewed."
+                : "Hide it from the public, with its images and files, while this Case is reviewed. Nobody can republish it until you show it again."}
+            </p>
+            <button type="submit">{hold ? "Show it again" : "Hide pending review"}</button>
+          </Form>
+        ))}
 
       {loaderData.can.act && found.state === "triaged" && (
         <Form method="post" className="article-form">

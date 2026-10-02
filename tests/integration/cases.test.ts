@@ -108,6 +108,11 @@ describe("reporting (SAFE-01)", () => {
     expect(await rows("SELECT purpose, source_form FROM consent_record WHERE email = ?1", email)).toEqual([
       { purpose: "reply", source_form: "report" },
     ]);
+    // That an address sent a report is for the case team, not the privacy contact's consent lookup.
+    const privacy = await staff("privacy", { role: "privacy_contact" });
+    const lookup = await (await privacy.browser.fetch(`/admin/consents?email=${encodeURIComponent(email)}`)).text();
+    expect(lookup).toContain("a restricted form");
+    expect(lookup).not.toContain("<td>report</td>");
   });
 
   it("opens one Case for a form sent twice, though Turnstile won't take the token again", async () => {
@@ -159,7 +164,19 @@ describe("who can open a Case (AC-05)", () => {
     expect(audit).toEqual([
       { action: "case.viewed", actor_id: lead.userId },
       { action: "case.refused", actor_id: privacy.userId },
+      { action: "case.refused", actor_id: admin.userId },
+      { action: "case.refused", actor_id: editor.userId },
     ]);
+    // The queue itself: looking at it, and being turned away from it, are recorded too.
+    expect(
+      await rows(
+        "SELECT action FROM audit_event WHERE actor_id = ?1 AND object_id IS NULL AND action LIKE 'case.%'",
+        admin.userId,
+      ),
+    ).toEqual([{ action: "case.refused" }]);
+    expect(
+      await rows("SELECT action FROM audit_event WHERE actor_id = ?1 AND action = 'case.queue_viewed'", lead.userId),
+    ).toHaveLength(1);
   });
 
   it("data requests go to the privacy contact, who sees what Na iSema holds for the address", async () => {
@@ -214,10 +231,20 @@ describe("a report through triage, action and appeal (AC-05)", () => {
 
     // Hidden pending review: off the public site, and nobody can republish it.
     expect((await caseAction(editor, id, { intent: "hide" })).status).toBe(403);
+    expect(await (await visitor()("/sitemap.xml")).text()).toContain(path);
     expect((await caseAction(lead, id, { intent: "hide" })).status).toBe(200);
     expect((await visitor()(path)).status).not.toBe(200);
+    expect(await (await visitor()("/sitemap.xml")).text()).not.toContain(path);
+    expect(await (await caseAction(lead, id, { intent: "hide" })).text()).toContain("It is already hidden.");
+    await expect(
+      env.DB.prepare(
+        "INSERT INTO content_hold (id, content_item_id, case_id, placed_by, placed_at) VALUES (?1, ?2, ?3, 'x', 0)",
+      )
+        .bind(crypto.randomUUID(), itemId, id)
+        .run(),
+    ).rejects.toThrow(/UNIQUE/);
     const editorView = await (await editor.browser.fetch(`/admin/articles/${itemId}/revisions/1`)).text();
-    expect(editorView).toContain("hidden while a report about it is reviewed");
+    expect(editorView).toContain("hidden while a Case about it is reviewed");
     expect(editorView).not.toContain(email);
 
     // The decision, and the reporter is told how to appeal.
@@ -243,6 +270,9 @@ describe("a report through triage, action and appeal (AC-05)", () => {
     expect((await emailsTo(backup.email)).at(-1)?.subject).toMatch(/^An appeal on report/);
     expect(await emailsTo(lead.email)).toHaveLength(before);
     expect((await visitor()(appealPath, { reasons: "Again" })).status).toBe(409);
+    expect(await rows("SELECT id FROM audit_event WHERE object_id = ?1 AND action = 'case.appealed'", id)).toHaveLength(
+      1,
+    );
 
     // The appeal goes to someone other than the original decision-maker.
     const own = await caseAction(lead, id, { intent: "decide-appeal", outcome: "overturned", rationale: "Mine." });
@@ -346,8 +376,15 @@ describe("restricted evidence", () => {
     expect(download.headers.get("Content-Security-Policy")).toContain("sandbox");
     expect((await privacy.browser.fetch(`/admin/cases/${id}/evidence/${assetId}`)).status).toBe(403);
     expect((await admin.browser.fetch(`/admin/cases/${id}/evidence/${assetId}`)).status).toBe(403);
+    // Each attempt is recorded, including the one turned away while the file was still being scanned.
     expect(
-      await rows("SELECT actor_id FROM audit_event WHERE object_id = ?1 AND action = 'case.evidence_read'", id),
-    ).toEqual([{ actor_id: lead.userId }]);
+      await rows(
+        "SELECT actor_id, details FROM audit_event WHERE object_id = ?1 AND action = 'case.evidence_read' ORDER BY created_at",
+        id,
+      ),
+    ).toEqual([
+      { actor_id: lead.userId, details: JSON.stringify({ assetId, delivered: false }) },
+      { actor_id: lead.userId, details: JSON.stringify({ assetId, delivered: true }) },
+    ]);
   });
 });

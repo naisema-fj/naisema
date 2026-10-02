@@ -99,6 +99,28 @@ describe("Rights Records for media library files (#17)", () => {
     expect(page).toContain("The photographer withdrew permission.");
   });
 
+  it("aren't delivered while an item using them is hidden pending a Case", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const lead = await staff("lead", { role: "safeguarding_lead" });
+    const imageId = await scannedImage(editor);
+    const id = await articleShowing(editor, imageId);
+    await recordMediaRights(editor.browser, imageId);
+    expect((await act(editor, id, 1, { intent: "publish" })).status).toBe(302);
+    const caseId = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO case_record (id, kind, reason, details, content_item_id, received_at, updated_at) VALUES (?1, 'report', 'harm', 'The photo.', ?2, ?3, ?3)",
+    )
+      .bind(caseId, id, Date.now())
+      .run();
+
+    expect((await lead.browser.fetch(`/admin/cases/${caseId}`, { form: { intent: "hide" } })).status).toBe(200);
+    expect((await visit(`/media/images/${imageId}/960`)).status).toBe(404);
+    expect(await publishableMedia(getDb(env.DB), imageId)).toBeUndefined();
+
+    expect((await lead.browser.fetch(`/admin/cases/${caseId}`, { form: { intent: "show" } })).status).toBe(200);
+    expect((await visit(`/media/images/${imageId}/960`)).status).toBe(200);
+  });
+
   it("are managed by editors; Educators upload but can't record rights", async () => {
     const editor = await staff("editor", { role: "editor" });
     const educator = await staff("educator", { role: "educator" });

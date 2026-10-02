@@ -9,7 +9,7 @@ import type { Route } from "./+types/evidence";
  */
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, actor } = await requireCaseTeam(env, request);
+  const { db, actor } = await requireCaseTeam(env, request, params.id);
   const evidence = await readCaseEvidence(env, db, actor, params.id, params.assetId);
   if (!evidence) throw new Response("Not found", { status: 404 });
   if ("unavailable" in evidence) {

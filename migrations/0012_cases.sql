@@ -53,6 +53,7 @@ CREATE TABLE `content_hold` (
 );
 --> statement-breakpoint
 CREATE INDEX `content_hold_item_idx` ON `content_hold` (`content_item_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `content_hold_active_idx` ON `content_hold` (`content_item_id`) WHERE "content_hold"."lifted_at" IS NULL;--> statement-breakpoint
 -- A hold is only ever lifted, once (db/schema.ts, contentHold).
 CREATE TRIGGER `content_hold_lift_only` BEFORE UPDATE ON `content_hold`
 WHEN OLD.lifted_at IS NOT NULL OR NEW.lifted_at IS NULL OR NEW.lifted_by IS NULL

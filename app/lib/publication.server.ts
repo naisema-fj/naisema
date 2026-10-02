@@ -31,7 +31,7 @@ export async function isEligible(db: Database, revisionId: string, now = new Dat
 export async function eligibilityFor(db: Database, review: Review, now = new Date()): Promise<Eligibility> {
   const reasons: string[] = [];
   if (await activeHold(db, review.contentItem.id)) {
-    reasons.push("It is hidden while a report about it is reviewed. The safeguarding lead can show it again.");
+    reasons.push("It is hidden while a Case about it is reviewed. The safeguarding lead can show it again.");
   }
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
   for (const { requirement, status } of review.progress) {

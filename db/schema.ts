@@ -787,5 +787,9 @@ export const contentHold = sqliteTable(
     liftedBy: text("lifted_by"),
     liftedAt: integer("lifted_at", { mode: "timestamp_ms" }),
   },
-  (table) => [index("content_hold_item_idx").on(table.contentItemId)],
+  (table) => [
+    index("content_hold_item_idx").on(table.contentItemId),
+    // At most one hold in place per item, so lifting it always shows the item again.
+    uniqueIndex("content_hold_active_idx").on(table.contentItemId).where(sql`${table.liftedAt} IS NULL`),
+  ],
 );

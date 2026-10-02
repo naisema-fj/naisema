@@ -9,7 +9,7 @@ import {
   type Values,
 } from "~/components/public/form-fields";
 import { CASE_LIMITS, DATA_REQUESTS, readDataRequest } from "~/lib/case-rules";
-import { alreadyOpened, openCase } from "~/lib/cases.server";
+import { alreadyReceived, receiveCase } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { currentNotices } from "~/lib/consent.server";
 import { getDb } from "~/lib/db.server";
@@ -37,7 +37,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();
   const db = getDb(env.DB);
   const formKey = String(form.get("formKey") ?? "");
-  const earlier = await alreadyOpened(db, formKey);
+  const earlier = await alreadyReceived(db, formKey);
   if (earlier?.ok) return { sent: true as const, reference: earlier.reference };
   const refuse = (status: number, errors: Errors, values: Values) =>
     data({ sent: false as const, errors, values }, { status });
@@ -45,7 +45,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!guarded.ok) return refuse(guarded.status, { form: guarded.error }, formValues(form));
   const read = readDataRequest(form);
   if (!read.ok) return refuse(400, read.errors, read.values);
-  const opened = await openCase(env, db, read.request, formKey, new URL(request.url).origin);
+  const opened = await receiveCase(env, db, read.request, formKey);
   if (!opened.ok) return refuse(400, { form: opened.error }, formValues(form));
   return { sent: true as const, reference: opened.reference };
 }
@@ -97,7 +97,7 @@ export default function DataRequest({ loaderData, actionData }: Route.ComponentP
             values={values}
             errors={errors}
             autoComplete="email"
-            maxLength={254}
+            maxLength={CASE_LIMITS.email}
           />
           <ChoiceField
             name="request"

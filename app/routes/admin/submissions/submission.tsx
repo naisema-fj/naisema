@@ -1,5 +1,6 @@
 import { data, Form } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import {
   CONSENT_PURPOSES,
   SUBMISSION_STATUSES,
@@ -38,7 +39,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const intent = form.get("intent");
   if (intent === "upload-link") {
     // Links in the email go to the public site, never the staff host.
-    const origin = env.PUBLIC_ORIGINS.split(",")[0].trim();
+    const origin = primaryPublicOrigin(env);
     const sent = await sendUploadLink(env, db, actor.userId, params.id, origin);
     if (!sent) throw new Response("Only a contribution proposal can be sent an upload link.", { status: 400 });
     return { saved: "An upload link has been emailed to them." };

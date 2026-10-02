@@ -10,9 +10,9 @@ export function meta() {
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db, kinds } = await requireCaseTeam(context.get(cloudflareContext).env, request);
+  const { db, actor, kinds } = await requireCaseTeam(context.get(cloudflareContext).env, request);
   const show = new URL(request.url).searchParams.get("show") === "closed" ? "closed" : "open";
-  const cases = await caseQueue(db, kinds, show);
+  const cases = await caseQueue(db, actor, kinds, show);
   return {
     show,
     kinds: kinds.map((kind) => CASE_KINDS[kind]),
