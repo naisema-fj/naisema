@@ -8,6 +8,7 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+import type { AppealOutcome, CaseOutcome, CaseState, Severity } from "../app/lib/case-rules";
 import type {
   AccessMode,
   AgeSuitability,
@@ -18,6 +19,7 @@ import type {
   OfferingFormat,
   OrganisationType,
 } from "../app/lib/listing-fields";
+import type { CaseKind } from "../app/lib/permissions";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { ConsentPurpose, SubmissionFields, SubmissionStatus, SubmissionType } from "../app/lib/submission-fields";
 import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
@@ -703,3 +705,87 @@ export const uploadLinkFile = sqliteTable("upload_link_file", {
     .notNull()
     .references(() => uploadLink.id),
 });
+
+// --- Cases (SAFE-01–03, DATA-03) ---
+
+/**
+ * A restricted, audited record of a report, rights concern or data request (CONTEXT.md, Case). Only
+ * the role that handles its kind can read it (permissions.ts), and every view and change is
+ * audited. A decision can be appealed once, and someone else decides the appeal.
+ */
+export const caseRecord = sqliteTable(
+  "case_record",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").$type<CaseKind>().notNull(),
+    /** The key its form was rendered with: sending the same form twice opens one Case. */
+    formKey: text("form_key").unique(),
+    state: text("state").$type<CaseState>().notNull().default("received"),
+    /** What the person said was wrong, or asked for (case-rules.ts). */
+    reason: text("reason").notNull(),
+    details: text("details").notNull(),
+    /** The content it is about, from the report link on the item's page. */
+    contentItemId: text("content_item_id").references(() => contentItem.id),
+    /** Who it is about, in the case team's words: a creator, a person in a recording, the requester. */
+    affectedPerson: text("affected_person").notNull().default(""),
+    reporterName: text("reporter_name").notNull().default(""),
+    /** Null for an anonymous report. */
+    reporterEmail: text("reporter_email"),
+    severity: text("severity").$type<Severity>(),
+    ownerId: text("owner_id"),
+    outcome: text("outcome").$type<CaseOutcome>(),
+    action: text("action"),
+    rationale: text("rationale"),
+    decidedBy: text("decided_by"),
+    decidedAt: integer("decided_at", { mode: "timestamp_ms" }),
+    appealReasons: text("appeal_reasons"),
+    appealedAt: integer("appealed_at", { mode: "timestamp_ms" }),
+    appealOutcome: text("appeal_outcome").$type<AppealOutcome>(),
+    appealRationale: text("appeal_rationale"),
+    appealDecidedBy: text("appeal_decided_by"),
+    appealDecidedAt: integer("appeal_decided_at", { mode: "timestamp_ms" }),
+    receivedAt: integer("received_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    closedAt: integer("closed_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("case_record_queue_idx").on(table.kind, table.state, table.receivedAt)],
+);
+
+/** Restricted evidence a case team adds to a Case: scanned like any upload, kept in EVIDENCE. */
+export const caseEvidence = sqliteTable(
+  "case_evidence",
+  {
+    assetId: text("asset_id")
+      .primaryKey()
+      .references(() => mediaAsset.id),
+    caseId: text("case_id")
+      .notNull()
+      .references(() => caseRecord.id),
+    addedBy: text("added_by").notNull(),
+    addedAt: integer("added_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("case_evidence_case_idx").on(table.caseId)],
+);
+
+/**
+ * A Content Item hidden from the public while a Case about it is reviewed (SAFE-03). While a hold
+ * is in place the item is not eligible (ADR-0007), whatever its reviews and rights; lifting the
+ * hold brings it back. Holds are lifted, never deleted.
+ */
+export const contentHold = sqliteTable(
+  "content_hold",
+  {
+    id: text("id").primaryKey(),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    caseId: text("case_id")
+      .notNull()
+      .references(() => caseRecord.id),
+    placedBy: text("placed_by").notNull(),
+    placedAt: integer("placed_at", { mode: "timestamp_ms" }).notNull(),
+    liftedBy: text("lifted_by"),
+    liftedAt: integer("lifted_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("content_hold_item_idx").on(table.contentItemId)],
+);

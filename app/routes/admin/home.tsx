@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { readableKinds } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can } from "~/lib/permissions";
 import { describeRoleAssignment } from "~/lib/role-names";
@@ -22,6 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     canManageSubmissions: can(actor, { action: "submission.manage" }),
     canPublishNotices: can(actor, { action: "notice.publish" }),
     canManageConsent: can(actor, { action: "consent.manage" }),
+    handlesCases: readableKinds(actor).length > 0,
     roles: actor.roles.map(describeRoleAssignment),
   };
 }
@@ -57,6 +59,11 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
             </li>
           </ul>
         </>
+      )}
+      {loaderData.handlesCases && (
+        <p>
+          <a href="/admin/cases">Cases</a>
+        </p>
       )}
       {loaderData.canManageSubmissions && (
         <p>

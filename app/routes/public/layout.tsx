@@ -69,6 +69,9 @@ function SiteFooter() {
             <li>
               <Link to="/newsletter">Newsletter</Link>
             </li>
+            <li>
+              <Link to="/report">Report a problem</Link>
+            </li>
           </ul>
         </nav>
         <p className="footer-note">

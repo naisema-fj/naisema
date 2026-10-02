@@ -2,6 +2,7 @@ import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { contributor, mediaAsset, rightsRecord, rightsRecordContributor, user } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { type EvidenceFile, readEvidenceFile } from "./evidence-file";
 import { quarantineFile } from "./media.server";
 import {
   isCurrent,
@@ -12,7 +13,6 @@ import {
   type RightsPart,
   type RightsSubject,
 } from "./rights-rules";
-import { checkContent, checkDeclared, HEAD_BYTES, storedName, type UploadType } from "./upload-rules";
 
 export type { RightsSubject } from "./rights-rules";
 
@@ -132,7 +132,7 @@ export type RightsForm = {
   guardianPermission: boolean;
   expiresAt: Date | null;
   contributorIds: string[];
-  evidence: { bytes: Uint8Array; name: string; type: UploadType };
+  evidence: EvidenceFile;
 };
 
 /** What was typed into the form, to show it again when the form is refused (the file can't be kept). */
@@ -193,19 +193,9 @@ export async function readRightsForm(
     if (known.length !== contributorIds.length) errors.contributorIds = "One of those contributors no longer exists.";
   }
 
-  const file = form.get("evidence");
-  let evidence: RightsForm["evidence"] | null = null;
-  if (!(file instanceof File) || file.size === 0) errors.evidence = "Attach the evidence of this permission.";
-  else {
-    const declared = checkDeclared(file, "evidence");
-    if (!declared.ok) errors.evidence = declared.error;
-    else {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const content = checkContent(declared.type, bytes.subarray(0, HEAD_BYTES));
-      if (!content.ok) errors.evidence = content.error;
-      else evidence = { bytes, name: storedName(file.name), type: declared.type };
-    }
-  }
+  const read = await readEvidenceFile(form.get("evidence"), "Attach the evidence of this permission.");
+  if (!read.ok) errors.evidence = read.error;
+  const evidence = read.ok ? read.file : null;
 
   if (Object.keys(errors).length || !evidence) {
     return {

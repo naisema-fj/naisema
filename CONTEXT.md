@@ -155,8 +155,12 @@ _Avoid_: Privacy policy (the Privacy page is a Page, not a Notice)
 A single-use, expiring link an editor emails to someone whose contribution proposal they want, through which that person uploads into quarantine. The only public way to upload.
 
 **Case**:
-A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner.
+A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner. Its decision can be appealed once, and someone other than the decision's maker decides the appeal.
 _Avoid_: Ticket, complaint (as the record)
+
+**Hold**:
+The safeguarding lead's hiding of a Content Item while a Case about it is reviewed. A held item is not eligible, so it is off the public site and can't be republished until the hold is lifted.
+_Avoid_: Takedown (a withdrawal is the editor's)
 
 ## Discovery
 

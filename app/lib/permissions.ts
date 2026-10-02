@@ -85,7 +85,7 @@ export type Check =
   | { action: "learnerData.process"; learnerRecord: { ownerId: string } };
 
 /** Which staff role handles each kind of Case. */
-const CASE_HANDLER: Record<CaseKind, StaffRole> = {
+export const CASE_HANDLER: Record<CaseKind, StaffRole> = {
   report: "safeguarding_lead",
   rights_concern: "safeguarding_lead",
   data_request: "privacy_contact",

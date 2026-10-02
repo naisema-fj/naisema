@@ -192,6 +192,25 @@ The public site has four forms at `/forms/<name>` (`app/lib/submission-fields.ts
 - **Consent Records for a person:** the privacy contact finds them by email address at `/admin/consents`, and can withdraw one when the person asks.
 - **Locally and in tests** the forms use Cloudflare's always-passing Turnstile test keys: the site key in `wrangler.jsonc` and the secret in `.dev.vars`, added by `scripts/ensure-dev-vars.mjs`. These keys are answered without calling Cloudflare. Newsletter sign-ups go to the `newsletter_outbox` table (`NEWSLETTER_OUTBOX`).
 
+## Cases: reports, rights concerns and data requests
+
+A report, rights concern or data request becomes a restricted Case (`app/lib/case-rules.ts`, `cases.server.ts`).
+
+- **Reporting:** every content page has a "Report a problem" link to `/report?item=<id>`, so the Case knows what it is about. The footer and the Community standards page link to `/report` too. A rights issue becomes a rights concern; anything else, a report. A report can be anonymous. With an email address, and the reply consent, the reporter is told the reference, the decision and how to appeal.
+- **Data requests:** `/privacy/request`, linked from the Privacy page, asks for a copy, a correction or a deletion. It needs a name, an email address and the reply consent.
+- **Both forms** work like the other public forms: Turnstile, the rate limit, nothing lost on a refusal, and a resend opens one Case.
+- **Who opens a Case:** the safeguarding lead opens reports and rights concerns, and the privacy contact opens data requests, at `/admin/cases`. Nobody else can, administrators included. Each view (`case.viewed`), each refusal (`case.refused`), each change and each evidence download is audited. The people who handle a kind are emailed when one arrives or is appealed, with a link but none of its contents.
+- **Working a Case:** received → triaged (a severity, an owner who handles the kind, who it affects) → actioned (an outcome, what was done, why) → closed.
+  - The outcome is what the person is told, in fixed words.
+  - What was done and why stay with the case team.
+- **Hiding content:** the safeguarding lead can hide a Case's content pending review. The hold makes the item ineligible, so it leaves the public site at once, and no editor can republish it until the lead shows it again. Editors see only that it is hidden while a report is reviewed. Holds are lifted, never deleted (a trigger).
+- **Appeals:** the decision email carries a link to appeal, open for 30 days and usable once. The case team can also record an appeal that came another way.
+  - Everyone who handles the kind is told, except whoever made the decision.
+  - Only someone else can decide the appeal, which closes the Case. The person is told whether the decision stands.
+  - With one safeguarding lead, appeals wait for the backup (launch blocker #5).
+- **Restricted evidence:** the case team can add a PDF or image of at most 10 MB. It is quarantined and scanned like any upload, kept in `EVIDENCE`, and downloaded as a sandboxed attachment, by the case team only.
+- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Self-service export and the deletion ledger come with #32 and #34.
+
 ## Upload safety
 
 Every upload follows the same path (docs/phase-1a-defaults.md §1, ADR-0010); the code is in `app/lib/upload-rules.ts`, `media.server.ts` and `scan.server.ts`.

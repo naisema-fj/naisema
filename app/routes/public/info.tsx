@@ -28,6 +28,39 @@ export function meta({ loaderData }: Route.MetaArgs) {
   ];
 }
 
+/**
+ * The routes a footer page must always offer, whatever its words say: the community standards'
+ * reporting route (SAFE-01) and the privacy page's way to ask about your information (DATA-03).
+ */
+function FixedRoutes({ path }: { path: string }) {
+  if (path === "community-standards") {
+    return (
+      <section className="letter letter-narrow fixed-routes" aria-labelledby="report-heading">
+        <h2 id="report-heading">Reporting a problem</h2>
+        <p>
+          If something on Na iSema could cause harm, is wrong, or uses someone's work without permission, tell us. Every
+          page has a "Report a problem" link, or <Link to="/report">report it here</Link>. Only the people who handle
+          reports see what you send, and you can appeal what we decide.
+        </p>
+      </section>
+    );
+  }
+  if (path === "privacy") {
+    return (
+      <section className="letter letter-narrow fixed-routes" aria-labelledby="your-information-heading">
+        <h2 id="your-information-heading">Your information</h2>
+        <p>
+          <Link to="/privacy/request">
+            Ask for a copy of what we hold about you, or for it to be corrected or deleted
+          </Link>
+          . To stop the newsletter, <Link to="/newsletter/unsubscribe">unsubscribe here</Link>.
+        </p>
+      </section>
+    );
+  }
+  return null;
+}
+
 export default function Info({ loaderData }: Route.ComponentProps) {
   const { page, published } = loaderData;
   return (
@@ -43,6 +76,7 @@ export default function Info({ loaderData }: Route.ComponentProps) {
           </p>
         </article>
       )}
+      <FixedRoutes path={page.path} />
     </main>
   );
 }

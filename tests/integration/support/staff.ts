@@ -109,5 +109,5 @@ export async function signedInStaff(email: string, roles: RoleAssignment[]) {
   await signInWithMagicLink(browser, email);
   const secret = await startTwoFactorSetup(browser);
   await browser.fetch("/admin/two-factor/setup", { form: { intent: "verify", code: await codeFor(secret) } });
-  return { userId, browser, secret };
+  return { userId, email, browser, secret };
 }

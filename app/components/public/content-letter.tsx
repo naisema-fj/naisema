@@ -101,6 +101,10 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
             <Link to={`/${item.area}`}>More from {item.areaName}</Link>
           </p>
         )}
+        {/* Carries the item's id, so the Case knows what it is about (SAFE-01). */}
+        <p className="report-problem">
+          <Link to={`/report?item=${item.id}`}>Report a problem with this {name}</Link>
+        </p>
       </footer>
       {/* Counts the view (content_opened, IDs only) even when the page came from the edge cache; no script needed. */}
       <img src={`/e/opened/${item.id}`} alt="" width={1} height={1} className="beacon" />

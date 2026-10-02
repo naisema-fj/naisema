@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { contentItem } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
+import { activeHold } from "./content-holds.server";
 import type { Database } from "./db.server";
 import { readyDownload, readyEpisodeAudio } from "./media-delivery.server";
 import { type Actor, can } from "./permissions";
@@ -18,7 +19,7 @@ export type Eligibility = { eligible: true } | { eligible: false; reasons: strin
  * guardian permission when it shows identifiable children. Because it is evaluated on every call,
  * an expiry or withdrawal takes effect immediately. Each media library file the Revision uses
  * needs a current Rights Record of its own too; the item's record covers its words and anything
- * from other sites.
+ * from other sites. An item hidden pending a Case's review is never eligible.
  */
 export async function isEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
   const review = await loadReview(db, revisionId);
@@ -29,6 +30,9 @@ export async function isEligible(db: Database, revisionId: string, now = new Dat
 /** isEligible for a Revision whose review was loaded in this same request. */
 export async function eligibilityFor(db: Database, review: Review, now = new Date()): Promise<Eligibility> {
   const reasons: string[] = [];
+  if (await activeHold(db, review.contentItem.id)) {
+    reasons.push("It is hidden while a report about it is reviewed. The safeguarding lead can show it again.");
+  }
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
   for (const { requirement, status } of review.progress) {
     if (status === "approved") continue;

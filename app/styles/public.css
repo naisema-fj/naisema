@@ -969,6 +969,15 @@ blockquote.notice-wording {
   cursor: progress;
 }
 
+.report-problem {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+}
+
+.fixed-routes {
+  margin-top: 2rem;
+}
+
 .sent-files {
   padding-left: 1.25rem;
 }

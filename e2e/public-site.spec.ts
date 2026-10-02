@@ -40,6 +40,9 @@ test("the homepage, an area, an article and the not-found page pass axe", async 
     "/forms/consultation",
     "/newsletter",
     "/newsletter/unsubscribe",
+    "/report",
+    "/privacy/request",
+    "/community-standards",
   ]) {
     await page.goto(path);
     await expectNoAxeViolations(page);

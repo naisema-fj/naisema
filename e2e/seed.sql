@@ -48,6 +48,15 @@ INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUE
 INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
   ('e2e-intake-desktop-role', 'e2e-intake-desktop', 'editor', 'e2e-seed', 0),
   ('e2e-intake-mobile-role', 'e2e-intake-mobile', 'editor', 'e2e-seed', 0);
+-- One safeguarding lead per browser project for the Case journey, and the reports earlier runs sent.
+DELETE FROM case_record WHERE details LIKE 'E2E:%';
+DELETE FROM user WHERE email LIKE 'e2e-lead-%@naisema.test';
+INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
+  ('e2e-lead-desktop', 'E2E Safeguarding Lead', 'e2e-lead-desktop-chromium@naisema.test', 0, 0, 0),
+  ('e2e-lead-mobile', 'E2E Safeguarding Lead', 'e2e-lead-mobile-chromium@naisema.test', 0, 0, 0);
+INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
+  ('e2e-lead-desktop-role', 'e2e-lead-desktop', 'safeguarding_lead', 'e2e-seed', 0),
+  ('e2e-lead-mobile-role', 'e2e-lead-mobile', 'safeguarding_lead', 'e2e-seed', 0);
 INSERT INTO topic (id, slug, name, created_by, created_at) VALUES
   ('e2e-topic-ceremonies', 'e2e-ceremonies', 'E2E Ceremonies', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;

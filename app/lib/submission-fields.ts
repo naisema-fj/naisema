@@ -94,15 +94,18 @@ export const CONSENT_PROMPTS: Record<ConsentPurpose, string> = {
 export const isConsentPurpose = (value: string): value is ConsentPurpose => Object.hasOwn(CONSENT_PURPOSES, value);
 
 /** The consents each form asks for: those it needs, and one the person may add. */
-export const FORM_CONSENTS: Record<
-  SubmissionType | "newsletter",
-  { required: ConsentPurpose[]; optional: ConsentPurpose[] }
-> = {
+/** A public form that asks for consent: a Submission's, the newsletter's, or one that opens a Case. */
+export type ConsentForm = SubmissionType | "newsletter" | "report" | "data_request";
+
+export const FORM_CONSENTS: Record<ConsentForm, { required: ConsentPurpose[]; optional: ConsentPurpose[] }> = {
   enquiry: { required: ["reply"], optional: ["newsletter"] },
   contribution: { required: ["reply"], optional: ["newsletter"] },
   educator_interest: { required: ["reply"], optional: ["newsletter"] },
   consultation_interest: { required: ["reply", "consultation"], optional: ["newsletter"] },
   newsletter: { required: ["newsletter"], optional: [] },
+  // A report can be anonymous; one that leaves an email address needs the reply consent.
+  report: { required: ["reply"], optional: [] },
+  data_request: { required: ["reply"], optional: [] },
 };
 
 export const SUBMISSION_LIMITS = { name: 100, email: 254, short: 200, text: 5000, languages: 10 } as const;
@@ -159,7 +162,7 @@ export function emailProblem(email: string) {
  * Reads the consents ticked on a form. Each ticked purpose carries the notice it was shown with
  * (`notice-{purpose}`); a purpose the form needs and isn't ticked is an error.
  */
-export function readConsents(form: FormData, formName: SubmissionType | "newsletter") {
+export function readConsents(form: FormData, formName: ConsentForm) {
   const { required, optional } = FORM_CONSENTS[formName];
   const ticked = new Set(form.getAll("consent").map(String));
   const errors: Record<string, string> = {};
