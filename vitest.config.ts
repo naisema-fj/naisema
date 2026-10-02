@@ -18,6 +18,8 @@ export default defineConfig({
           TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
           BETTER_AUTH_SECRET: "test-only-secret-at-least-32-characters-long",
           PUBLIC_ORIGINS: "https://naisema.test",
+          // Cloudflare's always-passing Turnstile test secret (app/lib/turnstile.ts).
+          TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
         },
       },
     })),

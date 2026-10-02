@@ -778,6 +778,17 @@ html:has(.public) {
   max-width: 46rem;
 }
 
+.participate-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: var(--step-0);
+}
+
 .public .notices > * + * {
   border-top: 1px solid var(--rule);
   padding-top: 2.5rem;
@@ -807,6 +818,159 @@ html:has(.public) {
 
 .empty {
   color: var(--ink-soft);
+}
+
+/*
+ * Public forms (enquiries, proposals, the newsletter): plain fields on a letter sheet. Each
+ * consent is its own box with the notice's words beside it, set in the reading face.
+ */
+
+.public-form {
+  display: grid;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.public-form label,
+.public-form legend {
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--teal-900);
+}
+
+.public-form .optional {
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+
+.public-form .hint {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+.public .public-form input[type="text"],
+.public .public-form input[type="email"],
+.public .public-form input[type="file"],
+.public .public-form textarea {
+  font: inherit;
+  color: var(--ink);
+  background: var(--sheet);
+  border: 1px solid var(--teal-700);
+  border-radius: 3px;
+  padding: 0.55rem 0.75rem;
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.public .public-form textarea {
+  resize: vertical;
+}
+
+.public .public-form [aria-invalid="true"] {
+  border-color: var(--masi);
+  border-width: 2px;
+}
+
+.public .public-form input[type="checkbox"],
+.public .public-form input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--teal-700);
+  flex: none;
+}
+
+.form-choices,
+.form-consents {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.form-consents {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+  gap: 1.25rem;
+}
+
+.form-choice {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.form-choice > label {
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.notice-wording {
+  margin: 0.5rem 0 0 2rem;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+}
+
+blockquote.notice-wording {
+  margin: 0 0 1.5rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--teal-200);
+}
+
+.public .field-error {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--masi);
+}
+
+.form-alert {
+  border-left: 4px solid var(--masi);
+  background: var(--masi-200);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+
+.form-alert p {
+  margin: 0;
+}
+
+.public .public-form button {
+  justify-self: start;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 1rem;
+  background: var(--teal-900);
+  color: var(--sheet);
+  border: 0;
+  border-radius: 3px;
+  padding: 0 1.6rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.public .public-form button:hover {
+  background: var(--teal-950);
+}
+
+.public .public-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.sent-files {
+  padding-left: 1.25rem;
 }
 
 /* Search: a plain form on a letter sheet; results are the same ruled list as an area's. */

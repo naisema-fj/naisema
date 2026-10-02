@@ -35,6 +35,11 @@ test("the homepage, an area, an article and the not-found page pass axe", async 
     "/connect/offerings?cost=paid",
     "/connect/creators",
     CREATOR,
+    "/forms/contribute",
+    "/forms/teach",
+    "/forms/consultation",
+    "/newsletter",
+    "/newsletter/unsubscribe",
   ]) {
     await page.goto(path);
     await expectNoAxeViolations(page);

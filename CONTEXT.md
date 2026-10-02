@@ -147,6 +147,13 @@ _Avoid_: Post, entry
 **Consent Record**:
 The stored fact that a person agreed to one purpose under one notice version, with time, source and any withdrawal; kept apart from the Submission it came with.
 
+**Notice**:
+The words shown beside a consent box for one purpose, kept as numbered versions. New wording is a new version; earlier versions are never changed, so a Consent Record always names words that can still be read.
+_Avoid_: Privacy policy (the Privacy page is a Page, not a Notice)
+
+**Upload Link**:
+A single-use, expiring link an editor emails to someone whose contribution proposal they want, through which that person uploads into quarantine. The only public way to upload.
+
 **Case**:
 A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner.
 _Avoid_: Ticket, complaint (as the record)

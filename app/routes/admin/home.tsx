@@ -19,6 +19,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     canEditContent: can(actor, { action: "content.edit" }),
     canUpload: can(actor, { action: "media.upload" }),
     isReviewer: can(actor, { action: "reviewQueue.view" }),
+    canManageSubmissions: can(actor, { action: "submission.manage" }),
+    canPublishNotices: can(actor, { action: "notice.publish" }),
+    canManageConsent: can(actor, { action: "consent.manage" }),
     roles: actor.roles.map(describeRoleAssignment),
   };
 }
@@ -52,6 +55,28 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
             <li>
               <a href="/admin/providers">Providers and offerings</a>
             </li>
+          </ul>
+        </>
+      )}
+      {loaderData.canManageSubmissions && (
+        <p>
+          <a href="/admin/submissions">Submissions</a>
+        </p>
+      )}
+      {(loaderData.canPublishNotices || loaderData.canManageConsent) && (
+        <>
+          <h2>Privacy</h2>
+          <ul>
+            {loaderData.canPublishNotices && (
+              <li>
+                <a href="/admin/notices">Consent notices</a>
+              </li>
+            )}
+            {loaderData.canManageConsent && (
+              <li>
+                <a href="/admin/consents">Consent Records</a>
+              </li>
+            )}
           </ul>
         </>
       )}

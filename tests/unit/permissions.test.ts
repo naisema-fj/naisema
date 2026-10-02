@@ -142,6 +142,17 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["administrator cannot upload by role alone", administrator, { action: "media.upload" }, false],
   ["safeguarding lead cannot upload by role alone", safeguardingLead, { action: "media.upload" }, false],
   ["a signed-in person without a staff role cannot upload", learner("me"), { action: "media.upload" }, false],
+
+  // Submissions and Consent Records (docs/phase-1a-defaults.md §4, §11)
+  ["editor works the Submission queue", editor, { action: "submission.manage" }, true],
+  ["educator does not see Submissions", educator, { action: "submission.manage" }, false],
+  ["administrator does not see Submissions by role alone", administrator, { action: "submission.manage" }, false],
+  ["privacy contact publishes consent notices", privacyContact, { action: "notice.publish" }, true],
+  ["administrator publishes consent notices", administrator, { action: "notice.publish" }, true],
+  ["editor cannot change consent notices", editor, { action: "notice.publish" }, false],
+  ["privacy contact looks up and withdraws Consent Records", privacyContact, { action: "consent.manage" }, true],
+  ["editor cannot look up Consent Records by person", editor, { action: "consent.manage" }, false],
+  ["administrator cannot look up Consent Records by role alone", administrator, { action: "consent.manage" }, false],
   [
     "educator cannot read learner records",
     educator,

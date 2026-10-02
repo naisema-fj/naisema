@@ -11,6 +11,12 @@ export default [
     route("topics/:slug", "routes/public/topic.tsx", { id: "topic" }),
     route("topics/:slug/:subtopic", "routes/public/topic.tsx", { id: "topic-filtered" }),
     route("resources/:id/report-link", "routes/public/report-link.tsx"),
+    // Public forms, never cached (PUB-05, PUB-06; app/lib/submissions.server.ts).
+    route("forms/:form", "routes/public/form.tsx"),
+    route("newsletter", "routes/public/newsletter.tsx"),
+    route("newsletter/unsubscribe", "routes/public/newsletter-unsubscribe.tsx"),
+    route("consent/:token", "routes/public/consent.tsx"),
+    route("upload/:token", "routes/public/upload-link.tsx"),
     route("connect/providers", "routes/public/connect/providers.tsx"),
     route("connect/providers/:slug", "routes/public/connect/provider.tsx"),
     route("connect/offerings", "routes/public/connect/offerings.tsx"),
@@ -27,6 +33,10 @@ export default [
   route("resources/:id/download", "routes/public/resource-download.ts"),
   route("episodes/:id/audio", "routes/public/episode-audio.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
+  // A contributor's upload link: the resumable uploader's endpoints, bound to the link's token.
+  route("upload/:token/files", "routes/public/upload-link-files.ts"),
+  route("upload/:token/files/:id", "routes/public/upload-link-file.ts"),
+  route("upload/:token/files/:id/parts/:number", "routes/public/upload-link-part.ts"),
   // Staff tools, served only on the admin host (workers/app.ts, ADR-0005).
   ...prefix("admin", [
     index("routes/admin/home.tsx"),
@@ -53,6 +63,11 @@ export default [
     route("sign-in", "routes/admin/sign-in.tsx"),
     route("sign-out", "routes/admin/sign-out.tsx"),
     route("reviews", "routes/admin/reviews.tsx"),
+    route("submissions", "routes/admin/submissions/index.tsx"),
+    route("submissions/:id", "routes/admin/submissions/submission.tsx"),
+    route("submissions/:id/files/:assetId", "routes/admin/submissions/file.ts"),
+    route("notices", "routes/admin/notices.tsx"),
+    route("consents", "routes/admin/consents.tsx"),
     route("staff", "routes/admin/staff.tsx"),
     route("topics", "routes/admin/topics.tsx"),
     route("two-factor", "routes/admin/two-factor.tsx"),

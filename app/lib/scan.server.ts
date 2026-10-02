@@ -85,7 +85,8 @@ async function settle(
   });
 }
 
-const destinationOf = (env: Env, asset: MediaAsset) => (asset.purpose === "evidence" ? env.EVIDENCE : env.MEDIA);
+/** Only the media library is in MEDIA; evidence and contributors' material stay private, in EVIDENCE. */
+const destinationOf = (env: Env, asset: MediaAsset) => (asset.purpose === "media" ? env.MEDIA : env.EVIDENCE);
 
 /** Scans one queued upload and acts on the verdict. */
 export async function scanUpload(env: Env, db: Database, assetId: string, scanner: Scanner): Promise<Outcome> {

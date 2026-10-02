@@ -46,14 +46,21 @@ export default async function handleRequest(
     const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
     applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
       allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost,
+      turnstile: leafHandle(routerContext)?.turnstile === true,
     });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
 }
 
-/** Whether the page will load client JavaScript: routes opt out with `handle = { hydrate: false }` (root.tsx). */
-function hydrates(context: EntryContext) {
+/** The page's own route `handle`: `hydrate: false` (root.tsx), `turnstile: true` for a public form. */
+function leafHandle(context: EntryContext) {
   const leaf = context.staticHandlerContext.matches.at(-1);
-  const handle = leaf ? (context.routeModules[leaf.route.id]?.handle as { hydrate?: boolean } | undefined) : undefined;
-  return handle?.hydrate !== false;
+  return leaf
+    ? (context.routeModules[leaf.route.id]?.handle as { hydrate?: boolean; turnstile?: boolean } | undefined)
+    : undefined;
+}
+
+/** Whether the page will load client JavaScript: routes opt out with `handle = { hydrate: false }`. */
+function hydrates(context: EntryContext) {
+  return leafHandle(context)?.hydrate !== false;
 }

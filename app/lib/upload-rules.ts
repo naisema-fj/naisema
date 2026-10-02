@@ -16,8 +16,11 @@ export type UploadType =
 
 export type UploadKind = "video" | "audio" | "document" | "image";
 
-/** Where a clean file goes: the media library, or a Rights Record's private evidence. */
-export type UploadPurpose = "media" | "evidence";
+/**
+ * Where a clean file goes: the media library, a Rights Record's private evidence, or material a
+ * contributor sent through an upload link, which staff read privately (both in EVIDENCE).
+ */
+export type UploadPurpose = "media" | "evidence" | "submission";
 
 /**
  * Where an upload has got to: uploading → scanning → ready, or failed (refused: wrong type, never

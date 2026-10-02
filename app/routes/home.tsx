@@ -98,15 +98,28 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <div className="notices">
         <section className="participate" aria-labelledby="participate-heading">
           <h2 id="participate-heading">Ways to take part</h2>
-          <p>
-            You will be able to share a story or recording, offer to teach, or join a consultation. These forms aren't
-            open yet; they open once the safeguards behind them are ready.
-          </p>
+          <ul className="participate-links">
+            <li>
+              <Link to="/forms/contribute">Offer a story, recording or piece of work</Link>
+            </li>
+            <li>
+              <Link to="/forms/teach">Offer to teach</Link>
+            </li>
+            <li>
+              <Link to="/forms/consultation">Take part in a consultation</Link>
+            </li>
+            <li>
+              <Link to="/forms/enquiry">Send us a message</Link>
+            </li>
+          </ul>
         </section>
 
         <section className="updates" aria-labelledby="updates-heading">
           <h2 id="updates-heading">Updates</h2>
-          <p>The newsletter isn't open yet. When it opens, you will be asked twice before anything is sent.</p>
+          <p>
+            News of new stories, recordings, classes and consultations. You'll be asked to confirm before anything is
+            sent. <Link to="/newsletter">Sign up for the newsletter</Link>
+          </p>
         </section>
       </div>
     </main>

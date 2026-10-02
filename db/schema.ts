@@ -19,6 +19,7 @@ import type {
   OrganisationType,
 } from "../app/lib/listing-fields";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
+import type { ConsentPurpose, SubmissionFields, SubmissionStatus, SubmissionType } from "../app/lib/submission-fields";
 import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -590,3 +591,115 @@ export const partnershipAgreement = sqliteTable(
   },
   (table) => [index("partnership_agreement_provider_idx").on(table.providerId)],
 );
+
+// --- Submissions and Consent Records (PUB-05, PUB-06, DATA-02) ---
+
+/**
+ * Anything a member of the public sends through a form (CONTEXT.md, Submission). It goes to the
+ * staff queue and is never published. The consents given with it are kept apart, in consent_record.
+ */
+export const submission = sqliteTable(
+  "submission",
+  {
+    id: text("id").primaryKey(),
+    type: text("type").$type<SubmissionType>().notNull(),
+    /** A key the form was rendered with: sending the same form twice stores it once. */
+    formKey: text("form_key").notNull().unique(),
+    name: text("name").notNull(),
+    email: text("email").notNull(),
+    fields: text("fields", { mode: "json" }).$type<SubmissionFields>().notNull(),
+    status: text("status").$type<SubmissionStatus>().notNull().default("new"),
+    /** The staff member working it. */
+    ownerId: text("owner_id"),
+    /** The day, YYYY-MM-DD, it should be answered by. */
+    dueOn: text("due_on").notNull(),
+    /** When the confirmation email went; null if it couldn't be sent. */
+    confirmedAt: integer("confirmed_at", { mode: "timestamp_ms" }),
+    receivedAt: integer("received_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("submission_queue_idx").on(table.status, table.dueOn)],
+);
+
+/**
+ * The wording a person is shown when asked to consent to one purpose, one row per version. A new
+ * version is added, never an old one changed, so the exact words anyone agreed to are recoverable.
+ */
+export const notice = sqliteTable(
+  "notice",
+  {
+    id: text("id").primaryKey(),
+    purpose: text("purpose").$type<ConsentPurpose>().notNull(),
+    version: integer("version").notNull(),
+    wording: text("wording").notNull(),
+    publishedBy: text("published_by"),
+    publishedAt: integer("published_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [uniqueIndex("notice_purpose_version_idx").on(table.purpose, table.version)],
+);
+
+/**
+ * That a person agreed to one purpose under one notice version (CONTEXT.md, Consent Record): when,
+ * on which form, and when they withdrew. Kept apart from the Submission it came with, which it
+ * outlives: deleting a Submission leaves the record of what was agreed.
+ */
+export const consentRecord = sqliteTable(
+  "consent_record",
+  {
+    id: text("id").primaryKey(),
+    purpose: text("purpose").$type<ConsentPurpose>().notNull(),
+    noticeId: text("notice_id")
+      .notNull()
+      .references(() => notice.id),
+    email: text("email").notNull(),
+    /** The form it was given on: a Submission type, or "newsletter". */
+    sourceForm: text("source_form").notNull(),
+    /** The Submission it came with, if any; not a foreign key, so the Submission can be deleted. */
+    submissionId: text("submission_id"),
+    givenAt: integer("given_at", { mode: "timestamp_ms" }).notNull(),
+    withdrawnAt: integer("withdrawn_at", { mode: "timestamp_ms" }),
+    /** How it was withdrawn: the person's own link, an unsubscribe, or staff on their request. */
+    withdrawnVia: text("withdrawn_via").$type<"link" | "unsubscribe" | "staff">(),
+  },
+  (table) => [index("consent_record_email_idx").on(table.email, table.purpose)],
+);
+
+/** Newsletter changes, written here instead of sent to the newsletter tool in local development and tests. */
+export const newsletterOutbox = sqliteTable("newsletter_outbox", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  action: text("action").$type<"subscribe" | "unsubscribe">().notNull(),
+  email: text("email").notNull(),
+  tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/**
+ * A single-use, expiring link an editor sends so a contributor can upload the material they
+ * proposed (docs/phase-1a-defaults.md §4). Files go to quarantine and are scanned like any upload;
+ * the link stops working once the contributor finishes or it expires. Only the token's hash is kept.
+ */
+export const uploadLink = sqliteTable(
+  "upload_link",
+  {
+    id: text("id").primaryKey(),
+    submissionId: text("submission_id")
+      .notNull()
+      .references(() => submission.id),
+    tokenHash: text("token_hash").notNull().unique(),
+    issuedBy: text("issued_by").notNull(),
+    issuedAt: integer("issued_at", { mode: "timestamp_ms" }).notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    finishedAt: integer("finished_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [index("upload_link_submission_idx").on(table.submissionId)],
+);
+
+/** The files that arrived through an upload link. */
+export const uploadLinkFile = sqliteTable("upload_link_file", {
+  assetId: text("asset_id")
+    .primaryKey()
+    .references(() => mediaAsset.id),
+  linkId: text("link_id")
+    .notNull()
+    .references(() => uploadLink.id),
+});

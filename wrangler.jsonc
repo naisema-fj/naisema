@@ -16,9 +16,15 @@
   "upload_source_maps": true,
   // Local development and tests: the staff admin site answers on admin.localhost, and email is
   // written to the email_outbox table instead of being sent.
-  // Set per environment with `wrangler secret put BETTER_AUTH_SECRET --env <env>`; locally in .dev.vars.
-  "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+  // Set per environment with `wrangler secret put <NAME> --env <env>`; locally in .dev.vars, where
+  // TURNSTILE_SECRET_KEY is Cloudflare's always-passing test secret (scripts/ensure-dev-vars.mjs).
+  "secrets": { "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SECRET_KEY"] },
   "vars": {
+    // Cloudflare's always-passing Turnstile test site key (app/lib/turnstile.ts); deployed
+    // environments set their own as a secret.
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    // Newsletter sign-ups are written to the newsletter_outbox table instead of the newsletter tool.
+    "NEWSLETTER_OUTBOX": "true",
     "ADMIN_HOSTNAME": "admin.localhost",
     // Where the public site answers, so a withdrawal can purge its cached pages (app/lib/public-cache.server.ts).
     "PUBLIC_ORIGINS": "http://localhost:5173,http://localhost:4173",
@@ -35,6 +41,8 @@
   ],
   // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_dev_events" }],
+  // Public forms: at most 5 sends a minute from one address to one form (app/lib/form-guard.server.ts).
+  "ratelimits": [{ "name": "FORM_RATE_LIMIT", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }],
   // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
   // The Scanner container's Durable Object class (workers/scanner.ts).
@@ -80,10 +88,12 @@
       "vars": {
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
         "PUBLIC_ORIGINS": "https://staging.naisema.com",
-        "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>"
+        "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>",
+        // Staging never adds anyone to the real newsletter list.
+        "NEWSLETTER_OUTBOX": "true"
       },
       "send_email": [{ "name": "EMAIL" }],
-      "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+      "secrets": { "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] },
       "d1_databases": [
         {
           "binding": "DB",
@@ -94,6 +104,8 @@
       ],
       // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_staging_events" }],
+      // Public forms: at most 5 sends a minute from one address to one form (app/lib/form-guard.server.ts).
+      "ratelimits": [{ "name": "FORM_RATE_LIMIT", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }],
       // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
       // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
@@ -129,7 +141,9 @@
         "EMAIL_FROM": "Na iSema <no-reply@naisema.com>"
       },
       "send_email": [{ "name": "EMAIL" }],
-      "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "BUTTONDOWN_API_KEY"]
+      },
       "d1_databases": [
         {
           "binding": "DB",
@@ -140,6 +154,8 @@
       ],
       // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
       "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_production_events" }],
+      // Public forms: at most 5 sends a minute from one address to one form (app/lib/form-guard.server.ts).
+      "ratelimits": [{ "name": "FORM_RATE_LIMIT", "namespace_id": "1003", "simple": { "limit": 5, "period": 60 } }],
       // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
       "version_metadata": { "binding": "CF_VERSION_METADATA" },
       // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).

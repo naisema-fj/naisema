@@ -34,6 +34,20 @@ INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUE
 INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
   ('e2e-educator-desktop-role', 'e2e-educator-desktop', 'educator', 'e2e-seed', 0),
   ('e2e-educator-mobile-role', 'e2e-educator-mobile', 'educator', 'e2e-seed', 0);
+-- One editor per browser project for the Submission journey, and the forms earlier runs sent.
+DELETE FROM upload_link_file WHERE link_id IN (SELECT id FROM upload_link WHERE issued_by LIKE 'e2e-intake-%');
+DELETE FROM media_upload_part WHERE asset_id IN (SELECT id FROM media_asset WHERE uploaded_by LIKE 'e2e-intake-%');
+DELETE FROM media_asset WHERE uploaded_by LIKE 'e2e-intake-%';
+DELETE FROM upload_link WHERE issued_by LIKE 'e2e-intake-%';
+DELETE FROM submission WHERE email LIKE 'e2e-%@example.com';
+DELETE FROM consent_record WHERE email LIKE 'e2e-%@example.com';
+DELETE FROM user WHERE email LIKE 'e2e-intake-%@naisema.test';
+INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
+  ('e2e-intake-desktop', 'E2E Intake Editor', 'e2e-intake-desktop-chromium@naisema.test', 0, 0, 0),
+  ('e2e-intake-mobile', 'E2E Intake Editor', 'e2e-intake-mobile-chromium@naisema.test', 0, 0, 0);
+INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
+  ('e2e-intake-desktop-role', 'e2e-intake-desktop', 'editor', 'e2e-seed', 0),
+  ('e2e-intake-mobile-role', 'e2e-intake-mobile', 'editor', 'e2e-seed', 0);
 INSERT INTO topic (id, slug, name, created_by, created_at) VALUES
   ('e2e-topic-ceremonies', 'e2e-ceremonies', 'E2E Ceremonies', 'e2e-seed', 0)
 ON CONFLICT(id) DO NOTHING;

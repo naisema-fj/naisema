@@ -62,6 +62,12 @@ function SiteFooter() {
                 <Link to={`/${page.path}`}>{page.title}</Link>
               </li>
             ))}
+            <li>
+              <Link to="/forms/enquiry">Send us a message</Link>
+            </li>
+            <li>
+              <Link to="/newsletter">Newsletter</Link>
+            </li>
           </ul>
         </nav>
         <p className="footer-note">

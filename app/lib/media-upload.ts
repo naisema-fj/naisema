@@ -1,4 +1,4 @@
-import { checkContent, checkDeclared, HEAD_BYTES } from "./upload-rules";
+import { checkContent, checkDeclared, HEAD_BYTES, type UploadPurpose } from "./upload-rules";
 
 /**
  * The media library's browser upload (app/lib/media.server.ts is the other side). It checks the
@@ -9,6 +9,10 @@ import { checkContent, checkDeclared, HEAD_BYTES } from "./upload-rules";
 export type UploadStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 export type UploadOptions = {
+  /** Where uploads start: the media library's, or a contributor's upload link (app/routes.ts). */
+  endpoint?: string;
+  /** What the file is for, which decides the types and sizes allowed. */
+  purpose?: Exclude<UploadPurpose, "evidence">;
   fetch?: (input: string, init?: RequestInit) => Promise<Response>;
   storage?: UploadStorage;
   onProgress?: (sentBytes: number) => void;
@@ -34,8 +38,9 @@ function browserStorage(): UploadStorage {
 
 class Refused extends Error {}
 
-/** Remembers an unfinished upload by the file's name, size and modification time. */
-const resumeKey = (file: File) => `naisema-upload:${file.name}:${file.size}:${file.lastModified}`;
+/** Remembers an unfinished upload by where it goes and the file's name, size and modification time. */
+const resumeKey = (endpoint: string, file: File) =>
+  `naisema-upload:${endpoint}:${file.name}:${file.size}:${file.lastModified}`;
 
 async function errorOf(response: Response) {
   const text = await response.text().catch(() => "");
@@ -51,7 +56,8 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
   const storage = options.storage ?? browserStorage();
   const wait = options.wait ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
-  const declared = checkDeclared(file, "media");
+  const endpoint = options.endpoint ?? "/admin/media/uploads";
+  const declared = checkDeclared(file, options.purpose ?? "media");
   if (!declared.ok) return { ok: false, error: declared.error };
   const head = new Uint8Array(await file.slice(0, HEAD_BYTES).arrayBuffer());
   const content = checkContent(declared.type, head);
@@ -59,17 +65,17 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
 
   try {
     let upload: { id: string; partSize: number; partCount: number; received: number[] } | null = null;
-    const earlier = storage.getItem(resumeKey(file));
+    const earlier = storage.getItem(resumeKey(endpoint, file));
     if (earlier) {
-      const response = await send(`/admin/media/uploads/${earlier}`);
+      const response = await send(`${endpoint}/${earlier}`);
       const status = response.ok
         ? ((await response.json()) as { status: string; partSize: number; partCount: number; received: number[] })
         : null;
       if (status?.status === "uploading") upload = { id: earlier, ...status };
-      else storage.removeItem(resumeKey(file));
+      else storage.removeItem(resumeKey(endpoint, file));
     }
     if (!upload) {
-      const response = await send("/admin/media/uploads", {
+      const response = await send(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -82,7 +88,7 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
       if (!response.ok) throw new Refused(await errorOf(response));
       const started = (await response.json()) as { id: string; partSize: number; partCount: number };
       upload = { ...started, received: [] };
-      storage.setItem(resumeKey(file), started.id);
+      storage.setItem(resumeKey(endpoint, file), started.id);
     }
 
     const { id, partSize, partCount } = upload;
@@ -95,13 +101,13 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
       if (received.has(part)) continue;
       const bytes = file.slice((part - 1) * partSize, part * partSize);
       for (let attempt = 0; ; attempt++) {
-        const response = await send(`/admin/media/uploads/${id}/parts/${part}`, { method: "PUT", body: bytes }).catch(
+        const response = await send(`${endpoint}/${id}/parts/${part}`, { method: "PUT", body: bytes }).catch(
           () => null,
         );
         if (response?.ok) break;
         // A refusal (4xx) is final; a lost connection or server error is worth another try.
         if (response && response.status < 500 && response.status !== 408 && response.status !== 429) {
-          storage.removeItem(resumeKey(file));
+          storage.removeItem(resumeKey(endpoint, file));
           throw new Refused(await errorOf(response));
         }
         if (attempt >= RETRIES) {
@@ -113,9 +119,9 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
       options.onProgress?.(sent);
     }
 
-    const done = await send(`/admin/media/uploads/${id}`, { method: "POST" });
+    const done = await send(`${endpoint}/${id}`, { method: "POST" });
     if (!done.ok) throw new Refused(await errorOf(done));
-    storage.removeItem(resumeKey(file));
+    storage.removeItem(resumeKey(endpoint, file));
     return { ok: true, id };
   } catch (error) {
     if (error instanceof Refused) return { ok: false, error: error.message };

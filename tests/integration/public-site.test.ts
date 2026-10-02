@@ -52,7 +52,8 @@ describe("public site shell", () => {
     const home = await (await visit("/")).text();
 
     expect(learn).toContain("Videos with captions, word meanings and practice open once the first ones are reviewed.");
-    expect(home).toContain("The newsletter isn&#x27;t open yet.");
+    expect(home).toContain('href="/newsletter"');
+    expect(home).toContain('href="/forms/contribute"');
   });
 
   it("answers unknown areas and pages with 404", async () => {

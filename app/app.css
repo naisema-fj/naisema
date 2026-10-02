@@ -264,3 +264,8 @@ a {
   font: inherit;
   padding: 0.3rem;
 }
+
+/* Text people typed with line breaks, such as a Submission's answers. */
+.preserve-lines {
+  white-space: pre-line;
+}

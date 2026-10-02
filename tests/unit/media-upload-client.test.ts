@@ -82,7 +82,9 @@ describe("uploadFile, the media library's browser upload", () => {
 
   it("resumes an interrupted upload of the same file, sending only the missing parts", async () => {
     const file = pdf();
-    const storage = memoryStorage({ [`naisema-upload:${file.name}:${file.size}:${file.lastModified}`]: "earlier" });
+    const storage = memoryStorage({
+      [`naisema-upload:/admin/media/uploads:${file.name}:${file.size}:${file.lastModified}`]: "earlier",
+    });
     const { calls, fetcher } = server({ existing: "earlier", received: [1, 3] });
 
     const result = await uploadFile(file, { fetch: fetcher, storage, wait: async () => {} });
