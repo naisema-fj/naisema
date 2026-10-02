@@ -1,7 +1,7 @@
 // The spike's player (issue #4, ADR-0008): a native <video> fed by hls.js, or by the browser's
 // own HLS where it has one (Safari), replaying and looping one segment exactly. Throwaway code;
 // it records what it sees on `window.spike` for measure.mjs and shows it on the page.
-import Hls from "./node_modules/hls.js/dist/hls.mjs";
+/* global Hls: the light build, loaded by index.html as an app would ship it. */
 
 const video = document.getElementById("video");
 const log = document.getElementById("log");
@@ -37,7 +37,9 @@ if (Hls.isSupported() && params.get("native") !== "1") {
     state.levelSwitches.push({ level: data.level, at: video.currentTime });
     say(`level ${data.level} at ${video.currentTime.toFixed(3)} s`);
   });
-  hls.on(Hls.Events.ERROR, (_event, data) => say(`hls error: ${data.type} ${data.details}${data.fatal ? " (fatal)" : ""}`));
+  hls.on(Hls.Events.ERROR, (_event, data) =>
+    say(`hls error: ${data.type} ${data.details}${data.fatal ? " (fatal)" : ""}`),
+  );
 } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
   state.native = true;
   video.src = src;
@@ -83,22 +85,19 @@ if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
   });
 }
 
-/** Resolves once a seek has finished and the first frame at the new position is presented. */
+/** Resolves once a seek has finished. */
 function seekTo(seconds) {
   return new Promise((resolve) => {
-    const onFrame = (mediaTime) => {
-      frameListeners.delete(onFrame);
-      resolve(mediaTime);
-    };
-    video.addEventListener("seeked", () => frameListeners.add(onFrame), { once: true });
+    video.addEventListener("seeked", () => resolve(), { once: true });
     video.currentTime = seconds;
   });
 }
 
 /**
- * Plays one segment from its start to its end, `times` over, at a speed. Each pass records the
- * media time of the first frame shown after the seek to the start, and of the last frame shown
- * before stopping at the end, so the boundaries can be checked against the segment's own times.
+ * Plays one segment from its start to its end, `times` over, at a speed. Each pass seeks to the
+ * start, plays, and records the media time of the first frame presented and of the last frame
+ * presented before stopping at the end, so the boundaries can be checked against the segment's
+ * own times. A pass that doesn't reach its end in time is recorded as stalled rather than waited on.
  */
 async function playSegment({ startMs, endMs, speed = 1, times = 1, onPass }) {
   video.defaultPlaybackRate = speed;
@@ -107,27 +106,42 @@ async function playSegment({ startMs, endMs, speed = 1, times = 1, onPass }) {
   const passes = [];
   const start = startMs / 1000;
   const end = endMs / 1000;
+  const allowanceMs = (endMs - startMs) / speed + 15_000;
   for (let pass = 0; pass < times; pass++) {
     video.pause();
-    const firstFrame = await seekTo(start);
-    const lastFrame = await new Promise((resolve) => {
-      let last = firstFrame;
+    await seekTo(start);
+    const result = await new Promise((resolve) => {
+      let first = null;
+      let last = null;
+      const finish = (stalled) => {
+        clearTimeout(watchdog);
+        frameListeners.delete(onFrame);
+        video.pause();
+        resolve({
+          pass,
+          speed,
+          stalled,
+          firstFrameMs: first === null ? null : first * 1000,
+          lastFrameMs: last === null ? null : last * 1000,
+        });
+      };
       // Stop on the last frame that starts before the end: one more frame would overshoot.
       const onFrame = (mediaTime) => {
+        if (first === null) first = mediaTime;
         last = mediaTime;
-        if (mediaTime >= end - 1 / 60) {
-          video.pause();
-          frameListeners.delete(onFrame);
-          resolve(last);
-        }
+        if (mediaTime >= end - 1 / 60) finish(false);
       };
+      const watchdog = setTimeout(() => finish(true), allowanceMs);
       frameListeners.add(onFrame);
       video.play().catch((error) => say(`play refused: ${error.message}`));
     });
-    const result = { pass, speed, firstFrameMs: firstFrame * 1000, lastFrameMs: lastFrame * 1000 };
     passes.push(result);
     onPass?.(result);
-    say(`pass ${pass + 1} at ${speed}×: ${result.firstFrameMs.toFixed(0)} → ${result.lastFrameMs.toFixed(0)} ms`);
+    say(
+      result.stalled
+        ? `pass ${pass + 1} at ${speed}×: stalled at ${video.currentTime.toFixed(3)} s`
+        : `pass ${pass + 1} at ${speed}×: ${result.firstFrameMs.toFixed(0)} → ${result.lastFrameMs.toFixed(0)} ms`,
+    );
   }
   return passes;
 }

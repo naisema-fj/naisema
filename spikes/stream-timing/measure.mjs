@@ -12,6 +12,7 @@
 import { createReadStream, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
+import { createGzip } from "node:zlib";
 import { chromium } from "@playwright/test";
 
 const ROOT = new URL(".", import.meta.url).pathname;
@@ -19,7 +20,12 @@ const CODEC = process.argv[2] ?? "vp9";
 const CLIPS = ["landscape", "vertical"];
 const SEGMENT = { startMs: 12000, endMs: 15500 };
 const SPEEDS = [1, 0.75, 0.5];
-const PROFILE = { offline: false, latency: 150, downloadThroughput: (1.5e6 / 8) | 0, uploadThroughput: (0.75e6 / 8) | 0 };
+const PROFILE = {
+  offline: false,
+  latency: 150,
+  downloadThroughput: (1.5e6 / 8) | 0,
+  uploadThroughput: (0.75e6 / 8) | 0,
+};
 const TOLERANCE_MS = 100;
 const TYPES = {
   ".html": "text/html",
@@ -46,8 +52,17 @@ function serve() {
     if (range) {
       const start = Number(range[1]);
       const end = range[2] ? Number(range[2]) : size - 1;
-      response.writeHead(206, { ...headers, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": end - start + 1 });
+      response.writeHead(206, {
+        ...headers,
+        "Content-Range": `bytes ${start}-${end}/${size}`,
+        "Content-Length": end - start + 1,
+      });
       return createReadStream(path, { start, end }).pipe(response);
+    }
+    // Text (the page, scripts, playlists) is compressed, as Cloudflare's edge compresses it.
+    if (/\.(html|m?js|m3u8)$/.test(path) && /gzip/.test(request.headers["accept-encoding"] ?? "")) {
+      response.writeHead(200, { ...headers, "Content-Encoding": "gzip" });
+      return createReadStream(path).pipe(createGzip()).pipe(response);
     }
     response.writeHead(200, { ...headers, "Content-Length": size });
     createReadStream(path).pipe(response);
@@ -84,7 +99,11 @@ async function coldStarts(browser, origin, clip) {
     console.log(`  run ${run + 1}: ${runs.at(-1)} ms`);
     await context.close();
   }
-  return { runs, within5s: runs.filter((ms) => ms !== null && ms <= 5000).length, passes: runs.filter((ms) => ms !== null && ms <= 5000).length >= 4 };
+  return {
+    runs,
+    within5s: runs.filter((ms) => ms !== null && ms <= 5000).length,
+    passes: runs.filter((ms) => ms !== null && ms <= 5000).length >= 4,
+  };
 }
 
 async function loops(page) {
@@ -111,14 +130,17 @@ async function loops(page) {
       },
       { segment: SEGMENT, speed },
     );
-    const startErrors = passes.passes.map((pass) => Math.round(pass.firstFrameMs - SEGMENT.startMs));
-    const endErrors = passes.passes.map((pass) => Math.round(SEGMENT.endMs - pass.lastFrameMs));
-    const worst = Math.max(...startErrors.map(Math.abs), ...endErrors.map(Math.abs));
+    const completed = passes.passes.filter((pass) => !pass.stalled);
+    const startErrors = completed.map((pass) => Math.round(pass.firstFrameMs - SEGMENT.startMs));
+    const endErrors = completed.map((pass) => Math.round(SEGMENT.endMs - pass.lastFrameMs));
+    const stalled = passes.passes.length - completed.length;
+    const worst = Math.max(0, ...startErrors.map(Math.abs), ...endErrors.map(Math.abs));
     results[speed] = {
       startErrors,
       endErrors,
       worstMs: worst,
-      passes: worst <= TOLERANCE_MS,
+      stalled,
+      passes: stalled === 0 && worst <= TOLERANCE_MS,
       cueFrames: passes.cueFrames,
       cueMisses: passes.cueMisses,
     };
@@ -151,10 +173,14 @@ async function qualityChange(page) {
       after: window.spike.currentLevel(),
       forcedAtMs,
       framesOutsideSegment: outside,
-      passes: passes.map((pass) => ({
-        startErrorMs: Math.round(pass.firstFrameMs - segment.startMs),
-        endErrorMs: Math.round(segment.endMs - pass.lastFrameMs),
-      })),
+      passes: passes.map((pass) =>
+        pass.stalled
+          ? { stalled: true }
+          : {
+              startErrorMs: Math.round(pass.firstFrameMs - segment.startMs),
+              endErrorMs: Math.round(segment.endMs - pass.lastFrameMs),
+            },
+      ),
       switches: window.spike.state.levelSwitches,
     };
   }, SEGMENT);
@@ -188,7 +214,7 @@ for (const [clip, result] of Object.entries(report.clips)) {
   console.log(`  first frame (ms): ${result.coldStarts.runs.join(", ")} → ${result.coldStarts.within5s}/5 within 5 s`);
   for (const [speed, loop] of Object.entries(result.loops)) {
     console.log(
-      `  ${speed}×: worst ${loop.worstMs} ms; start ${loop.startErrors.join(" ")}; end ${loop.endErrors.join(" ")}; cue missing on ${loop.cueMisses.length}/${loop.cueFrames} frames`,
+      `  ${speed}×: worst ${loop.worstMs} ms, ${loop.stalled} stalled; start ${loop.startErrors.join(" ")}; end ${loop.endErrors.join(" ")}; cue missing on ${loop.cueMisses.length}/${loop.cueFrames} frames`,
     );
   }
   const q = result.qualityChange;

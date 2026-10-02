@@ -31,6 +31,8 @@
       <button id="switch" type="button">Force a quality change</button>
     </fieldset>
     <output id="log" aria-live="polite"></output>
+    <!-- The light build (no DRM or subtitle parsing: captions are our own native <track>), as an app would ship it. -->
+    <script src="./node_modules/hls.js/dist/hls.light.min.js"></script>
     <script type="module" src="./player.js"></script>
   </body>
 </html>
