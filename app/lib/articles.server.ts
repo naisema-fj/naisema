@@ -212,7 +212,9 @@ export async function listArticles(db: Database) {
 /** Content Items another item may embed or name as related: every one except itself. */
 export async function embeddableArticles(db: Database, exceptId?: string) {
   const items = await listArticles(db);
-  return items.filter(({ id }) => id !== exceptId).map(({ id, title, typeName }) => ({ id, title, typeName }));
+  return items
+    .filter(({ id }) => id !== exceptId)
+    .map(({ id, title, type, typeName }) => ({ id, title, type, typeName }));
 }
 
 /** Titles and admin links for the Content Items a body embeds, keyed by ID, for the renderer. */

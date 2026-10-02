@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, gt, inArray, lte, ne, sql } from "drizzle-orm";
 import { type AnySQLiteColumn, integer, sqliteTable } from "drizzle-orm/sqlite-core";
-import { contentItem, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
+import { contentItem, revision, rightsRecord, searchEntry, searchEntryTopic, topic } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { MEDIA_TYPES, type MediaType } from "./creator-fields";
 import type { Database } from "./db.server";
@@ -243,8 +243,15 @@ export async function listByTopics(
  * asked. Like every listing, each is checked again before it is shown.
  */
 export async function listCreators(db: Database, mediaType: MediaType | null, now = new Date()) {
+  // The kind of work is matched in SQL, in the published Revision, so the limit applies after it.
+  const worksIn = mediaType
+    ? sql`exists (
+        select 1 from ${revision}, json_each(${revision.snapshot}, '$.creator.mediaTypes')
+        where ${revision.id} = ${contentItem.currentPublishedRevisionId} and json_each.value = ${mediaType}
+      )`
+    : undefined;
   const rows = await indexedItems(db, null)
-    .where(and(hasPublishRights(searchEntry.contentItemId, now), eq(searchEntry.format, "creator")))
+    .where(and(hasPublishRights(searchEntry.contentItemId, now), eq(searchEntry.format, "creator"), worksIn))
     .orderBy(asc(searchEntry.title))
     .limit(CREATOR_LIST_LIMIT);
   const checked = await Promise.all(
@@ -255,7 +262,6 @@ export async function listCreators(db: Database, mediaType: MediaType | null, no
         await indexItem(db, item.id, now);
         return null;
       }
-      if (mediaType && !creator.mediaTypes.includes(mediaType)) return null;
       return {
         name: published.snapshot.title,
         summary: published.snapshot.summary,

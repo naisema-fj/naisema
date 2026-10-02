@@ -92,7 +92,9 @@ export default function Offerings({ loaderData }: Route.ComponentProps) {
           <button type="submit">Show</button>
         </Form>
         {offerings.length ? (
-          offerings.map(({ view, provider }) => <OfferingCard key={view.id} offering={view} provider={provider} />)
+          offerings.map(({ view, provider }) => (
+            <OfferingCard key={view.id} offering={view} provider={provider} headingLevel={2} />
+          ))
         ) : (
           <p className="empty">{filtered ? "Nothing matches those choices." : "Nothing is listed yet."}</p>
         )}

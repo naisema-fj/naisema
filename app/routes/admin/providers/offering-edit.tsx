@@ -3,7 +3,7 @@ import { OfferingForm, offeringValues } from "~/components/listing-forms";
 import { embeddableArticles } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
-import { readListingFlags, readOfferingFields } from "~/lib/listing-fields";
+import { formValues, listingErrors, readListingFlags, readOfferingFields } from "~/lib/listing-fields";
 import { getOffering, getProvider, providerChanged, updateOffering } from "~/lib/providers.server";
 import type { Route } from "./+types/offering-edit";
 
@@ -35,13 +35,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
   const { db, actor, offering, provider } = await requireOffering(request, env, params.id);
   const form = await request.formData();
-  const values = Object.fromEntries([...form].map(([key, value]) => [key, String(value)]));
+  const values = formValues(form);
   const details = readOfferingFields(form);
   const flags = readListingFlags(form);
-  if (!details.ok || !flags.ok) {
-    const errors = { ...(details.ok ? {} : details.errors), ...(flags.ok ? {} : flags.errors) };
-    return data({ errors, values }, { status: 400 });
-  }
+  if (!details.ok || !flags.ok) return data({ errors: listingErrors(details, flags), values }, { status: 400 });
   const updated = await updateOffering(db, actor.userId, offering, details.details, flags.flags);
   if (!updated.ok) return data({ errors: updated.errors, values }, { status: 400 });
   await providerChanged(env, provider.slug);

@@ -5,9 +5,9 @@ import { articleFingerprints, embeddableArticles, getArticle, readArticleForm } 
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { CONTENT_TYPE_NAMES } from "~/lib/content-types";
+import { itemPath } from "~/lib/item-paths";
 import { reportsSince } from "~/lib/link-reports.server";
 import { downloadChoices, episodeAudioChoices, imageChoices } from "~/lib/media-delivery.server";
-import { publicPath } from "~/lib/public.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { appendRevision } from "~/lib/revisions.server";
 import { changeSlug } from "~/lib/slugs.server";
@@ -52,7 +52,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         { errors: {}, values: null, error: null, baseRevisionId: null, slugError: changed.error },
         { status: 400 },
       );
-    await publicItemChanged(env, db, params.id, [publicPath(changed.area, changed.oldSlug)]);
+    // The old address, as this type is addressed (a Creator Profile's is under /connect/creators).
+    const oldPath = itemPath({ type: changed.type, primaryArea: changed.area, slug: changed.oldSlug });
+    await publicItemChanged(env, db, params.id, [oldPath]);
     throw redirect(`/admin/articles/${params.id}?slug=changed`);
   }
 

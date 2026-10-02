@@ -1,10 +1,12 @@
 import { and, asc, eq, like, or } from "drizzle-orm";
 import { contentItem, offering, partnershipAgreement, provider } from "~db/schema";
 import { auditInsert } from "./audit.server";
+import { requireEditor } from "./content.server";
 import type { Database } from "./db.server";
 import {
   ACCESS_MODES,
   AGE_SUITABILITY,
+  type AgreementDetails,
   type AgreementFacts,
   costText,
   FORMATS,
@@ -14,6 +16,7 @@ import {
   type ListingFlags,
   type OfferingDetails,
   type OfferingFilters,
+  type OrganisationType,
   PARTNER_ONLY_MODES,
   type ProviderDetails,
   providerPath,
@@ -199,27 +202,7 @@ export async function updateOffering(
   return { ok: true, id: current.id };
 }
 
-/** Reads a Partnership Agreement from its form: where it is kept, and when it starts and ends. */
-export function readAgreement(form: FormData) {
-  const errors: Record<string, string> = {};
-  const reference = String(form.get("reference") ?? "").trim();
-  const startsOn = String(form.get("startsOn") ?? "").trim();
-  const endsOn = String(form.get("endsOn") ?? "").trim();
-  if (!reference) errors.reference = "Say where the signed agreement is kept.";
-  else if (reference.length > 300) errors.reference = "This can be at most 300 characters.";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(startsOn)) errors.startsOn = "Enter the day it starts.";
-  if (endsOn && !/^\d{4}-\d{2}-\d{2}$/.test(endsOn)) errors.endsOn = "Enter its last day as a date.";
-  else if (endsOn && endsOn < startsOn) errors.endsOn = "It can't end before it starts.";
-  if (Object.keys(errors).length) return { ok: false as const, errors };
-  return { ok: true as const, agreement: { reference, startsOn, endsOn: endsOn || null } };
-}
-
-export async function recordAgreement(
-  db: Database,
-  actorId: string,
-  providerId: string,
-  agreement: { reference: string; startsOn: string; endsOn: string | null },
-) {
+export async function recordAgreement(db: Database, actorId: string, providerId: string, agreement: AgreementDetails) {
   const id = crypto.randomUUID();
   await db.batch([
     db.insert(partnershipAgreement).values({
@@ -263,9 +246,29 @@ export async function endAgreement(db: Database, actorId: string, providerId: st
   return true;
 }
 
-/** Purges the public pages that show a Provider and its Offerings. */
+/** Purges the public pages that show a Provider and its Offerings, the sitemap included. */
 export function providerChanged(env: Env, slug: string) {
-  return purgePublicPages(env, ["/connect", "/connect/providers", providerPath(slug)]);
+  return purgePublicPages(env, ["/connect", "/connect/providers", providerPath(slug), "/sitemap.xml"]);
+}
+
+/**
+ * The Providers whose Offerings are hosted on a Na iSema item, so their pages can be refreshed
+ * when that item changes: they say whether it can be opened.
+ */
+export async function providersHosting(db: Database, contentItemId: string) {
+  return db
+    .selectDistinct({ slug: provider.slug })
+    .from(offering)
+    .innerJoin(provider, eq(provider.id, offering.providerId))
+    .where(and(eq(offering.accessMode, "licensed_native"), like(offering.access, `%${contentItemId}%`)));
+}
+
+/** The editor gate plus the Provider a staff page is about; 404 if there is none. */
+export async function requireProvider(env: Env, request: Request, id: string) {
+  const staff = await requireEditor(env, request);
+  const found = await getProvider(staff.db, id);
+  if (!found) throw new Response("Not found", { status: 404 });
+  return { ...staff, provider: found };
 }
 
 // --- What the public site shows ---
@@ -282,10 +285,17 @@ async function agreementsByProvider(db: Database) {
 const shownWith = (row: OfferingRow, partner: boolean) =>
   row.listed && (partner || !PARTNER_ONLY_MODES.includes(row.accessMode));
 
-/** The listed Providers, A to Z, each marked a Partner only while an agreement is in force. */
-export async function publicProviders(db: Database, now = new Date()) {
+/**
+ * The listed Providers, A to Z, of one kind if asked, each marked a Partner only while an
+ * agreement is in force.
+ */
+export async function publicProviders(db: Database, now = new Date(), kind: OrganisationType | null = null) {
   const [rows, agreements] = await Promise.all([
-    db.select().from(provider).where(eq(provider.listed, true)).orderBy(asc(provider.name)),
+    db
+      .select()
+      .from(provider)
+      .where(and(eq(provider.listed, true), kind ? eq(provider.organisationType, kind) : undefined))
+      .orderBy(asc(provider.name)),
     agreementsByProvider(db),
   ]);
   return rows.map((row) => ({ ...row, partner: isPartner(agreements.get(row.id) ?? [], now) }));

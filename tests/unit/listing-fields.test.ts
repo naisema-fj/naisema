@@ -3,6 +3,7 @@ import {
   costText,
   isPartner,
   offeringFilters,
+  readAgreementFields,
   readListingFlags,
   readOfferingFields,
   readProviderFields,
@@ -152,6 +153,14 @@ describe("isPartner (PART-03)", () => {
     endedAt,
   });
 
+  it("counts agreement days in Fiji, so a Partner starts and ends on Fiji's days", () => {
+    const fijiMorning = new Date("2026-09-30T20:00:00Z"); // 08:00 on 1 October in Fiji
+    const fijiNextMorning = new Date("2026-10-01T20:00:00Z"); // 08:00 on 2 October in Fiji
+
+    expect(isPartner([agreement("2026-10-01", null)], fijiMorning)).toBe(true);
+    expect(isPartner([agreement("2026-01-01", "2026-10-01")], fijiNextMorning)).toBe(false);
+  });
+
   it("is true only while a recorded Partnership Agreement is in force", () => {
     expect(isPartner([], today)).toBe(false);
     expect(isPartner([agreement("2026-01-01", null)], today)).toBe(true);
@@ -159,6 +168,25 @@ describe("isPartner (PART-03)", () => {
     expect(isPartner([agreement("2025-01-01", "2026-06-30")], today)).toBe(false);
     expect(isPartner([agreement("2026-01-01", "2026-10-01")], today)).toBe(true);
     expect(isPartner([agreement("2026-01-01", null, new Date("2026-09-01"))], today)).toBe(false);
+  });
+});
+
+describe("readAgreementFields", () => {
+  it("reads where the signed copy is kept and its first and last days", () => {
+    expect(readAgreementFields(form({ reference: "MOU, founder's files", startsOn: "2026-01-01" }))).toEqual({
+      ok: true,
+      details: { reference: "MOU, founder's files", startsOn: "2026-01-01", endsOn: null },
+    });
+  });
+
+  it("refuses dates that aren't real, and an end before the start", () => {
+    expect(readAgreementFields(form({ reference: "MOU", startsOn: "2026-13-45" }))).toMatchObject({
+      ok: false,
+      errors: { startsOn: expect.any(String) },
+    });
+    expect(readAgreementFields(form({ reference: "MOU", startsOn: "2026-05-01", endsOn: "2026-04-01" }))).toMatchObject(
+      { ok: false, errors: { endsOn: expect.any(String) } },
+    );
   });
 });
 

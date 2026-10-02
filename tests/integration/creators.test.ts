@@ -156,4 +156,21 @@ describe("Creator Profiles (CRE-01)", () => {
     expect(text).toContain("Give only a town, island or country, without numbers.");
     expect(text).toContain("Choose an Article, Resource or Episode that shows their work.");
   });
+
+  it("move with their address, answering only under /connect/creators", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const { id, sample } = await creatorProfile(editor);
+    await publish(editor, sample);
+    await publish(editor, id);
+    const old = await slugOf(id);
+    expect((await visit(`/connect/creators/${old}`)).status).toBe(200);
+
+    const moved = await editor.browser.fetch(`/admin/articles/${id}`, { form: { intent: "slug", slug: `${old}-new` } });
+
+    expect(moved.status).toBe(302);
+    const response = await visit(`/connect/creators/${old}`);
+    expect(response.status).toBe(301);
+    expect(response.headers.get("Location")).toBe(`/connect/creators/${old}-new`);
+    expect((await visit(`/connect/${old}`)).status).toBe(404);
+  });
 });

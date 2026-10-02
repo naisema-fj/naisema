@@ -1,4 +1,4 @@
-import { latestToday } from "./calendar";
+import { fijiToday, latestToday } from "./calendar";
 import { AGE_GUIDANCE } from "./resource-fields";
 
 /**
@@ -62,7 +62,7 @@ export const ACCESS_MODES = {
   external_link: "On the Provider's website",
   enquiry: "Ask the Provider",
   referral: "Through a Na iSema referral",
-  authorised_embed: "Shown on Na iSema with the Provider's authorisation",
+  authorised_embed: "Shared by Na iSema with the Provider's authorisation",
   licensed_native: "On Na iSema, under licence",
 } as const;
 export type AccessMode = keyof typeof ACCESS_MODES;
@@ -105,24 +105,21 @@ export type OfferingDetails = {
 export const LISTING_LIMITS = { name: 200, text: 2000, short: 300, url: 2000 } as const;
 
 type Errors = Record<string, string>;
-type Result<T> = { ok: true; details: T } | { ok: false; errors: Errors; values: Record<string, string> };
+type Result<T> = { ok: true; details: T } | { ok: false; errors: Errors };
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isDate = (value: string) => DATE.test(value) && !Number.isNaN(new Date(`${value}T00:00:00Z`).getTime());
 
 function reader(form: FormData) {
   const errors: Errors = {};
-  const values: Record<string, string> = {};
   const text = (name: string, limit: number, missing?: string) => {
     const value = String(form.get(name) ?? "").trim();
-    values[name] = value;
     if (!value && missing) errors[name] = missing;
     else if (value.length > limit) errors[name] = `This can be at most ${limit} characters.`;
     return value;
   };
   const choice = <T extends string>(name: string, options: Record<T, string>, fallback: T, label: string): T => {
     const value = String(form.get(name) ?? "") || fallback;
-    values[name] = value;
     if (!Object.hasOwn(options, value)) {
       errors[name] = `Choose ${label} from the list.`;
       return fallback;
@@ -134,12 +131,12 @@ function reader(form: FormData) {
     if (value && !isSecureUrl(value)) errors[name] = "Enter a full web address starting with https://.";
     return value;
   };
-  return { errors, values, text, choice, url };
+  return { errors, text, choice, url };
 }
 
 /** Reads a Provider from its form. `today` bounds the last-checked date. */
 export function readProviderFields(form: FormData, today = new Date()): Result<ProviderDetails> {
-  const { errors, values, text, choice, url } = reader(form);
+  const { errors, text, choice, url } = reader(form);
   const name = text("name", LISTING_LIMITS.name, "Enter the Provider's name.");
   const description = text("description", LISTING_LIMITS.text);
   const organisationType = choice<OrganisationType>(
@@ -155,7 +152,7 @@ export function readProviderFields(form: FormData, today = new Date()): Result<P
   if (lastCheckedOn && !isDate(lastCheckedOn)) errors.lastCheckedOn = "Enter the date you last checked these details.";
   else if (lastCheckedOn > latestToday(today)) errors.lastCheckedOn = "That date is in the future.";
 
-  if (Object.keys(errors).length) return { ok: false, errors, values };
+  if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
     details: { name, description, organisationType, location, website, contactRoute, lastCheckedOn },
@@ -164,7 +161,7 @@ export function readProviderFields(form: FormData, today = new Date()): Result<P
 
 /** Reads an Offering from its form. */
 export function readOfferingFields(form: FormData): Result<OfferingDetails> {
-  const { errors, values, text, choice, url } = reader(form);
+  const { errors, text, choice, url } = reader(form);
   const title = text("title", LISTING_LIMITS.name, "Enter the Offering's name.");
   const summary = text("summary", LISTING_LIMITS.text);
   const languageVariety = text("languageVariety", LISTING_LIMITS.short);
@@ -191,7 +188,6 @@ export function readOfferingFields(form: FormData): Result<OfferingDetails> {
   else if (startsOn && endsOn && endsOn < startsOn) errors.endsOn = "It can't end before it starts.";
 
   const mode = String(form.get("accessMode") ?? "");
-  values.accessMode = mode;
   let access: OfferingAccess = { mode: "enquiry" };
   if (mode === "external_link" || mode === "authorised_embed") {
     access = { mode, url: url("accessUrl", "Enter the web address visitors go to.") };
@@ -205,7 +201,7 @@ export function readOfferingFields(form: FormData): Result<OfferingDetails> {
   const enrolmentBy = choice<HandledBy>("enrolmentBy", HANDLED_BY, "unknown", "who handles enrolment");
   const supportBy = choice<HandledBy>("supportBy", HANDLED_BY, "unknown", "who handles support");
 
-  if (Object.keys(errors).length) return { ok: false, errors, values };
+  if (Object.keys(errors).length) return { ok: false, errors };
   return {
     ok: true,
     details: {
@@ -264,6 +260,14 @@ export function sponsorsText(...sponsors: (string | null)[]) {
   return named.length ? `Sponsored by ${named.join(" and ")}.` : null;
 }
 
+/** A submitted form's fields, to show it again as it was when it is refused. */
+export const formValues = (form: FormData) =>
+  Object.fromEntries([...form].map(([key, value]) => [key, String(value)])) as Record<string, string>;
+
+/** The errors of every refused part of a listing form, together. */
+export const listingErrors = (...results: ({ ok: true } | { ok: false; errors: Errors })[]) =>
+  Object.assign({}, ...results.map((result) => (result.ok ? {} : result.errors))) as Errors;
+
 /** A cost as visitors read it. */
 export function costText(cost: Cost) {
   if (cost.kind === "free") return "Free";
@@ -274,13 +278,27 @@ export function costText(cost: Cost) {
 /** A recorded Partnership Agreement, as the Partner rule needs it. */
 export type AgreementFacts = { startsOn: string; endsOn: string | null; endedAt: Date | null };
 
+export type AgreementDetails = { reference: string; startsOn: string; endsOn: string | null };
+
+/** Reads a Partnership Agreement from its form: where the signed copy is kept, its first and last days. */
+export function readAgreementFields(form: FormData): Result<AgreementDetails> {
+  const { errors, text } = reader(form);
+  const reference = text("reference", LISTING_LIMITS.short, "Say where the signed agreement is kept.");
+  const startsOn = text("startsOn", 10, "Enter the day it starts.");
+  const endsOn = text("endsOn", 10);
+  if (startsOn && !isDate(startsOn)) errors.startsOn = "Enter the day it starts.";
+  if (endsOn && !isDate(endsOn)) errors.endsOn = "Enter its last day as a date.";
+  else if (endsOn && endsOn < startsOn) errors.endsOn = "It can't end before it starts.";
+  if (Object.keys(errors).length) return { ok: false, errors };
+  return { ok: true, details: { reference, startsOn, endsOn: endsOn || null } };
+}
+
 /**
- * Whether a Provider is a Partner right now (PART-03): an agreement has started, hasn't reached
- * its end date (the end date is its last day) and hasn't been ended early. Only then is "Partner"
- * shown.
+ * Whether a Provider is a Partner right now (PART-03): an agreement has started, hasn't passed its
+ * last day and hasn't been ended early. Agreement days are Fiji's. Only then is "Partner" shown.
  */
 export function isPartner(agreements: AgreementFacts[], now = new Date()) {
-  const day = now.toISOString().slice(0, 10);
+  const day = fijiToday(now);
   return agreements.some(
     (agreement) =>
       !agreement.endedAt && agreement.startsOn <= day && (agreement.endsOn === null || day <= agreement.endsOn),

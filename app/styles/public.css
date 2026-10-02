@@ -960,7 +960,8 @@ html:has(.public) {
 
 .resource-details dt,
 .episode dt,
-.creator dt {
+.creator dt,
+.facts dt {
   font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--step--1);
@@ -972,7 +973,8 @@ html:has(.public) {
 
 .resource-details dd,
 .episode dd,
-.creator dd {
+.creator dd,
+.facts dd {
   margin: 0;
 }
 
@@ -1184,20 +1186,6 @@ html:has(.public) {
   display: grid;
   grid-template-columns: 11rem minmax(0, 1fr);
   gap: 1.25rem;
-}
-
-.facts dt {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--masi);
-  padding-top: 0.2rem;
-}
-
-.facts dd {
-  margin: 0;
 }
 
 /* Sponsorship and editorial features, always disclosed in the same plain voice. */

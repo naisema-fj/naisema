@@ -4,6 +4,7 @@ import type { ArticleSnapshot } from "./article-fields";
 import type { Database } from "./db.server";
 import { mediaPaths } from "./media-delivery.server";
 import { itemsMentioning } from "./mentions.server";
+import { providerChanged, providersHosting } from "./providers.server";
 import { pagesShowing, purgePublicPages } from "./public-cache.server";
 import { indexItem } from "./search.server";
 
@@ -39,6 +40,8 @@ export async function publicItemChanged(
     ? await db.select({ snapshot: revision.snapshot }).from(revision).where(inArray(revision.id, revisionIds))
     : [];
   const topicIds = [...new Set(snapshots.flatMap(({ snapshot }) => (snapshot as ArticleSnapshot).topicIds ?? []))];
+  // A Provider whose Offering is hosted on this item says whether it can be opened.
+  for (const { slug } of await providersHosting(db, itemId)) await providerChanged(env, slug);
   // A Topic it leads shows it too, even once it is no longer tagged with that Topic.
   const topics = await db
     .select({ slug: topic.slug, parentId: topic.parentTopicId })

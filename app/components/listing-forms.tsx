@@ -111,7 +111,13 @@ function ListingFlagsFields({ values, errors }: { values: Values; errors: Errors
         hint="A sponsor is always disclosed next to the listing."
       />
       <div className="choice">
-        <input type="checkbox" id="featured" name="featured" defaultChecked={Boolean(values.featureRationale)} />
+        <input
+          type="checkbox"
+          id="featured"
+          name="featured"
+          // A refused form (it has an intent) shows what was ticked; a saved listing, whether it is featured.
+          defaultChecked={"intent" in values ? values.featured === "on" : Boolean(values.featureRationale)}
+        />
         <label htmlFor="featured">Featured by Na iSema editors</label>
       </div>
       <Text

@@ -144,7 +144,8 @@ export async function findPublicArticle(
       .innerJoin(contentItem, eq(contentItem.id, slugRedirect.contentItemId))
       .where(and(eq(slugRedirect.primaryArea, area), eq(slugRedirect.slug, slug)))
       .get();
-    if (!redirect) return { kind: "missing" };
+    // An old address answers only where that type lives (a Creator's old slug under /connect/creators).
+    if (!redirect || !(types as readonly string[]).includes(redirect.item.type)) return { kind: "missing" };
     // An old address answers as the item's own address would.
     if (isTakenDown(redirect.item)) return { kind: "withdrawn" };
     if (!(await eligiblePublished(db, redirect.item, now))) return { kind: "missing" };

@@ -61,8 +61,9 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
 }
 
 /**
- * Whether a Content Item is public right now: published, and its published Revision eligible. A
- * Creator Profile's sample can't itself be a Creator Profile, so this never recurses further.
+ * Whether a Content Item is public right now: published, and its published Revision eligible. It
+ * mirrors `eligiblePublished`, which lives in public.server and imports this module. A Creator
+ * Profile's sample can't itself be a Creator Profile, so this never recurses further.
  */
 async function isPublicNow(db: Database, contentItemId: string, now: Date) {
   const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();

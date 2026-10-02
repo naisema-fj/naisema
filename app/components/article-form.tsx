@@ -495,9 +495,7 @@ export function ArticleForm({
           >
             <option value="">Choose a published item</option>
             {embeddable
-              .filter(
-                (item) => item.typeName !== CONTENT_TYPE_NAMES.creator && item.typeName !== CONTENT_TYPE_NAMES.page,
-              )
+              .filter((item) => item.type !== "creator" && item.type !== "page")
               .map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.title}

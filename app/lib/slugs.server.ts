@@ -6,7 +6,7 @@ import type { Database } from "./db.server";
 import { isReservedSlug, slugify } from "./slug";
 
 export type SlugChange =
-  | { ok: true; area: PrimaryArea; oldSlug: string; newSlug: string }
+  | { ok: true; area: PrimaryArea; type: string; oldSlug: string; newSlug: string }
   | { ok: false; error: string };
 
 /**
@@ -59,5 +59,5 @@ export async function changeSlug(
       details: { from: item.slug, to: slug },
     }),
   ]);
-  return { ok: true, area: area as PrimaryArea, oldSlug: item.slug, newSlug: slug };
+  return { ok: true, area: area as PrimaryArea, type: item.type, oldSlug: item.slug, newSlug: slug };
 }

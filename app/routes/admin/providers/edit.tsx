@@ -1,21 +1,23 @@
 import { data, Form, redirect } from "react-router";
 import { listingValues, ProviderForm } from "~/components/listing-forms";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { requireEditor } from "~/lib/content.server";
 import {
   ACCESS_MODES,
   costText,
+  formValues,
   isPartner,
+  LISTING_LIMITS,
+  listingErrors,
   providerPath,
+  readAgreementFields,
   readListingFlags,
   readProviderFields,
 } from "~/lib/listing-fields";
 import {
   endAgreement,
-  getProvider,
   providerChanged,
-  readAgreement,
   recordAgreement,
+  requireProvider,
   updateProvider,
 } from "~/lib/providers.server";
 import { formatDay } from "~/lib/rights-rules";
@@ -27,15 +29,8 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: `${loaderData?.provider.name ?? "Provider"} · Na iSema staff` }];
 }
 
-async function requireProvider(request: Request, env: Env, id: string) {
-  const staff = await requireEditor(env, request);
-  const found = await getProvider(staff.db, id);
-  if (!found) throw new Response("Not found", { status: 404 });
-  return { ...staff, provider: found };
-}
-
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const { provider } = await requireProvider(request, context.get(cloudflareContext).env, params.id);
+  const { provider } = await requireProvider(context.get(cloudflareContext).env, request, params.id);
   return {
     provider,
     partner: isPartner(provider.agreements),
@@ -45,29 +40,29 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, actor, provider } = await requireProvider(request, env, params.id);
+  const { db, actor, provider } = await requireProvider(env, request, params.id);
   const form = await request.formData();
   const intent = form.get("intent");
+  const refused = (errors: Record<string, string>, which: "provider" | "agreement") =>
+    data(
+      which === "agreement"
+        ? { errors: {}, values: null, agreementErrors: errors, agreementValues: formValues(form) }
+        : { errors, values: formValues(form), agreementErrors: null, agreementValues: null },
+      { status: 400 },
+    );
 
   if (intent === "agreement") {
-    const read = readAgreement(form);
-    if (!read.ok) return data({ errors: {}, values: null, agreementErrors: read.errors }, { status: 400 });
-    await recordAgreement(db, actor.userId, provider.id, read.agreement);
+    const read = readAgreementFields(form);
+    if (!read.ok) return refused(read.errors, "agreement");
+    await recordAgreement(db, actor.userId, provider.id, read.details);
   } else if (intent === "endAgreement") {
-    await endAgreement(db, actor.userId, provider.id, String(form.get("agreementId") ?? ""));
+    const ended = await endAgreement(db, actor.userId, provider.id, String(form.get("agreementId") ?? ""));
+    if (!ended)
+      return refused({ reference: "That agreement has already ended, or isn't this Provider's." }, "agreement");
   } else {
     const details = readProviderFields(form);
     const flags = readListingFlags(form);
-    if (!details.ok || !flags.ok) {
-      return data(
-        {
-          errors: { ...(details.ok ? {} : details.errors), ...(flags.ok ? {} : flags.errors) },
-          values: Object.fromEntries([...form].map(([key, value]) => [key, String(value)])),
-          agreementErrors: null,
-        },
-        { status: 400 },
-      );
-    }
+    if (!details.ok || !flags.ok) return refused(listingErrors(details, flags), "provider");
     await updateProvider(db, actor.userId, provider.id, details.details, flags.flags);
   }
   // Partner status, listing and details all show on its public pages.
@@ -78,6 +73,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 export default function EditProvider({ loaderData, actionData }: Route.ComponentProps) {
   const { provider, partner, saved } = loaderData;
   const agreementErrors: Record<string, string> = actionData?.agreementErrors ?? {};
+  const agreementValues: Record<string, string> = actionData?.agreementValues ?? {};
   return (
     <main id="main" className="page">
       <p>
@@ -148,7 +144,8 @@ export default function EditProvider({ loaderData, actionData }: Route.Component
           id="reference"
           name="reference"
           required
-          maxLength={300}
+          maxLength={LISTING_LIMITS.short}
+          defaultValue={agreementValues.reference}
           aria-describedby={agreementErrors.reference ? "reference-error" : undefined}
         />
         {agreementErrors.reference && (
@@ -162,6 +159,7 @@ export default function EditProvider({ loaderData, actionData }: Route.Component
           name="startsOn"
           type="date"
           required
+          defaultValue={agreementValues.startsOn}
           aria-describedby={agreementErrors.startsOn ? "startsOn-error" : undefined}
         />
         {agreementErrors.startsOn && (
@@ -174,6 +172,7 @@ export default function EditProvider({ loaderData, actionData }: Route.Component
           id="agreementEndsOn"
           name="endsOn"
           type="date"
+          defaultValue={agreementValues.endsOn}
           aria-describedby={agreementErrors.endsOn ? "endsOn-error" : undefined}
         />
         {agreementErrors.endsOn && (

@@ -181,6 +181,55 @@ describe("Partners, sponsorship and features (PART-03, PUB-04)", () => {
   });
 });
 
+describe("Keeping Connect's pages current", () => {
+  it("purges the sitemap when a Provider is listed or unlisted, and narrows Providers by kind", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const { id, path } = await addProvider(editor, { organisationType: "church" });
+    expect(await read("/sitemap.xml")).toContain(path);
+    expect(await read("/connect/providers?kind=church")).toContain(`href="${path}"`);
+    expect(await read("/connect/providers?kind=university")).not.toContain(`href="${path}"`);
+
+    await editor.browser.fetch(`/admin/providers/${id}`, {
+      form: { intent: "provider", name: "Unlisted now", lastCheckedOn: "2026-09-30" },
+    });
+
+    expect(await read("/sitemap.xml")).not.toContain(path);
+  });
+
+  it("says when the Na iSema item an Offering is on is no longer public", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const { id, path } = await addProvider(editor);
+    await recordAgreement(editor, id);
+    const article = await post(
+      editor,
+      "/admin/articles/new",
+      articleForm(await topic(editor), { flag: [], languageVariety: "", title: "Hosted lesson" }),
+    );
+    const itemId = article.headers.get("Location")?.split("/").at(-1) as string;
+    expect(
+      (await addOffering(editor, id, { accessMode: "licensed_native", accessUrl: "", accessContentItemId: itemId }))
+        .status,
+    ).toBe(302);
+
+    expect(await read(path)).toContain("It isn&#x27;t available on Na iSema right now.");
+  });
+
+  it("keeps a refused agreement's values, and won't end one that isn't this Provider's", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const { id } = await addProvider(editor);
+
+    const refused = await recordAgreement(editor, id, { reference: "Kept in the office", startsOn: "2026-13-45" });
+    const text = await refused.text();
+    expect(refused.status).toBe(400);
+    expect(text).toContain('value="Kept in the office"');
+
+    const ended = await editor.browser.fetch(`/admin/providers/${id}`, {
+      form: { intent: "endAgreement", agreementId: crypto.randomUUID() },
+    });
+    expect(ended.status).toBe(400);
+  });
+});
+
 describe("Connect's own addresses", () => {
   it("can't be taken by an item in Connect", async () => {
     const editor = await staff("editor", { role: "editor" });

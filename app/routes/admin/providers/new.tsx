@@ -2,7 +2,7 @@ import { data, redirect } from "react-router";
 import { ProviderForm } from "~/components/listing-forms";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
-import { readListingFlags, readProviderFields } from "~/lib/listing-fields";
+import { formValues, listingErrors, readListingFlags, readProviderFields } from "~/lib/listing-fields";
 import { createProvider, getProvider, providerChanged } from "~/lib/providers.server";
 import type { Route } from "./+types/new";
 
@@ -24,13 +24,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const details = readProviderFields(form);
   const flags = readListingFlags(form);
   if (!details.ok || !flags.ok) {
-    return data(
-      {
-        errors: { ...(details.ok ? {} : details.errors), ...(flags.ok ? {} : flags.errors) },
-        values: Object.fromEntries([...form].map(([key, value]) => [key, String(value)])),
-      },
-      { status: 400 },
-    );
+    return data({ errors: listingErrors(details, flags), values: formValues(form) }, { status: 400 });
   }
   const created = await createProvider(db, actor.userId, details.details, flags.flags);
   if (!created.ok) throw new Error("A new provider is never refused once its fields are read.");

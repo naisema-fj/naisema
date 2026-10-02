@@ -3,7 +3,7 @@ import { OfferingCard } from "~/components/public/offering-card";
 import { DateMark } from "~/components/public/postmarks";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { ORGANISATION_TYPES } from "~/lib/listing-fields";
+import { ORGANISATION_TYPES, sponsorsText } from "~/lib/listing-fields";
 import { offeringView, publicProvider } from "~/lib/providers.server";
 import { publicHeaders } from "~/lib/public-cache.server";
 import { linkHost } from "~/lib/resource-fields";
@@ -27,7 +27,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
       contactRoute: found.contactRoute || "Not known",
       lastCheckedOn: found.lastCheckedOn,
       partner: found.partner,
-      sponsoredBy: found.sponsoredBy,
+      sponsors: sponsorsText(found.sponsoredBy),
       featureRationale: found.featureRationale,
     },
     offerings: await Promise.all(found.offerings.map((row) => offeringView(db, row, found))),
@@ -72,7 +72,7 @@ export default function Provider({ loaderData }: Route.ComponentProps) {
               ? "A Na iSema Partner, under a recorded Partnership Agreement."
               : "Listed on Na iSema. Being listed doesn't mean a partnership or that Na iSema endorses them."}
           </p>
-          {provider.sponsoredBy && <p className="disclosure">{`Sponsored by ${provider.sponsoredBy}.`}</p>}
+          {provider.sponsors && <p className="disclosure">{provider.sponsors}</p>}
           {provider.featureRationale && (
             <p className="disclosure">{`Featured by Na iSema editors: ${provider.featureRationale}`}</p>
           )}
@@ -87,12 +87,9 @@ export default function Provider({ loaderData }: Route.ComponentProps) {
             <dt>Website</dt>
             <dd>
               {provider.website ? (
-                <>
-                  <a href={provider.website.url} rel="external noopener noreferrer">
-                    {provider.website.host}
-                  </a>
-                  {" (another website)"}
-                </>
+                <a href={provider.website.url} rel="external noopener noreferrer">
+                  {`${provider.website.host} (another website)`}
+                </a>
               ) : (
                 "Not known"
               )}

@@ -8,14 +8,18 @@ import type { OfferingView } from "~/lib/providers.server";
 export function OfferingCard({
   offering,
   provider,
+  headingLevel = 3,
 }: {
   offering: OfferingView;
   provider?: { name: string; path: string };
+  /** 2 where Offerings are the page's own list, 3 under a "What they offer" heading. */
+  headingLevel?: 2 | 3;
 }) {
   const headingId = `offering-${offering.id}`;
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   return (
     <section className="offering" aria-labelledby={headingId}>
-      <h3 id={headingId}>{offering.title}</h3>
+      <Heading id={headingId}>{offering.title}</Heading>
       {provider && (
         <p className="from">
           <span className="from-label">From</span> <Link to={provider.path}>{provider.name}</Link>
@@ -41,10 +45,10 @@ export function OfferingCard({
       <p>
         {offering.action.kind === "external" ? (
           <>
+            {/* The destination is part of the link's name, so it is announced before it is followed. */}
             <a className="primary-link" href={offering.action.url} rel="external noopener noreferrer">
-              {offering.action.label}
+              {`${offering.action.label} (${offering.action.host}, another website)`}
             </a>
-            {` (${offering.action.host}, another website)`}
             {offering.action.note && <span className="note">{` ${offering.action.note}`}</span>}
           </>
         ) : offering.action.kind === "item" ? (
