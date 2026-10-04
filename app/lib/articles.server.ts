@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { contentItem, revision } from "~db/schema";
+import { contentItem, learningLayer, revision } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, EMPTY_ARTICLE_BODY, embeddedItemIds, parseArticleBody } from "./article-body";
 import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldErrors } from "./article-fields";
@@ -138,6 +138,9 @@ export async function readArticleForm(
     video = { videoAssetId: String(form.get("videoAssetId") ?? "") };
     if (!video.videoAssetId || !(await readyVideo(db, video.videoAssetId))) {
       errors.videoAssetId = "Choose a video that has finished processing.";
+    } else if (itemId && (await footageLocked(db, itemId, video.videoAssetId))) {
+      errors.videoAssetId =
+        "This Video has Learning Layers timed to its current footage, so the footage can't be changed.";
     }
   }
   const extras = {
@@ -162,6 +165,21 @@ export async function readArticleForm(
     ok: true,
     snapshot: { title, summary, credit, topicIds, body: parsed.body, sources, flags, languageVariety, ...extras },
   };
+}
+
+/**
+ * Whether choosing this footage would change a Video's footage under its Learning Layers, whose
+ * Segment times belong to the footage they were made on.
+ */
+async function footageLocked(db: Database, itemId: string, videoAssetId: string) {
+  const current = await getContentItem<ArticleSnapshot>(db, itemId, "video");
+  if (!current || current.currentRevision.snapshot.video?.videoAssetId === videoAssetId) return false;
+  const layer = await db
+    .select({ id: learningLayer.id })
+    .from(learningLayer)
+    .where(eq(learningLayer.contentItemId, itemId))
+    .get();
+  return Boolean(layer);
 }
 
 /** The footer pages (info-pages.ts) that have no Page yet, for creating one. */

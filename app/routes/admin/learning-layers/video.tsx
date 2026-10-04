@@ -1,10 +1,11 @@
 import { data, Form, redirect } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { LAYER_LEVELS, type LayerDetailField } from "~/lib/learning-layer-fields";
+import { LAYER_LEVELS, LAYER_LIMITS, type LayerDetailField, layerSpan } from "~/lib/learning-layer-fields";
 import {
   createLearningLayer,
   educatorChoices,
   layersOfVideo,
+  refusal,
   requireLayerStaff,
   setAssignment,
   videoEducatorIds,
@@ -12,7 +13,6 @@ import {
   videoItem,
 } from "~/lib/learning-layers.server";
 import { can } from "~/lib/permissions";
-import { formatTimecode } from "~/lib/segment-rules";
 import { formatVideoLength } from "~/lib/video-rules";
 import type { Route } from "./+types/video";
 
@@ -26,8 +26,10 @@ async function requireVideo(env: Env, request: Request, id: string) {
   if (!video) throw new Response("Not found", { status: 404 });
   const assignedEducatorIds = await videoEducatorIds(staff.db, video.id);
   const canCreate = can(staff.actor, { action: "learningLayer.create", video: { assignedEducatorIds } });
-  if (!canCreate)
+  if (!canCreate) {
+    await refusal(staff.db, staff.actor, "content_item", video.id);
     throw new Response("Only editors and the Educators assigned to this Video can open it.", { status: 403 });
+  }
   return { ...staff, video };
 }
 
@@ -53,9 +55,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       id: layer.id,
       title: layer.title,
       level: LAYER_LEVELS[layer.level],
-      clip: layer.excerpt
-        ? `Excerpt ${formatTimecode(layer.excerpt.sourceStartMs)} to ${formatTimecode(layer.excerpt.sourceEndMs)}`
-        : "Whole video",
+      clip: layerSpan(layer.excerpt),
       segmentCount: layer.segmentCount,
     })),
   };
@@ -144,7 +144,7 @@ export default function VideoLearningLayers({ loaderData, actionData }: Route.Co
         <input
           id="title"
           name="title"
-          maxLength={200}
+          maxLength={LAYER_LIMITS.title}
           defaultValue={values?.title}
           aria-invalid={errors.title ? true : undefined}
           aria-describedby={errors.title ? "title-error" : undefined}

@@ -45,7 +45,8 @@ CREATE TABLE `video_educator` (
 );
 --> statement-breakpoint
 CREATE INDEX `video_educator_user_idx` ON `video_educator` (`user_id`);--> statement-breakpoint
--- Learning Layer Revisions are write-once, like Content Item Revisions (ADR-0006).
+-- Learning Layer Revisions are write-once, like Content Item Revisions (ADR-0006). Written by
+-- hand: drizzle-kit does not generate triggers.
 CREATE TRIGGER `learning_layer_revision_immutable` BEFORE UPDATE ON `learning_layer_revision`
 BEGIN
 	SELECT RAISE(ABORT, 'Revisions are immutable');

@@ -45,15 +45,25 @@ function readCueText(lines: string[]) {
   const text = lines
     .join("\n")
     .replace(/<v(?:\.[\w.-]+)?\s+([^>]*)>/g, (_, name: string) => {
-      speaker ||= name.trim();
+      speaker ||= readEntities(name.trim());
       return "";
     })
-    .replace(/<[^>]*>/g, "")
-    .replace(/&(?:amp|lt|gt|nbsp|lrm|rlm);/g, (entity) => ENTITIES[entity]);
-  return { speaker, text: text.trim() };
+    .replace(/<[^>]*>/g, "");
+  return { speaker, text: readEntities(text).trim() };
 }
 
-const escapeText = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const readEntities = (text: string) => text.replace(/&(?:amp|lt|gt|nbsp|lrm|rlm);/g, (entity) => ENTITIES[entity]);
+
+/**
+ * Text as cue text: markup characters escaped, and blank lines closed up, since a blank line would
+ * end the cue.
+ */
+const escapeText = (text: string) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\n\s*\n/g, "\n");
 
 /** Reads a WebVTT file's cues; notes, style and region blocks and cue settings are skipped. */
 export function parseWebVtt(input: string): ParsedWebVtt {
@@ -102,44 +112,57 @@ export function toWebVtt(segments: Segment[], language: SegmentLanguage) {
   return ["WEBVTT", "", ...blocks.flatMap((block) => [block.trimEnd(), ""])].join("\n");
 }
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
 /** How far a cue's start and end may be from a Segment's for an English cue to match it. */
 const MATCH_MS = 250;
 
 export type WebVttImport = { segments: Segment[]; matched: number; unmatched: number };
 
 /**
- * Imports cues as one language. Fijian cues become new Segments, replacing the old ones. English
- * cues fill the translation of the Segment with their ID, or with the same times; cues that match
- * no Segment are counted and left out. Everything imported is an unreviewed draft.
+ * Imports cues as one language. Fijian cues become the Segments, replacing the old ones; a cue
+ * whose ID is a Segment ID (as exported) stays that Segment, keeping its English translation, so
+ * Segments keep their IDs through an export, an edit elsewhere and an import. English cues fill the
+ * translation of the Segment with their ID, or else with the same times, one cue to a Segment;
+ * cues that match no Segment are counted and left out. Everything imported is an unreviewed draft.
  */
 export function importWebVtt(cues: Cue[], existing: Segment[], language: SegmentLanguage): WebVttImport {
   if (language === "fijian") {
+    const used = new Set<string>();
     return {
-      segments: cues.map((cue) => ({
-        id: crypto.randomUUID(),
-        startMs: cue.startMs,
-        endMs: cue.endMs,
-        speaker: cue.speaker,
-        fijian: cue.text,
-        english: "",
-        overlapIntended: false,
-        draft: true,
-        retimed: false,
-      })),
+      segments: cues.map((cue) => {
+        const keep = UUID.test(cue.id) && !used.has(cue.id);
+        const id = keep ? cue.id : crypto.randomUUID();
+        used.add(id);
+        return {
+          id,
+          startMs: cue.startMs,
+          endMs: cue.endMs,
+          speaker: cue.speaker,
+          fijian: cue.text,
+          english: existing.find((segment) => segment.id === id)?.english ?? "",
+          overlapIntended: false,
+          draft: true,
+          retimed: false,
+        };
+      }),
       matched: cues.length,
       unmatched: 0,
     };
   }
   const segments = existing.map((segment) => ({ ...segment }));
+  const filled = new Set<string>();
   let matched = 0;
   for (const cue of cues) {
+    const open = segments.filter((segment) => !filled.has(segment.id));
     const target =
-      segments.find((segment) => cue.id && segment.id === cue.id) ??
-      segments.find(
+      open.find((segment) => cue.id && segment.id === cue.id) ??
+      open.find(
         (segment) =>
           Math.abs(segment.startMs - cue.startMs) <= MATCH_MS && Math.abs(segment.endMs - cue.endMs) <= MATCH_MS,
       );
     if (!target) continue;
+    filled.add(target.id);
     target.english = cue.text;
     target.draft = true;
     matched += 1;

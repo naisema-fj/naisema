@@ -1,5 +1,5 @@
 import type { ReviewType } from "./permissions";
-import { type Excerpt, parseTimecode, type Segment } from "./segment-rules";
+import { type Excerpt, formatTimecode, parseTimecode, type Segment } from "./segment-rules";
 
 /**
  * What a Learning Layer Revision holds (ADR-0001, ADR-0006, docs/phase-1a-defaults.md §2): its
@@ -24,6 +24,12 @@ export type LayerLevel = keyof typeof LAYER_LEVELS;
 export const LAYER_LANGUAGE_VARIETY = "standard-fijian";
 
 export const LAYER_LIMITS = { title: 200 } as const;
+
+/** What a Learning Layer is built on, as staff read it. */
+export const layerSpan = (excerpt: Excerpt) =>
+  excerpt
+    ? `Excerpt ${formatTimecode(excerpt.sourceStartMs)} to ${formatTimecode(excerpt.sourceEndMs)}`
+    : "Whole video";
 
 export type LayerDetails = { title: string; level: LayerLevel; excerpt: Excerpt };
 export type LayerDetailField = "title" | "level" | "sourceStartMs" | "sourceEndMs";

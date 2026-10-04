@@ -122,6 +122,38 @@ describe("Video Content Items", () => {
   });
 });
 
+describe("a Video's footage", () => {
+  it("can't change once Learning Layers are timed to it", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const { id: videoId } = await video(editor);
+    const other = await readyVideoAsset(editor, { seconds: 20 });
+    await addLayer(editor, videoId);
+    const current = await env.DB.prepare(
+      "SELECT r.id, r.snapshot FROM content_item c JOIN revision r ON r.id = c.current_draft_revision_id WHERE c.id = ?1",
+    )
+      .bind(videoId)
+      .first<{ id: string; snapshot: string }>();
+    const snapshot = JSON.parse(current?.snapshot ?? "{}");
+
+    const refused = await post(
+      editor,
+      `/admin/articles/${videoId}`,
+      new URLSearchParams({
+        baseRevisionId: current?.id ?? "",
+        title: snapshot.title,
+        summary: snapshot.summary,
+        credit: snapshot.credit,
+        body: JSON.stringify(snapshot.body),
+        topicId: snapshot.topicIds[0],
+        videoAssetId: other,
+      }),
+    );
+
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("Learning Layers timed to its current footage");
+  });
+});
+
 describe("adding Learning Layers", () => {
   it("is for editors and the Educators assigned to the Video, who are then assigned to what they add", async () => {
     const editor = await staff("editor", { role: "editor" });
@@ -261,7 +293,7 @@ describe("authoring a Learning Layer", () => {
     expect((await reviewer.browser.fetch(`/admin/learning-layers/${layerId}`)).status).toBe(403);
     expect((await layer(layerId))?.number).toBe(1);
     const refusals = await env.DB.prepare(
-      "SELECT COUNT(*) AS count FROM audit_event WHERE action = 'learning_layer.refused' AND object_id = ?1 AND actor_id = ?2",
+      "SELECT COUNT(*) AS count FROM audit_event WHERE action = 'learning_layer.authoring_refused' AND object_id = ?1 AND actor_id = ?2",
     )
       .bind(layerId, other.userId)
       .first<{ count: number }>();

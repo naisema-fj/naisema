@@ -1,7 +1,6 @@
 import { cloudflareContext } from "~/lib/cloudflare";
-import { LAYER_LEVELS } from "~/lib/learning-layer-fields";
+import { LAYER_LEVELS, layerSpan } from "~/lib/learning-layer-fields";
 import { layersFor, requireLayerStaff, videosFor } from "~/lib/learning-layers.server";
-import { formatTimecode } from "~/lib/segment-rules";
 import type { Route } from "./+types/index";
 
 export function meta() {
@@ -22,9 +21,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     layers: layers.map((layer) => ({
       ...layer,
       level: LAYER_LEVELS[layer.level],
-      clip: layer.excerpt
-        ? `Excerpt ${formatTimecode(layer.excerpt.sourceStartMs)} to ${formatTimecode(layer.excerpt.sourceEndMs)}`
-        : "Whole video",
+      clip: layerSpan(layer.excerpt),
       videoTitle: videoTitles.get(layer.contentItemId) ?? null,
     })),
   };

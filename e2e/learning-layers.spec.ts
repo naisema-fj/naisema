@@ -35,7 +35,8 @@ test("an Educator builds Segments in the timeline editor: checked as they type, 
   const start = second.getByLabel("Start", { exact: true });
   await expect(start).toHaveValue("0:02.000");
   await start.press("ArrowUp");
-  await expect(start).toHaveValue("0:02.100");
+  await start.press("ArrowUp");
+  await expect(start).toHaveValue("0:02.200");
 
   // English imported from WebVTT fills the matching Segment as an unreviewed draft.
   await page.getByLabel("Import English translations").setInputFiles({

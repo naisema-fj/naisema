@@ -76,6 +76,18 @@ describe("Segment validation", () => {
     ]);
   });
 
+  it("says a Segment with no length has no length", () => {
+    const empty = segment({ startMs: 1_000, endMs: 1_000 });
+    expect(segmentProblems([empty], 5_000)).toEqual([
+      {
+        segmentId: empty.id,
+        position: 1,
+        field: "endMs",
+        message: "Segment 1 has no length: its end must be after its start.",
+      },
+    ]);
+  });
+
   it("requires time order", () => {
     const second = segment({ startMs: 1_000, endMs: 1_500 });
     expect(segmentProblems([segment({ startMs: 2_000, endMs: 3_000 }), second], 5_000)).toContainEqual({
@@ -163,6 +175,13 @@ describe("reading Segments sent by the editor", () => {
     });
     expect(result.segments[1].id).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.segments[1].draft).toBe(true);
+  });
+
+  it("closes up blank lines in text, which a WebVTT cue can't hold", () => {
+    const result = readSegments(
+      JSON.stringify([{ startMs: 0, endMs: 1, fijian: " Bula.\n\n\nVinaka. ", english: "" }]),
+    );
+    expect(result.ok && result.segments[0].fijian).toBe("Bula.\nVinaka.");
   });
 
   it("refuses repeated IDs and anything that isn't a list of Segments", () => {

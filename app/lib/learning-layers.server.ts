@@ -109,6 +109,12 @@ export type AssignResult = { ok: true } | { ok: false; error: string };
 
 type Assignment = { kind: "video"; contentItemId: string } | { kind: "layer"; learningLayerId: string };
 
+const targetId = (target: Assignment) => (target.kind === "video" ? target.contentItemId : target.learningLayerId);
+
+/** Records a refused attempt to open or change a Video's or Learning Layer's authoring (VAC-05). */
+export const refusal = (db: Database, actor: Actor, objectType: "content_item" | "learning_layer", objectId: string) =>
+  recordAudit(db, { actorId: actor.userId, action: `${objectType}.authoring_refused`, objectType, objectId });
+
 /** Assigns an Educator to a Video or a Learning Layer, or takes them off it. Editors only. */
 export async function setAssignment(
   db: Database,
@@ -117,11 +123,14 @@ export async function setAssignment(
   educatorId: string,
   assigned: boolean,
 ): Promise<AssignResult> {
-  if (!can(actor, { action: "content.edit" })) return { ok: false, error: "Only editors can assign Educators." };
+  if (!can(actor, { action: "content.edit" })) {
+    await refusal(db, actor, target.kind === "video" ? "content_item" : "learning_layer", targetId(target));
+    return { ok: false, error: "Only editors can assign Educators." };
+  }
   if (assigned && !(await isEducator(db, educatorId)))
     return { ok: false, error: "Choose someone who is an Educator." };
   const objectType = target.kind === "video" ? "content_item" : "learning_layer";
-  const objectId = target.kind === "video" ? target.contentItemId : target.learningLayerId;
+  const objectId = targetId(target);
   const audit = auditInsert(db, {
     actorId: actor.userId,
     action: `${objectType}.educator_${assigned ? "assigned" : "unassigned"}`,
@@ -197,6 +206,7 @@ export async function createLearningLayer(
       video: { assignedEducatorIds: await videoEducatorIds(db, video.id) },
     })
   ) {
+    await refusal(db, actor, "content_item", video.id);
     return {
       ok: false,
       status: 403,
@@ -277,12 +287,7 @@ export async function openLearningLayer(db: Database, actor: Actor, learningLaye
   if (
     !can(actor, { action: "learningLayer.author", learningLayer: { assignedEducatorIds: layer.assignedEducatorIds } })
   ) {
-    await recordAudit(db, {
-      actorId: actor.userId,
-      action: "learning_layer.refused",
-      objectType: "learning_layer",
-      objectId: layer.id,
-    });
+    await refusal(db, actor, "learning_layer", layer.id);
     return { ok: false as const, status: 403 };
   }
   return { ok: true as const, layer };

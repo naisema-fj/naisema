@@ -83,7 +83,8 @@ export function segmentProblems(segments: Segment[], clipMs: number): SegmentPro
     const problem = (field: SegmentField, message: string) =>
       problems.push({ segmentId: segment.id, position, field, message: `Segment ${position} ${message}` });
     if (segment.startMs < 0) problem("startMs", "starts before the clip does.");
-    if (segment.endMs <= segment.startMs) problem("endMs", "ends before it starts.");
+    if (segment.endMs === segment.startMs) problem("endMs", "has no length: its end must be after its start.");
+    else if (segment.endMs < segment.startMs) problem("endMs", "ends before it starts.");
     else if (segment.endMs > clipMs) problem("endMs", `ends after the clip, which ends at ${formatTimecode(clipMs)}.`);
     const previous = segments[index - 1];
     if (previous && segment.startMs < previous.startMs) {
@@ -122,6 +123,9 @@ export function retimeExcerpt(segments: Segment[], from: Excerpt, to: Excerpt, v
   });
 }
 
+/** Text with its ends trimmed and blank lines closed up: a Segment's text is a line or two. */
+const closeUp = (value: string) => value.trim().replace(/\n\s*\n/g, "\n");
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
@@ -159,8 +163,8 @@ export function readSegments(json: string): ReadSegments {
       startMs: item.startMs as number,
       endMs: item.endMs as number,
       speaker: text(item.speaker).trim(),
-      fijian: text(item.fijian).trim(),
-      english: text(item.english).trim(),
+      fijian: closeUp(text(item.fijian)),
+      english: closeUp(text(item.english)),
       overlapIntended: item.overlapIntended === true,
       draft: item.draft === true,
       retimed: item.retimed === true,

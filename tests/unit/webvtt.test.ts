@@ -91,6 +91,22 @@ describe("writing WebVTT", () => {
   });
 });
 
+describe("round trips", () => {
+  it("keep speakers with markup characters, and text with blank lines", () => {
+    const original = [segment({ startMs: 0, endMs: 1_000, speaker: "Ratu & Adi <2>", fijian: "Bula.\n\nVinaka." })];
+    const parsed = parseWebVtt(toWebVtt(original, "fijian"));
+    expect(parsed).toMatchObject({ ok: true, cues: [{ speaker: "Ratu & Adi <2>", text: "Bula.\nVinaka." }] });
+  });
+
+  it("keep Segment IDs when an exported Fijian file is edited and imported again, with their translations", () => {
+    const kept = segment({ startMs: 0, endMs: 1_000, fijian: "Bula", english: "Hello" });
+    const parsed = parseWebVtt(toWebVtt([kept], "fijian").replace("Bula", "Bula vinaka"));
+    if (!parsed.ok) throw new Error(parsed.error);
+    const imported = importWebVtt(parsed.cues, [kept], "fijian").segments;
+    expect(imported).toEqual([{ ...kept, fijian: "Bula vinaka", draft: true }]);
+  });
+});
+
 describe("importing WebVTT into a Learning Layer", () => {
   const cues = [
     { id: "", startMs: 0, endMs: 1_000, speaker: "Mere", text: "Bula" },
@@ -105,6 +121,19 @@ describe("importing WebVTT into a Learning Layer", () => {
       { startMs: 1_000, endMs: 2_000, fijian: "Vinaka", draft: true },
     ]);
     expect(result.segments[0].id).not.toBe(result.segments[1].id);
+  });
+
+  it("fills each Segment from one English cue at most", () => {
+    const only = segment({ startMs: 0, endMs: 1_000, fijian: "Bula" });
+    const result = importWebVtt(
+      [
+        { id: "", startMs: 0, endMs: 1_000, speaker: "", text: "Hello" },
+        { id: "", startMs: 50, endMs: 1_050, speaker: "", text: "Hi" },
+      ],
+      [only],
+      "english",
+    );
+    expect(result).toMatchObject({ matched: 1, unmatched: 1, segments: [{ english: "Hello" }] });
   });
 
   it("fills English translations into the Segments whose ID or times match, marking them drafts", () => {
