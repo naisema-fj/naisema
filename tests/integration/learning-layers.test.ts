@@ -621,4 +621,71 @@ describe("Annotations, Expressions and notes", () => {
       `/admin/expressions/${expressionId}`,
     );
   });
+
+  it("lets the Educator who added an Expression change it only until another's Learning Layer uses it", async () => {
+    const mine = await layerWithWords();
+    const theirs = await layerWithWords();
+    const id = crypto.randomUUID();
+    const headword = `sega-${crypto.randomUUID().slice(0, 6)}`;
+    const plain = (words: typeof mine.segment) => [
+      { ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" },
+    ];
+    await save(mine.educator, mine.layerId, plain(mine.segment), {
+      annotations: JSON.stringify([
+        annotationOn(mine.segment.id, mine.segment.tokens[0].id, mine.segment.tokens[0].id, id),
+      ]),
+      newExpressions: JSON.stringify([newExpression(id, { headword, generalMeaning: "no; not" })]),
+    });
+    const form = { headword, generalMeaning: "no; not", grammarNote: "", pronunciation: "senga", literalMeaning: "" };
+    expect((await mine.educator.browser.fetch(`/admin/expressions/${id}`, { form })).status).toBe(302);
+
+    // Another Educator's Learning Layer starts using it.
+    await save(theirs.educator, theirs.layerId, plain(theirs.segment), {
+      annotations: JSON.stringify([
+        annotationOn(theirs.segment.id, theirs.segment.tokens[0].id, theirs.segment.tokens[0].id, id),
+      ]),
+    });
+
+    expect((await mine.educator.browser.fetch(`/admin/expressions/${id}`, { form })).status).toBe(403);
+    expect(
+      (await mine.editor.browser.fetch(`/admin/expressions/${id}`, { form: { ...form, pronunciation: "sega" } }))
+        .status,
+    ).toBe(302);
+    // The other Learning Layer's editor shows the library change before it is saved again.
+    const page = await (await theirs.educator.browser.fetch(`/admin/learning-layers/${theirs.layerId}`)).text();
+    expect(page).toContain("Updated in the library since this Learning Layer was saved");
+  });
+
+  it("splits a hyphenated compound into its parts, and flags an Annotation whose word an edit repeats", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const compound = { ...words, fijian: "Ni sa vale-ni-vuli", startMs: 1_000, endMs: 3_000, english: "", speaker: "" };
+    await save(educator, layerId, [compound]);
+    const split = await snapshotOf(layerId);
+    expect(split.segments[0].tokens.map((token) => token.text)).toEqual(["Ni", "sa", "vale", "ni", "vuli"]);
+
+    const id = crypto.randomUUID();
+    const vuli = split.segments[0].tokens[4];
+    await save(educator, layerId, [{ ...split.segments[0], startMs: 1_000, endMs: 3_000, english: "", speaker: "" }], {
+      annotations: JSON.stringify([annotationOn(words.id, vuli.id, vuli.id, id)]),
+      newExpressions: JSON.stringify([
+        newExpression(id, { headword: `vuli-${crypto.randomUUID().slice(0, 6)}`, generalMeaning: "learn" }),
+      ]),
+    });
+    const annotated = await snapshotOf(layerId);
+
+    // Sent without matching tokens, the server re-tokenises and flags the Annotation to check.
+    const repeated = {
+      ...annotated.segments[0],
+      fijian: "Ni sa vuli vale-ni-vuli",
+      startMs: 1_000,
+      endMs: 3_000,
+      english: "",
+      speaker: "",
+    };
+    expect(
+      (await save(educator, layerId, [repeated], { annotations: JSON.stringify(annotated.annotations) })).status,
+    ).toBe(302);
+    const flagged = (await snapshotOf(layerId)).annotations[0] as { needsCheck?: boolean };
+    expect(flagged.needsCheck).toBe(true);
+  });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { retokenise, sameTokens, tokenSpans, tokenTexts } from "~/lib/tokens";
+import { rangeText, retokenise, sameTokens, tokenSpans, tokenTexts } from "~/lib/tokens";
 
 let counter = 0;
 const ids = () => `t${++counter}`;
@@ -15,8 +15,14 @@ describe("splitting Fijian text into tokens", () => {
     ]);
   });
 
-  it("keeps words joined by an apostrophe or hyphen together", () => {
-    expect(tokenTexts("vale-ni-bula o'qo")).toEqual(["vale-ni-bula", "o'qo"]);
+  it("keeps a word with an apostrophe together, and splits a hyphenated compound into its parts", () => {
+    expect(tokenTexts("vale-ni-vuli o'qo")).toEqual(["vale", "ni", "vuli", "o'qo"]);
+  });
+
+  it("gives the text of a run of words as written, hyphens and all", () => {
+    expect(rangeText("Au lako ki na vale-ni-vuli.", 4, 6)).toBe("vale-ni-vuli");
+    expect(rangeText("Au lako ki na vale-ni-vuli.", 5, 6)).toBe("ni-vuli");
+    expect(rangeText("Au lako ki na vale-ni-vuli.", 0, 1)).toBe("Au lako");
   });
 });
 

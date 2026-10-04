@@ -1,4 +1,5 @@
 import type { Segment } from "./segment-rules";
+import { rangeText, type Token } from "./tokens";
 
 /**
  * Annotations, Expressions and context notes (ADR-0011, docs/phase-1a-defaults.md §2, VID-05/07/12).
@@ -19,6 +20,11 @@ export type Annotation = {
   grammarNote: string;
   /** Chosen by the Educator for the Learning Layer's vocabulary list. */
   inVocabulary: boolean;
+  /**
+   * Set when an edit changed how often one of its words appears in the Segment, so which copy it
+   * should be on can't be told from the words alone; cleared when the Educator confirms or moves it.
+   */
+  needsCheck: boolean;
 };
 
 /** A cultural or context note, on the whole Learning Layer (`segmentId` null) or one Segment. */
@@ -53,25 +59,44 @@ export const ANNOTATION_LIMITS = {
   attribution: 200,
 } as const;
 
+/** Where an Annotation's first and last tokens are in a Segment (-1 when gone). */
+export const tokenRange = (segment: Pick<Segment, "tokens">, annotation: Annotation) => ({
+  start: segment.tokens.findIndex((token) => token.id === annotation.startTokenId),
+  end: segment.tokens.findIndex((token) => token.id === annotation.endTokenId),
+});
+
 /** Where an Annotation's tokens are in its Segment, or null if any part is gone. */
 function span(segments: Segment[], annotation: Annotation) {
   const segment = segments.find((item) => item.id === annotation.segmentId);
   if (!segment) return null;
-  const start = segment.tokens.findIndex((token) => token.id === annotation.startTokenId);
-  const end = segment.tokens.findIndex((token) => token.id === annotation.endTokenId);
+  const { start, end } = tokenRange(segment, annotation);
   if (start < 0 || end < 0 || end < start) return null;
-  return { segment, start, end };
+  return { segment, start, end, text: rangeText(segment.fijian, start, end) };
 }
 
-/** The words an Annotation covers, or null when it needs revalidating. */
-export function annotatedText(segments: Segment[], annotation: Annotation) {
-  const found = span(segments, annotation);
-  return found
-    ? found.segment.tokens
-        .slice(found.start, found.end + 1)
-        .map((token) => token.text)
-        .join(" ")
-    : null;
+/** The words an Annotation covers, as written, or null when it needs revalidating. */
+export const annotatedText = (segments: Segment[], annotation: Annotation) => span(segments, annotation)?.text ?? null;
+
+/** How a word is counted: whatever its capitals or Unicode form. */
+const wordKey = (text: string) => text.normalize("NFC").toLowerCase();
+
+/**
+ * Annotations on a Segment that an edit leaves needing a check: one of their words now appears a
+ * different number of times than before, so the diff had to choose which copy keeps the ID.
+ */
+export function annotationsToCheck(annotations: Annotation[], segmentId: string, before: Token[], after: Token[]) {
+  const count = (tokens: Token[], word: string) => tokens.filter((token) => wordKey(token.text) === word).length;
+  return annotations
+    .filter((annotation) => annotation.segmentId === segmentId)
+    .filter((annotation) => {
+      const { start, end } = tokenRange({ tokens: after }, annotation);
+      if (start < 0 || end < 0) return false;
+      return [after[start], after[end]].some((token) => {
+        const word = wordKey(token.text);
+        return count(after, word) > 1 && count(after, word) !== count(before, word);
+      });
+    })
+    .map((annotation) => annotation.id);
 }
 
 /**
@@ -93,14 +118,19 @@ export function annotationProblems(
     const problem = (message: string, revalidate = false) => [{ annotationId: annotation.id, message, revalidate }];
     const segment = segments.find((item) => item.id === annotation.segmentId);
     if (!segment) return problem("Its Segment was removed. Remove the Annotation.", true);
-    const start = segment.tokens.findIndex((token) => token.id === annotation.startTokenId);
-    const end = segment.tokens.findIndex((token) => token.id === annotation.endTokenId);
+    const { start, end } = tokenRange(segment, annotation);
     if (start < 0 || end < 0) {
       return problem("Its words are no longer in the Segment. Select them again, or remove it.", true);
     }
     if (end < start) return problem("Its last word comes before its first. Select the words again.");
     if (!expressionIds.has(annotation.expressionId)) return problem("Choose the Expression it links to.");
     if (!annotation.contextualMeaning.trim()) return problem("Say what the words mean here.");
+    if (annotation.needsCheck) {
+      return problem(
+        "One of its words now appears more than once in the Segment. Check it's on the right one, then confirm it.",
+        true,
+      );
+    }
     return [];
   });
 }
@@ -184,12 +214,7 @@ export function vocabularyList(
     .filter((annotation) => annotation.inVocabulary && expressions[annotation.expressionId])
     .flatMap((annotation) => {
       const found = span(segments, annotation);
-      if (!found) return [];
-      const text = found.segment.tokens
-        .slice(found.start, found.end + 1)
-        .map((token) => token.text)
-        .join(" ");
-      return [{ annotation, segment: found.segment, start: found.start, text }];
+      return found ? [{ annotation, segment: found.segment, start: found.start, text: found.text }] : [];
     })
     .sort((a, b) => a.segment.startMs - b.segment.startMs || a.start - b.start);
   const entries = new Map<string, VocabularyEntry>();
@@ -252,6 +277,7 @@ export const readAnnotations = (json: string) =>
     contextualMeaning: text(item.contextualMeaning, ANNOTATION_LIMITS.meaning),
     grammarNote: text(item.grammarNote, ANNOTATION_LIMITS.grammarNote),
     inVocabulary: item.inVocabulary === true,
+    needsCheck: item.needsCheck === true,
   }));
 
 /** Cultural and context notes as the editor sends them (JSON). */

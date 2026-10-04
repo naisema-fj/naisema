@@ -4,6 +4,7 @@ import {
   type Annotation,
   type AnnotationProblem,
   annotationProblems,
+  annotationsToCheck,
   type ContextNote,
   type ExpressionDetails,
   type NoteProblem,
@@ -268,6 +269,14 @@ export function TimelineEditor({
         : [...current, annotation],
     );
   };
+  // Expressions changed in the library since this Revision copied them: saving takes the new
+  // wording, so the Educator sees both first.
+  const libraryChanges = Object.entries(snapshot.expressions).flatMap(([id, copy]) => {
+    const now = library.find((choice) => choice.id === id);
+    if (!now) return [];
+    const changed = EXPRESSION_FIELD_NAMES.filter(([field]) => (copy[field] ?? "") !== (now[field] ?? ""));
+    return changed.length ? [{ id, copy, now, changed }] : [];
+  });
   const removeAnnotation = (id: string) => setAnnotations((current) => current.filter((item) => item.id !== id));
   const playing = segments.filter((segment) => segment.startMs <= playheadMs && playheadMs < segment.endMs);
   const detailError = (field: LayerDetailField) => refused?.errors?.[field];
@@ -535,7 +544,18 @@ export function TimelineEditor({
                     onChange={(event) => update(index, { fijian: event.target.value })}
                     // Once the edit is done, its words are matched with those from before it, so words
                     // still there keep their token IDs and their Annotations (ADR-0011).
-                    onBlur={() => update(index, { tokens: retokenise(segment.tokens, segment.fijian) })}
+                    onBlur={() => {
+                      const tokens = retokenise(segment.tokens, segment.fijian);
+                      // Where the edit changed how often an annotated word appears, ask the Educator
+                      // to check the Annotation is on the right copy.
+                      const toCheck = new Set(annotationsToCheck(annotations, segment.id, segment.tokens, tokens));
+                      if (toCheck.size) {
+                        setAnnotations((current) =>
+                          current.map((item) => (toCheck.has(item.id) ? { ...item, needsCheck: true } : item)),
+                        );
+                      }
+                      update(index, { tokens });
+                    }}
                   />
                   {problemFor(segment.id, "fijian") && (
                     <p className="field-error" id={`${field("fijian")}-error`}>
@@ -629,6 +649,27 @@ export function TimelineEditor({
             </section>
           )}
 
+          {libraryChanges.length > 0 && (
+            <section aria-labelledby="library-changes-heading" className="segment-problems">
+              <h2 id="library-changes-heading">Updated in the library since this Learning Layer was saved</h2>
+              <p className="hint">Saving uses the new wording, which is reviewed with the Learning Layer.</p>
+              <ul>
+                {libraryChanges.map(({ id, copy, now, changed }) => (
+                  <li key={id}>
+                    <span lang="fj">{now.headword}</span>
+                    <ul>
+                      {changed.map(([field, name]) => (
+                        <li key={field}>
+                          {name}: “{copy[field] ?? "none"}” becomes “{now[field] ?? "none"}”
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section aria-labelledby="layer-notes-heading">
             <h2 id="layer-notes-heading">Notes on the whole Learning Layer</h2>
             <p className="hint">
@@ -698,6 +739,15 @@ export function TimelineEditor({
     </div>
   );
 }
+
+/** An Expression's fields as staff read them, for showing what changed in the library. */
+const EXPRESSION_FIELD_NAMES = [
+  ["headword", "Word or phrase"],
+  ["generalMeaning", "General meaning"],
+  ["literalMeaning", "Literal meaning"],
+  ["grammarNote", "Grammar note"],
+  ["pronunciation", "Pronunciation"],
+] as const;
 
 /**
  * One of a Segment's times: typed ("1:01.250"), moved 100 ms by the up and down arrow keys (which

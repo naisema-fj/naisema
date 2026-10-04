@@ -22,10 +22,10 @@ async function requireExpression(env: Env, request: Request, id: string) {
  * Learning Layer that uses it shows the change when it is next saved, and is reviewed then.
  */
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const { actor, row } = await requireExpression(context.get(cloudflareContext).env, request, params.id);
+  const { db, actor, row } = await requireExpression(context.get(cloudflareContext).env, request, params.id);
   return {
     expression: detailsOf(row),
-    canEdit: canEditExpression(actor, row),
+    canEdit: await canEditExpression(db, actor, row),
     saved: new URL(request.url).searchParams.has("saved"),
   };
 }
@@ -34,7 +34,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const { db, actor, row } = await requireExpression(context.get(cloudflareContext).env, request, params.id);
   const refused = () => new Response("Only editors and whoever added an Expression can change it.", { status: 403 });
   // updateExpression audits a refused attempt; asking it first means one is never let through by a form error.
-  if (!canEditExpression(actor, row) && !(await updateExpression(db, actor, row, detailsOf(row)))) throw refused();
+  if (!(await canEditExpression(db, actor, row)) && !(await updateExpression(db, actor, row, detailsOf(row)))) {
+    throw refused();
+  }
   const form = await request.formData();
   const field = (name: string) => String(form.get(name) ?? "");
   const read = readExpressionDetails({

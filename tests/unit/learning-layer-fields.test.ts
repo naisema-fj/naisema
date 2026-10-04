@@ -83,6 +83,7 @@ describe("what each review covers", () => {
         contextualMeaning: "Hello",
         grammarNote: "",
         inVocabulary: true,
+        needsCheck: false,
       },
     ],
     notes: [],

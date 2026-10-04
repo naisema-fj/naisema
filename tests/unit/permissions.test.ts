@@ -155,19 +155,25 @@ const rows: [string, Actor | null, Check, boolean][] = [
   [
     "educator changes an Expression they added",
     educator,
-    { action: "expression.edit", expression: { createdBy: "educator" } },
+    { action: "expression.edit", expression: { createdBy: "educator", usedByOthers: false } },
     true,
+  ],
+  [
+    "educator cannot change an Expression they added once another's Learning Layer uses it",
+    educator,
+    { action: "expression.edit", expression: { createdBy: "educator", usedByOthers: true } },
+    false,
   ],
   [
     "educator cannot change another's Expression",
     educator,
-    { action: "expression.edit", expression: { createdBy: "someone-else" } },
+    { action: "expression.edit", expression: { createdBy: "someone-else", usedByOthers: false } },
     false,
   ],
   [
     "editor changes any Expression",
     editor,
-    { action: "expression.edit", expression: { createdBy: "someone-else" } },
+    { action: "expression.edit", expression: { createdBy: "someone-else", usedByOthers: true } },
     true,
   ],
   [
