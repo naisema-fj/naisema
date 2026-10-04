@@ -105,9 +105,14 @@ test("an Educator builds Segments and Activities in the timeline editor: checked
   await preview.getByRole("button", { name: "I've said it" }).click();
   await expect(preview).toContainText("Pronunciation: mBOO-la vee-NAH-ka");
   await expect(activities.getByText("In your preview: the Learning Layer is complete.")).toBeVisible();
+  // Switching to the text version starts again: writing it out is the attempt there.
   await preview.getByLabel("Use the text version").check();
   await expect(preview).toContainText("Read “Bula vinaka” and write it out.");
-  await expect(preview.getByLabel("Write it out")).toBeVisible();
+  await expect(activities.getByText("In your preview: 0 of 1 required Activities done.")).toBeVisible();
+  await expect(preview.getByRole("button", { name: "Check what I wrote" })).toBeDisabled();
+  await preview.getByLabel("Write it out").fill("Bula vinaka");
+  await preview.getByRole("button", { name: "Check what I wrote" }).click();
+  await expect(activities.getByText("In your preview: the Learning Layer is complete.")).toBeVisible();
 
   await page.getByRole("button", { name: "Save a new revision" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Saved as revision 2." })).toBeVisible();

@@ -5,10 +5,13 @@ import {
   type Activity,
   type ActivityField,
   type ActivityKind,
+  type ActivityOption,
   type ActivityProblem,
   type ActivityProgress,
   completionProgress,
+  countsForCompletion,
   forKind,
+  KIND_RULES,
   usesChoices,
 } from "~/lib/activities";
 import type { Segment } from "~/lib/segment-rules";
@@ -47,7 +50,7 @@ const blank = (kind: ActivityKind): Activity =>
       modelResponse: "",
       feedback: "",
       pronunciation: "",
-      required: kind !== "real-world",
+      required: KIND_RULES[kind].canBeRequired,
       textAlternative: "",
     },
     kind,
@@ -59,6 +62,16 @@ const segmentName = (segment: Segment, index: number) => {
   return `Segment ${index + 1}${words ? `: ${words}` : ""}`;
 };
 
+/** Everything an Activity holds, so a preview of it starts afresh, and forgets what was done in it, once it changes. */
+const signature = (activity: Activity) => JSON.stringify(activity);
+
+const KindOptions = () =>
+  Object.entries(ACTIVITY_KINDS).map(([value, name]) => (
+    <option key={value} value={value}>
+      {name}
+    </option>
+  ));
+
 const MODEL_LABELS: Partial<Record<ActivityKind, string>> = {
   "listen-repeat": "Words to repeat (Fijian)",
   "next-line": "Model response",
@@ -68,8 +81,17 @@ const MODEL_LABELS: Partial<Record<ActivityKind, string>> = {
 export function ActivitiesEditor({ activities, segments, problems, onChange, onPlay, pronunciationFor }: Props) {
   const [adding, setAdding] = useState<ActivityKind>("listen-repeat");
   const [previewing, setPreviewing] = useState<Set<string>>(new Set());
-  const [progress, setProgress] = useState<Record<string, ActivityProgress>>({});
-  const completion = completionProgress(activities, progress);
+  // What was done in each preview, against the Activity as it was then.
+  const [progress, setProgress] = useState<Record<string, { signature: string; state: ActivityProgress }>>({});
+  const completion = completionProgress(
+    activities,
+    Object.fromEntries(
+      activities.flatMap((activity) => {
+        const done = progress[activity.id];
+        return done?.signature === signature(activity) ? [[activity.id, done.state]] : [];
+      }),
+    ),
+  );
   const update = (id: string, change: Partial<Activity>) =>
     onChange(activities.map((activity) => (activity.id === id ? { ...activity, ...change } : activity)));
   const move = (index: number, by: -1 | 1) => {
@@ -77,7 +99,7 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
     [next[index], next[index + by]] = [next[index + by], next[index]];
     onChange(next);
   };
-  const required = activities.filter((activity) => activity.required && activity.kind !== "real-world").length;
+  const { required } = completion;
 
   return (
     <div className="activities-editor">
@@ -85,7 +107,7 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
         <h3>Completion Rule</h3>
         {required ? (
           <p>
-            {`Learners complete this Learning Layer once they have tried ${required === 1 ? "the required Activity" : `each of the ${required} required Activities`} and seen its feedback, by the standard or the text route. Watching alone never completes it, and real-world prompts are never required.`}
+            {`Learners complete this Learning Layer once they have tried ${required === 1 ? "the required Activity" : `each of the ${required} required Activities`} and seen its feedback, either by doing it or with its text version. Watching alone never completes it, and real-world prompts are never required.`}
           </p>
         ) : (
           <p className="field-error">
@@ -123,11 +145,16 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
             errors(field).length ? { "aria-invalid": true, "aria-describedby": `${fieldId(field)}-error` } : {};
           const linked = segments.findIndex((segment) => segment.id === activity.segmentId);
           const suggestion = activity.segmentId ? pronunciationFor(activity.segmentId) : "";
+          const rules = KIND_RULES[activity.kind];
+          const updateOption = (optionId: string, change: Partial<ActivityOption>) =>
+            update(activity.id, {
+              options: activity.options.map((item) => (item.id === optionId ? { ...item, ...change } : item)),
+            });
           return (
             <li key={activity.id} id={`activity-${activity.id}`} className="activity" aria-label={name}>
               <h3>
                 {name}: {ACTIVITY_KINDS[activity.kind]}
-                {activity.required && activity.kind !== "real-world" && <span className="badge">Required</span>}
+                {countsForCompletion(activity) && <span className="badge">Required</span>}
               </h3>
               <label htmlFor={fieldId("kind")}>Kind</label>
               <select
@@ -141,11 +168,7 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
                   )
                 }
               >
-                {Object.entries(ACTIVITY_KINDS).map(([value, kindName]) => (
-                  <option key={value} value={value}>
-                    {kindName}
-                  </option>
-                ))}
+                <KindOptions />
               </select>
 
               <label htmlFor={fieldId("segmentId")}>Practises</label>
@@ -179,11 +202,11 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
               {error("prompt")}
 
               {usesChoices(activity.kind) && (
-                <fieldset className="activity-choices" {...described("options")}>
+                <fieldset id={fieldId("options")} className="activity-choices" {...described("options")}>
                   <legend>
                     Choices<span className="visually-hidden"> for {name}</span>
                   </legend>
-                  {activity.kind === "next-line" && <p className="hint">Give choices, a model response, or both.</p>}
+                  {rules.model === "either" && <p className="hint">Give choices, a model response, or both.</p>}
                   {activity.options.map((option, at) => (
                     <div key={option.id} className="activity-choice">
                       <label htmlFor={`${fieldId("options")}-${option.id}`}>Choice {at + 1}</label>
@@ -191,25 +214,13 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
                         id={`${fieldId("options")}-${option.id}`}
                         value={option.text}
                         maxLength={ACTIVITY_LIMITS.option}
-                        onChange={(event) =>
-                          update(activity.id, {
-                            options: activity.options.map((item) =>
-                              item.id === option.id ? { ...item, text: event.target.value } : item,
-                            ),
-                          })
-                        }
+                        onChange={(event) => updateOption(option.id, { text: event.target.value })}
                       />
                       <label className="checkbox">
                         <input
                           type="checkbox"
                           checked={option.correct}
-                          onChange={(event) =>
-                            update(activity.id, {
-                              options: activity.options.map((item) =>
-                                item.id === option.id ? { ...item, correct: event.target.checked } : item,
-                              ),
-                            })
-                          }
+                          onChange={(event) => updateOption(option.id, { correct: event.target.checked })}
                         />{" "}
                         Correct answer<span className="visually-hidden"> (choice {at + 1})</span>
                       </label>
@@ -244,7 +255,7 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
                   <textarea
                     id={fieldId("modelResponse")}
                     rows={2}
-                    lang={activity.kind === "listen-repeat" ? "fj" : undefined}
+                    lang={rules.model === "optional" ? undefined : "fj"}
                     value={activity.modelResponse}
                     maxLength={ACTIVITY_LIMITS.modelResponse}
                     onChange={(event) => update(activity.id, { modelResponse: event.target.value })}
@@ -254,7 +265,7 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
                 </>
               )}
 
-              {activity.kind === "listen-repeat" && (
+              {rules.pronunciation && (
                 <>
                   <label htmlFor={fieldId("pronunciation")}>Pronunciation guidance (optional)</label>
                   <input
@@ -275,9 +286,9 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
               )}
 
               <label htmlFor={fieldId("feedback")}>
-                {activity.kind === "real-world"
-                  ? "A note for after they reflect (optional)"
-                  : "Feedback (shown once the learner has answered)"}
+                {rules.needsFeedback
+                  ? "Feedback (shown once the learner has answered)"
+                  : "A note for after they reflect (optional)"}
               </label>
               <textarea
                 id={fieldId("feedback")}
@@ -302,20 +313,23 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
               />
               {error("textAlternative")}
 
-              {activity.kind === "real-world" ? (
-                <>
-                  <p className="hint">A real-world prompt is always optional, so it is never required.</p>
-                  {error("required")}
-                </>
-              ) : (
+              {rules.canBeRequired ? (
                 <label className="checkbox">
                   <input
+                    id={fieldId("required")}
                     type="checkbox"
                     checked={activity.required}
                     onChange={(event) => update(activity.id, { required: event.target.checked })}
                   />{" "}
                   Required for completion<span className="visually-hidden"> ({name})</span>
                 </label>
+              ) : (
+                <>
+                  <p className="hint" id={fieldId("required")}>
+                    A real-world prompt is always optional.
+                  </p>
+                  {error("required")}
+                </>
               )}
 
               <div className="segment-actions">
@@ -347,12 +361,14 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
               {previewing.has(activity.id) && (
                 <ActivityPreview
                   // A changed Activity starts its preview afresh.
-                  key={JSON.stringify(activity)}
+                  key={signature(activity)}
                   id={`activity-${activity.id}-preview`}
                   name={name}
                   activity={activity}
-                  onPlay={() => onPlay(linked < 0 ? null : activity.segmentId)}
-                  onProgress={(state) => setProgress((current) => ({ ...current, [activity.id]: state }))}
+                  onPlay={() => onPlay(activity.segmentId)}
+                  onProgress={(state) =>
+                    setProgress((current) => ({ ...current, [activity.id]: { signature: signature(activity), state } }))
+                  }
                 />
               )}
             </li>
@@ -366,11 +382,7 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
           value={adding}
           onChange={(event) => setAdding(event.target.value as ActivityKind)}
         >
-          {Object.entries(ACTIVITY_KINDS).map(([value, kindName]) => (
-            <option key={value} value={value}>
-              {kindName}
-            </option>
-          ))}
+          <KindOptions />
         </select>
         <button
           type="button"
@@ -422,7 +434,7 @@ function ActivityPreview({
   const choice = activity.options.find((option) => option.id === chosen);
   const correct = activity.options.filter((option) => option.correct).map((option) => option.text);
   const hasChoices = activity.options.length > 0;
-  const audio = activity.kind === "listen-repeat" || activity.kind === "discrimination";
+  const { listens } = KIND_RULES[activity.kind];
 
   return (
     <section id={id} className="activity-preview" aria-label={`Learner preview of ${name}`}>
@@ -433,8 +445,11 @@ function ActivityPreview({
             type="checkbox"
             checked={viaText}
             onChange={(event) => {
+              // Switching route starts the Activity again.
               setViaText(event.target.checked);
               setAnswered(false);
+              setWritten("");
+              onProgress({ attempted: false, feedbackViewed: false });
             }}
           />{" "}
           Use the text version
@@ -444,7 +459,7 @@ function ActivityPreview({
       {viaText ? (
         <p className="activity-alternative">{activity.textAlternative}</p>
       ) : (
-        audio && (
+        listens && (
           <button type="button" onClick={onPlay}>
             {activity.segmentId ? "Play the Segment" : "Play the clip"}
           </button>
@@ -502,7 +517,11 @@ function ActivityPreview({
           {(viaText || activity.kind === "next-line") && (
             <>
               <label htmlFor={`${id}-written`}>
-                {activity.kind === "listen-repeat" ? "Write it out" : "What would you say? (optional)"}
+                {viaText
+                  ? activity.kind === "listen-repeat"
+                    ? "Write it out"
+                    : "Write what you would say"
+                  : "Or write it (optional)"}
               </label>
               <textarea
                 id={`${id}-written`}
@@ -514,11 +533,10 @@ function ActivityPreview({
               />
             </>
           )}
-          {!viaText && activity.kind === "listen-repeat" && (
-            <p className="hint">Say it aloud, as many times as you like. Nothing is recorded.</p>
-          )}
-          <button type="button" disabled={answered} onClick={answer}>
-            {activity.kind === "listen-repeat" && !viaText ? "I've said it" : "Show a model answer"}
+          {!viaText && <p className="hint">Say it aloud, as many times as you like. Nothing is recorded.</p>}
+          {/* By the text route, writing it is the attempt. */}
+          <button type="button" disabled={answered || (viaText && !written.trim())} onClick={answer}>
+            {viaText ? "Check what I wrote" : "I've said it"}
           </button>
         </>
       )}

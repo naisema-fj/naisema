@@ -187,7 +187,7 @@ describe("what each review covers", () => {
     expect(alternative.accessibility).not.toBe(before.accessibility);
   });
 
-  it("puts a real-world prompt before cultural and safeguarding review", async () => {
+  it("puts every Activity's words before cultural review, and real-world prompts before safeguarding", async () => {
     const before = await fingerprintsOf(learningLayerReviewFields(snapshot, "standard-fijian"));
     const changed = await fingerprintsOf(
       learningLayerReviewFields(
@@ -199,10 +199,24 @@ describe("what each review covers", () => {
     expect(changed.safeguarding).not.toBe(before.safeguarding);
     const practice = await fingerprintsOf(
       learningLayerReviewFields(
-        { ...snapshot, activities: [{ ...snapshot.activities[0], prompt: "Say it twice." }, snapshot.activities[1]] },
+        {
+          ...snapshot,
+          activities: [{ ...snapshot.activities[0], feedback: "Said to elders." }, snapshot.activities[1]],
+        },
         "standard-fijian",
       ),
     );
+    expect(practice.cultural).not.toBe(before.cultural);
     expect(practice.safeguarding).toBe(before.safeguarding);
+  });
+
+  it("doesn't count putting the Activities in another order as a change to their words", async () => {
+    const before = await fingerprintsOf(learningLayerReviewFields(snapshot, "standard-fijian"));
+    const reordered = await fingerprintsOf(
+      learningLayerReviewFields({ ...snapshot, activities: [...snapshot.activities].reverse() }, "standard-fijian"),
+    );
+    expect(reordered.language).toBe(before.language);
+    expect(reordered.accessibility).toBe(before.accessibility);
+    expect(reordered.editorial).not.toBe(before.editorial);
   });
 });

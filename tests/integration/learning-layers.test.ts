@@ -770,7 +770,7 @@ describe("Activities and the Completion Rule", () => {
     const refused = await save(educator, layerId, segments, { activities: JSON.stringify([realWorld, unanswerable]) });
     expect(refused.status).toBe(400);
     const page = await refused.text();
-    expect(page).toContain("2 things in the Activities need fixing before this can be saved.");
+    expect(page).toContain("Some Activities need fixing before this can be saved.");
     expect(page).toContain("Activity 1 is a real-world prompt, which can never be required.");
     expect(page).toContain("Activity 2 needs a correct choice.");
   });

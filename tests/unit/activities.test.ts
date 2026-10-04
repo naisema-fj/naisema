@@ -162,6 +162,8 @@ describe("changing an Activity's kind", () => {
     expect(changed).toMatchObject({ kind: "real-world", pronunciation: "", required: false, options: [] });
     expect(forKind(activity(), "listen-repeat")).toMatchObject({ options: [], pronunciation: "" });
     expect(forKind(activity(), "discrimination").options).toHaveLength(2);
+    expect(forKind(listenRepeat(), "comprehension").modelResponse).toBe("");
+    expect(forKind(listenRepeat(), "next-line").modelResponse).toBe("Bula vinaka");
   });
 });
 
@@ -193,7 +195,15 @@ describe("reading Activities the editor sent", () => {
       readActivities(JSON.stringify([activity({ options: [{ id: "x", text: "Fish", correct: true }] })])),
     ).toMatchObject({ ok: false });
     expect(readActivities("not json")).toMatchObject({ ok: false });
+    // A link that can't be a Segment is refused, rather than saved as a removed one.
+    expect(readActivities(JSON.stringify([{ ...listenRepeat(), segmentId: 7 }]))).toMatchObject({ ok: false });
+    expect(readActivities(JSON.stringify([{ ...listenRepeat(), segmentId: undefined }]))).toMatchObject({ ok: false });
     expect(readActivities("")).toEqual({ ok: true, items: [] });
+    const many = Array.from({ length: 51 }, (_, n) => activity({ id: id(100 + n) }));
+    expect(readActivities(JSON.stringify(many))).toEqual({
+      ok: false,
+      error: "A Learning Layer can have at most 50 Activities.",
+    });
   });
 });
 
