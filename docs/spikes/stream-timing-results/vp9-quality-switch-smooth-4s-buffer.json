@@ -1,0 +1,323 @@
+{
+  "codec": "vp9",
+  "segmentId": "s2",
+  "maxBuffer": "4",
+  "modes": [
+    "smooth"
+  ],
+  "browser": "141.0.7390.37",
+  "profile": {
+    "offline": false,
+    "latency": 150,
+    "downloadThroughput": 187500,
+    "uploadThroughput": 93750
+  },
+  "clips": {
+    "landscape": {
+      "coldStarts": null,
+      "loops": {},
+      "qualityChanges": {
+        "smooth 1": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 12652,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13734,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 67,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.75": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13750,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13737,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.5": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13750,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ]
+      }
+    },
+    "vertical": {
+      "coldStarts": null,
+      "loops": {},
+      "qualityChanges": {
+        "smooth 1": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 12600,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 67,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13731,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.75": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13736,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.5": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ]
+      }
+    }
+  },
+  "segment": {
+    "id": "s2",
+    "startMs": 12000,
+    "endMs": 15500,
+    "text": "Au lako mai Suva."
+  }
+}

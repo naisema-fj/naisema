@@ -1,0 +1,691 @@
+{
+  "codec": "vp9",
+  "segmentId": "s2",
+  "browser": "141.0.7390.37",
+  "profile": {
+    "offline": false,
+    "latency": 150,
+    "downloadThroughput": 187500,
+    "uploadThroughput": 93750
+  },
+  "clips": {
+    "landscape": {
+      "coldStarts": null,
+      "loops": {},
+      "qualityChanges": {
+        "smooth 1": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 12652,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13734,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.75": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.5": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13751,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "immediate 1": [
+          {
+            "mode": "immediate",
+            "levels": "1 → 2",
+            "forcedAtMs": 13750,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 100,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 2,
+                "atMs": 13895
+              }
+            ],
+            "ok": true
+          },
+          {
+            "mode": "immediate",
+            "levels": "2 → 1",
+            "forcedAtMs": 13765,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              33,
+              33,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 2000,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 1,
+                "atMs": 13994
+              }
+            ],
+            "ok": false
+          }
+        ],
+        "immediate 0.75": [
+          {
+            "mode": "immediate",
+            "levels": "1 → 2",
+            "forcedAtMs": 13735,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 67,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 2,
+                "atMs": 13944
+              }
+            ],
+            "ok": true
+          },
+          {
+            "mode": "immediate",
+            "levels": "2 → 1",
+            "forcedAtMs": 13747,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 1967,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 1,
+                "atMs": 14044
+              }
+            ],
+            "ok": false
+          }
+        ],
+        "immediate 0.5": [
+          {
+            "mode": "immediate",
+            "levels": "1 → 2",
+            "forcedAtMs": 13758,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 1967,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 2,
+                "atMs": 14047
+              }
+            ],
+            "ok": false
+          },
+          {
+            "mode": "immediate",
+            "levels": "2 → 1",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 1933,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 1,
+                "atMs": 14081
+              }
+            ],
+            "ok": false
+          }
+        ]
+      }
+    },
+    "vertical": {
+      "coldStarts": null,
+      "loops": {},
+      "qualityChanges": {
+        "smooth 1": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 12566,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13747,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              33,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.75": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "smooth 0.5": [
+          {
+            "mode": "smooth",
+            "levels": "1 → 2",
+            "forcedAtMs": 13747,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          },
+          {
+            "mode": "smooth",
+            "levels": "1 → 0",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [],
+            "switches": [],
+            "ok": true
+          }
+        ],
+        "immediate 1": [
+          {
+            "mode": "immediate",
+            "levels": "1 → 2",
+            "forcedAtMs": 13732,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 100,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 2,
+                "atMs": 13894
+              }
+            ],
+            "ok": true
+          },
+          {
+            "mode": "immediate",
+            "levels": "2 → 1",
+            "forcedAtMs": 13727,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              33
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 100,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 1,
+                "atMs": 13907
+              }
+            ],
+            "ok": true
+          }
+        ],
+        "immediate 0.75": [
+          {
+            "mode": "immediate",
+            "levels": "1 → 2",
+            "forcedAtMs": 13745,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              0,
+              0
+            ],
+            "largestJumpMs": 33,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 2,
+                "atMs": 13980
+              }
+            ],
+            "ok": true
+          },
+          {
+            "mode": "immediate",
+            "levels": "2 → 1",
+            "forcedAtMs": 13744,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 2000,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 1,
+                "atMs": 14004
+              }
+            ],
+            "ok": false
+          }
+        ],
+        "immediate 0.5": [
+          {
+            "mode": "immediate",
+            "levels": "1 → 2",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 1967,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 2,
+                "atMs": 14046
+              }
+            ],
+            "ok": false
+          },
+          {
+            "mode": "immediate",
+            "levels": "2 → 1",
+            "forcedAtMs": 13747,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "startErrors": [
+              0,
+              0,
+              0
+            ],
+            "endErrors": [
+              0,
+              500,
+              0
+            ],
+            "largestJumpMs": 2000,
+            "hlsErrors": [
+              "bufferStalledError"
+            ],
+            "switches": [
+              {
+                "level": 1,
+                "atMs": 14020
+              }
+            ],
+            "ok": false
+          }
+        ]
+      }
+    }
+  },
+  "segment": {
+    "id": "s2",
+    "startMs": 12000,
+    "endMs": 15500,
+    "text": "Au lako mai Suva."
+  }
+}

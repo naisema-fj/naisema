@@ -30,6 +30,9 @@ const CODEC = process.argv[2] ?? "vp9";
 const LOOPS_ONLY = process.argv.includes("--loops-only");
 const INTERRUPTIONS_ONLY = process.argv.includes("--interruptions-only");
 const QUALITY_ONLY = process.argv.includes("--quality-only");
+// MAX_BUFFER=N buffers only N s ahead on the main page, so a smooth switch takes effect within the segment.
+const MAIN_QUERY = process.env.MAX_BUFFER ? `&maxBuffer=${Number(process.env.MAX_BUFFER)}` : "";
+const MODES = (process.env.MODES ?? "smooth,immediate").split(",");
 const SEGMENT_ID = process.env.SEGMENT ?? "s2";
 const CLIPS = ["landscape", "vertical"];
 const SPEEDS = [1, 0.75, 0.5];
@@ -206,7 +209,7 @@ async function forcedChange(page, segment, speed, direction, mode) {
 
 async function qualityChanges(page, segment) {
   const results = {};
-  for (const mode of ["smooth", "immediate"]) {
+  for (const mode of MODES) {
     for (const speed of SPEEDS) {
       console.log(`  ${mode} quality changes at ${speed}×`);
       const up = await forcedChange(page, segment, speed, 1, mode);
@@ -286,13 +289,21 @@ const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
 const browser = await chromium.launch({ executablePath, args: ["--autoplay-policy=no-user-gesture-required"] });
 const server = await serve();
 const origin = `http://127.0.0.1:${server.address().port}`;
-const report = { codec: CODEC, segmentId: SEGMENT_ID, browser: browser.version(), profile: PROFILE, clips: {} };
+const report = {
+  codec: CODEC,
+  segmentId: SEGMENT_ID,
+  maxBuffer: process.env.MAX_BUFFER ?? null,
+  modes: MODES,
+  browser: browser.version(),
+  profile: PROFILE,
+  clips: {},
+};
 try {
   for (const clip of CLIPS) {
     console.log(`${clip}: cold starts`);
     const only = INTERRUPTIONS_ONLY || QUALITY_ONLY;
     const cold = LOOPS_ONLY || only ? null : await coldStarts(browser, origin, clip);
-    const { context, page } = await openPlayer(browser, origin, clip);
+    const { context, page } = await openPlayer(browser, origin, clip, MAIN_QUERY);
     await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
     const segment = await page.evaluate((id) => window.spike.segment(id), SEGMENT_ID);
     if (!segment) throw new Error(`No segment "${SEGMENT_ID}" in player.js`);
