@@ -17,7 +17,13 @@ import { requireLayerRevision } from "~/lib/layer-revision-access.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import { decidableRequirement, reviewersFor } from "~/lib/review.server";
-import { issueReviewLink, reviewLinkPath, reviewLinksFor, revokeReviewLink } from "~/lib/review-links.server";
+import {
+  issueReviewLink,
+  reviewLinkPath,
+  reviewLinksFor,
+  revokeReviewLink,
+  videoHasPublishRights,
+} from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
 import type { Route } from "./+types/revision";
 
@@ -110,6 +116,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       : {},
     links,
     canIssueLinks: links !== null && review.submitted,
+    videoHasRights: links !== null && (await videoHasPublishRights(db, review.layer.contentItemId)),
     done: new URL(request.url).searchParams.get("done"),
   };
 }
@@ -294,8 +301,18 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
               </tbody>
             </table>
           )}
+          {loaderData.canIssueLinks && !loaderData.videoHasRights && (
+            <p className="field-error" id="link-rights-warning">
+              This Video has no Rights Record granting Publish yet. Share it only with people the rights holder has
+              agreed can see it.
+            </p>
+          )}
           {loaderData.canIssueLinks ? (
-            <Form method="post" className="inline-form">
+            <Form
+              method="post"
+              className="inline-form"
+              aria-describedby={loaderData.videoHasRights ? undefined : "link-rights-warning"}
+            >
               <input type="hidden" name="intent" value="issueLink" />
               <label htmlFor="link-recipient">Who it is for</label>
               <input id="link-recipient" name="recipient" required maxLength={200} />

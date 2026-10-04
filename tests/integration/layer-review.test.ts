@@ -265,6 +265,11 @@ describe("Review Links and Knowledge Holder Approvals", () => {
   async function issuedLink(flags = ["sensitiveCultural"]) {
     const layer = await authoredLayer({ flags });
     await act(layer.educator, layer.layerId, layer.number, { intent: "submit" });
+    // Before any rights are recorded, the editor is told what sharing the footage means.
+    const page = await (
+      await layer.editor.browser.fetch(`/admin/learning-layers/${layer.layerId}/revisions/${layer.number}`)
+    ).text();
+    expect(page).toContain("This Video has no Rights Record granting Publish yet.");
     const issued = await act(layer.editor, layer.layerId, layer.number, {
       intent: "issueLink",
       recipient: "Ratu Joni",
