@@ -126,6 +126,7 @@ export function learningLayerReviewFields(
     editorial: {
       ...snapshot,
       segments: snapshot.segments.map(({ draft, retimed, tokens, ...segment }) => segment),
+      annotations,
     },
     accessibility: { title: snapshot.title, timed, notes },
     safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, notes },

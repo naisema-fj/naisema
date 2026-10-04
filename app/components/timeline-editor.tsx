@@ -156,8 +156,6 @@ export function TimelineEditor({
               ...change,
               // Editing a retimed Segment's times is checking them.
               retimed: "startMs" in change || "endMs" in change ? false : segment.retimed,
-              // Words that are still there keep their token IDs, and so their Annotations.
-              tokens: change.fijian === undefined ? segment.tokens : retokenise(segment.tokens, change.fijian),
             }
           : segment,
       ),
@@ -364,7 +362,7 @@ export function TimelineEditor({
             <p role="alert">{previewError ?? "The video can't be previewed yet."}</p>
           )}
           {playing.some((segment) => annotations.some((annotation) => annotation.segmentId === segment.id)) && (
-            <ul className="caption-glossary" aria-label="Words annotated in the Segment playing">
+            <ul className="caption-meanings" aria-label="Words annotated in the Segment playing">
               {annotations
                 .filter((annotation) => playing.some((segment) => segment.id === annotation.segmentId))
                 .map((annotation) => (
@@ -535,6 +533,9 @@ export function TimelineEditor({
                     aria-invalid={problemFor(segment.id, "fijian") ? true : undefined}
                     aria-describedby={problemFor(segment.id, "fijian") ? `${field("fijian")}-error` : undefined}
                     onChange={(event) => update(index, { fijian: event.target.value })}
+                    // Once the edit is done, its words are matched with those from before it, so words
+                    // still there keep their token IDs and their Annotations (ADR-0011).
+                    onBlur={() => update(index, { tokens: retokenise(segment.tokens, segment.fijian) })}
                   />
                   {problemFor(segment.id, "fijian") && (
                     <p className="field-error" id={`${field("fijian")}-error`}>

@@ -40,7 +40,7 @@ One word of a Segment's Fijian text, with an ID that stays the same when the tex
 _Avoid_: Character offset (as an anchor)
 
 **Expression**:
-A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save.
+A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save. Expressions are kept in a library for each Language Variety and reused across Learning Layers.
 _Avoid_: Vocab item, word (when a phrase or idiom is meant)
 
 **Annotation**:

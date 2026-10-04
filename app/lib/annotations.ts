@@ -92,7 +92,7 @@ export function annotationProblems(
   return annotations.flatMap((annotation): AnnotationProblem[] => {
     const problem = (message: string, revalidate = false) => [{ annotationId: annotation.id, message, revalidate }];
     const segment = segments.find((item) => item.id === annotation.segmentId);
-    if (!segment) return problem("Its Segment was removed. Remove the Annotation, or add it to another Segment.", true);
+    if (!segment) return problem("Its Segment was removed. Remove the Annotation.", true);
     const start = segment.tokens.findIndex((token) => token.id === annotation.startTokenId);
     const end = segment.tokens.findIndex((token) => token.id === annotation.endTokenId);
     if (start < 0 || end < 0) {
@@ -124,8 +124,8 @@ type ExpressionInput = {
   generalMeaning: string;
   grammarNote: string;
   pronunciation: string;
-  /** Any value but "" marks it as an idiom. */
-  idiom: string;
+  /** An idiom: its meaning goes beyond its words. */
+  idiom: boolean;
   literalMeaning: string;
 };
 
@@ -151,7 +151,7 @@ export function readExpressionDetails(input: ExpressionInput): ReadExpression {
   if (grammarNote.length > ANNOTATION_LIMITS.grammarNote) errors.grammarNote = "The grammar note is too long.";
   if (pronunciation.length > ANNOTATION_LIMITS.pronunciation)
     errors.pronunciation = "The pronunciation guide is too long.";
-  const idiom = input.idiom !== "";
+  const { idiom } = input;
   if (idiom && !literal) errors.literalMeaning = "An idiom needs its literal meaning as well as what it means.";
   else if (idiom && literal.toLowerCase() === generalMeaning.toLowerCase()) {
     errors.literalMeaning = "Explain what the idiom means beyond its literal translation.";
@@ -284,7 +284,7 @@ export function readNewExpressions(json: string): Read<NewExpression> {
       generalMeaning: text(input.generalMeaning, 2000),
       grammarNote: text(input.grammarNote, 2000),
       pronunciation: text(input.pronunciation, 1000),
-      idiom: input.idiom ? "yes" : "",
+      idiom: input.idiom === true,
       literalMeaning: text(input.literalMeaning, 2000),
     });
     if (!details.ok) {

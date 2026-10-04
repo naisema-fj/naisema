@@ -13,7 +13,6 @@ import {
 import {
   type AnnotationProblem,
   annotationProblems,
-  type ExpressionDetails,
   type NoteProblem,
   noteProblems,
   readAnnotations,
@@ -23,7 +22,7 @@ import {
 import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
-import { detailsOf, expressionsById, placeNewExpressions } from "./expressions.server";
+import { expressionCopies, placeNewExpressions } from "./expressions.server";
 import {
   LAYER_LANGUAGE_VARIETY,
   type LayerDetailField,
@@ -367,28 +366,29 @@ export async function saveLearningLayer(
   if (!annotations.ok) return { ok: false, error: annotations.error };
   const notes = readNotes(input.notes);
   if (!notes.ok) return { ok: false, error: notes.error };
-  const fresh = readNewExpressions(input.newExpressions);
-  if (!fresh.ok) return { ok: false, error: fresh.error };
+  const defined = readNewExpressions(input.newExpressions);
+  if (!defined.ok) return { ok: false, error: defined.error };
 
-  // New Expressions join the library (or match one already there); every Annotation then links to
-  // a library Expression, of which the Revision keeps a copy.
-  const placed = await placeNewExpressions(db, actor.userId, layer.languageVariety, fresh.items);
+  // New Expressions an Annotation uses join the library (or match one there saying exactly the
+  // same); every Annotation then links to a library Expression, of which the Revision keeps a copy.
+  const used = new Set(annotations.items.map((annotation) => annotation.expressionId));
+  const library = await placeNewExpressions(
+    db,
+    actor.userId,
+    layer.languageVariety,
+    defined.items.filter((item) => used.has(item.id)),
+  );
+  if (!library.ok) return { ok: false, error: library.error };
   const linked = annotations.items.map((annotation) => ({
     ...annotation,
-    expressionId: placed.ids.get(annotation.expressionId) ?? annotation.expressionId,
+    expressionId: library.ids.get(annotation.expressionId) ?? annotation.expressionId,
   }));
-  const library = await expressionsById(db, [...new Set(linked.map((annotation) => annotation.expressionId))]);
-  const expressions: Record<string, ExpressionDetails> = {};
-  for (const annotation of linked) {
-    const added = placed.added.find((item) => item.id === annotation.expressionId);
-    const row = library.get(annotation.expressionId);
-    if (added) {
-      const { id: _, ...details } = added;
-      expressions[annotation.expressionId] = details;
-    } else if (row?.languageVariety === layer.languageVariety) {
-      expressions[annotation.expressionId] = detailsOf(row);
-    }
-  }
+  const expressions = await expressionCopies(
+    db,
+    layer.languageVariety,
+    [...new Set(linked.map((annotation) => annotation.expressionId))],
+    library.added,
+  );
   // Annotations and notes whose words or Segment are gone are kept, flagged; anything else wrong is refused.
   const annotationIssues = annotationProblems(linked, segments.segments, new Set(Object.keys(expressions))).filter(
     (problem) => !problem.revalidate,
@@ -425,7 +425,7 @@ export async function saveLearningLayer(
         createdBy: actor.userId,
         createdAt: now,
       }),
-      ...placed.inserts,
+      ...library.inserts,
       db
         .update(learningLayer)
         .set({ currentDraftRevisionId: id, updatedAt: now })

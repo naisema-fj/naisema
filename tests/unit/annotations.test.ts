@@ -72,7 +72,7 @@ describe("Annotations to revalidate", () => {
       },
       {
         annotationId: segmentGone.id,
-        message: "Its Segment was removed. Remove the Annotation, or add it to another Segment.",
+        message: "Its Segment was removed. Remove the Annotation.",
         revalidate: true,
       },
       {
@@ -115,7 +115,7 @@ describe("Expressions", () => {
     generalMeaning: "hello",
     grammarNote: "",
     pronunciation: "nee sah mbula",
-    idiom: "",
+    idiom: false,
     literalMeaning: "",
   };
 
@@ -137,15 +137,15 @@ describe("Expressions", () => {
   });
 
   it("explain an idiom beyond its literal translation", () => {
-    expect(readExpressionDetails({ ...base, idiom: "yes", literalMeaning: "" })).toMatchObject({
+    expect(readExpressionDetails({ ...base, idiom: true, literalMeaning: "" })).toMatchObject({
       ok: false,
       errors: { literalMeaning: "An idiom needs its literal meaning as well as what it means." },
     });
-    expect(readExpressionDetails({ ...base, idiom: "yes", literalMeaning: "hello" })).toMatchObject({
+    expect(readExpressionDetails({ ...base, idiom: true, literalMeaning: "hello" })).toMatchObject({
       ok: false,
       errors: { literalMeaning: "Explain what the idiom means beyond its literal translation." },
     });
-    expect(readExpressionDetails({ ...base, idiom: "yes", literalMeaning: "you are alive" })).toMatchObject({
+    expect(readExpressionDetails({ ...base, idiom: true, literalMeaning: "you are alive" })).toMatchObject({
       ok: true,
       details: { literalMeaning: "you are alive" },
     });

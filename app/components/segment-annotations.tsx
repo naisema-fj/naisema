@@ -6,6 +6,7 @@ import {
   type ExpressionDetails,
   NOTE_KINDS,
   type NoteKind,
+  readExpressionDetails,
 } from "~/lib/annotations";
 import type { Segment } from "~/lib/segment-rules";
 import { ExpressionFields } from "./expression-fields";
@@ -110,15 +111,17 @@ export function SegmentAnnotations({
     let newExpression: ExpressionChoice | null = null;
     let expressionId = draft.expressionId;
     if (expressionId === "new") {
-      if (!draft.newExpression.headword.trim() || !draft.newExpression.generalMeaning.trim()) {
-        setError("Give the new Expression its word or phrase and general meaning.");
+      // The same check the server makes on save, so a refusal is seen here first.
+      const read = readExpressionDetails({
+        ...draft.newExpression,
+        idiom: draft.newExpression.literalMeaning !== null,
+        literalMeaning: draft.newExpression.literalMeaning ?? "",
+      });
+      if (!read.ok) {
+        setError(Object.values(read.errors)[0] ?? "Check the new Expression.");
         return;
       }
-      if (draft.newExpression.literalMeaning !== null && !draft.newExpression.literalMeaning.trim()) {
-        setError("Give the idiom its literal meaning, or untick it.");
-        return;
-      }
-      newExpression = { id: crypto.randomUUID(), ...draft.newExpression };
+      newExpression = { id: crypto.randomUUID(), ...read.details };
       expressionId = newExpression.id;
     }
     onSave(

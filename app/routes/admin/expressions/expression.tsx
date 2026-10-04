@@ -2,7 +2,7 @@ import { data, Form, redirect } from "react-router";
 import { ExpressionFields } from "~/components/expression-fields";
 import { type ExpressionField, readExpressionDetails } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { canEditExpression, getExpression, updateExpression } from "~/lib/expressions.server";
+import { canEditExpression, detailsOf, getExpression, updateExpression } from "~/lib/expressions.server";
 import { requireLayerStaff } from "~/lib/learning-layers.server";
 import type { Route } from "./+types/expression";
 
@@ -24,13 +24,7 @@ async function requireExpression(env: Env, request: Request, id: string) {
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { actor, row } = await requireExpression(context.get(cloudflareContext).env, request, params.id);
   return {
-    expression: {
-      headword: row.headword,
-      generalMeaning: row.generalMeaning,
-      grammarNote: row.grammarNote,
-      pronunciation: row.pronunciation,
-      literalMeaning: row.literalMeaning,
-    },
+    expression: detailsOf(row),
     canEdit: canEditExpression(actor, row),
     saved: new URL(request.url).searchParams.has("saved"),
   };
@@ -38,9 +32,9 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { db, actor, row } = await requireExpression(context.get(cloudflareContext).env, request, params.id);
-  if (!canEditExpression(actor, row)) {
-    throw new Response("Only editors and whoever added an Expression can change it.", { status: 403 });
-  }
+  const refused = () => new Response("Only editors and whoever added an Expression can change it.", { status: 403 });
+  // updateExpression audits a refused attempt; asking it first means one is never let through by a form error.
+  if (!canEditExpression(actor, row) && !(await updateExpression(db, actor, row, detailsOf(row)))) throw refused();
   const form = await request.formData();
   const field = (name: string) => String(form.get(name) ?? "");
   const read = readExpressionDetails({
@@ -48,12 +42,12 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     generalMeaning: field("generalMeaning"),
     grammarNote: field("grammarNote"),
     pronunciation: field("pronunciation"),
-    idiom: field("idiom"),
+    idiom: field("idiom") !== "",
     literalMeaning: field("literalMeaning"),
   });
   if (!read.ok)
     return data<{ errors: Partial<Record<ExpressionField, string>> }>({ errors: read.errors }, { status: 400 });
-  await updateExpression(db, actor, row, read.details);
+  if (!(await updateExpression(db, actor, row, read.details))) throw refused();
   return redirect(`/admin/expressions/${row.id}?saved`);
 }
 
