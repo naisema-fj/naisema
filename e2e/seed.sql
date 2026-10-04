@@ -26,6 +26,7 @@ INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
   ('e2e-editor-mobile-role', 'e2e-editor-mobile', 'editor', 'e2e-seed', 0);
 -- One Educator per browser project for the media library journey; their earlier uploads go first.
 DELETE FROM media_upload_part WHERE asset_id IN (SELECT id FROM media_asset WHERE uploaded_by LIKE 'e2e-educator-%');
+DELETE FROM video_asset WHERE owner_id LIKE 'e2e-educator-%';
 DELETE FROM media_asset WHERE uploaded_by LIKE 'e2e-educator-%';
 DELETE FROM user WHERE email LIKE 'e2e-educator-%@naisema.test';
 INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
@@ -34,6 +35,22 @@ INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUE
 INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
   ('e2e-educator-desktop-role', 'e2e-educator-desktop', 'educator', 'e2e-seed', 0),
   ('e2e-educator-mobile-role', 'e2e-educator-mobile', 'educator', 'e2e-seed', 0);
+-- Each Educator's vertical video master, which Stream failed to process (the master itself isn't
+-- in local R2, which the journey doesn't need).
+INSERT INTO media_asset (id, purpose, type, name, size, status, quarantine_key, destination_key, uploaded_by,
+  created_at, updated_at, scanned_at) VALUES
+  ('e2e-video-desktop', 'media', 'video/mp4', 'e2e-vale-desktop.mp4', 2048, 'ready', 'uploads/e2e-video-desktop',
+    'masters/e2e-video-desktop', 'e2e-educator-desktop', 0, 0, 0),
+  ('e2e-video-mobile', 'media', 'video/mp4', 'e2e-vale-mobile.mp4', 2048, 'ready', 'uploads/e2e-video-mobile',
+    'masters/e2e-video-mobile', 'e2e-educator-mobile', 0, 0, 0);
+INSERT INTO video_asset (id, owner_id, master_key, provider, provider_id, state, state_reason, duration_ms, width,
+  height, orientation, environment, created_at, updated_at) VALUES
+  ('e2e-video-desktop', 'e2e-educator-desktop', 'masters/e2e-video-desktop', 'stream', 'e2e-stream-desktop', 'failed',
+    'Stream couldn''t process it: The file was not recognized as a video.', 61000, 720, 1280, 'portrait',
+    'development', 0, 0),
+  ('e2e-video-mobile', 'e2e-educator-mobile', 'masters/e2e-video-mobile', 'stream', 'e2e-stream-mobile', 'failed',
+    'Stream couldn''t process it: The file was not recognized as a video.', 61000, 720, 1280, 'portrait',
+    'development', 0, 0);
 -- One editor per browser project for the Submission journey, and the forms earlier runs sent.
 DELETE FROM upload_link_file WHERE link_id IN (SELECT id FROM upload_link WHERE issued_by LIKE 'e2e-intake-%');
 DELETE FROM media_upload_part WHERE asset_id IN (SELECT id FROM media_asset WHERE uploaded_by LIKE 'e2e-intake-%');

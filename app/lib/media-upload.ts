@@ -1,4 +1,5 @@
-import { checkContent, checkDeclared, HEAD_BYTES, type UploadPurpose } from "./upload-rules";
+import { checkContent, checkDeclared, HEAD_BYTES, kindOf, type UploadPurpose } from "./upload-rules";
+import { lengthProblem } from "./video-rules";
 
 /**
  * The media library's browser upload (app/lib/media.server.ts is the other side). It checks the
@@ -18,6 +19,8 @@ export type UploadOptions = {
   onProgress?: (sentBytes: number) => void;
   /** Pauses before a retry; replaceable so tests don't wait. */
   wait?: (ms: number) => Promise<void>;
+  /** A video's length in milliseconds, or null if the browser can't tell; replaceable for tests. */
+  readDuration?: (file: File) => Promise<number | null>;
 };
 
 export type UploadOutcome = { ok: true; id: string } | { ok: false; error: string };
@@ -37,6 +40,32 @@ function browserStorage(): UploadStorage {
 }
 
 class Refused extends Error {}
+
+/**
+ * A video's length as the browser reads it from the file's metadata, or null if it can't (it may
+ * not decode the format). The server reads the length itself before accepting the file, so this
+ * only spares the wait of uploading a video that would be refused.
+ */
+async function browserDuration(file: File): Promise<number | null> {
+  if (typeof document === "undefined") return null;
+  const url = URL.createObjectURL(file);
+  try {
+    return await new Promise<number | null>((resolve) => {
+      const video = document.createElement("video");
+      const done = (value: number | null) => {
+        video.removeAttribute("src");
+        resolve(value);
+      };
+      video.preload = "metadata";
+      video.onloadedmetadata = () => done(Number.isFinite(video.duration) ? Math.round(video.duration * 1000) : null);
+      video.onerror = () => done(null);
+      setTimeout(() => done(null), 5000);
+      video.src = url;
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 /** Remembers an unfinished upload by where it goes and the file's name, size and modification time. */
 const resumeKey = (endpoint: string, file: File) =>
@@ -62,6 +91,12 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
   const head = new Uint8Array(await file.slice(0, HEAD_BYTES).arrayBuffer());
   const content = checkContent(declared.type, head);
   if (!content.ok) return { ok: false, error: content.error };
+  // A video master over 15 minutes is refused before it is sent (docs/decision-log.md).
+  if ((options.purpose ?? "media") === "media" && kindOf(declared.type) === "video") {
+    const duration = await (options.readDuration ?? browserDuration)(file);
+    const problem = duration === null ? null : lengthProblem(duration);
+    if (problem) return { ok: false, error: problem };
+  }
 
   try {
     let upload: { id: string; partSize: number; partCount: number; received: number[] } | null = null;

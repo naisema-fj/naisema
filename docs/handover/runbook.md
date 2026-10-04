@@ -62,6 +62,7 @@ pnpm wrangler d1 create naisema-staging --location oc
 pnpm wrangler r2 bucket create naisema-staging-media --location oc
 pnpm wrangler r2 bucket create naisema-staging-evidence --location oc
 pnpm wrangler r2 bucket create naisema-staging-quarantine --location oc
+pnpm wrangler r2 bucket create naisema-staging-video-masters --location oc
 pnpm wrangler queues create naisema-staging-upload-scans
 ```
 
@@ -222,15 +223,44 @@ Every upload follows the same path (docs/phase-1a-defaults.md §1, ADR-0010); th
 
 1. **Before it starts:** the file's extension, declared type and size are checked against the allowlist: MP4 and MOV up to 2 GB, MP3 and M4A up to 500 MB, PDF up to 50 MB, JPEG, PNG and WebP up to 25 MB, and Rights Record evidence (PDF or image) up to 10 MB. Only editors and Educators can upload, on the admin host. The one exception on the public site is a contributor's upload link, which an editor sends and which works for one Submission only (see Public forms).
 2. **Upload:** the file's first bytes must match its type before the upload starts, and again as the first part actually arrives; this stops a renamed executable, and ISO media brands are checked too, so HEIC, AVIF and 3GP files are refused. The file then arrives in 10 MiB parts, as an R2 multipart upload into the private `QUARANTINE` bucket. Choosing the same file again resumes an interrupted upload. Evidence arrives in one go with the Rights Record form.
-3. **Scan:** a finished upload is queued on `naisema-<env>-upload-scans`. The Worker consumes the queue, checks the type again, and streams the file to ClamAV running in Cloudflare Containers (`containers/scanner`, instance type `standard-1`, at most two instances). A clean file is copied to `MEDIA` (the media library) or `EVIDENCE` (Rights Record evidence and contributors' material) and marked ready. An infected or unscannable file stays in quarantine, and the media library or rights page shows why; any copy an interrupted earlier attempt left in the destination is removed. A scanner that can't answer, for example while clamd is still loading its signatures, means a retry with a growing delay. After five deliveries the upload is marked failed. Every step is safe to repeat.
+3. **Scan:** a finished upload is queued on `naisema-<env>-upload-scans`. The Worker consumes the queue, checks the type again, and streams the file to ClamAV running in Cloudflare Containers (`containers/scanner`, instance type `standard-1`, at most two instances). A clean file is copied to `MEDIA` (the media library), `VIDEO_MASTERS` (video masters, see Video) or `EVIDENCE` (Rights Record evidence and contributors' material) and marked ready. An infected or unscannable file stays in quarantine, and the media library or rights page shows why; any copy an interrupted earlier attempt left in the destination is removed. A scanner that can't answer, for example while clamd is still loading its signatures, means a retry with a growing delay. After five deliveries the upload is marked failed. Every step is safe to repeat.
 4. **Daily tidy-up** (the 19:45 UTC cron): failed and infected files are deleted 30 days after the scan, uploads unfinished after 7 days are abandoned, and scans with no verdict after an hour are queued again.
-5. **Delivery:** ready images are served from `/media/images/<id>/<width>` (320, 640, 960, 1280 or 1920), re-encoded as WebP through the Cloudflare Images binding, which strips metadata. Ready PDFs are served from `/media/files/<id>`, always as a download with a sandboxing content security policy. An Episode's audio is streamed through its Episode (see Voices Episodes); video is delivered by its own player when it arrives (#16).
+5. **Delivery:** ready images are served from `/media/images/<id>/<width>` (320, 640, 960, 1280 or 1920), re-encoded as WebP through the Cloudflare Images binding, which strips metadata. Ready PDFs are served from `/media/files/<id>`, always as a download with a sandboxing content security policy. An Episode's audio is streamed through its Episode (see Voices Episodes). Video is delivered by Cloudflare Stream (see Video).
 
 **The scanner image** is the official `clamav/clamav:stable` image, which includes a recent signature database, plus a small Go front end (`containers/scanner/main.go`). Inside the container, freshclam keeps the signatures current, so the container needs internet access. `wrangler deploy` builds the image with Docker, so the deploy runner needs Docker; GitHub's runners have it. To check the image, run `sh scripts/scanner-smoke.sh`, which needs Docker. It builds the image and checks that a clean file passes and the EICAR test file is caught. CI runs it on every pull request.
 
 **Locally and in tests** the container isn't built (`dev.enable_containers: false`), so uploads stay "Being scanned for viruses" while the local queue retries. Integration tests drive the scan step directly with a stand-in scanner. To scan for real locally, set `enable_containers` to `true` with Docker running.
 
 **If uploads stay in scanning:** look at the Worker's queue consumer logs ("Upload scan failed") and at the container's logs in the dashboard (Workers & Pages › Containers). If clamd or the front end stops, the container exits and the next scan starts a fresh one. The daily job re-queues stalled scans; to retry at once, re-upload the file.
+
+## Video
+
+Video masters follow ADR-0008; the code is in `app/lib/video-assets.server.ts`, `video-provider.server.ts`, `mp4-facts.ts` and `scan.server.ts`.
+
+1. **Upload:** an MP4 or MOV master of up to 2 GB goes through upload safety like any file. The browser reads its length first and refuses one over 15 minutes before sending it, where it can read the length.
+2. **Length check:** before the virus scan, the scan step reads the master's length and picture size from its movie header (`moov`), with ranged reads, so a 2 GB file is never held in memory. A master over 15 minutes (judged to the second), or one whose length can't be read, is refused and stays in quarantine with the reason. This check is what enforces the limit; the browser's is a courtesy.
+3. **Masters:** a clean master is copied to the private `naisema-<env>-video-masters` bucket under `masters/<id>` and recorded as a Video Asset. That copy is Na iSema's original. Nothing serves it publicly, and Stream holds only a copy for playing it.
+4. **Processing:** the Worker asks Stream to copy the master from a pre-signed R2 address that lasts one hour (`POST /accounts/<id>/stream/copy`, with `requireSignedURLs: true`). Stream's signed webhook then reports the video ready or failed. Reports only ever move a Video Asset forwards (uploaded → processing → ready or failed), in code and by a database trigger, so a repeated or late report changes nothing. A refusal fails the video with Stream's reason; no address or credential is ever shown. If Stream can't be reached, the scan message is retried with a growing delay, and after five tries the video is marked failed. Staff can then press **Try processing again** on the video's page.
+5. **Catching up:** the daily job asks Stream about any video that has been processing for over an hour, which covers lost webhooks, and sends any master that was never sent. A video's page also has **Check with Stream now**.
+6. **Preview:** a ready video's page (`/admin/media/<id>/video`, for editors and Educators) plays it through a signed token that lasts ten minutes. The token is signed by the Worker with a Stream signing key, and the player is hls.js's light build. Only that page, and the media library (for reading a file's length), allow media from `blob:` and from the Stream customer subdomain.
+7. **Captions:** Stream generates captions only when asked (`POST …/captions/<language>/generate`), and the adapter never asks. Captions come from our own reviewed Segments (ADR-0008). Don't turn on captions for these videos in the Stream dashboard.
+
+**Locally and in tests** `VIDEO_PROVIDER` is `local`. A local stand-in "processes" a video at once and plays the master itself from a staff-only route with a ten-minute token (`/admin/media/<id>/video/master`). That route answers nowhere else. Integration tests drive the Stream adapter against a stand-in for its API.
+
+**Setting up Stream for an environment** (done once each, by someone with admin access to the account):
+
+1. Create the masters bucket (see One-time Cloudflare provisioning).
+2. **R2 credentials for pre-signed addresses:** in R2 › Manage API tokens, create an *Object Read only* token limited to `naisema-<env>-video-masters`, then set its access key: `pnpm wrangler secret put R2_MASTERS_ACCESS_KEY_ID --env <env>` and `R2_MASTERS_SECRET_ACCESS_KEY`. It can read masters and nothing else.
+3. **Stream API token:** create an account API token with *Stream: Edit* only, and set it as `STREAM_API_TOKEN`.
+4. **Signing key:** `curl -X POST -H "Authorization: Bearer <token>" https://api.cloudflare.com/client/v4/accounts/<account id>/stream/keys`. Set the result's `id` as `STREAM_SIGNING_KEY_ID` and its base64 `jwk` as `STREAM_SIGNING_KEY_JWK`. Don't keep a copy anywhere else.
+5. **Customer code:** the `customer-<code>` part of any video's playback address in the Stream dashboard. Set it as `STREAM_CUSTOMER_CODE`; the video page's security policy allows exactly that origin.
+6. **Webhook:** `curl -X PUT -H "Authorization: Bearer <token>" https://api.cloudflare.com/client/v4/accounts/<account id>/stream/webhook --data '{"notificationUrl":"https://naisema.com/webhooks/stream"}'`. Set the `secret` it returns as `STREAM_WEBHOOK_SECRET`.
+
+Until these are set, a video fails with "Video processing isn't set up in this environment yet", and nothing else is affected. Staging and production deliberately don't require them at deploy time, because there is no Stream account yet. Once Stream is in use, add them to production's `secrets.required` in `wrangler.jsonc`.
+
+**One webhook per account:** Stream sends every account's reports to one address. Point it at production. Staging, which shares the account, then never hears from the webhook: its videos become ready through the daily job or **Check with Stream now**. Production acknowledges and ignores videos it doesn't know. Every video is tagged with its environment in Stream (`meta.environment`), so staging's can be found and deleted in the dashboard.
+
+**If a video stays processing:** open its page and press **Check with Stream now**. If Stream no longer has the video, the page says so; press **Try processing again**. The Worker logs "Video refresh failed" when the daily check can't reach Stream.
 
 ## Custom domains
 

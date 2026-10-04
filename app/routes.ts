@@ -37,6 +37,8 @@ export default [
   route("resources/:id/download", "routes/public/resource-download.ts"),
   route("episodes/:id/audio", "routes/public/episode-audio.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
+  // Cloudflare Stream's signed processing reports (app/lib/video-assets.server.ts).
+  route("webhooks/stream", "routes/public/stream-webhook.ts"),
   // A contributor's upload link: the resumable uploader's endpoints, bound to the link's token.
   route("upload/:token/files", "routes/public/upload-link-files.ts"),
   route("upload/:token/files/:id", "routes/public/upload-link-file.ts"),
@@ -60,6 +62,8 @@ export default [
     route("offerings/:id", "routes/admin/providers/offering-edit.tsx"),
     route("media", "routes/admin/media/index.tsx"),
     route("media/:id/rights", "routes/admin/media/rights.tsx"),
+    route("media/:id/video", "routes/admin/media/video.tsx"),
+    route("media/:id/video/master", "routes/admin/media/video-master.ts"),
     route("media/uploads", "routes/admin/media/uploads.ts"),
     route("media/uploads/:id", "routes/admin/media/upload.ts"),
     route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),

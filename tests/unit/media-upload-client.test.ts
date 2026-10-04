@@ -56,6 +56,36 @@ describe("uploadFile, the media library's browser upload", () => {
     expect(calls).toEqual([]);
   });
 
+  it("refuses a video master over 15 minutes before sending it, when the browser can read its length", async () => {
+    const { calls, fetcher } = server();
+    const video = new File(
+      [Uint8Array.from([0, 0, 0, 0x20, ...new TextEncoder().encode("ftypisom"), 0, 0, 0, 0])],
+      "talk.mp4",
+      {
+        type: "video/mp4",
+      },
+    );
+
+    const tooLong = await uploadFile(video, {
+      fetch: fetcher,
+      storage: memoryStorage(),
+      readDuration: async () => 16 * 60 * 1000,
+    });
+    expect(tooLong).toEqual({
+      ok: false,
+      error: "This video is 16:00 long. The limit is 15 minutes: trim it, or upload the part you need, and try again.",
+    });
+    expect(calls).toEqual([]);
+
+    // A length the browser can't read is left to the server, which reads it before accepting the file.
+    const unknown = await uploadFile(video, {
+      fetch: fetcher,
+      storage: memoryStorage(),
+      readDuration: async () => null,
+    });
+    expect(unknown.ok).toBe(true);
+  });
+
   it("starts, sends every part, completes, and forgets the upload", async () => {
     const { calls, fetcher } = server();
     const storage = memoryStorage();

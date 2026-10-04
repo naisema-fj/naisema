@@ -29,7 +29,13 @@
     // Where the public site answers, so a withdrawal can purge its cached pages (app/lib/public-cache.server.ts).
     "PUBLIC_ORIGINS": "http://localhost:5173,http://localhost:4173",
     "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
-    "EMAIL_OUTBOX": "true"
+    "EMAIL_OUTBOX": "true",
+    // Which environment this is, recorded on every Video Asset, as one Stream account serves them all.
+    "ENVIRONMENT": "development",
+    // Videos are "processed" by a local stand-in that plays the master itself (app/lib/video-provider.server.ts).
+    "VIDEO_PROVIDER": "local",
+    "CLOUDFLARE_ACCOUNT_ID": "79d195146bfff668d5b0e8aa5a6ed28b",
+    "VIDEO_MASTERS_BUCKET": "naisema-dev-video-masters"
   },
   "d1_databases": [
     {
@@ -71,7 +77,9 @@
     { "binding": "MEDIA", "bucket_name": "naisema-dev-media" },
     { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" },
     // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
-    { "binding": "QUARANTINE", "bucket_name": "naisema-dev-quarantine" }
+    { "binding": "QUARANTINE", "bucket_name": "naisema-dev-quarantine" },
+    // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+    { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-dev-video-masters" }
   ],
   "env": {
     "staging": {
@@ -90,7 +98,12 @@
         "PUBLIC_ORIGINS": "https://staging.naisema.com",
         "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>",
         // Staging never adds anyone to the real newsletter list.
-        "NEWSLETTER_OUTBOX": "true"
+        "NEWSLETTER_OUTBOX": "true",
+        "ENVIRONMENT": "staging",
+        // Cloudflare Stream, once its secrets are set (docs/handover/runbook.md, video).
+        "VIDEO_PROVIDER": "stream",
+        "CLOUDFLARE_ACCOUNT_ID": "79d195146bfff668d5b0e8aa5a6ed28b",
+        "VIDEO_MASTERS_BUCKET": "naisema-staging-video-masters"
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": { "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] },
@@ -129,7 +142,9 @@
         { "binding": "MEDIA", "bucket_name": "naisema-staging-media" },
         { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" },
         // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
-        { "binding": "QUARANTINE", "bucket_name": "naisema-staging-quarantine" }
+        { "binding": "QUARANTINE", "bucket_name": "naisema-staging-quarantine" },
+        // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-staging-video-masters" }
       ]
     },
     "production": {
@@ -138,7 +153,12 @@
         "ALLOW_INDEXING": "true",
         "ADMIN_HOSTNAME": "admin.naisema.com",
         "PUBLIC_ORIGINS": "https://naisema.com",
-        "EMAIL_FROM": "Na iSema <no-reply@naisema.com>"
+        "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
+        "ENVIRONMENT": "production",
+        // Cloudflare Stream, once its secrets are set (docs/handover/runbook.md, video).
+        "VIDEO_PROVIDER": "stream",
+        "CLOUDFLARE_ACCOUNT_ID": "79d195146bfff668d5b0e8aa5a6ed28b",
+        "VIDEO_MASTERS_BUCKET": "naisema-production-video-masters"
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": {
@@ -179,7 +199,9 @@
         { "binding": "MEDIA", "bucket_name": "naisema-production-media" },
         { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" },
         // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
-        { "binding": "QUARANTINE", "bucket_name": "naisema-production-quarantine" }
+        { "binding": "QUARANTINE", "bucket_name": "naisema-production-quarantine" },
+        // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-production-video-masters" }
       ]
     }
   }

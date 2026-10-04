@@ -9,7 +9,12 @@ import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import { mediaRightsFacts } from "~/lib/rights.server";
 import { isPublishable, rightsPagePath } from "~/lib/rights-rules";
 import { formatBytes, type MediaStatus, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
+import { videoStates } from "~/lib/video-assets.server";
+import { VIDEO_STATE_NAMES } from "~/lib/video-rules";
 import type { Route } from "./+types/index";
+
+// The uploader reads a chosen video's length before sending it, from a `blob:` address.
+export const handle = { video: true };
 
 export function meta() {
   return [{ title: "Media library · Na iSema staff" }];
@@ -29,7 +34,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { db, actor } = await requireUploader(env, request);
   // Ready files open on the public site, where they are delivered once their rights allow it.
   const publicOrigin = primaryPublicOrigin(env);
-  const assets = await listMedia(db);
+  const [assets, videos] = await Promise.all([listMedia(db), videoStates(db)]);
   const readyIds = assets.filter((asset) => asset.status === "ready").map((asset) => asset.id);
   const rights = await mediaRightsFacts(db, readyIds);
   const recordsOf = new Map(readyIds.map((id, index) => [id, rights[index].records]));
@@ -41,6 +46,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       const ready = asset.status === "ready";
       const records = recordsOf.get(asset.id) ?? [];
       const publishable = ready && isPublishable(records, now);
+      const videoState = videos.get(asset.id);
       return {
         id: asset.id,
         name: asset.name,
@@ -48,6 +54,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         size: formatBytes(asset.size),
         status: STATUS_NAMES[asset.status] ?? asset.status,
         reason: asset.statusReason,
+        // A video master's processing, and its page with a preview once it's ready.
+        video: videoState ? { state: VIDEO_STATE_NAMES[videoState], href: `/admin/media/${asset.id}/video` } : null,
         isImage,
         // Alt text describes an image people can see, so only a ready image takes it.
         takesAltText: isImage && ready,
@@ -125,6 +133,14 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
                   <td>
                     {asset.status}
                     {asset.reason && <span className="reason">{asset.reason}</span>}
+                    {asset.video && (
+                      <span className="video-state">
+                        <a href={asset.video.href}>
+                          {`Video: ${asset.video.state}`}
+                          <span className="visually-hidden"> ({asset.name})</span>
+                        </a>
+                      </span>
+                    )}
                   </td>
                   <td>
                     {asset.takesAltText ? (

@@ -30,4 +30,17 @@ test("an Educator uploads to the media library: refused files never start, other
   await expect(row).toContainText("PNG image");
   await expect(row).toContainText("Being scanned for viruses");
   await expectNoAxeViolations(page);
+
+  // A video master Stream couldn't process: staff see why, and try again.
+  const video = `e2e-vale-${testInfo.project.name.split("-")[0]}.mp4`;
+  await page.getByRole("link", { name: `Video: Processing failed (${video})` }).click();
+  await expect(page.getByRole("heading", { name: video })).toBeVisible();
+  await expect(page.getByRole("status").first()).toContainText("The file was not recognized as a video.");
+  await expect(page.getByText("720 × 1280 (Vertical)")).toBeVisible();
+  await expectNoAxeViolations(page);
+  // Here the local stand-in processes it at once; the preview plays through a short-lived link.
+  await page.getByRole("button", { name: "Try processing again" }).click();
+  await expect(page.getByRole("status").first()).toContainText("Ready to play");
+  await expect(page.getByLabel(`Preview of ${video}`)).toHaveAttribute("src", /\/video\/master\?token=/);
+  await expectNoAxeViolations(page);
 });

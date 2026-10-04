@@ -15,7 +15,7 @@ _Avoid_: Cultural item, post, page (for content other than a Page)
 A Content Item a visitor downloads (a scanned PDF or audio file) or follows (an external link with a last-checked date), shown with its language, age guidance, accessibility and usage terms first.
 
 **Episode**:
-A Na iSema Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes follow the video pipeline.
+A Na iSema Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes, using a ready Video Asset, come with the learner player.
 _Avoid_: Podcast (until distribution to podcast apps is approved), show
 
 **Usage Terms**:
@@ -47,6 +47,10 @@ _Avoid_: Quiz, exercise
 **Completion Rule**:
 The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
 _Avoid_: Finished, mastered, passed
+
+**Video Asset**:
+A video source master kept as Na iSema's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
+_Avoid_: Stream video (for the master), clip
 
 **Excerpt**:
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.

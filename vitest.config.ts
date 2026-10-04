@@ -20,6 +20,8 @@ export default defineConfig({
           PUBLIC_ORIGINS: "https://naisema.test",
           // Cloudflare's always-passing Turnstile test secret (app/lib/turnstile.ts).
           TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
+          // Signs the Stream webhook deliveries tests send (app/routes/public/stream-webhook.ts).
+          STREAM_WEBHOOK_SECRET: "test-stream-webhook-secret",
         },
       },
     })),

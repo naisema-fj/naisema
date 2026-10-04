@@ -10,6 +10,7 @@ import {
   type UploadPurpose,
   type UploadType,
 } from "./upload-rules";
+import { isVideoMaster, MASTERS_PREFIX } from "./video-assets.server";
 
 /**
  * Uploads (docs/phase-1a-defaults.md §1, ADR-0010). A file is checked against the allowlist, and
@@ -28,7 +29,9 @@ const expectedPartSize = (size: number, partNumber: number) =>
   partNumber < partCount(size) ? PART_SIZE : size - PART_SIZE * (partCount(size) - 1);
 
 const quarantineKey = (id: string) => `uploads/${id}`;
-const destinationKey = (purpose: UploadPurpose, id: string) => `${purpose}/${id}`;
+/** Where a clean file is copied: a video master into VIDEO_MASTERS (MASTERS_PREFIX), the rest by purpose. */
+const destinationKey = (purpose: UploadPurpose, id: string, type: UploadType) =>
+  isVideoMaster({ purpose, type }) ? `${MASTERS_PREFIX}${id}` : `${purpose}/${id}`;
 
 export type UploadResult<T> = { ok: true; value: T } | { ok: false; status: number; error: string };
 
@@ -75,7 +78,7 @@ export async function startUpload(
       status: "uploading",
       quarantineKey: quarantineKey(id),
       multipartUploadId: upload.uploadId,
-      destinationKey: destinationKey(purpose, id),
+      destinationKey: destinationKey(purpose, id, declared.type),
       uploadedBy,
       createdAt: now,
       updatedAt: now,
@@ -239,13 +242,13 @@ export async function quarantineFile(
     size: file.bytes.byteLength,
     status: "uploading",
     quarantineKey: quarantineKey(id),
-    destinationKey: destinationKey(purpose, id),
+    destinationKey: destinationKey(purpose, id, file.type),
     uploadedBy,
     createdAt: now,
     updatedAt: now,
   });
   await queueScan(env, db, id, uploadedBy);
-  return { id, destinationKey: destinationKey(purpose, id) };
+  return { id, destinationKey: destinationKey(purpose, id, file.type) };
 }
 
 /** Marks an asset as waiting for its scan and sends the scan request. */

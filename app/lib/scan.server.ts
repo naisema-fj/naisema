@@ -3,14 +3,20 @@ import { mediaAsset } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import { type Database, getDb } from "./db.server";
 import { abortMultipart, type MediaAsset, type ScanMessage } from "./media.server";
+import { readVideoFacts, type VideoFacts } from "./mp4-facts";
 import { DAY_MS } from "./rights-rules";
 import { checkContent, HEAD_BYTES } from "./upload-rules";
+import { bucketReader, failVideo, isVideoMaster, MASTERS_PREFIX, startVideo } from "./video-assets.server";
+import { ProviderError, type VideoProvider, videoProvider } from "./video-provider.server";
+import { lengthProblem } from "./video-rules";
 
 /**
  * The scan step (ADR-0010). A queued upload is read from quarantine, its type checked again,
  * and its bytes sent to ClamAV. Only a clean file is copied to its destination bucket; an
- * infected or unscannable file stays in quarantine with its reason. Every step is safe to repeat,
- * because a queue message can be delivered more than once.
+ * infected or unscannable file stays in quarantine with its reason. A video master's length is
+ * read first, and one over 15 minutes is refused before it is scanned; a clean master goes to
+ * VIDEO_MASTERS and is sent for processing (app/lib/video-assets.server.ts). Every step is safe to
+ * repeat, because a queue message can be delivered more than once.
  */
 
 export type ScanVerdict = { verdict: "clean" } | { verdict: "infected"; signature: string };
@@ -54,6 +60,9 @@ export const MAX_SCAN_ATTEMPTS = 5;
 const SCAN_FAILED =
   "The virus scan could not finish. Upload the file again; if it keeps failing, tell the technical owner.";
 
+const VIDEO_SEND_FAILED =
+  "The video couldn't be sent for processing. Try again; if it keeps failing, tell the technical owner.";
+
 type Outcome = "skipped" | "clean" | "infected" | "failed";
 
 /**
@@ -85,15 +94,35 @@ async function settle(
   });
 }
 
-/** Only the media library is in MEDIA; evidence and contributors' material stay private, in EVIDENCE. */
-const destinationOf = (env: Env, asset: MediaAsset) => (asset.purpose === "media" ? env.MEDIA : env.EVIDENCE);
+/**
+ * Video masters are kept in VIDEO_MASTERS (ones scanned before it existed stay in MEDIA, under
+ * their old key); the rest of the media library is in MEDIA; evidence and contributors' material
+ * stay private, in EVIDENCE.
+ */
+const destinationOf = (env: Env, asset: MediaAsset) =>
+  asset.destinationKey.startsWith(MASTERS_PREFIX)
+    ? env.VIDEO_MASTERS
+    : asset.purpose === "media"
+      ? env.MEDIA
+      : env.EVIDENCE;
+
+/** Whether a ready upload is a master the video pipeline takes. */
+const takesVideo = (asset: MediaAsset) => isVideoMaster(asset) && asset.destinationKey.startsWith(MASTERS_PREFIX);
 
 /** Scans one queued upload and acts on the verdict. */
-export async function scanUpload(env: Env, db: Database, assetId: string, scanner: Scanner): Promise<Outcome> {
+export async function scanUpload(
+  env: Env,
+  db: Database,
+  assetId: string,
+  scanner: Scanner,
+  provider: VideoProvider = videoProvider(env),
+): Promise<Outcome> {
   const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, assetId)).get();
   if (!asset) return "skipped";
   if (asset.status === "ready") {
-    // A repeat after a run that copied the file but stopped before clearing quarantine.
+    // A repeat after a run that copied the file but stopped before sending a video master for
+    // processing or clearing quarantine.
+    if (takesVideo(asset)) await startVideo(env, db, asset, provider);
     await env.QUARANTINE.delete(asset.quarantineKey);
     return "skipped";
   }
@@ -109,6 +138,16 @@ export async function scanUpload(env: Env, db: Database, assetId: string, scanne
     await settle(env, db, asset, "failed", content.error);
     return "failed";
   }
+  let facts: VideoFacts | undefined;
+  if (takesVideo(asset)) {
+    const read = await readVideoFacts(bucketReader(env.QUARANTINE, asset.quarantineKey, asset.size), asset.size);
+    const problem = read.ok ? lengthProblem(read.facts.durationMs) : read.error;
+    if (problem || !read.ok) {
+      await settle(env, db, asset, "failed", problem);
+      return "failed";
+    }
+    facts = read.facts;
+  }
 
   const file = await env.QUARANTINE.get(asset.quarantineKey);
   if (!file) throw new Error("The quarantined file disappeared during the scan.");
@@ -123,6 +162,7 @@ export async function scanUpload(env: Env, db: Database, assetId: string, scanne
   if (!clean || !("body" in clean)) throw new Error("The quarantined file changed after its scan.");
   await destinationOf(env, asset).put(asset.destinationKey, clean.body, { httpMetadata: { contentType: asset.type } });
   await settle(env, db, asset, "ready", null);
+  if (takesVideo(asset)) await startVideo(env, db, { ...asset, status: "ready" }, provider, facts);
   await env.QUARANTINE.delete(asset.quarantineKey);
   return "clean";
 }
@@ -131,17 +171,26 @@ export async function scanUpload(env: Env, db: Database, assetId: string, scanne
  * The queue consumer. A scanner that can't answer (still starting, say) means a retry with a
  * growing delay; after MAX_SCAN_ATTEMPTS deliveries the upload is marked failed for staff to see.
  */
-export async function handleScanBatch(batch: MessageBatch<ScanMessage>, env: Env, scanner: Scanner) {
+export async function handleScanBatch(
+  batch: MessageBatch<ScanMessage>,
+  env: Env,
+  scanner: Scanner,
+  provider: VideoProvider = videoProvider(env),
+) {
   const db = getDb(env.DB);
   for (const message of batch.messages) {
     try {
-      await scanUpload(env, db, message.body.assetId, scanner);
+      await scanUpload(env, db, message.body.assetId, scanner, provider);
       message.ack();
     } catch (error) {
       console.error("Upload scan failed", message.body.assetId, message.attempts, error);
       if (message.attempts >= MAX_SCAN_ATTEMPTS) {
         const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, message.body.assetId)).get();
         if (asset) await settle(env, db, asset, "failed", SCAN_FAILED);
+        // A clean master the provider never took: staff see why and can try again.
+        if (asset?.status === "ready") {
+          await failVideo(db, asset.id, error instanceof ProviderError ? error.message : VIDEO_SEND_FAILED);
+        }
         message.ack();
       } else {
         message.retry({ delaySeconds: Math.min(60 * message.attempts, 600) });

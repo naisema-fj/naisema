@@ -19,7 +19,7 @@ import {
  * which strips their metadata (location included) and neutralises malformed image payloads; PDFs
  * are downloads that never open in the site's origin. A Resource's file (PDF or audio) is downloaded
  * through its Resource, and an Episode's audio is streamed through its Episode, each checking
- * eligibility first. Video is delivered by its own player later (#16).
+ * eligibility first. Video is delivered by its provider (app/lib/video-provider.server.ts).
  *
  * A file is delivered only while it has a current Rights Record of its own granting Publish (#17),
  * so withdrawing or letting that lapse stops it, within the 5-minute edge-cache limit at most.
@@ -119,11 +119,21 @@ export async function fileDownload(
 
 /**
  * Audio for a native `<audio>` player, with byte ranges so it starts at once and can seek. The
- * caller has already decided the visitor may hear it. A media library file never changes once
- * scanned, so its ID is its validator: an `If-Range` naming another version gets the whole file.
+ * caller has already decided the visitor may hear it.
  */
-export async function audioResponse(
+export const audioResponse = (
   env: Env,
+  request: Request,
+  asset: { id: string; destinationKey: string; size: number; type: string },
+  cacheControl: string,
+) => rangedResponse(env.MEDIA, request, asset, cacheControl);
+
+/**
+ * A stored file for a native media player, with byte ranges. A media library file never changes
+ * once scanned, so its ID is its validator: an `If-Range` naming another version gets the whole file.
+ */
+export async function rangedResponse(
+  bucket: R2Bucket,
   request: Request,
   asset: { id: string; destinationKey: string; size: number; type: string },
   cacheControl: string,
@@ -144,7 +154,7 @@ export async function audioResponse(
     headers.set("Content-Range", `bytes */${asset.size}`);
     return new Response(null, { status: 416, headers });
   }
-  const file = await env.MEDIA.get(asset.destinationKey, range ? { range } : {});
+  const file = await bucket.get(asset.destinationKey, range ? { range } : {});
   if (!file) return null;
   if (!range) {
     headers.set("Content-Length", String(asset.size));

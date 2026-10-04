@@ -4,6 +4,7 @@ import type { EntryContext, RouterContextProvider } from "react-router";
 import { ServerRouter } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { applySecurityHeaders, createNonce, NonceContext } from "~/lib/security-headers";
+import { videoPlaybackOrigin } from "~/lib/video-provider.server";
 
 export default async function handleRequest(
   request: Request,
@@ -47,16 +48,22 @@ export default async function handleRequest(
     applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
       allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost,
       turnstile: leafHandle(routerContext)?.turnstile === true,
+      video: leafHandle(routerContext)?.video === true ? { origin: videoPlaybackOrigin(env) } : null,
     });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
 }
 
-/** The page's own route `handle`: `hydrate: false` (root.tsx), `turnstile: true` for a public form. */
+/**
+ * The page's own route `handle`: `hydrate: false` (root.tsx), `turnstile: true` for a public form,
+ * `video: true` for a page that plays video or reads a video file's length.
+ */
 function leafHandle(context: EntryContext) {
   const leaf = context.staticHandlerContext.matches.at(-1);
   return leaf
-    ? (context.routeModules[leaf.route.id]?.handle as { hydrate?: boolean; turnstile?: boolean } | undefined)
+    ? (context.routeModules[leaf.route.id]?.handle as
+        | { hydrate?: boolean; turnstile?: boolean; video?: boolean }
+        | undefined)
     : undefined;
 }
 

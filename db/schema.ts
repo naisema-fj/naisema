@@ -23,6 +23,7 @@ import type { CaseKind } from "../app/lib/permissions";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { ConsentPurpose, SubmissionFields, SubmissionStatus, SubmissionType } from "../app/lib/submission-fields";
 import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
+import type { Orientation, VideoState } from "../app/lib/video-rules";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 const updatedAt = () => integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -791,5 +792,45 @@ export const contentHold = sqliteTable(
     index("content_hold_item_idx").on(table.contentItemId),
     // At most one hold in place per item, so lifting it always shows the item again.
     uniqueIndex("content_hold_active_idx").on(table.contentItemId).where(sql`${table.liftedAt} IS NULL`),
+  ],
+);
+
+/**
+ * A Video Asset (ADR-0008): a scanned video master kept in the private VIDEO_MASTERS bucket as
+ * Na iSema's original, and the copy a video provider (Cloudflare Stream) made of it for delivery.
+ * It shares its ID with the media library upload it came from. Its length and picture size are
+ * read from the master itself; the provider's reports only move its state forwards.
+ */
+export const videoAsset = sqliteTable(
+  "video_asset",
+  {
+    id: text("id")
+      .primaryKey()
+      .references(() => mediaAsset.id),
+    ownerId: text("owner_id")
+      .notNull()
+      .references(() => user.id),
+    /** The master's key in VIDEO_MASTERS. */
+    masterKey: text("master_key").notNull(),
+    /** Which provider holds the delivery copy ("stream", or "local" in development and tests). */
+    provider: text("provider").notNull(),
+    /** The provider's ID for its copy, such as a Stream video UID, once one was asked for. */
+    providerId: text("provider_id"),
+    state: text("state").$type<VideoState>().notNull(),
+    /** Why processing failed, for staff to read; never carries addresses or credentials. */
+    stateReason: text("state_reason"),
+    durationMs: integer("duration_ms").notNull(),
+    width: integer("width").notNull(),
+    height: integer("height").notNull(),
+    orientation: text("orientation").$type<Orientation>().notNull(),
+    /** The environment that sent it (development, staging or production), as one Stream account serves them all. */
+    environment: text("environment").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+    readyAt: integer("ready_at", { mode: "timestamp_ms" }),
+  },
+  (table) => [
+    uniqueIndex("video_asset_provider_idx").on(table.provider, table.providerId),
+    index("video_asset_state_idx").on(table.state, table.updatedAt),
   ],
 );
