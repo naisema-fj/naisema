@@ -1,3 +1,4 @@
+import { type Read, readList, reference, text } from "./editor-lists";
 import type { Segment } from "./segment-rules";
 import { rangeText, type Token } from "./tokens";
 
@@ -229,41 +230,6 @@ export function vocabularyList(
     entries.set(annotation.expressionId, entry);
   }
   return [...entries.values()];
-}
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
-const text = (value: unknown, limit: number) => (typeof value === "string" ? value.trim().slice(0, limit) : "");
-const reference = (value: unknown) => (typeof value === "string" && value.length <= 64 ? value : "");
-
-type Read<T> = { ok: true; items: T[] } | { ok: false; error: string };
-
-/** Parses a JSON list the editor sent, reading each entry; refuses one it can't read or a repeated ID. */
-function readList<T extends { id: string }>(
-  json: string,
-  what: string,
-  read: (item: Record<string, unknown>) => T | null,
-): Read<T> {
-  const refused = (where = "") => ({
-    ok: false as const,
-    error: `The ${what} couldn't be read${where}. Reload the editor and try again.`,
-  });
-  let value: unknown;
-  try {
-    value = JSON.parse(json || "[]");
-  } catch {
-    return refused();
-  }
-  if (!Array.isArray(value) || value.length > 2000) return refused();
-  const items: T[] = [];
-  const seen = new Set<string>();
-  for (const [index, entry] of value.entries()) {
-    const item = isRecord(entry) ? read(entry) : null;
-    if (!item || !UUID.test(item.id) || seen.has(item.id)) return refused(` (number ${index + 1})`);
-    seen.add(item.id);
-    items.push(item);
-  }
-  return { ok: true, items };
 }
 
 /** Annotations as the editor sends them (JSON). */

@@ -1,3 +1,4 @@
+import type { Activity } from "./activities";
 import type { Annotation, ContextNote, ExpressionDetails } from "./annotations";
 import type { ReviewType } from "./permissions";
 import { type Excerpt, formatTimecode, parseTimecode, type Segment } from "./segment-rules";
@@ -7,8 +8,8 @@ import { retokenise } from "./tokens";
  * What a Learning Layer Revision holds (ADR-0001, ADR-0006, ADR-0011, docs/phase-1a-defaults.md
  * §2): its title and level, the clip it is built on (the whole video or an Excerpt), its Segments
  * with their tokens, its Annotations and cultural or context notes, and a copy of each Expression
- * its Annotations use, so the Revision says exactly what was reviewed. Activities and the
- * Completion Rule are added to it by later work.
+ * its Annotations use, so the Revision says exactly what was reviewed, and its Activities, whose
+ * required flags are its Completion Rule.
  */
 export type LearningLayerSnapshot = {
   title: string;
@@ -19,11 +20,12 @@ export type LearningLayerSnapshot = {
   notes: ContextNote[];
   /** The Expressions its Annotations use, as they were when it was saved, by ID. */
   expressions: Record<string, ExpressionDetails>;
+  activities: Activity[];
 };
 
 /**
- * A stored snapshot with everything later work added filled in: Revisions saved before tokens
- * and Annotations existed have none.
+ * A stored snapshot with everything later work added filled in: Revisions saved before tokens,
+ * Annotations or Activities existed have none.
  */
 export function withDefaults(
   snapshot: Partial<LearningLayerSnapshot> & Pick<LearningLayerSnapshot, "title" | "level">,
@@ -39,6 +41,7 @@ export function withDefaults(
     annotations: snapshot.annotations ?? [],
     notes: snapshot.notes ?? [],
     expressions: snapshot.expressions ?? {},
+    activities: snapshot.activities ?? [],
   } satisfies LearningLayerSnapshot;
 }
 
@@ -100,10 +103,12 @@ export function readLayerDetails(
 /**
  * The parts of a Learning Layer each Review Type covers, which its fingerprints are taken over
  * (ADR-0003, ADR-0006). Language review covers the Fijian and English, the Variety taught, the
- * Annotations and the Expressions they use; cultural review the words, who speaks, which part of
- * the video is used, the Annotations and the cultural and context notes; accessibility the
- * captions as timed text and the notes; safeguarding the words, notes and what is shown;
- * editorial everything. Token IDs aren't covered: they only anchor Annotations.
+ * Annotations, the Expressions they use and the Activities' answers; cultural review the words,
+ * who speaks, which part of the video is used, the Annotations, the cultural and context notes
+ * and the real-world prompts; accessibility the captions as timed text, the notes and each
+ * Activity's text alternative; safeguarding the words, notes, real-world prompts and what is
+ * shown; editorial everything. Token IDs aren't covered: they only anchor Annotations. Which
+ * Activities are required is editorial only: it changes no words.
  */
 export function learningLayerReviewFields(
   snapshot: LearningLayerSnapshot,
@@ -113,6 +118,14 @@ export function learningLayerReviewFields(
   // Authoring state, not what a reviewer approves: the vocabulary choice and the check flag.
   const annotations = snapshot.annotations.map(({ inVocabulary, needsCheck, ...annotation }) => annotation);
   const { expressions, notes } = snapshot;
+  const activities = snapshot.activities.map(({ required, ...activity }) => activity);
+  const realWorld = activities.filter((activity) => activity.kind === "real-world");
+  const alternatives = snapshot.activities.map(({ id, kind, prompt, textAlternative }) => ({
+    id,
+    kind,
+    prompt,
+    textAlternative,
+  }));
   const spoken = snapshot.segments.map(({ id, fijian, english, speaker }) => ({ id, fijian, english, speaker }));
   const timed = snapshot.segments.map(({ id, startMs, endMs, fijian, english }) => ({
     id,
@@ -122,14 +135,22 @@ export function learningLayerReviewFields(
     english,
   }));
   return {
-    language: { languageVariety, words, annotations, expressions },
-    cultural: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, annotations, expressions, notes },
+    language: { languageVariety, words, annotations, expressions, activities },
+    cultural: {
+      title: snapshot.title,
+      excerpt: snapshot.excerpt,
+      spoken,
+      annotations,
+      expressions,
+      notes,
+      realWorld,
+    },
     editorial: {
       ...snapshot,
       segments: snapshot.segments.map(({ draft, retimed, tokens, ...segment }) => segment),
       annotations,
     },
-    accessibility: { title: snapshot.title, timed, notes },
-    safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, notes },
+    accessibility: { title: snapshot.title, timed, notes, alternatives },
+    safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, notes, realWorld },
   };
 }

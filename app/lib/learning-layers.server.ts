@@ -10,6 +10,7 @@ import {
   videoAsset,
   videoEducator,
 } from "~db/schema";
+import { type ActivityProblem, activityProblems, readActivities } from "./activities";
 import {
   type AnnotationProblem,
   annotationProblems,
@@ -233,6 +234,7 @@ export async function createLearningLayer(
     annotations: [],
     notes: [],
     expressions: {},
+    activities: [],
   };
   const id = crypto.randomUUID();
   const revisionId = crypto.randomUUID();
@@ -323,11 +325,13 @@ export type SaveLayerResult =
       problems?: SegmentProblem[];
       annotationProblems?: AnnotationProblem[];
       noteProblems?: NoteProblem[];
+      activityProblems?: ActivityProblem[];
     };
 
 /**
- * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: its details and Segments,
- * which must pass validation against its clip. Refused if a newer Revision exists.
+ * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: its details, Segments,
+ * Annotations, notes and Activities, which must pass validation against its clip. Refused if a
+ * newer Revision exists.
  */
 export async function saveLearningLayer(
   db: Database,
@@ -339,6 +343,7 @@ export async function saveLearningLayer(
     annotations: string;
     notes: string;
     newExpressions: string;
+    activities: string;
   },
 ): Promise<SaveLayerResult> {
   if (
@@ -369,6 +374,8 @@ export async function saveLearningLayer(
   if (!notes.ok) return { ok: false, error: notes.error };
   const defined = readNewExpressions(input.newExpressions);
   if (!defined.ok) return { ok: false, error: defined.error };
+  const activities = readActivities(input.activities);
+  if (!activities.ok) return { ok: false, error: activities.error };
 
   // New Expressions an Annotation uses join the library (or match one there saying exactly the
   // same); every Annotation then links to a library Expression, of which the Revision keeps a copy.
@@ -403,7 +410,8 @@ export async function saveLearningLayer(
     [...new Set(linked.map((annotation) => annotation.expressionId))],
     library.added,
   );
-  // Annotations and notes whose words or Segment are gone are kept, flagged; anything else wrong is refused.
+  // Annotations, notes and Activities whose words or Segment are gone are kept, flagged; anything
+  // else wrong is refused.
   const annotationIssues = annotationProblems(linked, segments.segments, new Set(Object.keys(expressions))).filter(
     (problem) => !problem.revalidate,
   );
@@ -416,6 +424,14 @@ export async function saveLearningLayer(
       noteProblems: noteIssues,
     };
   }
+  const activityIssues = activityProblems(activities.items, segments.segments).filter((problem) => !problem.revalidate);
+  if (activityIssues.length) {
+    return {
+      ok: false,
+      error: `${activityIssues.length === 1 ? "One thing in the Activities needs" : `${activityIssues.length} things in the Activities need`} fixing before this can be saved.`,
+      activityProblems: activityIssues,
+    };
+  }
 
   const snapshot: LearningLayerSnapshot = {
     ...details.details,
@@ -423,6 +439,7 @@ export async function saveLearningLayer(
     annotations: linked,
     notes: notes.items,
     expressions,
+    activities: activities.items,
   };
   const number = layer.currentRevision.number + 1;
   const id = crypto.randomUUID();
@@ -454,6 +471,7 @@ export async function saveLearningLayer(
           number,
           segments: snapshot.segments.length,
           annotations: snapshot.annotations.length,
+          activities: snapshot.activities.length,
         },
       }),
     ]);

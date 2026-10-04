@@ -499,3 +499,50 @@ a {
   padding-left: 1rem;
   font-size: 0.9rem;
 }
+
+/* Activities and their learner preview (app/components/activities-editor.tsx). */
+.activity-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.activity {
+  border-top: 1px solid #d6d3cc;
+  padding: 0.75rem 0;
+}
+
+.activity h3,
+.completion-rule h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.activity textarea,
+.activity input:not([type="checkbox"], [type="radio"]) {
+  max-width: 100%;
+}
+
+.activity-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: end;
+  margin-bottom: 0.5rem;
+}
+
+.activity-preview {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #d6d3cc;
+  border-radius: 0.25rem;
+  background: #fff;
+}
+
+.activity-alternative {
+  border-left: 4px solid #1d3557;
+  padding-left: 0.75rem;
+}
+
+.activity-feedback {
+  margin-top: 0.5rem;
+}

@@ -264,7 +264,7 @@ Until these are set, a video fails with "Video processing isn't set up in this e
 
 ## Learning Layers
 
-Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in `app/lib/learning-layers.server.ts`, `segment-rules.ts`, `webvtt.ts` and `components/timeline-editor.tsx`.
+Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in `app/lib/learning-layers.server.ts`, `segment-rules.ts`, `webvtt.ts`, `activities.ts`, `components/timeline-editor.tsx` and `components/activities-editor.tsx`.
 
 1. **A Video:** an editor adds a Video under Content and chooses a Video Asset that has finished processing (see Video). It can't be published until the learner player exists.
 2. **Educators:** on the Video's edit page, **Learning Layers and Educators** opens `/admin/videos/<id>/learning-layers`, where editors assign Educators.
@@ -275,6 +275,7 @@ Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in 
 6. **Annotations:** under a Segment, select a word, or a first and last word, then **Annotate**. Link the selection to an Expression from the library or define a new one: the word or phrase, its general meaning, an optional grammar note and pronunciation guide, and for an idiom its literal meaning. Then say what it means at that moment, and whether it goes on the vocabulary list. Editing the Fijian keeps Annotations on their words. When a word an Annotation needs is gone, the Annotation is listed under **Annotations and notes to check**; select the words again and press **Move to the selected words**, or remove it. When an edit repeats an annotated word, the Annotation is listed too: check it's on the right copy and press **It's on the right word**, or move it. Each part of a hyphenated compound is its own word, so select the first and last part to annotate the whole compound.
 7. **Notes:** add cultural or context notes to a Segment or to the whole Learning Layer, each with who the knowledge comes from.
 8. **Vocabulary list:** shown under the Segments, built from the Annotations marked for it, with when each occurs.
+9. **Activities:** under **Activities**, choose a kind and **Add an Activity**. Choose which Segment it practises, or the whole clip, and write its prompt, its choices (tick the correct ones) or model response, its feedback and a text alternative for learners who can't use the audio or speak. Listen and repeat also takes pronunciation guidance; **Start from the Expressions' pronunciation** fills it from the Segment's Annotations. Tick **Required for completion** on the Activities a learner must do. Learners complete the Learning Layer once they have tried each required one and seen its feedback; watching never completes it, and real-world prompts are never required. **Preview as a learner** shows an Activity as learners will see it, with its text version. Problems are listed under **Activities to check**.
 
 The Expression library is at `/admin/expressions`, linked from **Learning Layers**. Editors can change any Expression there; an Educator can change one they added until a Learning Layer they aren't assigned to uses it. Learning Layers pick a change up when they are next saved, and their editor shows it first.
 
