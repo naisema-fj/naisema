@@ -49,6 +49,23 @@ test("an Educator builds Segments in the timeline editor: checked as they type, 
   await expect(first.getByLabel("English translation")).toHaveValue("Hello, good to see you.");
   await expect(first.getByText("Unreviewed draft")).toBeVisible();
 
+  // Annotate "Bula vinaka" with a new Expression, and add a cultural note with who it comes from.
+  await first.getByRole("button", { name: "Bula", exact: true }).click();
+  await first.getByRole("button", { name: "vinaka", exact: true }).click();
+  await first.getByRole("button", { name: "Annotate “Bula vinaka”" }).click();
+  // The library may already hold it from another run, which the form would choose; define one here.
+  await first.getByLabel("Expression", { exact: true }).selectOption({ label: "A new Expression…" });
+  await first.getByLabel("General meaning").fill(`hello; good health (${project})`);
+  await first.getByLabel("What it means here").fill("A warm hello to a friend");
+  await first.getByRole("button", { name: "Add the Annotation" }).click();
+  await expect(first.getByRole("list", { name: "Annotations in Segment 1" })).toContainText("A warm hello to a friend");
+  await first.getByRole("button", { name: /Add a cultural or context note/ }).click();
+  await first.getByLabel("Note", { exact: true }).fill("Said with a smile and a nod.");
+  await first.getByLabel("From (who the knowledge comes from)").fill("Mere Vula");
+  const vocabulary = page.getByRole("region", { name: "Vocabulary list" });
+  await expect(vocabulary).toContainText("bula vinaka");
+  await expect(vocabulary).toContainText("“Bula vinaka” at 0:00.000");
+
   // The preview shows the captions in either layout.
   await page.getByLabel("Landscape").check();
   await expect(page.locator(".layout-frame")).toHaveClass(/layout-landscape/);
@@ -58,5 +75,10 @@ test("an Educator builds Segments in the timeline editor: checked as they type, 
   await page.getByRole("button", { name: "Save a new revision" }).click();
   await expect(page.getByRole("status").filter({ hasText: "Saved as revision 2." })).toBeVisible();
   await expect(page.getByRole("listitem", { name: "Segment 2" }).getByLabel("Fijian")).toHaveValue("Ni sa yadra.");
+  await expect(page.getByRole("list", { name: "Annotations in Segment 1" })).toContainText("bula vinaka");
   await expectNoAxeViolations(page);
+
+  // The new Expression is in the library for every Learning Layer to reuse.
+  await page.goto(`${page.url().split("/admin/")[0]}/admin/expressions?q=bula`);
+  await expect(page.getByRole("link", { name: "bula vinaka" }).first()).toBeVisible();
 });

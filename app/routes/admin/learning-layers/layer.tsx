@@ -1,6 +1,8 @@
 import { data, Form, redirect } from "react-router";
 import { TimelineEditor } from "~/components/timeline-editor";
+import type { AnnotationProblem, NoteProblem } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { listExpressions } from "~/lib/expressions.server";
 import type { LayerDetailField } from "~/lib/learning-layer-fields";
 import {
   educatorChoices,
@@ -71,6 +73,14 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     previewError,
     saved: saved === String(layer.currentRevision.number),
     isEditor,
+    library: (await listExpressions(db, layer.languageVariety)).map((row) => ({
+      id: row.id,
+      headword: row.headword,
+      generalMeaning: row.generalMeaning,
+      grammarNote: row.grammarNote,
+      pronunciation: row.pronunciation,
+      literalMeaning: row.literalMeaning,
+    })),
     educators: layer.assignedEducators,
     choices: isEditor
       ? (await educatorChoices(db)).filter((choice) => !layer.assignedEducatorIds.includes(choice.id))
@@ -82,6 +92,8 @@ type ActionData = {
   error: string;
   errors?: Partial<Record<LayerDetailField, string>>;
   problems?: SegmentProblem[];
+  annotationProblems?: AnnotationProblem[];
+  noteProblems?: NoteProblem[];
 };
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -109,6 +121,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     sourceStart: field("sourceStart"),
     sourceEnd: field("sourceEnd"),
     segments: field("segments"),
+    annotations: field("annotations"),
+    notes: field("notes"),
+    newExpressions: field("newExpressions"),
   });
   if (!saved.ok) return data<ActionData>(saved, { status: 400 });
   return redirect(`/admin/learning-layers/${layer.id}?saved=${saved.number}`);
@@ -135,6 +150,7 @@ export default function LearningLayerEditor({ loaderData, actionData }: Route.Co
         orientation={loaderData.orientation}
         preview={loaderData.preview}
         previewError={loaderData.previewError}
+        library={loaderData.library}
         refused={actionData ?? null}
       />
       <section aria-labelledby="educators-heading">

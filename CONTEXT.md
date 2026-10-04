@@ -35,6 +35,10 @@ _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 A timed span of a Learning Layer's clip holding the Fijian text, English translation and optional speaker for that span.
 _Avoid_: Cue, caption line (for the record)
 
+**Token**:
+One word of a Segment's Fijian text, with an ID that stays the same when the text around it is edited, so Annotations stay anchored to it.
+_Avoid_: Character offset (as an anchor)
+
 **Expression**:
 A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save.
 _Avoid_: Vocab item, word (when a phrase or idiom is meant)
@@ -42,6 +46,13 @@ _Avoid_: Vocab item, word (when a phrase or idiom is meant)
 **Annotation**:
 A link from a range of tokens in one Segment to an Expression, carrying the contextual meaning at that moment.
 _Avoid_: Tooltip, gloss
+
+**Context Note**:
+A cultural or context note on a whole Learning Layer or one Segment, always with who the knowledge comes from.
+_Avoid_: Caption, tooltip
+
+**Vocabulary List**:
+The Expressions an Educator chose from a Learning Layer's Annotations, each with the moments it occurs.
 
 **Activity**:
 A practice or comprehension task in a Learning Layer, with reviewed answers or a model response, feedback and an accessible alternative.

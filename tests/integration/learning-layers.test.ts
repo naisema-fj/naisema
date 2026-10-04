@@ -171,6 +171,9 @@ describe("adding Learning Layers", () => {
       level: "beginner",
       excerpt: { sourceStartMs: 10_000, sourceEndMs: 40_000 },
       segments: [],
+      annotations: [],
+      notes: [],
+      expressions: {},
     });
     expect((await assigned.browser.fetch(`/admin/learning-layers/${added.id}`)).status).toBe(200);
 
@@ -337,5 +340,236 @@ describe("authoring a Learning Layer", () => {
       "<v Mere>Hello",
     );
     expect((await educator.browser.fetch(`/admin/learning-layers/${layerId}/webvtt/klingon`)).status).toBe(404);
+  });
+});
+
+describe("Annotations, Expressions and notes", () => {
+  type Saved = {
+    segments: { id: string; fijian: string; tokens: { id: string; text: string }[] }[];
+    annotations: { id: string; expressionId: string; startTokenId: string; endTokenId: string }[];
+    notes: { id: string; attribution: string }[];
+    expressions: Record<string, { headword: string; generalMeaning: string }>;
+  };
+  const snapshotOf = async (layerId: string) => JSON.parse((await layer(layerId))?.snapshot ?? "{}") as Saved;
+
+  /** A Learning Layer with one Segment, "Ni sa bula vinaka", saved so its words have token IDs. */
+  async function layerWithWords() {
+    const editor = await staff("editor", { role: "editor" });
+    const educator = await staff("educator", { role: "educator" });
+    const { id: videoId } = await video(editor, 30);
+    await assignToVideo(editor, videoId, educator);
+    const { id } = await addLayer(educator, videoId);
+    const layerId = id as string;
+    const segmentId = crypto.randomUUID();
+    await save(educator, layerId, [
+      segment({ id: segmentId, startMs: 1_000, endMs: 3_000, fijian: "Ni sa bula vinaka" }),
+    ]);
+    const saved = await snapshotOf(layerId);
+    return { editor, educator, videoId, layerId, segment: saved.segments[0] };
+  }
+
+  const annotationOn = (segmentId: string, startTokenId: string, endTokenId: string, expressionId: string) => ({
+    id: crypto.randomUUID(),
+    segmentId,
+    startTokenId,
+    endTokenId,
+    expressionId,
+    contextualMeaning: "Hello (said to one person)",
+    grammarNote: "",
+    inVocabulary: true,
+  });
+
+  const newExpression = (id: string, fields: Record<string, unknown> = {}) => ({
+    id,
+    headword: "ni sa bula",
+    generalMeaning: "hello",
+    grammarNote: "A greeting.",
+    pronunciation: "nee sah mbula",
+    idiom: false,
+    literalMeaning: "",
+    ...fields,
+  });
+
+  it("adds a new Expression to the library and keeps a copy of it with the Annotation", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const temporary = crypto.randomUUID();
+    const tokens = words.tokens;
+
+    const saved = await save(
+      educator,
+      layerId,
+      [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }],
+      {
+        annotations: JSON.stringify([annotationOn(words.id, tokens[0].id, tokens[2].id, temporary)]),
+        newExpressions: JSON.stringify([newExpression(temporary)]),
+      },
+    );
+
+    expect(saved.status, await saved.clone().text()).toBe(302);
+    const snapshot = await snapshotOf(layerId);
+    expect(snapshot.annotations).toHaveLength(1);
+    const expressionId = snapshot.annotations[0].expressionId;
+    expect(snapshot.expressions[expressionId]).toMatchObject({ headword: "ni sa bula", generalMeaning: "hello" });
+    const row = await env.DB.prepare("SELECT headword, created_by AS createdBy FROM expression WHERE id = ?1")
+      .bind(expressionId)
+      .first<{ headword: string; createdBy: string }>();
+    expect(row).toEqual({ headword: "ni sa bula", createdBy: educator.userId });
+  });
+
+  it("reuses an Expression already in the library instead of adding the same one again", async () => {
+    const first = await layerWithWords();
+    const second = await layerWithWords();
+    const headword = `bula-${crypto.randomUUID().slice(0, 8)}`;
+    for (const { educator, layerId, segment: words } of [first, second]) {
+      const temporary = crypto.randomUUID();
+      const response = await save(
+        educator,
+        layerId,
+        [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }],
+        {
+          annotations: JSON.stringify([annotationOn(words.id, words.tokens[2].id, words.tokens[2].id, temporary)]),
+          newExpressions: JSON.stringify([newExpression(temporary, { headword, generalMeaning: "life" })]),
+        },
+      );
+      expect(response.status).toBe(302);
+    }
+    const rows = await env.DB.prepare("SELECT id FROM expression WHERE headword = ?1")
+      .bind(headword)
+      .all<{ id: string }>();
+    expect(rows.results).toHaveLength(1);
+    expect((await snapshotOf(second.layerId)).annotations[0].expressionId).toBe(rows.results[0].id);
+  });
+
+  it("keeps an Annotation anchored when words are added, and flags it, unmoved, when its words go", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const temporary = crypto.randomUUID();
+    const bula = words.tokens[2];
+    await save(educator, layerId, [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }], {
+      annotations: JSON.stringify([annotationOn(words.id, bula.id, bula.id, temporary)]),
+      newExpressions: JSON.stringify([newExpression(temporary, { headword: "bula", generalMeaning: "life" })]),
+    });
+    const annotated = await snapshotOf(layerId);
+
+    // The editor sends its old tokens with the new text; the server re-tokenises against them.
+    const longer = {
+      ...annotated.segments[0],
+      fijian: "Ni sa bula vakalevu vinaka",
+      startMs: 1_000,
+      endMs: 3_000,
+      english: "",
+      speaker: "",
+    };
+    expect(
+      (await save(educator, layerId, [longer], { annotations: JSON.stringify(annotated.annotations) })).status,
+    ).toBe(302);
+    const after = await snapshotOf(layerId);
+    expect(after.segments[0].tokens.map((token) => token.text)).toEqual(["Ni", "sa", "bula", "vakalevu", "vinaka"]);
+    expect(after.segments[0].tokens[2].id).toBe(bula.id);
+    expect(after.annotations[0].startTokenId).toBe(bula.id);
+
+    const without = {
+      ...after.segments[0],
+      fijian: "Ni sa vinaka",
+      startMs: 1_000,
+      endMs: 3_000,
+      english: "",
+      speaker: "",
+    };
+    expect((await save(educator, layerId, [without], { annotations: JSON.stringify(after.annotations) })).status).toBe(
+      302,
+    );
+    const gone = await snapshotOf(layerId);
+    expect(gone.segments[0].tokens.some((token) => token.id === bula.id)).toBe(false);
+    // Kept as it was, pointing at the word that's gone, for the Educator to revalidate.
+    expect(gone.annotations).toEqual(after.annotations);
+  });
+
+  it("refuses an Annotation without its meaning, and a note without who it comes from", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const temporary = crypto.randomUUID();
+    const plain = [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }];
+
+    const noMeaning = await save(educator, layerId, plain, {
+      annotations: JSON.stringify([
+        { ...annotationOn(words.id, words.tokens[0].id, words.tokens[0].id, temporary), contextualMeaning: "" },
+      ]),
+      newExpressions: JSON.stringify([newExpression(temporary)]),
+    });
+    expect(noMeaning.status).toBe(400);
+    expect(await noMeaning.text()).toContain("Say what the words mean here.");
+
+    const note = {
+      id: crypto.randomUUID(),
+      segmentId: words.id,
+      kind: "cultural",
+      text: "Said on arrival.",
+      attribution: "",
+    };
+    const unattributed = await save(educator, layerId, plain, { notes: JSON.stringify([note]) });
+    expect(unattributed.status).toBe(400);
+    expect(await unattributed.text()).toContain("Say who the note comes from.");
+
+    const attributed = await save(educator, layerId, plain, {
+      notes: JSON.stringify([{ ...note, attribution: "Ratu Joni" }]),
+    });
+    expect(attributed.status).toBe(302);
+    expect((await snapshotOf(layerId)).notes).toEqual([{ ...note, attribution: "Ratu Joni" }]);
+  });
+
+  it("refuses an idiom explained only by its literal words", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const temporary = crypto.randomUUID();
+
+    const refused = await save(
+      educator,
+      layerId,
+      [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }],
+      {
+        annotations: JSON.stringify([annotationOn(words.id, words.tokens[0].id, words.tokens[1].id, temporary)]),
+        newExpressions: JSON.stringify([newExpression(temporary, { idiom: true, literalMeaning: "hello" })]),
+      },
+    );
+
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("Explain what the idiom means beyond its literal translation.");
+  });
+
+  it("lets editors and whoever added an Expression change it in the library", async () => {
+    const { editor, educator, layerId, segment: words } = await layerWithWords();
+    const temporary = crypto.randomUUID();
+    await save(educator, layerId, [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }], {
+      annotations: JSON.stringify([annotationOn(words.id, words.tokens[3].id, words.tokens[3].id, temporary)]),
+      newExpressions: JSON.stringify([
+        newExpression(temporary, {
+          headword: `vinaka-${crypto.randomUUID().slice(0, 6)}`,
+          generalMeaning: "good; thank you",
+        }),
+      ]),
+    });
+    const expressionId = (await snapshotOf(layerId)).annotations[0].expressionId;
+    const other = await staff("other-educator", { role: "educator" });
+    const form = {
+      headword: "vinaka",
+      generalMeaning: "good; thank you",
+      grammarNote: "",
+      pronunciation: "vee-nah-kah",
+      literalMeaning: "",
+    };
+
+    expect((await other.browser.fetch(`/admin/expressions/${expressionId}`, { form })).status).toBe(403);
+    expect((await educator.browser.fetch(`/admin/expressions/${expressionId}`, { form })).status).toBe(302);
+    expect(
+      (await editor.browser.fetch(`/admin/expressions/${expressionId}`, { form: { ...form, pronunciation: "vinaka" } }))
+        .status,
+    ).toBe(302);
+    const row = await env.DB.prepare("SELECT pronunciation FROM expression WHERE id = ?1")
+      .bind(expressionId)
+      .first<{ pronunciation: string }>();
+    expect(row?.pronunciation).toBe("vinaka");
+    // The Learning Layer keeps its copy until it is next saved.
+    expect((await snapshotOf(layerId)).expressions[expressionId]).toMatchObject({ pronunciation: "nee sah mbula" });
+    expect(await (await other.browser.fetch("/admin/expressions?q=good")).text()).toContain(
+      `/admin/expressions/${expressionId}`,
+    );
   });
 });

@@ -1,6 +1,16 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Form } from "react-router";
 import {
+  type Annotation,
+  type AnnotationProblem,
+  annotationProblems,
+  type ContextNote,
+  type ExpressionDetails,
+  type NoteProblem,
+  noteProblems,
+  vocabularyList,
+} from "~/lib/annotations";
+import {
   LAYER_LEVELS,
   LAYER_LIMITS,
   type LayerDetailField,
@@ -18,7 +28,9 @@ import {
   type SegmentProblem,
   segmentProblems,
 } from "~/lib/segment-rules";
+import { retokenise } from "~/lib/tokens";
 import { importWebVtt, parseWebVtt, type SegmentLanguage } from "~/lib/webvtt";
+import { type ExpressionChoice, NotesEditor, SegmentAnnotations } from "./segment-annotations";
 import { VideoPreview } from "./video-preview";
 
 /**
@@ -38,11 +50,15 @@ type Props = {
   orientation: "landscape" | "portrait" | "square";
   preview: { src: string; hls: boolean } | null;
   previewError: string | null;
+  /** The Expression library for the Learning Layer's Language Variety, as it is now. */
+  library: ExpressionChoice[];
   /** What the server refused, when a save was sent back. */
   refused: {
     error: string;
     errors?: Partial<Record<LayerDetailField, string>>;
     problems?: SegmentProblem[];
+    annotationProblems?: AnnotationProblem[];
+    noteProblems?: NoteProblem[];
   } | null;
 };
 
@@ -56,6 +72,7 @@ const newSegment = (startMs: number, clipMs: number): Segment => ({
   overlapIntended: false,
   draft: false,
   retimed: false,
+  tokens: [],
 });
 
 const excerptFields = (excerpt: Excerpt) => ({
@@ -72,8 +89,12 @@ export function TimelineEditor({
   orientation,
   preview,
   previewError,
+  library,
   refused,
 }: Props) {
+  const [annotations, setAnnotations] = useState<Annotation[]>(snapshot.annotations);
+  const [notes, setNotes] = useState<ContextNote[]>(snapshot.notes);
+  const [newExpressions, setNewExpressions] = useState<ExpressionChoice[]>([]);
   const [title, setTitle] = useState(snapshot.title);
   const [level, setLevel] = useState<string>(snapshot.level);
   const [clipForm, setClipForm] = useState(excerptFields(snapshot.excerpt));
@@ -135,6 +156,8 @@ export function TimelineEditor({
               ...change,
               // Editing a retimed Segment's times is checking them.
               retimed: "startMs" in change || "endMs" in change ? false : segment.retimed,
+              // Words that are still there keep their token IDs, and so their Annotations.
+              tokens: change.fijian === undefined ? segment.tokens : retokenise(segment.tokens, change.fijian),
             }
           : segment,
       ),
@@ -211,6 +234,43 @@ export function TimelineEditor({
     (clipForm.clip === "excerpt" &&
       (parseTimecode(clipForm.sourceStart) !== excerpt?.sourceStartMs ||
         parseTimecode(clipForm.sourceEnd) !== excerpt?.sourceEndMs));
+  // Expressions to choose from: the library as it is now, Expressions this Revision copied that
+  // aren't in it, and new ones defined since opening the editor.
+  const choices = useMemo(() => {
+    const byId = new Map<string, ExpressionChoice>();
+    for (const [id, details] of Object.entries(snapshot.expressions)) byId.set(id, { id, ...details });
+    for (const choice of [...library, ...newExpressions]) byId.set(choice.id, choice);
+    return [...byId.values()].sort((a, b) => a.headword.localeCompare(b.headword));
+  }, [snapshot.expressions, library, newExpressions]);
+  const expressionMap = useMemo(
+    () => Object.fromEntries(choices.map(({ id, ...details }) => [id, details])) as Record<string, ExpressionDetails>,
+    [choices],
+  );
+  const annotationIssues = useMemo(
+    () => annotationProblems(annotations, segments, new Set(Object.keys(expressionMap))),
+    [annotations, segments, expressionMap],
+  );
+  const noteIssues = useMemo(() => noteProblems(notes, segments), [notes, segments]);
+  const annotationProblemMap = new Map(annotationIssues.map((problem) => [problem.annotationId, problem.message]));
+  const noteProblemMap = new Map(noteIssues.map((problem) => [problem.noteId, problem.message]));
+  const segmentIds = new Set(segments.map((segment) => segment.id));
+  const orphanAnnotations = annotations.filter((annotation) => !segmentIds.has(annotation.segmentId));
+  const vocabulary = useMemo(
+    () => vocabularyList(segments, annotations, expressionMap),
+    [segments, annotations, expressionMap],
+  );
+  const usedNew = newExpressions.filter((expression) =>
+    annotations.some((annotation) => annotation.expressionId === expression.id),
+  );
+  const saveAnnotation = (annotation: Annotation, newExpression: ExpressionChoice | null) => {
+    if (newExpression) setNewExpressions((current) => [...current, newExpression]);
+    setAnnotations((current) =>
+      current.some((item) => item.id === annotation.id)
+        ? current.map((item) => (item.id === annotation.id ? annotation : item))
+        : [...current, annotation],
+    );
+  };
+  const removeAnnotation = (id: string) => setAnnotations((current) => current.filter((item) => item.id !== id));
   const playing = segments.filter((segment) => segment.startMs <= playheadMs && playheadMs < segment.endMs);
   const detailError = (field: LayerDetailField) => refused?.errors?.[field];
 
@@ -223,6 +283,23 @@ export function TimelineEditor({
         <div role="alert" className="form-errors">
           <p>{refused.error}</p>
         </div>
+      )}
+      {(annotationIssues.length > 0 || noteIssues.length > 0) && (
+        <section aria-labelledby="annotation-problems-heading" className="segment-problems">
+          <h2 id="annotation-problems-heading">Annotations and notes to check</h2>
+          <ul>
+            {annotationIssues.map((problem) => (
+              <li key={problem.annotationId}>
+                <a href={`#annotation-${problem.annotationId}`}>{problem.message}</a>
+              </li>
+            ))}
+            {noteIssues.map((problem) => (
+              <li key={problem.noteId}>
+                <a href={`#note-${problem.noteId}`}>{problem.message}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {shown.length > 0 && (
         <section aria-labelledby="problems-heading" className="segment-problems">
@@ -286,6 +363,18 @@ export function TimelineEditor({
           ) : (
             <p role="alert">{previewError ?? "The video can't be previewed yet."}</p>
           )}
+          {playing.some((segment) => annotations.some((annotation) => annotation.segmentId === segment.id)) && (
+            <ul className="caption-glossary" aria-label="Words annotated in the Segment playing">
+              {annotations
+                .filter((annotation) => playing.some((segment) => segment.id === annotation.segmentId))
+                .map((annotation) => (
+                  <li key={annotation.id}>
+                    <span lang="fj">{expressionMap[annotation.expressionId]?.headword}</span>:{" "}
+                    {annotation.contextualMeaning}
+                  </li>
+                ))}
+            </ul>
+          )}
           <p className="playhead">
             Playhead <output>{formatTimecode(playheadMs)}</output> of {formatTimecode(clipMs)}
             {outsideClip && " (the video is outside the Excerpt)"}
@@ -308,6 +397,20 @@ export function TimelineEditor({
           <input type="hidden" name="intent" value="save" />
           <input type="hidden" name="baseRevisionId" value={baseRevisionId} />
           <input type="hidden" name="segments" value={JSON.stringify(segments)} />
+          <input type="hidden" name="annotations" value={JSON.stringify(annotations)} />
+          <input type="hidden" name="notes" value={JSON.stringify(notes)} />
+          <input
+            type="hidden"
+            name="newExpressions"
+            value={JSON.stringify(
+              usedNew.map(({ id, literalMeaning, ...details }) => ({
+                id,
+                ...details,
+                idiom: literalMeaning !== null,
+                literalMeaning: literalMeaning ?? "",
+              })),
+            )}
+          />
           <input type="hidden" name="clip" value={excerpt ? "excerpt" : "whole"} />
           <input type="hidden" name="sourceStart" value={excerpt ? formatTimecode(excerpt.sourceStartMs) : ""} />
           <input type="hidden" name="sourceEnd" value={excerpt ? formatTimecode(excerpt.sourceEndMs) : ""} />
@@ -454,6 +557,22 @@ export function TimelineEditor({
                     />{" "}
                     Overlaps the Segment before on purpose
                   </label>
+                  <SegmentAnnotations
+                    segment={segment}
+                    label={label}
+                    annotations={annotations.filter((annotation) => annotation.segmentId === segment.id)}
+                    problems={annotationProblemMap}
+                    choices={choices}
+                    onSave={saveAnnotation}
+                    onRemove={removeAnnotation}
+                  />
+                  <NotesEditor
+                    segmentId={segment.id}
+                    label={label}
+                    notes={notes}
+                    problems={noteProblemMap}
+                    onChange={setNotes}
+                  />
                   <div className="segment-actions">
                     {segment.draft && (
                       <button type="button" onClick={() => update(index, { draft: false })}>
@@ -491,6 +610,61 @@ export function TimelineEditor({
               Put Segments in time order
             </button>
           </div>
+
+          {orphanAnnotations.length > 0 && (
+            <section aria-labelledby="orphans-heading" className="segment-problems">
+              <h2 id="orphans-heading">Annotations whose Segment was removed</h2>
+              <ul>
+                {orphanAnnotations.map((annotation) => (
+                  <li key={annotation.id} id={`annotation-${annotation.id}`}>
+                    {expressionMap[annotation.expressionId]?.headword ?? "An Annotation"}:{" "}
+                    {annotation.contextualMeaning}{" "}
+                    <button type="button" onClick={() => removeAnnotation(annotation.id)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section aria-labelledby="layer-notes-heading">
+            <h2 id="layer-notes-heading">Notes on the whole Learning Layer</h2>
+            <p className="hint">
+              Cultural or context notes about the whole clip, each with who the knowledge comes from.
+            </p>
+            <NotesEditor
+              segmentId={null}
+              label="the whole Learning Layer"
+              notes={notes}
+              problems={noteProblemMap}
+              onChange={setNotes}
+              include={(note) => note.segmentId === null || !segmentIds.has(note.segmentId)}
+            />
+          </section>
+
+          <section aria-labelledby="vocabulary-heading">
+            <h2 id="vocabulary-heading">Vocabulary list</h2>
+            {vocabulary.length ? (
+              <dl className="vocabulary-list">
+                {vocabulary.map((entry) => (
+                  <div key={entry.expressionId}>
+                    <dt lang="fj">{entry.headword}</dt>
+                    <dd>
+                      {entry.generalMeaning}
+                      <span className="meta">
+                        {entry.occurrences
+                          .map((occurrence) => `“${occurrence.text}” at ${formatTimecode(occurrence.startMs)}`)
+                          .join(" · ")}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p>Annotations added to the vocabulary list appear here, with when they occur.</p>
+            )}
+          </section>
 
           <fieldset className="webvtt-tools">
             <legend>WebVTT</legend>

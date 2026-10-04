@@ -18,6 +18,7 @@ const segment = (fields: Partial<Segment> & Pick<Segment, "startMs" | "endMs">):
   overlapIntended: false,
   draft: false,
   retimed: false,
+  tokens: [],
   ...fields,
 });
 
@@ -172,6 +173,7 @@ describe("reading Segments sent by the editor", () => {
       overlapIntended: false,
       draft: false,
       retimed: false,
+      tokens: [{ id: expect.any(String), text: "Bula" }],
     });
     expect(result.segments[1].id).toMatch(/^[0-9a-f-]{36}$/);
     expect(result.segments[1].draft).toBe(true);
@@ -182,6 +184,21 @@ describe("reading Segments sent by the editor", () => {
       JSON.stringify([{ startMs: 0, endMs: 1, fijian: " Bula.\n\n\nVinaka. ", english: "" }]),
     );
     expect(result.ok && result.segments[0].fijian).toBe("Bula.\nVinaka.");
+  });
+
+  it("keeps the token IDs sent when they match the text, and re-tokenises against the old ones when not", () => {
+    const tokens = [
+      { id: "a", text: "Bula" },
+      { id: "b", text: "vinaka" },
+    ];
+    const id = crypto.randomUUID();
+    const sent = readSegments(JSON.stringify([{ id, startMs: 0, endMs: 1, fijian: "Bula vinaka", tokens }]));
+    expect(sent.ok && sent.segments[0].tokens).toEqual(tokens);
+    const edited = readSegments(
+      JSON.stringify([{ id, startMs: 0, endMs: 1, fijian: "Bula vinaka vakalevu", tokens }]),
+      new Map([[id, tokens]]),
+    );
+    expect(edited.ok && edited.segments[0].tokens.map((token) => token.id).slice(0, 2)).toEqual(["a", "b"]);
   });
 
   it("refuses repeated IDs and anything that isn't a list of Segments", () => {

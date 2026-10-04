@@ -450,3 +450,52 @@ a {
 .playhead output {
   font-variant-numeric: tabular-nums;
 }
+
+/* Annotating a Segment (app/components/segment-annotations.tsx). */
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.token {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #d6d3cc;
+  border-radius: 0.25rem;
+  background: #fff;
+  font: inherit;
+}
+
+.token.annotated {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.token[aria-pressed="true"] {
+  border-color: #1d3557;
+  background: #1d3557;
+  color: #fff;
+}
+
+.annotation-list {
+  padding-left: 1rem;
+}
+
+.annotation-form,
+.note {
+  margin: 0.5rem 0;
+}
+
+.vocabulary-list dt {
+  font-weight: 600;
+}
+
+.vocabulary-list dd {
+  margin: 0 0 0.5rem;
+}
+
+.caption-glossary {
+  margin: 0 0 0.5rem;
+  padding-left: 1rem;
+  font-size: 0.9rem;
+}
