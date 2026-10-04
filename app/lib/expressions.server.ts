@@ -1,6 +1,6 @@
-import { and, asc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, like, notInArray, or, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
-import { expression } from "~db/schema";
+import { expression, learningLayer, learningLayerEducator, learningLayerRevision } from "~db/schema";
 import type { ExpressionDetails, NewExpression } from "./annotations";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
@@ -161,13 +161,42 @@ export async function expressionCopies(
   return copies;
 }
 
+/**
+ * Whether a Learning Layer the person isn't assigned to uses an Expression in its current draft:
+ * then only an editor may change it, so one Educator's change never reaches another's work unseen.
+ */
+async function usedByOthers(db: Database, actorId: string, expressionId: string) {
+  const row = await db
+    .select({ id: learningLayer.id })
+    .from(learningLayer)
+    .innerJoin(learningLayerRevision, eq(learningLayerRevision.id, learningLayer.currentDraftRevisionId))
+    .where(
+      and(
+        sql`instr(${learningLayerRevision.snapshot}, ${expressionId}) > 0`,
+        notInArray(
+          learningLayer.id,
+          db
+            .select({ id: learningLayerEducator.learningLayerId })
+            .from(learningLayerEducator)
+            .where(eq(learningLayerEducator.userId, actorId)),
+        ),
+      ),
+    )
+    .get();
+  return Boolean(row);
+}
+
 /** Whether someone may change an Expression in the library (`expression.edit`). */
-export const canEditExpression = (actor: Actor, row: LibraryExpression) =>
-  can(actor, { action: "expression.edit", expression: { createdBy: row.createdBy } });
+export async function canEditExpression(db: Database, actor: Actor, row: LibraryExpression) {
+  return can(actor, {
+    action: "expression.edit",
+    expression: { createdBy: row.createdBy, usedByOthers: await usedByOthers(db, actor.userId, row.id) },
+  });
+}
 
 /** Changes an Expression in the library; a refused attempt is audited. */
 export async function updateExpression(db: Database, actor: Actor, row: LibraryExpression, details: ExpressionDetails) {
-  if (!canEditExpression(actor, row)) {
+  if (!(await canEditExpression(db, actor, row))) {
     await recordAudit(db, {
       actorId: actor.userId,
       action: "expression.refused",

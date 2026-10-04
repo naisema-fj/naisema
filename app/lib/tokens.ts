@@ -3,13 +3,15 @@
  * with an ID that survives edits. Re-tokenising after an edit matches the new words against the
  * old ones with a longest-common-subsequence diff, so words that are still there keep their IDs
  * and Annotations stay anchored to them; new or respelt words get new IDs. Spaces and punctuation
- * aren't tokens. Shared by the editor in the browser and the server.
+ * aren't tokens, and a hyphenated compound ("vale-ni-vuli") is one token per part, so a part can
+ * be annotated on its own and the whole compound as a run of tokens. Shared by the editor in the
+ * browser and the server.
  */
 
 export type Token = { id: string; text: string };
 
-/** A word: letters (with their accents and macrons) and digits, joined by apostrophes or hyphens. */
-const WORD = /[\p{L}\p{M}\p{N}]+(?:['’-][\p{L}\p{M}\p{N}]+)*/gu;
+/** A word: letters (with their accents and macrons) and digits, joined by apostrophes. */
+const WORD = /[\p{L}\p{M}\p{N}]+(?:['’][\p{L}\p{M}\p{N}]+)*/gu;
 
 /** Each word in a text with where it starts and ends, for showing tokens in place. */
 export function tokenSpans(text: string) {
@@ -21,6 +23,15 @@ export function tokenSpans(text: string) {
 }
 
 export const tokenTexts = (text: string) => tokenSpans(text).map((span) => span.text);
+
+/**
+ * The text of the words from the `start`th to the `end`th, as written between them (spaces,
+ * hyphens, apostrophes), for showing what an Annotation covers.
+ */
+export function rangeText(text: string, start: number, end: number) {
+  const spans = tokenSpans(text);
+  return spans[start] && spans[end] ? text.slice(spans[start].start, spans[end].end) : "";
+}
 
 /** How two words are compared: the same word whatever its capitals or Unicode form. */
 const key = (word: string) => word.normalize("NFC").toLowerCase();

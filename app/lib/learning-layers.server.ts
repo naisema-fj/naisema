@@ -13,6 +13,7 @@ import {
 import {
   type AnnotationProblem,
   annotationProblems,
+  annotationsToCheck,
   type NoteProblem,
   noteProblems,
   readAnnotations,
@@ -379,9 +380,22 @@ export async function saveLearningLayer(
     defined.items.filter((item) => used.has(item.id)),
   );
   if (!library.ok) return { ok: false, error: library.error };
+  // Where the server had to work out a Segment's tokens itself, it flags Annotations whose words now
+  // appear a different number of times, as the editor does.
+  const toCheck = new Set(
+    [...segments.retokenised].flatMap((segmentId) =>
+      annotationsToCheck(
+        annotations.items,
+        segmentId,
+        base.segments.find((segment) => segment.id === segmentId)?.tokens ?? [],
+        segments.segments.find((segment) => segment.id === segmentId)?.tokens ?? [],
+      ),
+    ),
+  );
   const linked = annotations.items.map((annotation) => ({
     ...annotation,
     expressionId: library.ids.get(annotation.expressionId) ?? annotation.expressionId,
+    needsCheck: annotation.needsCheck || toCheck.has(annotation.id),
   }));
   const expressions = await expressionCopies(
     db,

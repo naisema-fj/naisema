@@ -110,7 +110,8 @@ export function learningLayerReviewFields(
   languageVariety: string,
 ): Record<ReviewType, unknown> {
   const words = snapshot.segments.map(({ id, fijian, english }) => ({ id, fijian, english }));
-  const annotations = snapshot.annotations.map(({ inVocabulary, ...annotation }) => annotation);
+  // Authoring state, not what a reviewer approves: the vocabulary choice and the check flag.
+  const annotations = snapshot.annotations.map(({ inVocabulary, needsCheck, ...annotation }) => annotation);
   const { expressions, notes } = snapshot;
   const spoken = snapshot.segments.map(({ id, fijian, english, speaker }) => ({ id, fijian, english, speaker }));
   const timed = snapshot.segments.map(({ id, startMs, endMs, fijian, english }) => ({

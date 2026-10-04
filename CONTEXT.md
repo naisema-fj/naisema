@@ -36,7 +36,7 @@ A timed span of a Learning Layer's clip holding the Fijian text, English transla
 _Avoid_: Cue, caption line (for the record)
 
 **Token**:
-One word of a Segment's Fijian text, with an ID that stays the same when the text around it is edited, so Annotations stay anchored to it.
+One word of a Segment's Fijian text (each part of a hyphenated compound is its own token), with an ID that stays the same when the text around it is edited, so Annotations stay anchored to it.
 _Avoid_: Character offset (as an anchor)
 
 **Expression**:

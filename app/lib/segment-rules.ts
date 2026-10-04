@@ -136,7 +136,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
  * A Segment's tokens: those sent, when they are exactly its words; otherwise its words re-tokenised
  * against the tokens it had (or those sent), so unchanged words keep their IDs.
  */
-function readTokens(value: unknown, fijian: string, previous: Token[]): Token[] {
+function readTokens(value: unknown, fijian: string, previous: Token[], onRetokenise: () => void): Token[] {
   const sent = Array.isArray(value)
     ? value.flatMap((token) =>
         isRecord(token) && typeof token.id === "string" && typeof token.text === "string" && token.id.length <= 64
@@ -145,13 +145,21 @@ function readTokens(value: unknown, fijian: string, previous: Token[]): Token[] 
       )
     : [];
   if (sent.length && sameTokens(sent, fijian)) return sent;
+  onRetokenise();
   return retokenise(previous.length ? previous : sent, fijian);
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null;
 const text = (value: unknown) => (typeof value === "string" ? value : "");
 
-export type ReadSegments = { ok: true; segments: Segment[] } | { ok: false; error: string };
+export type ReadSegments =
+  | {
+      ok: true;
+      segments: Segment[];
+      /** Segments whose tokens the server worked out because those sent didn't match the text. */
+      retokenised: Set<string>;
+    }
+  | { ok: false; error: string };
 
 /**
  * Segments as the timeline editor sends them (JSON). IDs it sends are kept, so a Segment stays the
@@ -171,6 +179,7 @@ export function readSegments(json: string, previousTokens: Map<string, Token[]> 
   }
   const seen = new Set<string>();
   const segments: Segment[] = [];
+  const retokenised = new Set<string>();
   for (const [index, item] of value.entries()) {
     if (!isRecord(item) || !Number.isInteger(item.startMs) || !Number.isInteger(item.endMs)) {
       return { ok: false, error: `Segment ${index + 1} has no usable times.` };
@@ -188,8 +197,10 @@ export function readSegments(json: string, previousTokens: Map<string, Token[]> 
       overlapIntended: item.overlapIntended === true,
       draft: item.draft === true,
       retimed: item.retimed === true,
-      tokens: readTokens(item.tokens, closeUp(text(item.fijian)), previousTokens.get(id) ?? []),
+      tokens: readTokens(item.tokens, closeUp(text(item.fijian)), previousTokens.get(id) ?? [], () =>
+        retokenised.add(id),
+      ),
     });
   }
-  return { ok: true, segments };
+  return { ok: true, segments, retokenised };
 }

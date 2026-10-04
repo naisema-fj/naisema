@@ -75,8 +75,11 @@ export type Check =
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
   /** Approving or rejecting a Revision for one Review Type. */
   | { action: "revision.review"; revision: RevisionUnderReview }
-  /** Changing an Expression in the library: editors, and the Educator who added it. */
-  | { action: "expression.edit"; expression: { createdBy: string } }
+  /**
+   * Changing an Expression in the library: editors, and the Educator who added it while no
+   * Learning Layer they aren't assigned to uses it.
+   */
+  | { action: "expression.edit"; expression: { createdBy: string; usedByOthers: boolean } }
   /** Adding a Learning Layer to a Video: editors, and the Educators assigned to that Video. */
   | { action: "learningLayer.create"; video: { assignedEducatorIds: string[] } }
   /** Opening and editing a Learning Layer: editors, and the Educators assigned to it (VAC-05). */
@@ -157,7 +160,10 @@ export function can(actor: Actor | null, check: Check): boolean {
     }
 
     case "expression.edit":
-      return hasRole("editor") || (hasRole("educator") && check.expression.createdBy === actor.userId);
+      return (
+        hasRole("editor") ||
+        (hasRole("educator") && check.expression.createdBy === actor.userId && !check.expression.usedByOthers)
+      );
 
     case "learningLayer.create":
       return hasRole("editor") || (hasRole("educator") && check.video.assignedEducatorIds.includes(actor.userId));

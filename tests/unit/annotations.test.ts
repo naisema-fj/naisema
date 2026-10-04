@@ -3,6 +3,7 @@ import {
   type Annotation,
   annotatedText,
   annotationProblems,
+  annotationsToCheck,
   type ContextNote,
   noteProblems,
   readExpressionDetails,
@@ -32,6 +33,7 @@ const annotation = (fields: Partial<Annotation>): Annotation => ({
   contextualMeaning: "Hello (to one person)",
   grammarNote: "",
   inVocabulary: true,
+  needsCheck: false,
   ...fields,
 });
 
@@ -52,6 +54,57 @@ describe("what an Annotation covers", () => {
   it("is the words from its start token to its end token, in one Segment", () => {
     expect(annotatedText(segments, annotation({ startTokenId: "a", endTokenId: "c" }))).toBe("Ni sa bula");
     expect(annotatedText(segments, annotation({ startTokenId: "x", endTokenId: "c" }))).toBeNull();
+  });
+});
+
+describe("hyphenated compounds", () => {
+  it("can be annotated whole, or by one part, and read as written", () => {
+    const compound = segment("s3", 8_000, [
+      ["g", "Au"],
+      ["h", "lako"],
+      ["i", "ki"],
+      ["j", "na"],
+      ["k", "vale"],
+      ["l", "ni"],
+      ["m", "vuli"],
+    ]);
+    compound.fijian = "Au lako ki na vale-ni-vuli.";
+    expect(annotatedText([compound], annotation({ segmentId: "s3", startTokenId: "k", endTokenId: "m" }))).toBe(
+      "vale-ni-vuli",
+    );
+    expect(annotatedText([compound], annotation({ segmentId: "s3", startTokenId: "m", endTokenId: "m" }))).toBe("vuli");
+  });
+});
+
+describe("Annotations on a word an edit repeats", () => {
+  const before = [
+    { id: "n", text: "ni" },
+    { id: "k", text: "koro" },
+  ];
+  const after = [
+    { id: "new", text: "ni" },
+    { id: "n", text: "ni" },
+    { id: "k", text: "koro" },
+  ];
+
+  it("are flagged to check when their word now appears a different number of times", () => {
+    const onNi = annotation({ segmentId: "s1", startTokenId: "n", endTokenId: "n" });
+    const onKoro = annotation({ segmentId: "s1", startTokenId: "k", endTokenId: "k" });
+    const elsewhere = annotation({ segmentId: "s2", startTokenId: "n", endTokenId: "n" });
+    expect(annotationsToCheck([onNi, onKoro, elsewhere], "s1", before, after)).toEqual([onNi.id]);
+    expect(annotationsToCheck([onNi], "s1", before, before)).toEqual([]);
+  });
+
+  it("are listed to check until the Educator confirms them", () => {
+    const flagged = annotation({ needsCheck: true });
+    expect(annotationProblems([flagged], segments, new Set(["e1"]))).toEqual([
+      {
+        annotationId: flagged.id,
+        message:
+          "One of its words now appears more than once in the Segment. Check it's on the right one, then confirm it.",
+        revalidate: true,
+      },
+    ]);
   });
 });
 

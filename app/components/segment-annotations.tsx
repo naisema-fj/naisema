@@ -7,8 +7,10 @@ import {
   NOTE_KINDS,
   type NoteKind,
   readExpressionDetails,
+  tokenRange,
 } from "~/lib/annotations";
 import type { Segment } from "~/lib/segment-rules";
+import { rangeText } from "~/lib/tokens";
 import { ExpressionFields } from "./expression-fields";
 
 /**
@@ -61,12 +63,8 @@ export function SegmentAnnotations({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState("");
   const tokens = segment.tokens;
-  const selectedText = selection
-    ? tokens
-        .slice(selection.start, selection.end + 1)
-        .map((token) => token.text)
-        .join(" ")
-    : "";
+  // Shown as written, so a part of a hyphenated compound reads "ni-vuli", not "ni vuli".
+  const selectedText = selection ? rangeText(segment.fijian, selection.start, selection.end) : "";
   const annotatedIds = new Set(
     annotations.flatMap((annotation) => {
       const start = tokens.findIndex((token) => token.id === annotation.startTokenId);
@@ -134,6 +132,7 @@ export function SegmentAnnotations({
         contextualMeaning: draft.contextualMeaning.trim(),
         grammarNote: draft.grammarNote.trim(),
         inVocabulary: draft.inVocabulary,
+        needsCheck: existing?.needsCheck ?? false,
       },
       newExpression,
     );
@@ -142,14 +141,8 @@ export function SegmentAnnotations({
   };
 
   const textOf = (annotation: Annotation) => {
-    const start = tokens.findIndex((token) => token.id === annotation.startTokenId);
-    const end = tokens.findIndex((token) => token.id === annotation.endTokenId);
-    return start >= 0 && end >= start
-      ? tokens
-          .slice(start, end + 1)
-          .map((token) => token.text)
-          .join(" ")
-      : null;
+    const { start, end } = tokenRange(segment, annotation);
+    return start >= 0 && end >= start ? rangeText(segment.fijian, start, end) : null;
   };
 
   return (
@@ -283,6 +276,7 @@ export function SegmentAnnotations({
                           ...annotation,
                           startTokenId: tokens[selection.start].id,
                           endTokenId: tokens[selection.end].id,
+                          needsCheck: false,
                         },
                         null,
                       );
@@ -291,6 +285,11 @@ export function SegmentAnnotations({
                   >
                     Move to the selected words
                   </button>
+                  {annotation.needsCheck && (
+                    <button type="button" onClick={() => onSave({ ...annotation, needsCheck: false }, null)}>
+                      It's on the right word<span className="visually-hidden"> ({words})</span>
+                    </button>
+                  )}
                   <button type="button" onClick={() => onRemove(annotation.id)}>
                     Remove<span className="visually-hidden"> the Annotation of {words ?? "missing words"}</span>
                   </button>
