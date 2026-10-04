@@ -3,10 +3,17 @@ import { mediaAsset, user, videoAsset } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import type { MediaAsset } from "./media.server";
-import { type RangeReader, readVideoFacts, type VideoFacts } from "./mp4-facts";
-import { kindOf } from "./upload-rules";
+import { readVideoFacts, type VideoFacts } from "./mp4-facts";
 import { ProviderError, type VideoProvider } from "./video-provider.server";
-import { canMoveVideo, orientationOf, type ProviderUpdate, type VideoState } from "./video-rules";
+import {
+  canMoveVideo,
+  formatVideoLength,
+  lengthProblem,
+  orientationOf,
+  type ProviderUpdate,
+  type VideoProviderName,
+  type VideoState,
+} from "./video-rules";
 
 /**
  * Video Assets (ADR-0008). A video master that passes its scan is kept in the private
@@ -21,19 +28,14 @@ export type VideoAsset = typeof videoAsset.$inferSelect;
 /** Where video masters are kept in VIDEO_MASTERS; the scan copies a clean master there. */
 export const MASTERS_PREFIX = "masters/";
 
-/** Whether an upload is a video master for the pipeline: a video in the media library. */
-export const isVideoMaster = (asset: Pick<MediaAsset, "purpose" | "type">) =>
-  asset.purpose === "media" && kindOf(asset.type) === "video";
-
-/** Ranged reads from an R2 object, for reading a master's length (mp4-facts.ts). */
-export const bucketReader =
-  (bucket: R2Bucket, key: string, size: number): RangeReader =>
-  async (offset, length) => {
+/** A stored master's length and picture size, read from its movie header with ranged reads (mp4-facts.ts). */
+export const masterFacts = (bucket: R2Bucket, key: string, size: number) =>
+  readVideoFacts(async (offset, length) => {
     const available = Math.min(length, size - offset);
     if (available <= 0) return new Uint8Array();
     const object = await bucket.get(key, { range: { offset, length: available } });
     return object ? new Uint8Array(await object.arrayBuffer()) : new Uint8Array();
-  };
+  }, size);
 
 /** A provider's failure as the reason staff read, or the error again if trying later could help. */
 function failureReason(error: unknown) {
@@ -80,12 +82,25 @@ export const failVideo = (db: Database, id: string, reason: string, actorId: str
   );
 
 /**
+ * A provider's "ready" turned into a failure when the provider measured the video at over 15
+ * minutes, which a master whose movie header understates its length could otherwise slip past.
+ */
+function measuredLength(update: ProviderUpdate): ProviderUpdate {
+  if (update.state !== "ready" || update.durationMs === null || !lengthProblem(update.durationMs)) return update;
+  return {
+    ...update,
+    state: "failed",
+    reason: `Stream measured this video at ${formatVideoLength(update.durationMs)}. The limit is 15 minutes: trim it, or upload the part you need, and try again.`,
+  };
+}
+
+/**
  * Applies a provider's report about one of its videos. Unknown videos (another environment's, as
  * one Stream account serves them all) and moves backwards are ignored.
  */
 export async function applyProviderUpdate(
   db: Database,
-  provider: string,
+  provider: VideoProviderName,
   providerId: string,
   update: ProviderUpdate,
   actorId: string | null = null,
@@ -96,16 +111,17 @@ export async function applyProviderUpdate(
     .where(and(eq(videoAsset.provider, provider), eq(videoAsset.providerId, providerId)))
     .get();
   if (!video) return "unknown";
+  const checked = measuredLength(update);
   const moved = await moveVideo(
     db,
     video.id,
     [video.state],
     {
-      state: update.state,
-      stateReason: update.state === "failed" ? update.reason : null,
-      ...(update.state === "ready" ? { readyAt: new Date() } : {}),
+      state: checked.state,
+      stateReason: checked.state === "failed" ? checked.reason : null,
+      ...(checked.state === "ready" ? { readyAt: new Date() } : {}),
     },
-    { actorId, details: update.reason ? { reason: update.reason } : undefined },
+    { actorId, details: checked.reason ? { reason: checked.reason } : undefined },
   );
   return moved ? "moved" : "unchanged";
 }
@@ -118,8 +134,8 @@ export async function sendForProcessing(
   db: Database,
   id: string,
   provider: VideoProvider,
-  now = new Date(),
   actorId: string | null = null,
+  now = new Date(),
 ): Promise<"sent" | "failed" | "skipped"> {
   const video = await getVideo(db, id);
   if (video?.state !== "uploaded") return "skipped";
@@ -154,8 +170,8 @@ export async function sendForProcessing(
 
 /**
  * Records the Video Asset for a master that just passed its scan, if not already recorded, and
- * sends it for processing. Its length and picture size come from the master itself, read before
- * the scan (`facts`) or, on a repeated delivery, read again from VIDEO_MASTERS.
+ * sends it for processing. Its length and picture size come from the master itself, read by the
+ * scan step (`facts`) or, on a repeated delivery, read again from VIDEO_MASTERS.
  */
 export async function startVideo(
   env: Env,
@@ -166,11 +182,11 @@ export async function startVideo(
   now = new Date(),
 ) {
   if (!(await getVideo(db, asset.id))) {
-    let known = facts;
-    if (!known) {
-      const read = await readVideoFacts(bucketReader(env.VIDEO_MASTERS, asset.destinationKey, asset.size), asset.size);
-      if (!read.ok) throw new Error(`The master's length couldn't be read again: ${read.error}`);
-      known = read.facts;
+    let measured = facts;
+    if (!measured) {
+      const result = await masterFacts(env.VIDEO_MASTERS, asset.destinationKey, asset.size);
+      if (!result.ok) throw new Error(`The master's length couldn't be read again: ${result.error}`);
+      measured = result.facts;
     }
     const inserted = await db
       .insert(videoAsset)
@@ -180,10 +196,10 @@ export async function startVideo(
         masterKey: asset.destinationKey,
         provider: provider.name,
         state: "uploaded",
-        durationMs: known.durationMs,
-        width: known.width,
-        height: known.height,
-        orientation: orientationOf(known.width, known.height),
+        durationMs: measured.durationMs,
+        width: measured.width,
+        height: measured.height,
+        orientation: orientationOf(measured.width, measured.height),
         environment: env.ENVIRONMENT,
         createdAt: now,
         updatedAt: now,
@@ -196,11 +212,11 @@ export async function startVideo(
         action: "video_asset.created",
         objectType: "video_asset",
         objectId: asset.id,
-        details: { durationMs: known.durationMs, width: known.width, height: known.height },
+        details: { durationMs: measured.durationMs, width: measured.width, height: measured.height },
       });
     }
   }
-  return sendForProcessing(db, asset.id, provider, now);
+  return sendForProcessing(db, asset.id, provider, null, now);
 }
 
 /** Asks the provider where a processing video has got to, for staff and the daily job. */
@@ -235,7 +251,7 @@ export async function retryVideo(db: Database, id: string, provider: VideoProvid
   );
   if (!moved) return "skipped";
   try {
-    return await sendForProcessing(db, id, provider, now, actorId);
+    return await sendForProcessing(db, id, provider, actorId, now);
   } catch {
     // Left waiting: the daily job sends it again.
     return "skipped";
@@ -262,7 +278,7 @@ export async function refreshStalledVideos(db: Database, provider: VideoProvider
   for (const video of stalled) {
     try {
       if (video.state === "processing") await checkVideo(db, video.id, provider);
-      else await sendForProcessing(db, video.id, provider, now);
+      else await sendForProcessing(db, video.id, provider, null, now);
     } catch (error) {
       console.error("Video refresh failed", video.id, error);
     }

@@ -117,27 +117,16 @@ export async function fileDownload(
   });
 }
 
-/**
- * Audio for a native `<audio>` player, with byte ranges so it starts at once and can seek. The
- * caller has already decided the visitor may hear it.
- */
-export const audioResponse = (
-  env: Env,
-  request: Request,
-  asset: { id: string; destinationKey: string; size: number; type: string },
-  cacheControl: string,
-) => rangedResponse(env.MEDIA, request, asset, cacheControl);
+/** A stored file as a media player is sent it: its ID, where it is kept, its size and type. */
+export type StoredFile = { id: string; destinationKey: string; size: number; type: string };
 
 /**
- * A stored file for a native media player, with byte ranges. A media library file never changes
- * once scanned, so its ID is its validator: an `If-Range` naming another version gets the whole file.
+ * A stored file for a native `<audio>` or `<video>` player, with byte ranges so it starts at once
+ * and can seek; the caller has already decided the visitor may have it. A media library file never
+ * changes once scanned, so its ID is its validator: an `If-Range` naming another version gets the
+ * whole file.
  */
-export async function rangedResponse(
-  bucket: R2Bucket,
-  request: Request,
-  asset: { id: string; destinationKey: string; size: number; type: string },
-  cacheControl: string,
-) {
+export async function rangedResponse(bucket: R2Bucket, request: Request, asset: StoredFile, cacheControl: string) {
   const etag = `"${asset.id}"`;
   const ifRange = request.headers.get("If-Range");
   const headers = new Headers({

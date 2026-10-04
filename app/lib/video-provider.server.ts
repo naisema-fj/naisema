@@ -1,12 +1,14 @@
-import { r2PresignedGet } from "./presign";
+import { r2PresignedGet } from "./presign.server";
+import { optionalSecret } from "./secrets.server";
 import { signToken, verifyToken } from "./signed-tokens.server";
-import { signPlaybackToken } from "./stream-signing";
+import { signPlaybackToken } from "./stream-signing.server";
 import {
   MASTER_URL_SECONDS,
   PLAYBACK_TOKEN_SECONDS,
   type ProviderUpdate,
   readStreamVideo,
   safeReason,
+  type VideoProviderName,
 } from "./video-rules";
 
 /**
@@ -22,13 +24,12 @@ export type CopyRequest = { assetId: string; name: string; masterKey: string; en
 
 export type Playback = {
   url: string;
-  expiresAt: Date;
   /** An HLS playlist (played by hls.js where the browser can't), or a plain file. */
   hls: boolean;
 };
 
 export interface VideoProvider {
-  readonly name: "stream" | "local";
+  readonly name: VideoProviderName;
   /** Asks the provider to copy a master from R2; its ID for the copy, and its state if already known. */
   copy(request: CopyRequest, now: Date): Promise<{ providerId: string; update?: ProviderUpdate }>;
   /** Where the provider says its copy has got to, or null if it has no such video. */
@@ -65,12 +66,6 @@ const STREAM_SECRETS = [
   "R2_MASTERS_SECRET_ACCESS_KEY",
 ] as const;
 type StreamSecret = (typeof STREAM_SECRETS)[number];
-
-/** An optional secret, which Env's generated types don't list. */
-export function optionalSecret(env: Env, name: string) {
-  const value = (env as unknown as Record<string, unknown>)[name];
-  return typeof value === "string" && value ? value : undefined;
-}
 
 const NOT_SET_UP =
   "Video processing isn't set up in this environment yet (Stream's secrets are missing). Tell the technical owner.";
@@ -163,7 +158,6 @@ export function streamProvider(env: Env, send: Fetch = (input, init) => fetch(in
       });
       return {
         url: `https://customer-${secret("STREAM_CUSTOMER_CODE")}.cloudflarestream.com/${token}/manifest/video.m3u8`,
-        expiresAt: new Date(now.getTime() + PLAYBACK_TOKEN_SECONDS * 1000),
         hls: true,
       };
     },
@@ -194,7 +188,6 @@ export function localProvider(env: Env): VideoProvider {
       const token = await signToken(env.BETTER_AUTH_SECRET, LOCAL_PLAYBACK, `${video.id}:${expires}`);
       return {
         url: `${localPlaybackPath(video.id)}?token=${encodeURIComponent(token)}`,
-        expiresAt: new Date(expires * 1000),
         hls: false,
       };
     },

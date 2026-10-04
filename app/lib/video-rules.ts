@@ -28,6 +28,18 @@ export const MASTER_URL_SECONDS = 60 * 60;
 
 export type Orientation = "landscape" | "portrait" | "square";
 
+/** Who holds a video's delivery copy: Cloudflare Stream, or the local stand-in in development and tests. */
+export type VideoProviderName = "stream" | "local";
+
+export const VIDEO_PROVIDER_NAMES: Record<VideoProviderName, string> = {
+  stream: "Cloudflare Stream",
+  local: "Local stand-in (development)",
+};
+
+/** Whether an upload is a video master for the pipeline: a video in the media library. */
+export const isVideoMaster = (upload: { purpose: string; type: string }) =>
+  upload.purpose === "media" && upload.type.startsWith("video/");
+
 const MOVES: Record<VideoState, readonly VideoState[]> = {
   uploaded: ["processing", "ready", "failed"],
   processing: ["ready", "failed"],
@@ -52,7 +64,7 @@ export function formatVideoLength(ms: number) {
 
 /**
  * Why a video is too long to accept, or null. Judged to the second as its length is shown, so a
- * 15-minute clip whose container says 900.02 seconds is accepted.
+ * 15-minute video whose container says 900.02 seconds is accepted.
  */
 export function lengthProblem(durationMs: number) {
   if (Math.round(durationMs / 1000) <= MAX_VIDEO_SECONDS) return null;

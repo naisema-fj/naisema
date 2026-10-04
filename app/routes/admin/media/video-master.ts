@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireUploader } from "~/lib/media-access.server";
-import { rangedResponse } from "~/lib/media-delivery.server";
+import { rangedResponse, type StoredFile } from "~/lib/media-delivery.server";
 import { getVideo } from "~/lib/video-assets.server";
 import { localPlaybackAllowed } from "~/lib/video-provider.server";
 import { mediaAsset } from "~db/schema";
@@ -27,7 +27,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       ? await rangedResponse(
           env.VIDEO_MASTERS,
           request,
-          { id: video.id, destinationKey: video.masterKey, size: asset.size, type: asset.type },
+          { id: video.id, destinationKey: video.masterKey, size: asset.size, type: asset.type } satisfies StoredFile,
           "private, no-store",
         )
       : null;

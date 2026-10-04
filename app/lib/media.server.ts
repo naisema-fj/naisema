@@ -10,7 +10,8 @@ import {
   type UploadPurpose,
   type UploadType,
 } from "./upload-rules";
-import { isVideoMaster, MASTERS_PREFIX } from "./video-assets.server";
+import { MASTERS_PREFIX } from "./video-assets.server";
+import { isVideoMaster } from "./video-rules";
 
 /**
  * Uploads (docs/phase-1a-defaults.md §1, ADR-0010). A file is checked against the allowlist, and

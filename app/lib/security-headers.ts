@@ -11,5 +11,3 @@ export function createNonce() {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   return btoa(String.fromCharCode(...bytes));
 }
-
-export { applySecurityHeaders } from "./security-policy";

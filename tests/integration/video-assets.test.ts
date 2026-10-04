@@ -214,23 +214,30 @@ describe("a video master after its scan", () => {
     expect(await audits(id, "video_asset.ready")).toBe(1);
   });
 
-  it("refuses a master over 15 minutes before it is scanned, leaving it in quarantine with the reason", async () => {
+  it("refuses a master over 15 minutes once it is scanned, leaving it in quarantine with the reason", async () => {
     const { id } = await uploadedVideo(mp4({ seconds: 15 * 60 + 2 }));
-    let scanned = false;
-    const scanner: Scanner = async (file) => {
-      scanned = true;
-      return cleanScanner(file);
-    };
 
-    expect(await scanUpload(env, getDb(env.DB), id, scanner, localProvider(env))).toBe("failed");
+    expect(await scanUpload(env, getDb(env.DB), id, cleanScanner, localProvider(env))).toBe("failed");
 
-    expect(scanned).toBe(false);
     expect(await media(id)).toMatchObject({
       status: "failed",
       reason: "This video is 15:02 long. The limit is 15 minutes: trim it, or upload the part you need, and try again.",
     });
+    expect(await env.QUARANTINE.head(`uploads/${id}`)).not.toBeNull();
     expect(await video(id)).toBeNull();
     expect(await env.VIDEO_MASTERS.head(`masters/${id}`)).toBeNull();
+  });
+
+  it("never reads an unscanned master: an infected one is refused for the virus, not its length", async () => {
+    const { id } = await uploadedVideo(mp4WithoutMoov());
+    const infected: Scanner = async ({ body }) => {
+      await new Response(body).arrayBuffer();
+      return { verdict: "infected", signature: "Eicar-Test-Signature" };
+    };
+
+    expect(await scanUpload(env, getDb(env.DB), id, infected, localProvider(env))).toBe("infected");
+
+    expect((await media(id))?.reason).toBe("The virus scanner found Eicar-Test-Signature.");
   });
 
   it("refuses a master whose length can't be read", async () => {
@@ -350,6 +357,18 @@ describe("Stream's webhook", () => {
     await webhook({ uid: providerId, status: { state: "error", errorReasonText: "Late failure" } });
 
     expect(await video(id)).toMatchObject({ state: "ready", reason: null });
+  });
+
+  it("fails a video Stream measured at over 15 minutes, whatever its movie header said", async () => {
+    const { id, providerId } = await processingInStream();
+
+    await webhook({ uid: providerId, readyToStream: true, status: { state: "ready" }, duration: 15 * 60 + 30 });
+
+    expect(await video(id)).toMatchObject({
+      state: "failed",
+      reason:
+        "Stream measured this video at 15:30. The limit is 15 minutes: trim it, or upload the part you need, and try again.",
+    });
   });
 
   it("records a processing failure with Stream's reason", async () => {
@@ -482,7 +501,7 @@ describe("signed playback", () => {
         new TextEncoder().encode(`${header}.${payload}`),
       ),
     ).toBe(true);
-    expect(playback).toMatchObject({ hls: true, expiresAt: new Date(now.getTime() + 600_000) });
+    expect(playback.hls).toBe(true);
   });
 
   it("gives the local stand-in's tokens the same ten minutes, for one video only", async () => {

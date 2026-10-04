@@ -10,7 +10,7 @@ const hex = (bytes: ArrayBuffer) =>
   [...new Uint8Array(bytes)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 
 /** Compares two strings in time that doesn't depend on where they differ. */
-function equal(a: string, b: string) {
+function constantTimeEqual(a: string, b: string) {
   if (a.length !== b.length) return false;
   let difference = 0;
   for (let index = 0; index < a.length; index++) difference |= a.charCodeAt(index) ^ b.charCodeAt(index);
@@ -36,7 +36,7 @@ export async function verifyStreamSignature(secret: string, header: string | nul
     "sign",
   ]);
   const expected = hex(await crypto.subtle.sign("HMAC", key, encoder.encode(`${time}.${body}`)));
-  return equal(expected, signature.toLowerCase());
+  return constantTimeEqual(expected, signature.toLowerCase());
 }
 
 const base64url = (bytes: Uint8Array) =>

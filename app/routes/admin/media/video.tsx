@@ -5,7 +5,7 @@ import { requireUploader } from "~/lib/media-access.server";
 import { formatBytes } from "~/lib/upload-rules";
 import { checkVideo, retryVideo, videoDetail } from "~/lib/video-assets.server";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
-import { formatVideoLength, VIDEO_STATE_NAMES } from "~/lib/video-rules";
+import { formatVideoLength, VIDEO_PROVIDER_NAMES, VIDEO_STATE_NAMES } from "~/lib/video-rules";
 import type { Route } from "./+types/video";
 
 // Plays the preview from the video provider, so the page's policy allows its media.
@@ -56,7 +56,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     length: formatVideoLength(video.durationMs),
     picture: `${video.width} × ${video.height}`,
     orientation: ORIENTATION_NAMES[video.orientation],
-    provider: video.provider === "stream" ? "Cloudflare Stream" : "Local stand-in (development)",
+    provider: VIDEO_PROVIDER_NAMES[video.provider],
     providerId: video.providerId,
     environment: video.environment,
     preview,

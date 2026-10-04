@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { presignedGet, r2PresignedGet } from "~/lib/presign";
+import { presignedGet, r2PresignedGet } from "~/lib/presign.server";
 
 describe("pre-signed GET addresses (AWS Signature Version 4, query string)", () => {
   it("matches AWS's published example", async () => {

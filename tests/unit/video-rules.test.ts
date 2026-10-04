@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { signPlaybackToken, verifyStreamSignature } from "~/lib/stream-signing";
+import { signPlaybackToken, verifyStreamSignature } from "~/lib/stream-signing.server";
 import {
   canMoveVideo,
   formatVideoLength,

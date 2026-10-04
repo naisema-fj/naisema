@@ -3,8 +3,7 @@ import { TURNSTILE_ORIGIN } from "./turnstile";
 /**
  * Only an environment that sets ALLOW_INDEXING = "true" (production) may be indexed;
  * staging, previews and local builds are always kept out of search engines.
- */
-/**
+ *
  * `nonce` is null for a page that ships no client JavaScript: it then allows no scripts at all,
  * which also means a cached public page carries no reusable nonce. A public form (`turnstile`)
  * also loads Cloudflare Turnstile's script and frame, and nothing else (app/lib/turnstile.ts).

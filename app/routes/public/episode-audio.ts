@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { audioResponse, readyEpisodeAudio } from "~/lib/media-delivery.server";
+import { rangedResponse, readyEpisodeAudio } from "~/lib/media-delivery.server";
 import { eligiblePublished } from "~/lib/public.server";
 import { contentItem } from "~db/schema";
 import type { Route } from "./+types/episode-audio";
@@ -18,7 +18,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const published = item?.type === "episode" ? await eligiblePublished(db, item, new Date()) : null;
   const episode = published?.snapshot.episode;
   const asset = episode ? await readyEpisodeAudio(db, episode.audioAssetId) : undefined;
-  const response = asset ? await audioResponse(env, request, asset, "no-store") : null;
+  const response = asset ? await rangedResponse(env.MEDIA, request, asset, "no-store") : null;
   if (!response) throw new Response("Not found", { status: 404 });
   return response;
 }

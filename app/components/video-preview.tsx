@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
  * A staff preview of a Video Asset through its signed playback address (ADR-0008): a native
  * `<video>`, fed by hls.js's light build where the browser can't play HLS itself (everywhere but
  * Safari). hls.js is loaded only here, as its own chunk, and without a Web Worker so the page's
- * content security policy needs no `worker-src`. Never forces an immediate quality switch
- * (docs/spikes/stream-timing.md).
+ * content security policy needs no `worker-src`. Never forces an immediate quality switch, and
+ * recovers from a fatal error once (docs/spikes/stream-timing.md).
  */
 export function VideoPreview({ src, hls, label }: { src: string; hls: boolean; label: string }) {
   const video = useRef<HTMLVideoElement>(null);
@@ -24,8 +24,19 @@ export function VideoPreview({ src, hls, label }: { src: string; hls: boolean; l
           return;
         }
         const instance = new Hls({ enableWorker: false });
+        // Recover once from each kind of fatal error, as the spike recommends: restart loading
+        // after a lost connection, rebuild the buffer after a media error. A second one is shown.
+        const recovered = new Set<string>();
         instance.on(Hls.Events.ERROR, (_event, data) => {
-          if (data.fatal) setError("The preview couldn't be played. Reload the page for a new link and try again.");
+          if (!data.fatal) return;
+          const recoverable = data.type === Hls.ErrorTypes.NETWORK_ERROR || data.type === Hls.ErrorTypes.MEDIA_ERROR;
+          if (recoverable && !recovered.has(data.type)) {
+            recovered.add(data.type);
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) instance.startLoad();
+            else instance.recoverMediaError();
+            return;
+          }
+          setError("The preview couldn't be played. Reload the page for a new link and try again.");
         });
         instance.loadSource(src);
         instance.attachMedia(element);

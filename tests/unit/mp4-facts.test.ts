@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MAX_MOOV_BYTES, type RangeReader, readVideoFacts } from "~/lib/mp4-facts";
-import { ftyp, IDENTITY, moov, mvhd, ROTATED_90, text, tkhd, trak, u32, u64 } from "../fixtures/mp4";
+import { box, ftyp, IDENTITY, moov, mvhd, ROTATED_90, text, tkhd, trak, u32, u64 } from "../fixtures/mp4";
 
 /** Reads from parts laid out one after another, some of them only sizes (a large mdat never held in memory). */
 function layout(...parts: (number[] | { mdat: number; large?: boolean })[]) {
@@ -73,12 +73,19 @@ describe("reading a video master's length and picture size", () => {
     });
   });
 
+  it("reads a fragmented file's length from its fragments' header when the movie header leaves it at zero", async () => {
+    const mehd = box("mehd", [0, 0, 0, 0], u32(42_000));
+    const file = layout(ftyp, moov(mvhd(1000, 0), box("mvex", mehd), trak("vide", tkhd(1280, 720))), { mdat: 64 });
+    expect(await readVideoFacts(file.read, file.size)).toMatchObject({ ok: true, facts: { durationMs: 42_000 } });
+  });
+
   it("refuses a file it can't read a length from", async () => {
     const cases = [
       layout(ftyp, { mdat: 4096 }),
       layout(ftyp, moov(trak("vide", tkhd(1280, 720)))),
       layout(ftyp, moov(mvhd(0, 1000), trak("vide", tkhd(1280, 720)))),
       layout(ftyp, moov(mvhd(1000, 0xffffffff), trak("vide", tkhd(1280, 720)))),
+      layout(ftyp, moov(mvhd(1000, 0), trak("vide", tkhd(1280, 720)))),
       layout(ftyp, [...u32(4), ...text("free")]),
     ];
     for (const file of cases) {

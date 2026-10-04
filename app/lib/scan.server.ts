@@ -3,20 +3,20 @@ import { mediaAsset } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import { type Database, getDb } from "./db.server";
 import { abortMultipart, type MediaAsset, type ScanMessage } from "./media.server";
-import { readVideoFacts, type VideoFacts } from "./mp4-facts";
 import { DAY_MS } from "./rights-rules";
 import { checkContent, HEAD_BYTES } from "./upload-rules";
-import { bucketReader, failVideo, isVideoMaster, MASTERS_PREFIX, startVideo } from "./video-assets.server";
+import { failVideo, MASTERS_PREFIX, masterFacts, startVideo } from "./video-assets.server";
 import { ProviderError, type VideoProvider, videoProvider } from "./video-provider.server";
-import { lengthProblem } from "./video-rules";
+import { isVideoMaster, lengthProblem } from "./video-rules";
 
 /**
  * The scan step (ADR-0010). A queued upload is read from quarantine, its type checked again,
  * and its bytes sent to ClamAV. Only a clean file is copied to its destination bucket; an
- * infected or unscannable file stays in quarantine with its reason. A video master's length is
- * read first, and one over 15 minutes is refused before it is scanned; a clean master goes to
- * VIDEO_MASTERS and is sent for processing (app/lib/video-assets.server.ts). Every step is safe to
- * repeat, because a queue message can be delivered more than once.
+ * infected or unscannable file stays in quarantine with its reason. Once a video master passes,
+ * its length is read, so no unscanned bytes are parsed (ADR-0010); one over 15 minutes stays in
+ * quarantine too. A clean master within the limit goes to VIDEO_MASTERS and is sent for processing
+ * (app/lib/video-assets.server.ts). Every step is safe to repeat, because a queue message can be
+ * delivered more than once.
  */
 
 export type ScanVerdict = { verdict: "clean" } | { verdict: "infected"; signature: string };
@@ -106,8 +106,8 @@ const destinationOf = (env: Env, asset: MediaAsset) =>
       ? env.MEDIA
       : env.EVIDENCE;
 
-/** Whether a ready upload is a master the video pipeline takes. */
-const takesVideo = (asset: MediaAsset) => isVideoMaster(asset) && asset.destinationKey.startsWith(MASTERS_PREFIX);
+/** Whether an upload goes into the video pipeline: a video master bound for VIDEO_MASTERS. */
+const isPipelineMaster = (asset: MediaAsset) => isVideoMaster(asset) && asset.destinationKey.startsWith(MASTERS_PREFIX);
 
 /** Scans one queued upload and acts on the verdict. */
 export async function scanUpload(
@@ -122,7 +122,7 @@ export async function scanUpload(
   if (asset.status === "ready") {
     // A repeat after a run that copied the file but stopped before sending a video master for
     // processing or clearing quarantine.
-    if (takesVideo(asset)) await startVideo(env, db, asset, provider);
+    if (isPipelineMaster(asset)) await startVideo(env, db, asset, provider);
     await env.QUARANTINE.delete(asset.quarantineKey);
     return "skipped";
   }
@@ -138,17 +138,6 @@ export async function scanUpload(
     await settle(env, db, asset, "failed", content.error);
     return "failed";
   }
-  let facts: VideoFacts | undefined;
-  if (takesVideo(asset)) {
-    const read = await readVideoFacts(bucketReader(env.QUARANTINE, asset.quarantineKey, asset.size), asset.size);
-    const problem = read.ok ? lengthProblem(read.facts.durationMs) : read.error;
-    if (problem || !read.ok) {
-      await settle(env, db, asset, "failed", problem);
-      return "failed";
-    }
-    facts = read.facts;
-  }
-
   const file = await env.QUARANTINE.get(asset.quarantineKey);
   if (!file) throw new Error("The quarantined file disappeared during the scan.");
   const result = await scanner({ body: file.body, size: file.size });
@@ -156,13 +145,21 @@ export async function scanUpload(
     await settle(env, db, asset, "infected", `The virus scanner found ${result.signature}.`);
     return "infected";
   }
+  const measured = isPipelineMaster(asset) ? await masterFacts(env.QUARANTINE, asset.quarantineKey, asset.size) : null;
+  if (measured) {
+    const problem = measured.ok ? lengthProblem(measured.facts.durationMs) : measured.error;
+    if (problem) {
+      await settle(env, db, asset, "failed", problem);
+      return "failed";
+    }
+  }
 
   // Copy exactly the bytes that were scanned: the same object, unchanged since (its etag).
   const clean = await env.QUARANTINE.get(asset.quarantineKey, { onlyIf: { etagMatches: file.etag } });
   if (!clean || !("body" in clean)) throw new Error("The quarantined file changed after its scan.");
   await destinationOf(env, asset).put(asset.destinationKey, clean.body, { httpMetadata: { contentType: asset.type } });
   await settle(env, db, asset, "ready", null);
-  if (takesVideo(asset)) await startVideo(env, db, { ...asset, status: "ready" }, provider, facts);
+  if (measured?.ok) await startVideo(env, db, { ...asset, status: "ready" }, provider, measured.facts);
   await env.QUARANTINE.delete(asset.quarantineKey);
   return "clean";
 }

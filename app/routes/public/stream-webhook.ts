@@ -1,9 +1,9 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { verifyStreamSignature } from "~/lib/stream-signing";
+import { optionalSecret } from "~/lib/secrets.server";
+import { verifyStreamSignature } from "~/lib/stream-signing.server";
 import { readLimitedBytes, UploadTooLarge } from "~/lib/upload-limit.server";
 import { applyProviderUpdate } from "~/lib/video-assets.server";
-import { optionalSecret } from "~/lib/video-provider.server";
 import { readStreamVideo } from "~/lib/video-rules";
 import type { Route } from "./+types/stream-webhook";
 

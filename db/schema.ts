@@ -23,7 +23,7 @@ import type { CaseKind } from "../app/lib/permissions";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { ConsentPurpose, SubmissionFields, SubmissionStatus, SubmissionType } from "../app/lib/submission-fields";
 import type { MediaStatus, UploadPurpose, UploadType } from "../app/lib/upload-rules";
-import type { Orientation, VideoState } from "../app/lib/video-rules";
+import type { Orientation, VideoProviderName, VideoState } from "../app/lib/video-rules";
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 const updatedAt = () => integer("updated_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
@@ -813,7 +813,7 @@ export const videoAsset = sqliteTable(
     /** The master's key in VIDEO_MASTERS. */
     masterKey: text("master_key").notNull(),
     /** Which provider holds the delivery copy ("stream", or "local" in development and tests). */
-    provider: text("provider").notNull(),
+    provider: text("provider").$type<VideoProviderName>().notNull(),
     /** The provider's ID for its copy, such as a Stream video UID, once one was asked for. */
     providerId: text("provider_id"),
     state: text("state").$type<VideoState>().notNull(),

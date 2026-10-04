@@ -1,5 +1,5 @@
-import { checkContent, checkDeclared, HEAD_BYTES, kindOf, type UploadPurpose } from "./upload-rules";
-import { lengthProblem } from "./video-rules";
+import { checkContent, checkDeclared, HEAD_BYTES, type UploadPurpose } from "./upload-rules";
+import { isVideoMaster, lengthProblem } from "./video-rules";
 
 /**
  * The media library's browser upload (app/lib/media.server.ts is the other side). It checks the
@@ -92,7 +92,7 @@ export async function uploadFile(file: File, options: UploadOptions = {}): Promi
   const content = checkContent(declared.type, head);
   if (!content.ok) return { ok: false, error: content.error };
   // A video master over 15 minutes is refused before it is sent (docs/decision-log.md).
-  if ((options.purpose ?? "media") === "media" && kindOf(declared.type) === "video") {
+  if (isVideoMaster({ purpose: options.purpose ?? "media", type: declared.type })) {
     const duration = await (options.readDuration ?? browserDuration)(file);
     const problem = duration === null ? null : lengthProblem(duration);
     if (problem) return { ok: false, error: problem };
