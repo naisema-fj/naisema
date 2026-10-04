@@ -155,6 +155,17 @@ export async function reviewPlaybackAllowed(
   return !withdrawn(whole, now) && !withdrawn(file?.records ?? [], now);
 }
 
+/**
+ * Whether the Video has a current Rights Record granting Publish, as a whole. Without one, sharing
+ * its footage through a Review Link is the editor's call, and the page says so before they share.
+ */
+export async function videoHasPublishRights(db: Database, contentItemId: string, now = new Date()) {
+  const whole = (await rightsFactsFor(db, { type: "content_item", id: contentItemId })).filter(
+    (record) => !record.part,
+  );
+  return isPublishable(whole, now);
+}
+
 /** The Review Links to a Revision, newest first, with their state and how often they were opened. */
 export async function reviewLinksFor(db: Database, revisionId: string, now = new Date()) {
   const rows = await db
