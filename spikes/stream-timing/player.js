@@ -14,6 +14,8 @@ const segments = [
   { id: "s2", startMs: 12000, endMs: 15500, text: "Au lako mai Suva." },
   { id: "s3", startMs: 21000, endMs: 23800, text: "Vinaka vakalevu." },
   { id: "s4", startMs: 40500, endMs: 44250, text: "Sa moce." },
+  // Starts between keyframes (every 2 s) and ends between frames (every 33.3 ms): the hard case.
+  { id: "s5", startMs: 27340, endMs: 30890, text: "Ni sa bula." },
 ];
 
 const say = (line) => {

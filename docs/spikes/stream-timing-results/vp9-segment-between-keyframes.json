@@ -1,0 +1,293 @@
+{
+  "codec": "vp9",
+  "browser": "141.0.7390.37",
+  "profile": {
+    "offline": false,
+    "latency": 150,
+    "downloadThroughput": 187500,
+    "uploadThroughput": 93750
+  },
+  "segment": {
+    "id": "s5",
+    "startMs": 27340,
+    "endMs": 30890
+  },
+  "clips": {
+    "landscape": {
+      "coldStarts": {
+        "runs": [],
+        "within5s": 0,
+        "passes": null
+      },
+      "loops": {
+        "1": {
+          "startErrors": [
+            -7,
+            27,
+            -7,
+            27,
+            27,
+            -7,
+            27,
+            -7,
+            27,
+            27
+          ],
+          "endErrors": [
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+          ],
+          "worstMs": 27,
+          "stalled": 0,
+          "passes": true,
+          "cueFrames": 920,
+          "cueMisses": []
+        },
+        "0.75": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            27,
+            -7
+          ],
+          "endErrors": [
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+          ],
+          "worstMs": 27,
+          "stalled": 0,
+          "passes": true,
+          "cueFrames": 920,
+          "cueMisses": []
+        },
+        "0.5": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+          ],
+          "worstMs": 10,
+          "stalled": 0,
+          "passes": true,
+          "cueFrames": 920,
+          "cueMisses": []
+        }
+      },
+      "qualityChange": {
+        "levels": [
+          240,
+          360,
+          720
+        ],
+        "before": 1,
+        "forced": 2,
+        "after": 2,
+        "forcedAtMs": 29083,
+        "framesOutsideSegment": [],
+        "passes": [
+          {
+            "startErrorMs": 27,
+            "endErrorMs": -10
+          },
+          {
+            "startErrorMs": 27,
+            "endErrorMs": -10
+          },
+          {
+            "startErrorMs": -7,
+            "endErrorMs": -10
+          }
+        ],
+        "switches": [
+          {
+            "level": 1,
+            "at": 0
+          },
+          {
+            "level": 2,
+            "at": 29.27006
+          }
+        ]
+      }
+    },
+    "vertical": {
+      "coldStarts": {
+        "runs": [],
+        "within5s": 0,
+        "passes": null
+      },
+      "loops": {
+        "1": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+          ],
+          "worstMs": 27,
+          "stalled": 0,
+          "passes": true,
+          "cueFrames": 920,
+          "cueMisses": []
+        },
+        "0.75": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+          ],
+          "worstMs": 10,
+          "stalled": 0,
+          "passes": true,
+          "cueFrames": 920,
+          "cueMisses": []
+        },
+        "0.5": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10,
+            -10
+          ],
+          "worstMs": 10,
+          "stalled": 0,
+          "passes": true,
+          "cueFrames": 920,
+          "cueMisses": []
+        }
+      },
+      "qualityChange": {
+        "levels": [
+          426,
+          640,
+          1280
+        ],
+        "before": 1,
+        "forced": 2,
+        "after": 2,
+        "forcedAtMs": 29035,
+        "framesOutsideSegment": [],
+        "passes": [
+          {
+            "startErrorMs": -7,
+            "endErrorMs": -10
+          },
+          {
+            "startErrorMs": 27,
+            "endErrorMs": -10
+          },
+          {
+            "startErrorMs": -7,
+            "endErrorMs": -10
+          }
+        ],
+        "switches": [
+          {
+            "level": 1,
+            "at": 27.34
+          },
+          {
+            "level": 2,
+            "at": 29.205544
+          }
+        ]
+      }
+    }
+  }
+}

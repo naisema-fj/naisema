@@ -18,7 +18,10 @@ import { chromium } from "@playwright/test";
 const ROOT = new URL(".", import.meta.url).pathname;
 const CODEC = process.argv[2] ?? "vp9";
 const CLIPS = ["landscape", "vertical"];
-const SEGMENT = { startMs: 12000, endMs: 15500 };
+// s2 starts on a keyframe and ends on a frame; s5 starts between keyframes and ends between frames.
+const SEGMENTS = { s2: { id: "s2", startMs: 12000, endMs: 15500 }, s5: { id: "s5", startMs: 27340, endMs: 30890 } };
+const SEGMENT = SEGMENTS[process.env.SEGMENT ?? "s2"];
+const LOOPS_ONLY = process.argv.includes("--loops-only");
 const SPEEDS = [1, 0.75, 0.5];
 const PROFILE = {
   offline: false,
@@ -121,10 +124,15 @@ async function loops(page) {
           // Away from the edges (where "time marches on" may lag a frame or two) the cue must show.
           if (ms > segment.startMs + 250 && ms < segment.endMs - 250) {
             inside += 1;
-            if (window.spike.activeCue() !== "s2") cueMisses.push(Math.round(ms));
+            if (window.spike.activeCue() !== segment.id) cueMisses.push(Math.round(ms));
           }
         });
-        const result = await window.spike.playSegment({ ...segment, speed, times: 10 });
+        const result = await window.spike.playSegment({
+          startMs: segment.startMs,
+          endMs: segment.endMs,
+          speed,
+          times: 10,
+        });
         stop();
         return { passes: result, cueFrames: inside, cueMisses };
       },
@@ -159,7 +167,7 @@ async function qualityChange(page) {
     });
     const before = window.spike.currentLevel();
     let forcedAtMs = null;
-    const loop = window.spike.playSegment({ ...segment, speed: 1, times: 3 });
+    const loop = window.spike.playSegment({ startMs: segment.startMs, endMs: segment.endMs, speed: 1, times: 3 });
     // Mid-way through the second pass.
     await new Promise((resolve) => setTimeout(resolve, (segment.endMs - segment.startMs) * 1.5));
     forcedAtMs = Math.round(video.currentTime * 1000);
@@ -193,7 +201,7 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 const report = { codec: CODEC, browser: browser.version(), profile: PROFILE, segment: SEGMENT, clips: {} };
 for (const clip of CLIPS) {
   console.log(`${clip}: cold starts`);
-  const cold = await coldStarts(browser, origin, clip);
+  const cold = LOOPS_ONLY ? { runs: [], within5s: 0, passes: null } : await coldStarts(browser, origin, clip);
   console.log(`${clip}: loops`);
   const { context, page } = await openPlayer(browser, origin, clip);
   await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
@@ -207,7 +215,7 @@ await browser.close();
 server.close();
 
 mkdirSync(join(ROOT, "results"), { recursive: true });
-const file = join(ROOT, "results", `${CODEC}-${new Date().toISOString().replaceAll(":", "-")}.json`);
+const file = join(ROOT, "results", `${CODEC}-${SEGMENT.id}-${new Date().toISOString().replaceAll(":", "-")}.json`);
 writeFileSync(file, JSON.stringify(report, null, 2));
 for (const [clip, result] of Object.entries(report.clips)) {
   console.log(`\n${clip}`);
