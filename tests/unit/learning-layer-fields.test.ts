@@ -20,13 +20,14 @@ describe("a Learning Layer's details", () => {
   it("reads the whole video or an Excerpt of it", () => {
     expect(readLayerDetails(form(), 60_000)).toEqual({
       ok: true,
-      details: { title: "Greetings at the market", level: "beginner", excerpt: null },
+      details: { title: "Greetings at the market", level: "beginner", flags: [], excerpt: null },
     });
     expect(readLayerDetails(form({ clip: "excerpt", sourceStart: "0:10", sourceEnd: "0:40.5" }), 60_000)).toEqual({
       ok: true,
       details: {
         title: "Greetings at the market",
         level: "beginner",
+        flags: [],
         excerpt: { sourceStartMs: 10_000, sourceEndMs: 40_500 },
       },
     });
@@ -58,6 +59,7 @@ describe("what each review covers", () => {
   const snapshot: LearningLayerSnapshot = {
     title: "Greetings",
     level: "beginner",
+    flags: [],
     excerpt: null,
     segments: [
       {

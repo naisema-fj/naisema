@@ -29,6 +29,9 @@ export default [
     route(":area", "routes/public/area.tsx"),
     route(":area/:slug", "routes/public/article.tsx"),
   ]),
+  // Review Links: one exact Learning Layer Revision for a Knowledge Holder, never cached or indexed.
+  route("review/:token", "routes/public/review-link.tsx"),
+  route("review/:token/video", "routes/public/review-link-video.ts"),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
   // Media library files that passed their scan (app/lib/media-delivery.server.ts).
@@ -68,6 +71,8 @@ export default [
     route("learning-layers", "routes/admin/learning-layers/index.tsx"),
     route("learning-layers/:id", "routes/admin/learning-layers/layer.tsx"),
     route("learning-layers/:id/webvtt/:language", "routes/admin/learning-layers/webvtt.ts"),
+    route("learning-layers/:id/revisions/:number", "routes/admin/learning-layers/revision.tsx"),
+    route("learning-layers/approvals/:approvalId/evidence", "routes/admin/learning-layers/evidence.tsx"),
     route("videos/:id/learning-layers", "routes/admin/learning-layers/video.tsx"),
     route("expressions", "routes/admin/expressions/index.tsx"),
     route("expressions/:id", "routes/admin/expressions/expression.tsx"),

@@ -95,6 +95,7 @@ export function TimelineEditor({
   const [newExpressions, setNewExpressions] = useState<ExpressionChoice[]>([]);
   const [title, setTitle] = useState(snapshot.title);
   const [level, setLevel] = useState<string>(snapshot.level);
+  const [culturalReview, setCulturalReview] = useState(snapshot.flags.includes("sensitiveCultural"));
   const [clipForm, setClipForm] = useState(excerptFields(snapshot.excerpt));
   const [excerpt, setExcerpt] = useState<Excerpt>(snapshot.excerpt);
   const [clipError, setClipError] = useState("");
@@ -455,6 +456,15 @@ export function TimelineEditor({
               </option>
             ))}
           </select>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              name="sensitiveCultural"
+              checked={culturalReview}
+              onChange={(event) => setCulturalReview(event.target.checked)}
+            />{" "}
+            Culturally sensitive: needs a Knowledge Holder's approval
+          </label>
           <fieldset>
             <legend id="built-on">Built on</legend>
             <label>

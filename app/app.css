@@ -546,3 +546,43 @@ a {
 .activity-feedback {
   margin-top: 0.5rem;
 }
+
+/* A Review Link (app/routes/public/review-link.tsx): watermarked as a draft throughout. */
+.review-link-page {
+  background-image: repeating-linear-gradient(-30deg, transparent 0 9rem, rgb(164 22 26 / 0.06) 9rem 9.5rem);
+}
+
+.draft-watermark {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #a4161a;
+  color: #a4161a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.draft-video {
+  position: relative;
+}
+
+.draft-watermark-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgb(255 255 255 / 0.55);
+  font-size: clamp(1.25rem, 6vw, 3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 0 0 0.5rem rgb(0 0 0 / 0.6);
+  pointer-events: none;
+  transform: rotate(-20deg);
+}
+
+.issued-link code {
+  overflow-wrap: anywhere;
+}
+
+.segment-english {
+  color: #4a4a4a;
+}

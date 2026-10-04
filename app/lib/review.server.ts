@@ -39,9 +39,13 @@ export type Reviewable = {
   episode?: EpisodeDetails;
 };
 
-type ApprovalRow = typeof reviewApproval.$inferSelect;
-
-function toRecordedDecision(row: ApprovalRow): RecordedDecision {
+/** A stored Review Approval, a Content Item's or a Learning Layer's, as the review rules see it. */
+export function toRecordedDecision(
+  row: Pick<
+    typeof reviewApproval.$inferSelect,
+    "id" | "reviewType" | "languageVariety" | "decision" | "knowledgeHolderName" | "reviewerId" | "decidedAt"
+  >,
+): RecordedDecision {
   return {
     id: row.id,
     reviewType: row.reviewType as ReviewType,
@@ -305,9 +309,8 @@ const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
 /** Only the current draft can be submitted or reviewed; older Revisions are superseded. */
 const isCurrent = (review: Review) => review.contentItem.currentDraftRevisionId === review.revisionId;
 
-/** An editor sends the current draft for review. */
 /** Runs a write, turning a unique-index clash (a second click racing the first) into a refusal. */
-async function onceOnly(write: () => Promise<unknown>, message: string): Promise<ReviewActionResult> {
+export async function onceOnly(write: () => Promise<unknown>, message: string): Promise<ReviewActionResult> {
   try {
     await write();
     return { ok: true };
@@ -317,6 +320,7 @@ async function onceOnly(write: () => Promise<unknown>, message: string): Promise
   }
 }
 
+/** An editor sends the current draft for review. */
 export async function submitRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.edit" })) return refuse("Only editors can submit for review.");
   if (!isCurrent(review)) return refuse("Only the latest revision can be submitted.");
