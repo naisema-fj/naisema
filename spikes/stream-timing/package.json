@@ -1,0 +1,9 @@
+{
+  "name": "stream-timing-spike",
+  "private": true,
+  "description": "Throwaway spike for issue #4: segment replay and loop timing with hls.js and a native video element.",
+  "type": "module",
+  "dependencies": {
+    "hls.js": "1.6.13"
+  }
+}

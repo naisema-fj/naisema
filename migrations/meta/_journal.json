@@ -15,6 +15,97 @@
       "when": 1790670679175,
       "tag": "0001_staff_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790798420781,
+      "tag": "0002_articles_and_revisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790801046811,
+      "tag": "0003_review_gates",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790803625110,
+      "tag": "0004_rights_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1790818181499,
+      "tag": "0005_public_site",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790821606863,
+      "tag": "0006_search",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1790826008008,
+      "tag": "0007_media",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1790838443599,
+      "tag": "0008_resources_pages_topics",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1790840101250,
+      "tag": "0009_rights_parts_and_episodes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790897317329,
+      "tag": "0010_providers_offerings",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1790900686842,
+      "tag": "0011_submissions_consent",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1790905734877,
+      "tag": "0012_cases",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1791101753084,
+      "tag": "0013_video_assets",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1791104314267,
+      "tag": "0014_learning_layers",
+      "breakpoints": true
     }
   ]
 }

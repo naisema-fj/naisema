@@ -42,3 +42,411 @@ a {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Staff forms */
+.article-form label,
+.article-form .label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 600;
+}
+
+.article-form input:not([type="checkbox"]),
+.article-form textarea,
+.article-form select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.4rem;
+}
+
+.article-form fieldset {
+  margin-top: 1rem;
+}
+
+.article-form .choice label {
+  display: inline;
+  font-weight: normal;
+  margin: 0 0 0 0.4rem;
+}
+
+.article-form > button[type="submit"] {
+  margin-top: 1.5rem;
+}
+
+.field-error {
+  color: #a4161a;
+  margin: 0.25rem 0 0;
+}
+
+/* Article body editor (Tiptap). Its own CSS injection is off because the CSP allows no inline styles. */
+.body-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+}
+
+.body-toolbar button[aria-pressed="true"] {
+  background: #0b4f5c;
+  color: #fff;
+}
+
+.embed-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  width: 100%;
+}
+
+.article-form .embed-picker label {
+  margin: 0;
+}
+
+.article-form .embed-picker select {
+  flex: 1 1 12rem;
+  width: auto;
+  min-width: 0;
+}
+
+.body-editor-content {
+  min-height: 12rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid #767676;
+  background: #fff;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.body-editor-content:focus {
+  outline: 3px solid #0b4f5c;
+}
+
+.ProseMirror {
+  position: relative;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-variant-ligatures: none;
+}
+
+.ProseMirror [contenteditable="false"] {
+  white-space: normal;
+}
+
+.ProseMirror-hideselection *::selection {
+  background: transparent;
+}
+
+.ProseMirror-selectednode {
+  outline: 2px solid #0b4f5c;
+}
+
+.ProseMirror-gapcursor {
+  display: none;
+  pointer-events: none;
+  position: absolute;
+}
+
+.ProseMirror-focused .ProseMirror-gapcursor {
+  display: block;
+}
+
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Blocks shared by the editor and the rendered body */
+.callout {
+  border-left: 4px solid #0b4f5c;
+  background: #eef5f6;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+}
+
+.embedded-item {
+  border: 1px dashed #767676;
+  padding: 0.5rem 1rem;
+  margin: 1rem 0;
+}
+
+.article-preview img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Comparing revisions */
+.body-diff {
+  list-style: none;
+  padding: 0;
+}
+
+.body-diff li {
+  padding: 0.15rem 0.5rem;
+}
+
+.body-diff .added {
+  background: #e6f4ea;
+}
+
+.body-diff .removed {
+  background: #fce8e6;
+}
+
+.sources {
+  white-space: pre-line;
+}
+
+/* Media library */
+.page-wide {
+  max-width: 64rem;
+}
+
+.hint {
+  margin: 0.25rem 0;
+  color: #4a4a4a;
+}
+
+.upload-form button[type="submit"] {
+  margin-top: 1rem;
+}
+
+.upload-form progress {
+  width: 12rem;
+  vertical-align: middle;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.table-scroll:focus-visible {
+  outline: 3px solid #0b4f5c;
+}
+
+.media-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 44rem;
+}
+
+.media-table caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+}
+
+.media-table th,
+.media-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5rem;
+  border-bottom: 1px solid #d6d3cc;
+}
+
+.media-table .reason {
+  display: block;
+  color: #a4161a;
+}
+
+.media-table .video-state {
+  display: block;
+}
+
+.alt-form {
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.alt-form input[name="altText"] {
+  flex: 1;
+  min-width: 8rem;
+  font: inherit;
+  padding: 0.3rem;
+}
+
+/* Text people typed with line breaks, such as a Submission's answers. */
+.preserve-lines {
+  white-space: pre-line;
+}
+
+/* A Video Asset's page (app/routes/admin/media/video.tsx). */
+.state-reason {
+  display: block;
+  color: #a4161a;
+}
+
+.video-preview {
+  margin: 0 0 0.5rem;
+}
+
+.video-preview video {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+}
+
+.video-facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.video-facts dt {
+  font-weight: 600;
+}
+
+.video-facts dd {
+  margin: 0;
+}
+
+.video-id {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 0.875rem;
+}
+
+/* Lists of Learning Layers and Videos, and a page's small print. */
+.meta {
+  display: block;
+  color: #4a4740;
+  font-size: 0.875rem;
+}
+
+.inline-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.5rem;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0 0.4rem;
+  border: 1px solid #4a4740;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.badge-warning {
+  border-color: #a4161a;
+  color: #a4161a;
+}
+
+/* The timeline editor (app/components/timeline-editor.tsx). */
+.timeline-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
+@media (min-width: 60rem) {
+  .timeline-layout {
+    grid-template-columns: minmax(18rem, 2fr) 3fr;
+    align-items: start;
+  }
+
+  .timeline-preview {
+    position: sticky;
+    top: 1rem;
+  }
+}
+
+.layout-frame {
+  position: relative;
+  margin: 0 auto 0.5rem;
+  background: #000;
+}
+
+.layout-landscape {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+}
+
+.layout-portrait {
+  aspect-ratio: 9 / 16;
+  width: min(100%, 22rem);
+}
+
+.layout-frame video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.caption-overlay {
+  position: absolute;
+  inset: auto 0.5rem 3.5rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.caption-overlay p {
+  display: inline-block;
+  margin: 0;
+  padding: 0.2rem 0.5rem;
+  background: rgb(0 0 0 / 0.75);
+  color: #fff;
+}
+
+.caption-english {
+  display: block;
+  font-size: 0.85em;
+  color: #e6e1d6;
+}
+
+.segment-problems {
+  border-left: 4px solid #a4161a;
+  padding-left: 0.75rem;
+}
+
+.segment-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.segment {
+  border-top: 1px solid #d6d3cc;
+  padding: 0.75rem 0;
+}
+
+.segment h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.segment-times {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: end;
+}
+
+.time-field input {
+  width: 8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.segment textarea,
+.segment input:not([type="checkbox"]) {
+  max-width: 100%;
+}
+
+.segment-actions,
+.segment-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.playhead output {
+  font-variant-numeric: tabular-nums;
+}

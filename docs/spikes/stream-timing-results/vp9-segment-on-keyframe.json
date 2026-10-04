@@ -1,0 +1,713 @@
+{
+  "codec": "vp9",
+  "segmentId": "s2",
+  "browser": "141.0.7390.37",
+  "profile": {
+    "offline": false,
+    "latency": 150,
+    "downloadThroughput": 187500,
+    "uploadThroughput": 93750
+  },
+  "clips": {
+    "landscape": {
+      "coldStarts": {
+        "runs": [
+          3318,
+          3319,
+          3331,
+          3330,
+          3337
+        ],
+        "within5s": 5,
+        "ok": true
+      },
+      "loops": {
+        "1": {
+          "startErrors": [
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            0
+          ],
+          "endErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33,
+            0
+          ],
+          "cueExit": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "worstMs": 33,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.75": {
+          "startErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "endErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueExit": [
+            0,
+            -33,
+            0,
+            -33,
+            -33,
+            -33,
+            -33,
+            0,
+            0,
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.5": {
+          "startErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "endErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueExit": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 0,
+          "stalled": 0,
+          "ok": true
+        }
+      },
+      "qualityChanges": {
+        "1": [
+          {
+            "levels": "1 → 2",
+            "forcedAtMs": 13735,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 → 1",
+            "forcedAtMs": 13729,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 33,
+            "stalled": 0,
+            "ok": true
+          }
+        ],
+        "0.75": [
+          {
+            "levels": "1 → 2",
+            "forcedAtMs": 13735,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 → 1",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "ok": false
+          }
+        ],
+        "0.5": [
+          {
+            "levels": "1 → 2",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "ok": false
+          },
+          {
+            "levels": "2 → 1",
+            "forcedAtMs": 13750,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "ok": false
+          }
+        ]
+      },
+      "interruptions": {
+        "whileLoopingBuffered": {
+          "startErrors": [
+            0,
+            33,
+            33
+          ],
+          "endErrors": [
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            33,
+            33
+          ],
+          "cueExit": [
+            0,
+            0,
+            0
+          ],
+          "worstMs": 33,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true
+        },
+        "seekingUnbuffered": {
+          "startErrors": [
+            0
+          ],
+          "endErrors": [
+            0
+          ],
+          "framesAfterStop": [
+            0
+          ],
+          "cueEntry": [
+            0
+          ],
+          "cueExit": [
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 0,
+          "stalled": 0,
+          "ok": true,
+          "farWasBuffered": false,
+          "finishedWhileOffline": false,
+          "offlineMs": 4007,
+          "finishedAfterRestoreMs": 4557
+        },
+        "hlsErrors": [
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          },
+          {
+            "details": "bufferStalledError",
+            "fatal": false
+          },
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          }
+        ]
+      }
+    },
+    "vertical": {
+      "coldStarts": {
+        "runs": [
+          3329,
+          3333,
+          3311,
+          3312,
+          3301
+        ],
+        "within5s": 5,
+        "ok": true
+      },
+      "loops": {
+        "1": {
+          "startErrors": [
+            0,
+            33,
+            0,
+            0,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33
+          ],
+          "endErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            33,
+            0,
+            0,
+            33,
+            33,
+            33,
+            33,
+            33,
+            33
+          ],
+          "cueExit": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "worstMs": 33,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.75": {
+          "startErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "endErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueExit": [
+            0,
+            0,
+            -33,
+            0,
+            -33,
+            -33,
+            0,
+            0,
+            0,
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.5": {
+          "startErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "endErrors": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueExit": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 0,
+          "stalled": 0,
+          "ok": true
+        }
+      },
+      "qualityChanges": {
+        "1": [
+          {
+            "levels": "1 → 2",
+            "forcedAtMs": 13732,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 → 1",
+            "forcedAtMs": 13745,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "ok": true
+          }
+        ],
+        "0.75": [
+          {
+            "levels": "1 → 2",
+            "forcedAtMs": 13748,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 0,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 → 1",
+            "forcedAtMs": 13746,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "ok": false
+          }
+        ],
+        "0.5": [
+          {
+            "levels": "1 → 2",
+            "forcedAtMs": 13749,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "ok": false
+          },
+          {
+            "levels": "2 → 1",
+            "forcedAtMs": 13745,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 500,
+            "stalled": 0,
+            "ok": false
+          }
+        ]
+      },
+      "interruptions": {
+        "whileLoopingBuffered": {
+          "startErrors": [
+            0,
+            33,
+            33
+          ],
+          "endErrors": [
+            0,
+            0,
+            0
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            0,
+            33,
+            33
+          ],
+          "cueExit": [
+            0,
+            0,
+            0
+          ],
+          "worstMs": 33,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true
+        },
+        "seekingUnbuffered": {
+          "startErrors": [
+            0
+          ],
+          "endErrors": [
+            0
+          ],
+          "framesAfterStop": [
+            0
+          ],
+          "cueEntry": [
+            0
+          ],
+          "cueExit": [
+            -33
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 33,
+          "stalled": 0,
+          "ok": true,
+          "farWasBuffered": false,
+          "finishedWhileOffline": false,
+          "offlineMs": 4006,
+          "finishedAfterRestoreMs": 4690
+        },
+        "hlsErrors": [
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          },
+          {
+            "details": "bufferStalledError",
+            "fatal": false
+          },
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          }
+        ]
+      }
+    }
+  },
+  "segment": {
+    "id": "s2",
+    "startMs": 12000,
+    "endMs": 15500,
+    "text": "Au lako mai Suva."
+  }
+}

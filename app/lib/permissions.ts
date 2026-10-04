@@ -42,15 +42,42 @@ type RevisionUnderReview = {
 export type Check =
   | { action: "staffArea.enter" }
   | { action: "account.manage" | "role.assign" | "settings.edit" }
+  /** Signed-in administrators still hold a working authenticator, so nobody resets their own. */
+  | { action: "twoFactor.reset"; staffMember: { userId: string } }
   /**
    * Who may publish. Whether a particular Revision may be published (approvals present, rights
    * current) is the eligibility decision, not a permission (ADR-0007).
    */
   | { action: "content.edit" | "revision.publish" | "reviewLink.issue" }
+  /** Taking published content down (withdraw) or retiring it (archive). */
+  | { action: "content.withdraw" }
+  /** Recording and withdrawing Rights Records, and reading the private evidence behind them. */
+  | { action: "rights.manage" | "rightsEvidence.read" }
+  /**
+   * Uploading files and managing the media library (alt text). There is no public upload path
+   * (docs/phase-1a-defaults.md §1).
+   */
+  | { action: "media.upload" }
+  /**
+   * Working the Submission queue: reading what the public sent, owning it, setting its due date
+   * and sending a contributor an upload link (docs/phase-1a-defaults.md §4).
+   */
+  | { action: "submission.manage" }
+  /** Publishing a new version of a consent notice's wording. */
+  | { action: "notice.publish" }
+  /** Finding a person's Consent Records and withdrawing one at their request (DATA-02). */
+  | { action: "consent.manage" }
+  /** Seeing the Revisions waiting on your review. */
+  | { action: "reviewQueue.view" }
+  /** Reading a Revision in the staff area: editors, and the reviewers assigned to it. */
+  | { action: "revision.view"; revision: { assignedReviewerIds: string[] } }
   | { action: "content.hidePendingReview" }
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
   /** Approving or rejecting a Revision for one Review Type. */
   | { action: "revision.review"; revision: RevisionUnderReview }
+  /** Adding a Learning Layer to a Video: editors, and the Educators assigned to that Video. */
+  | { action: "learningLayer.create"; video: { assignedEducatorIds: string[] } }
+  /** Opening and editing a Learning Layer: editors, and the Educators assigned to it (VAC-05). */
   | { action: "learningLayer.author" | "learningLayer.submit"; learningLayer: { assignedEducatorIds: string[] } }
   | { action: "case.read" | "case.act"; case: { kind: CaseKind } }
   | { action: "case.decideAppeal"; case: { kind: CaseKind; decidedBy: string } }
@@ -61,7 +88,7 @@ export type Check =
   | { action: "learnerData.process"; learnerRecord: { ownerId: string } };
 
 /** Which staff role handles each kind of Case. */
-const CASE_HANDLER: Record<CaseKind, StaffRole> = {
+export const CASE_HANDLER: Record<CaseKind, StaffRole> = {
   report: "safeguarding_lead",
   rights_concern: "safeguarding_lead",
   data_request: "privacy_contact",
@@ -80,10 +107,34 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "settings.edit":
       return hasRole("administrator");
 
+    case "twoFactor.reset":
+      return hasRole("administrator") && check.staffMember.userId !== actor.userId;
+
     case "content.edit":
     case "revision.publish":
     case "reviewLink.issue":
+    case "content.withdraw":
+    case "rights.manage":
+    case "rightsEvidence.read":
       return hasRole("editor");
+
+    case "media.upload":
+      return hasRole("editor") || hasRole("educator");
+
+    case "submission.manage":
+      return hasRole("editor");
+
+    case "notice.publish":
+      return hasRole("administrator") || hasRole("privacy_contact");
+
+    case "consent.manage":
+      return hasRole("privacy_contact");
+
+    case "reviewQueue.view":
+      return hasRole("reviewer");
+
+    case "revision.view":
+      return hasRole("editor") || (hasRole("reviewer") && check.revision.assignedReviewerIds.includes(actor.userId));
 
     case "knowledgeHolderApproval.record":
       return hasRole("editor") && !check.revision.authorIds.includes(actor.userId);
@@ -103,7 +154,14 @@ export function can(actor: Actor | null, check: Check): boolean {
       );
     }
 
+    case "learningLayer.create":
+      return hasRole("editor") || (hasRole("educator") && check.video.assignedEducatorIds.includes(actor.userId));
+
     case "learningLayer.author":
+      return (
+        hasRole("editor") || (hasRole("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId))
+      );
+
     case "learningLayer.submit":
       return hasRole("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId);
 

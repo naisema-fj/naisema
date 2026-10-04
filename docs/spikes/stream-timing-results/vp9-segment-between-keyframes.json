@@ -1,0 +1,714 @@
+{
+  "codec": "vp9",
+  "segmentId": "s5",
+  "browser": "141.0.7390.37",
+  "profile": {
+    "offline": false,
+    "latency": 150,
+    "downloadThroughput": 187500,
+    "uploadThroughput": 93750
+  },
+  "clips": {
+    "landscape": {
+      "coldStarts": {
+        "runs": [
+          3525,
+          3334,
+          3328,
+          3316,
+          3339
+        ],
+        "within5s": 5,
+        "ok": true
+      },
+      "loops": {
+        "1": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 27,
+          "cueWorstMs": 27,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.75": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 23,
+          "cueWorstMs": 23,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.5": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 23,
+          "cueWorstMs": 23,
+          "stalled": 0,
+          "ok": true
+        }
+      },
+      "qualityChanges": {
+        "1": [
+          {
+            "levels": "1 \u2192 2",
+            "forcedAtMs": 29115,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 27,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 \u2192 1",
+            "forcedAtMs": 29061,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 27,
+            "stalled": 0,
+            "ok": true
+          }
+        ],
+        "0.75": [
+          {
+            "levels": "1 \u2192 2",
+            "forcedAtMs": 29128,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 \u2192 1",
+            "forcedAtMs": 29066,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          }
+        ],
+        "0.5": [
+          {
+            "levels": "1 \u2192 2",
+            "forcedAtMs": 29120,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 \u2192 1",
+            "forcedAtMs": 29104,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          }
+        ]
+      },
+      "interruptions": {
+        "whileLoopingBuffered": {
+          "startErrors": [
+            -7,
+            -7,
+            27
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            -7,
+            27
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 27,
+          "cueWorstMs": 27,
+          "stalled": 0,
+          "ok": true
+        },
+        "seekingUnbuffered": {
+          "startErrors": [
+            0
+          ],
+          "endErrors": [
+            0
+          ],
+          "framesAfterStop": [
+            0
+          ],
+          "cueEntry": [
+            0
+          ],
+          "cueExit": [
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 0,
+          "stalled": 0,
+          "ok": true,
+          "farWasBuffered": false,
+          "finishedWhileOffline": false,
+          "offlineMs": 4005,
+          "finishedAfterRestoreMs": 4605
+        },
+        "hlsErrors": [
+          {
+            "details": "bufferStalledError",
+            "fatal": false
+          },
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          },
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          }
+        ]
+      }
+    },
+    "vertical": {
+      "coldStarts": {
+        "runs": [
+          3310,
+          3313,
+          3324,
+          3305,
+          3300
+        ],
+        "within5s": 5,
+        "ok": true
+      },
+      "loops": {
+        "1": {
+          "startErrors": [
+            -7,
+            27,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            27,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 27,
+          "cueWorstMs": 27,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.75": {
+          "startErrors": [
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            27,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 27,
+          "cueWorstMs": 27,
+          "stalled": 0,
+          "ok": true
+        },
+        "0.5": {
+          "startErrors": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 23,
+          "cueWorstMs": 23,
+          "stalled": 0,
+          "ok": true
+        }
+      },
+      "qualityChanges": {
+        "1": [
+          {
+            "levels": "1 \u2192 2",
+            "forcedAtMs": 29092,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 \u2192 1",
+            "forcedAtMs": 29048,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 27,
+            "stalled": 0,
+            "ok": true
+          }
+        ],
+        "0.75": [
+          {
+            "levels": "1 \u2192 2",
+            "forcedAtMs": 29095,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 \u2192 1",
+            "forcedAtMs": 29078,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          }
+        ],
+        "0.5": [
+          {
+            "levels": "1 \u2192 2",
+            "forcedAtMs": 29118,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          },
+          {
+            "levels": "2 \u2192 1",
+            "forcedAtMs": 29091,
+            "forcedInside": true,
+            "framesOutsideSegment": 0,
+            "worstMs": 23,
+            "stalled": 0,
+            "ok": true
+          }
+        ]
+      },
+      "interruptions": {
+        "whileLoopingBuffered": {
+          "startErrors": [
+            -7,
+            -7,
+            -7
+          ],
+          "endErrors": [
+            -23,
+            -23,
+            -23
+          ],
+          "framesAfterStop": [
+            0,
+            0,
+            0
+          ],
+          "cueEntry": [
+            -7,
+            -7,
+            -7
+          ],
+          "cueExit": [
+            -23,
+            -23,
+            -23
+          ],
+          "worstMs": 23,
+          "cueWorstMs": 23,
+          "stalled": 0,
+          "ok": true
+        },
+        "seekingUnbuffered": {
+          "startErrors": [
+            0
+          ],
+          "endErrors": [
+            0
+          ],
+          "framesAfterStop": [
+            0
+          ],
+          "cueEntry": [
+            0
+          ],
+          "cueExit": [
+            0
+          ],
+          "worstMs": 0,
+          "cueWorstMs": 0,
+          "stalled": 0,
+          "ok": true,
+          "farWasBuffered": false,
+          "finishedWhileOffline": false,
+          "offlineMs": 4005,
+          "finishedAfterRestoreMs": 4642
+        },
+        "hlsErrors": [
+          {
+            "details": "bufferStalledError",
+            "fatal": false
+          },
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          },
+          {
+            "details": "fragLoadError",
+            "fatal": false
+          }
+        ]
+      }
+    }
+  },
+  "segment": {
+    "id": "s5",
+    "startMs": 27340,
+    "endMs": 30890,
+    "text": "Ni sa bula."
+  },
+  "note": "Interruptions taken from the rerun with a 6 s buffer (vp9-s5-2026-10-04T07-24-19), in which the far segment was confirmed unbuffered."
+}

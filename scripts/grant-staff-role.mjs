@@ -5,13 +5,9 @@
 //   pnpm staff:grant --local --email me@example.com --role administrator
 //
 // Reviewers also need --review-type (and --language-variety for language reviewers).
-import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createRequire } from "node:module";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
+import { executeSql, fail, requireEmail, requireTarget } from "./lib/staff-cli.mjs";
 
 const ROLES = ["administrator", "editor", "educator", "reviewer", "safeguarding_lead", "privacy_contact"];
 const REVIEW_TYPES = ["language", "cultural", "editorial", "accessibility", "safeguarding"];
@@ -27,18 +23,10 @@ const { values } = parseArgs({
   },
 });
 
-function fail(message) {
-  console.error(message);
-  process.exit(1);
-}
-
-// wrangler d1 execute cannot bind parameters, so every value that reaches the SQL below is
-// checked against a strict pattern first, whatever the role.
-const email = values.email?.trim().toLowerCase();
-if (!email || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/.test(email)) fail("Pass --email with a valid address.");
+// Every value that reaches the SQL below is checked against a strict pattern first, whatever the role.
+const email = requireEmail(values.email);
 if (!ROLES.includes(values.role)) fail(`Pass --role, one of: ${ROLES.join(", ")}.`);
-if (!values.local && !values.env) fail("Pass --env staging|production, or --local.");
-if (values.env && !["staging", "production"].includes(values.env)) fail("--env must be staging or production.");
+const target = requireTarget(values);
 const reviewType = values["review-type"] ?? null;
 const variety = values["language-variety"] ?? null;
 if (reviewType !== null && !REVIEW_TYPES.includes(reviewType))
@@ -66,23 +54,5 @@ const sql = [
              '{"via":"cli","role":"${values.role}"}', ${now});`,
 ].join("\n");
 
-// Run Wrangler's own entry file with this Node binary: no shell, so it works the same on
-// Windows (where `pnpm` is a .cmd wrapper) and the SQL travels in a file, not a long argument.
-const require = createRequire(import.meta.url);
-const wranglerPackage = require.resolve("wrangler/package.json");
-const wranglerBin = join(dirname(wranglerPackage), require(wranglerPackage).bin.wrangler);
-const workDir = mkdtempSync(join(tmpdir(), "naisema-grant-"));
-const sqlFile = join(workDir, "grant.sql");
-writeFileSync(sqlFile, sql);
-
-const target = values.local ? ["--local"] : ["--remote", "--env", values.env];
-try {
-  execFileSync(
-    process.execPath,
-    [wranglerBin, "d1", "execute", "DB", ...target, "--config", "wrangler.jsonc", "--file", sqlFile, "--yes"],
-    { stdio: "inherit" },
-  );
-} finally {
-  rmSync(workDir, { recursive: true, force: true });
-}
+executeSql(target, sql);
 console.log(`Granted ${values.role} to ${email}. They can now sign in at the admin site and set up two-factor.`);

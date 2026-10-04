@@ -10,15 +10,32 @@
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
+  // Daily at 19:45 UTC (07:45 in Fiji): Rights Record expiry warnings (app/lib/rights-expiry.server.ts),
+  // then reindexing items whose rights expired (app/lib/search.server.ts).
+  "triggers": { "crons": ["45 19 * * *"] },
   "upload_source_maps": true,
   // Local development and tests: the staff admin site answers on admin.localhost, and email is
   // written to the email_outbox table instead of being sent.
-  // Set per environment with `wrangler secret put BETTER_AUTH_SECRET --env <env>`; locally in .dev.vars.
-  "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+  // Set per environment with `wrangler secret put <NAME> --env <env>`; locally in .dev.vars, where
+  // TURNSTILE_SECRET_KEY is Cloudflare's always-passing test secret (scripts/ensure-dev-vars.mjs).
+  "secrets": { "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SECRET_KEY"] },
   "vars": {
+    // Cloudflare's always-passing Turnstile test site key (app/lib/turnstile.ts); deployed
+    // environments set their own as a secret.
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    // Newsletter sign-ups are written to the newsletter_outbox table instead of the newsletter tool.
+    "NEWSLETTER_OUTBOX": "true",
     "ADMIN_HOSTNAME": "admin.localhost",
+    // Where the public site answers, so a withdrawal can purge its cached pages (app/lib/public-cache.server.ts).
+    "PUBLIC_ORIGINS": "http://localhost:5173,http://localhost:4173",
     "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
-    "EMAIL_OUTBOX": "true"
+    "EMAIL_OUTBOX": "true",
+    // Which environment this is, recorded on every Video Asset, as one Stream account serves them all.
+    "ENVIRONMENT": "development",
+    // Videos are "processed" by a local stand-in that plays the master itself (app/lib/video-provider.server.ts).
+    "VIDEO_PROVIDER": "local",
+    "CLOUDFLARE_ACCOUNT_ID": "79d195146bfff668d5b0e8aa5a6ed28b",
+    "VIDEO_MASTERS_BUCKET": "naisema-dev-video-masters"
   },
   "d1_databases": [
     {
@@ -28,9 +45,41 @@
       "migrations_dir": "migrations"
     }
   ],
+  // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_dev_events" }],
+  // Public forms: at most 5 sends a minute from one address to one form (app/lib/form-guard.server.ts).
+  "ratelimits": [{ "name": "FORM_RATE_LIMIT", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }],
+  // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+  // The Scanner container's Durable Object class (workers/scanner.ts).
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Scanner"] }],
+  // Building the scanner image needs Docker; local development and tests don't build it
+  // (docs/handover/runbook.md, upload safety).
+  "dev": { "enable_containers": false },
+  // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
+  "queues": {
+    "producers": [{ "binding": "UPLOAD_SCANS", "queue": "naisema-dev-upload-scans" }],
+    "consumers": [{ "queue": "naisema-dev-upload-scans", "max_batch_size": 1, "max_retries": 5 }]
+  },
+  // ClamAV in Cloudflare Containers (ADR-0010; containers/scanner), reached through its Durable Object.
+  "containers": [
+    {
+      "class_name": "Scanner",
+      "image": "./containers/scanner/Dockerfile",
+      "instance_type": "standard-1",
+      "max_instances": 2
+    }
+  ],
+  "durable_objects": { "bindings": [{ "name": "SCANNER", "class_name": "Scanner" }] },
+  // Image delivery: re-encoded on the way out, which strips metadata (docs/phase-1a-defaults.md §1).
+  "images": { "binding": "IMAGES" },
   "r2_buckets": [
     { "binding": "MEDIA", "bucket_name": "naisema-dev-media" },
-    { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" }
+    { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" },
+    // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
+    { "binding": "QUARANTINE", "bucket_name": "naisema-dev-quarantine" },
+    // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+    { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-dev-video-masters" }
   ],
   "env": {
     "staging": {
@@ -46,10 +95,18 @@
       "workers_dev": true,
       "vars": {
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
-        "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>"
+        "PUBLIC_ORIGINS": "https://staging.naisema.com",
+        "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>",
+        // Staging never adds anyone to the real newsletter list.
+        "NEWSLETTER_OUTBOX": "true",
+        "ENVIRONMENT": "staging",
+        // Cloudflare Stream, once its secrets are set (docs/handover/runbook.md, video).
+        "VIDEO_PROVIDER": "stream",
+        "CLOUDFLARE_ACCOUNT_ID": "79d195146bfff668d5b0e8aa5a6ed28b",
+        "VIDEO_MASTERS_BUCKET": "naisema-staging-video-masters"
       },
       "send_email": [{ "name": "EMAIL" }],
-      "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+      "secrets": { "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] },
       "d1_databases": [
         {
           "binding": "DB",
@@ -58,9 +115,36 @@
           "migrations_dir": "migrations"
         }
       ],
+      // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
+      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_staging_events" }],
+      // Public forms: at most 5 sends a minute from one address to one form (app/lib/form-guard.server.ts).
+      "ratelimits": [{ "name": "FORM_RATE_LIMIT", "namespace_id": "1002", "simple": { "limit": 5, "period": 60 } }],
+      // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
+      "queues": {
+        "producers": [{ "binding": "UPLOAD_SCANS", "queue": "naisema-staging-upload-scans" }],
+        "consumers": [{ "queue": "naisema-staging-upload-scans", "max_batch_size": 1, "max_retries": 5 }]
+      },
+      // ClamAV in Cloudflare Containers (ADR-0010; containers/scanner), reached through its Durable Object.
+      "containers": [
+        {
+          "class_name": "Scanner",
+          "image": "./containers/scanner/Dockerfile",
+          "instance_type": "standard-1",
+          "max_instances": 2
+        }
+      ],
+      "durable_objects": { "bindings": [{ "name": "SCANNER", "class_name": "Scanner" }] },
+      // Image delivery: re-encoded on the way out, which strips metadata (docs/phase-1a-defaults.md §1).
+      "images": { "binding": "IMAGES" },
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "naisema-staging-media" },
-        { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" }
+        { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" },
+        // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
+        { "binding": "QUARANTINE", "bucket_name": "naisema-staging-quarantine" },
+        // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-staging-video-masters" }
       ]
     },
     "production": {
@@ -68,10 +152,18 @@
       "vars": {
         "ALLOW_INDEXING": "true",
         "ADMIN_HOSTNAME": "admin.naisema.com",
-        "EMAIL_FROM": "Na iSema <no-reply@naisema.com>"
+        "PUBLIC_ORIGINS": "https://naisema.com",
+        "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
+        "ENVIRONMENT": "production",
+        // Cloudflare Stream, once its secrets are set (docs/handover/runbook.md, video).
+        "VIDEO_PROVIDER": "stream",
+        "CLOUDFLARE_ACCOUNT_ID": "79d195146bfff668d5b0e8aa5a6ed28b",
+        "VIDEO_MASTERS_BUCKET": "naisema-production-video-masters"
       },
       "send_email": [{ "name": "EMAIL" }],
-      "secrets": { "required": ["BETTER_AUTH_SECRET"] },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "BUTTONDOWN_API_KEY"]
+      },
       "d1_databases": [
         {
           "binding": "DB",
@@ -80,9 +172,36 @@
           "migrations_dir": "migrations"
         }
       ],
+      // Product events (docs/decision-log.md, analytics): IDs only, never learner IDs or search text.
+      "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "naisema_production_events" }],
+      // Public forms: at most 5 sends a minute from one address to one form (app/lib/form-guard.server.ts).
+      "ratelimits": [{ "name": "FORM_RATE_LIMIT", "namespace_id": "1003", "simple": { "limit": 5, "period": 60 } }],
+      // A new id on every deploy; keys the public edge cache so a deploy never serves pages built for old assets.
+      "version_metadata": { "binding": "CF_VERSION_METADATA" },
+      // Each finished upload is queued for a scan; the Worker consumes the queue (app/lib/scan.server.ts).
+      "queues": {
+        "producers": [{ "binding": "UPLOAD_SCANS", "queue": "naisema-production-upload-scans" }],
+        "consumers": [{ "queue": "naisema-production-upload-scans", "max_batch_size": 1, "max_retries": 5 }]
+      },
+      // ClamAV in Cloudflare Containers (ADR-0010; containers/scanner), reached through its Durable Object.
+      "containers": [
+        {
+          "class_name": "Scanner",
+          "image": "./containers/scanner/Dockerfile",
+          "instance_type": "standard-1",
+          "max_instances": 2
+        }
+      ],
+      "durable_objects": { "bindings": [{ "name": "SCANNER", "class_name": "Scanner" }] },
+      // Image delivery: re-encoded on the way out, which strips metadata (docs/phase-1a-defaults.md §1).
+      "images": { "binding": "IMAGES" },
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "naisema-production-media" },
-        { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" }
+        { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" },
+        // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
+        { "binding": "QUARANTINE", "bucket_name": "naisema-production-quarantine" },
+        // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-production-video-masters" }
       ]
     }
   }

@@ -44,6 +44,18 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["administrator manages accounts", administrator, { action: "account.manage" }, true],
   ["administrator assigns roles", administrator, { action: "role.assign" }, true],
   ["administrator edits site settings and feature flags", administrator, { action: "settings.edit" }, true],
+  [
+    "administrator resets another staff member's two-factor",
+    administrator,
+    { action: "twoFactor.reset", staffMember: { userId: "editor" } },
+    true,
+  ],
+  [
+    "administrator cannot reset their own two-factor",
+    administrator,
+    { action: "twoFactor.reset", staffMember: { userId: "admin" } },
+    false,
+  ],
   ["administrator cannot read report cases", administrator, { action: "case.read", case: { kind: "report" } }, false],
   [
     "administrator cannot read data-request cases",
@@ -52,6 +64,15 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["administrator cannot approve reviews by role alone", administrator, languageRevision(), false],
+  [
+    "administrator cannot read revisions by role alone",
+    administrator,
+    { action: "revision.view", revision: { assignedReviewerIds: [] } },
+    false,
+  ],
+  ["administrator cannot withdraw content", administrator, { action: "content.withdraw" }, false],
+  ["administrator cannot manage Rights Records by role alone", administrator, { action: "rights.manage" }, false],
+  ["administrator cannot read rights evidence", administrator, { action: "rightsEvidence.read" }, false],
 
   // Editor
   ["editor edits content", editor, { action: "content.edit" }, true],
@@ -71,11 +92,22 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ],
   ["editor cannot assign roles", editor, { action: "role.assign" }, false],
   [
+    "editor cannot reset a staff member's two-factor",
+    editor,
+    { action: "twoFactor.reset", staffMember: { userId: "educator" } },
+    false,
+  ],
+  [
     "editor cannot approve reviews without a reviewer role",
     editor,
     languageRevision({ authorIds: ["educator"] }),
     false,
   ],
+
+  ["editor withdraws and archives published content", editor, { action: "content.withdraw" }, true],
+  ["editor records and withdraws Rights Records", editor, { action: "rights.manage" }, true],
+  ["editor reads rights evidence", editor, { action: "rightsEvidence.read" }, true],
+  ["editor reads any revision", editor, { action: "revision.view", revision: { assignedReviewerIds: [] } }, true],
 
   // Educator
   [
@@ -91,6 +123,36 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   [
+    "editor authors any learning layer",
+    editor,
+    { action: "learningLayer.author", learningLayer: { assignedEducatorIds: [] } },
+    true,
+  ],
+  [
+    "reviewer cannot author a learning layer, even if listed",
+    languageReviewer,
+    { action: "learningLayer.author", learningLayer: { assignedEducatorIds: ["lang-reviewer"] } },
+    false,
+  ],
+  [
+    "educator adds a learning layer to a video they are assigned to",
+    educator,
+    { action: "learningLayer.create", video: { assignedEducatorIds: ["educator"] } },
+    true,
+  ],
+  [
+    "educator cannot add a learning layer to a video they aren't assigned to",
+    educator,
+    { action: "learningLayer.create", video: { assignedEducatorIds: ["someone-else"] } },
+    false,
+  ],
+  [
+    "editor adds a learning layer to any video",
+    editor,
+    { action: "learningLayer.create", video: { assignedEducatorIds: [] } },
+    true,
+  ],
+  [
     "educator submits an assigned learning layer for review",
     educator,
     { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: ["educator"] } },
@@ -103,6 +165,24 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   ["educator cannot publish", educator, { action: "revision.publish" }, false],
+  ["educator cannot withdraw content", educator, { action: "content.withdraw" }, false],
+  ["educator cannot manage Rights Records", educator, { action: "rights.manage" }, false],
+  ["educator uploads to the media library", educator, { action: "media.upload" }, true],
+  ["editor uploads to the media library", editor, { action: "media.upload" }, true],
+  ["administrator cannot upload by role alone", administrator, { action: "media.upload" }, false],
+  ["safeguarding lead cannot upload by role alone", safeguardingLead, { action: "media.upload" }, false],
+  ["a signed-in person without a staff role cannot upload", learner("me"), { action: "media.upload" }, false],
+
+  // Submissions and Consent Records (docs/phase-1a-defaults.md §4, §11)
+  ["editor works the Submission queue", editor, { action: "submission.manage" }, true],
+  ["educator does not see Submissions", educator, { action: "submission.manage" }, false],
+  ["administrator does not see Submissions by role alone", administrator, { action: "submission.manage" }, false],
+  ["privacy contact publishes consent notices", privacyContact, { action: "notice.publish" }, true],
+  ["administrator publishes consent notices", administrator, { action: "notice.publish" }, true],
+  ["editor cannot change consent notices", editor, { action: "notice.publish" }, false],
+  ["privacy contact looks up and withdraws Consent Records", privacyContact, { action: "consent.manage" }, true],
+  ["editor cannot look up Consent Records by person", editor, { action: "consent.manage" }, false],
+  ["administrator cannot look up Consent Records by role alone", administrator, { action: "consent.manage" }, false],
   [
     "educator cannot read learner records",
     educator,
@@ -172,6 +252,29 @@ const rows: [string, Actor | null, Check, boolean][] = [
     editorAndReviewer,
     languageRevision({ authorIds: ["educator"] }),
     true,
+  ],
+
+  [
+    "reviewer reads a revision they are assigned to review",
+    languageReviewer,
+    { action: "revision.view", revision: { assignedReviewerIds: ["lang-reviewer"] } },
+    true,
+  ],
+  [
+    "reviewer cannot read a revision they are not assigned to",
+    languageReviewer,
+    { action: "revision.view", revision: { assignedReviewerIds: ["someone-else"] } },
+    false,
+  ],
+  ["reviewer cannot withdraw content", languageReviewer, { action: "content.withdraw" }, false],
+  ["reviewer cannot read rights evidence", languageReviewer, { action: "rightsEvidence.read" }, false],
+  ["reviewer has a review queue", culturalReviewer, { action: "reviewQueue.view" }, true],
+  ["an editor without a reviewer role has no review queue", editor, { action: "reviewQueue.view" }, false],
+  [
+    "someone still assigned whose reviewer role was revoked cannot read the revision",
+    educator,
+    { action: "revision.view", revision: { assignedReviewerIds: ["educator"] } },
+    false,
   ],
 
   // Safeguarding lead

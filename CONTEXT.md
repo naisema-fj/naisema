@@ -8,8 +8,24 @@ _Avoid_: NAISEMA, Naisema, NaiSema
 ## Content and learning
 
 **Content Item**:
-A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area.
-_Avoid_: Cultural item, post, page (for content)
+A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area. Its type is Article, Resource, Episode, Creator Profile, Video or Page; all share Revisions and review.
+_Avoid_: Cultural item, post, page (for content other than a Page)
+
+**Resource**:
+A Content Item a visitor downloads (a scanned PDF or audio file) or follows (an external link with a last-checked date), shown with its language, age guidance, accessibility and usage terms first.
+
+**Episode**:
+A Na iSema Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes, using a ready Video Asset, come with the learner player.
+_Avoid_: Podcast (until distribution to podcast apps is approved), show
+
+**Usage Terms**:
+What a Resource tells visitors they may do with it, in plain words (for example "free to print for teaching"). Not a Permitted Use, which is what a Rights Record grants Na iSema.
+
+**Video**:
+A Content Item showing one Video Asset, which Learning Layers are built on.
+
+**Page**:
+A Content Item backing one of the fixed site pages in the footer (About, Privacy and so on), at `/{slug}`, outside the primary areas and Topics.
 
 **Learning Layer**:
 An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
@@ -34,6 +50,10 @@ _Avoid_: Quiz, exercise
 **Completion Rule**:
 The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
 _Avoid_: Finished, mastered, passed
+
+**Video Asset**:
+A video source master kept as Na iSema's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
+_Avoid_: Stream video (for the master), clip
 
 **Excerpt**:
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.
@@ -79,7 +99,7 @@ _Avoid_: Badge, verified
 A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
 
 **Rights Record**:
-The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses.
+The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses. A record can cover the whole item or one part an Episode lists with rights of its own (a speaker or guest, a piece of music, an archive clip).
 _Avoid_: Licence (for the record), consent (for rights)
 
 **Permitted Use**:
@@ -103,7 +123,7 @@ Anyone whose story, recording or knowledge appears in Na iSema content; a rights
 _Avoid_: Author (for non-staff), participant
 
 **Creator**:
-A Contributor with a public Creator Profile and their own channel of work.
+A Contributor with a public Creator Profile and their own channel of work. A Creator Profile is a Content Item in Connect: their chosen public name, biography, a general location, languages, kinds of work, a consented portrait and one free sample.
 _Avoid_: Influencer, channel owner
 
 **Learner**:
@@ -134,18 +154,36 @@ _Avoid_: Post, entry
 **Consent Record**:
 The stored fact that a person agreed to one purpose under one notice version, with time, source and any withdrawal; kept apart from the Submission it came with.
 
+**Notice**:
+The words shown beside a consent box for one purpose, kept as numbered versions. New wording is a new version; earlier versions are never changed, so a Consent Record always names words that can still be read.
+_Avoid_: Privacy policy (the Privacy page is a Page, not a Notice)
+
+**Upload Link**:
+A single-use, expiring link an editor emails to someone whose contribution proposal they want, through which that person uploads into quarantine. The only public way to upload.
+
 **Case**:
-A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner.
+A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner. Its decision can be appealed once, and someone other than the decision's maker decides the appeal.
 _Avoid_: Ticket, complaint (as the record)
 
+**Hold**:
+The safeguarding lead's hiding of a Content Item while a Case about it is reviewed. A held item is not eligible, so it is off the public site and can't be republished until the hold is lifted.
+_Avoid_: Takedown (a withdrawal is the editor's)
+
 ## Discovery
+
+**Topic**:
+A subject that Content Items are tagged with (at least one each, except Pages), with its own page at `/topics/{slug}`. Topics cut across the primary areas. A Topic may sit under one broader Topic as a **Subtopic** (one level only), and may have a **Lead Feature**: one item shown first on its page.
+_Avoid_: Tag, category
+
+**Related Items**:
+The other Content Items, of any type, an editor links from an item's Revision; shown only while each is public.
 
 **Provider**:
 Any organisation or person whose learning Offering is listed on Na iSema. Listing implies no endorsement or partnership.
 _Avoid_: Partner (unless an agreement exists)
 
 **Partner**:
-A Provider with a recorded Partnership Agreement.
+A Provider with a recorded Partnership Agreement in force. Only then is "Partner" shown, and only a Partner's Offering can be shown or hosted on Na iSema.
 
 **Offering**:
 A listed programme, course, resource or class belonging to a Provider, with one explicit access mode.

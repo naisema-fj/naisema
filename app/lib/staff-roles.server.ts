@@ -2,6 +2,7 @@ import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { roleAssignment, user } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { toLanguageVariety } from "./language-variety";
 import { REVIEW_TYPES, type ReviewType, type RoleAssignment, STAFF_ROLES, type StaffRole } from "./permissions";
 
 export type GrantRequest = RoleAssignment & { email: string };
@@ -28,7 +29,7 @@ export function validateGrant(form: FormData): GrantValidation {
     .toLowerCase();
   const role = String(form.get("role") ?? "");
   const reviewType = String(form.get("reviewType") ?? "");
-  const languageVariety = String(form.get("languageVariety") ?? "").trim();
+  const languageVariety = toLanguageVariety(String(form.get("languageVariety") ?? ""));
 
   if (!email.includes("@")) return { ok: false, error: "Enter the staff member's email address." };
   if (!(STAFF_ROLES as readonly string[]).includes(role)) return { ok: false, error: "Choose a role." };
@@ -38,7 +39,10 @@ export function validateGrant(form: FormData): GrantValidation {
     return { ok: false, error: "Choose the Review Type this reviewer may approve." };
   }
   if (reviewType === "language" && !languageVariety) {
-    return { ok: false, error: "Language reviewers need the Language Variety they may approve." };
+    return {
+      ok: false,
+      error: "Language reviewers need the Language Variety they may approve, in letters, digits and hyphens.",
+    };
   }
   return {
     ok: true,
@@ -46,7 +50,7 @@ export function validateGrant(form: FormData): GrantValidation {
       email,
       role: "reviewer",
       reviewType: reviewType as ReviewType,
-      ...(reviewType === "language" ? { languageVariety } : {}),
+      ...(reviewType === "language" && languageVariety ? { languageVariety } : {}),
     },
   };
 }
@@ -139,4 +143,13 @@ export async function listStaff(db: Database) {
     email: row.email,
     assignment: toRoleAssignment(row),
   }));
+}
+
+/** Everyone who currently holds a role, for sending them staff email. */
+export async function activeHolders(db: Database, role: StaffRole) {
+  return db
+    .selectDistinct({ id: user.id, email: user.email })
+    .from(roleAssignment)
+    .innerJoin(user, eq(user.id, roleAssignment.userId))
+    .where(and(eq(roleAssignment.role, role), isNull(roleAssignment.revokedAt)));
 }

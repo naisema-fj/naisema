@@ -19,3 +19,7 @@ export async function sendEmail(env: Env, email: OutgoingEmail): Promise<void> {
   }
   await env.EMAIL.send({ from: env.EMAIL_FROM, to: email.to, subject: email.subject, text: email.text });
 }
+
+/** A letter to a member of the public: a greeting, by name when we have one, the paragraphs, a sign-off. */
+export const letterText = (name: string, paragraphs: string[]) =>
+  [`Bula${name ? ` ${name}` : ""},`, ...paragraphs, "Vinaka,\nNa iSema"].join("\n\n");

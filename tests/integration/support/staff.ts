@@ -11,12 +11,16 @@ export class Browser {
   /** Each simulated browser has its own client IP, as Cloudflare would report it. */
   ip = `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
 
-  async fetch(path: string, init: RequestInit & { form?: Record<string, string> } = {}) {
+  async fetch(path: string, init: RequestInit & { form?: Record<string, string>; multipart?: FormData } = {}) {
     const url = path.startsWith("http") ? path : `${ADMIN}${path}`;
     const headers = new Headers(init.headers);
     headers.set("CF-Connecting-IP", this.ip);
     if (this.cookies.size) headers.set("Cookie", [...this.cookies].map(([k, v]) => `${k}=${v}`).join("; "));
     let body = init.body;
+    if (init.multipart) {
+      body = init.multipart;
+      if (!headers.has("Origin")) headers.set("Origin", new URL(url).origin);
+    }
     if (init.form) {
       body = new URLSearchParams(init.form);
       headers.set("Content-Type", "application/x-www-form-urlencoded");
@@ -24,7 +28,7 @@ export class Browser {
     }
     const response = await SELF.fetch(url, {
       ...init,
-      method: init.form ? "POST" : init.method,
+      method: init.form || init.multipart ? "POST" : init.method,
       body,
       headers,
       redirect: "manual",
@@ -105,5 +109,5 @@ export async function signedInStaff(email: string, roles: RoleAssignment[]) {
   await signInWithMagicLink(browser, email);
   const secret = await startTwoFactorSetup(browser);
   await browser.fetch("/admin/two-factor/setup", { form: { intent: "verify", code: await codeFor(secret) } });
-  return { userId, browser, secret };
+  return { userId, email, browser, secret };
 }

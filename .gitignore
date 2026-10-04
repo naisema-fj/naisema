@@ -8,3 +8,6 @@ test-results/
 playwright-report/
 worker-configuration.d.ts
 *.tsbuildinfo
+
+# Impeccable finish-review screenshots (local evidence, regenerated each review)
+.impeccable/review/

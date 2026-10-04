@@ -39,6 +39,15 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  scanner:
+    name: Upload scanner (real ClamAV, EICAR)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the scanner image and check its verdicts
+        run: sh scripts/scanner-smoke.sh
+
   secrets-scan:
     name: Secret scan (gitleaks)
     runs-on: ubuntu-latest
