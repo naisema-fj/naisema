@@ -237,10 +237,20 @@ ON CONFLICT(content_item_id) DO NOTHING;
 -- One Educator per browser project for the timeline editor journey, each assigned to a Learning
 -- Layer on a Video; earlier runs' Revisions go first. The master isn't in local R2, so the preview
 -- shows no picture, which the journey doesn't need.
-UPDATE learning_layer SET current_draft_revision_id = NULL WHERE id LIKE 'e2e-layer-%';
-DELETE FROM learning_layer_educator WHERE learning_layer_id LIKE 'e2e-layer-%';
-DELETE FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%';
-DELETE FROM learning_layer WHERE id LIKE 'e2e-layer-%';
+UPDATE learning_layer SET current_draft_revision_id = NULL, current_published_revision_id = NULL
+  WHERE id LIKE 'e2e-layer-%' OR id LIKE 'e2e-review-%';
+DELETE FROM learning_layer_approval WHERE revision_id IN
+  (SELECT id FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%');
+DELETE FROM review_link_access WHERE review_link_id IN (SELECT id FROM review_link WHERE revision_id IN
+  (SELECT id FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%'));
+DELETE FROM review_link WHERE revision_id IN
+  (SELECT id FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%');
+DELETE FROM learning_layer_submission WHERE revision_id IN
+  (SELECT id FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%');
+DELETE FROM learning_layer_review_assignment WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%';
+DELETE FROM learning_layer_educator WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%';
+DELETE FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%' OR learning_layer_id LIKE 'e2e-review-%';
+DELETE FROM learning_layer WHERE id LIKE 'e2e-layer-%' OR id LIKE 'e2e-review-%';
 DELETE FROM user WHERE email LIKE 'e2e-author-%@naisema.test';
 INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
   ('e2e-author-desktop', 'E2E Author', 'e2e-author-desktop-chromium@naisema.test', 0, 0, 0),
@@ -281,3 +291,28 @@ UPDATE learning_layer SET current_draft_revision_id = id || '-r1' WHERE id LIKE 
 INSERT INTO learning_layer_educator (learning_layer_id, user_id, assigned_by, assigned_at) VALUES
   ('e2e-layer-desktop', 'e2e-author-desktop', 'e2e-seed', 0),
   ('e2e-layer-mobile', 'e2e-author-mobile', 'e2e-seed', 0);
+
+-- One editor per browser project for the Review Link journey, and a submitted, culturally sensitive
+-- Learning Layer each that someone else wrote, waiting for a Knowledge Holder's approval.
+DELETE FROM role_assignment WHERE user_id LIKE 'e2e-kh-editor-%';
+DELETE FROM user WHERE email LIKE 'e2e-kh-editor-%@naisema.test';
+INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
+  ('e2e-kh-editor-desktop', 'E2E Review Editor', 'e2e-kh-editor-desktop-chromium@naisema.test', 0, 0, 0),
+  ('e2e-kh-editor-mobile', 'E2E Review Editor', 'e2e-kh-editor-mobile-chromium@naisema.test', 0, 0, 0);
+INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
+  ('e2e-kh-editor-desktop-role', 'e2e-kh-editor-desktop', 'editor', 'e2e-seed', 0),
+  ('e2e-kh-editor-mobile-role', 'e2e-kh-editor-mobile', 'editor', 'e2e-seed', 0);
+INSERT INTO learning_layer (id, content_item_id, language_variety, created_by, created_at, updated_at) VALUES
+  ('e2e-review-desktop', 'e2e-video', 'standard-fijian', 'e2e-seed', 0, 0),
+  ('e2e-review-mobile', 'e2e-video', 'standard-fijian', 'e2e-seed', 0, 0);
+INSERT INTO learning_layer_revision (id, learning_layer_id, number, snapshot, fingerprints, created_by, created_at) VALUES
+  ('e2e-review-desktop-r1', 'e2e-review-desktop', 1,
+    '{"title":"Review desktop","level":"beginner","flags":["sensitiveCultural"],"excerpt":null,"segments":[{"id":"6f1d2c3e-0000-4000-8000-000000000011","startMs":0,"endMs":2000,"speaker":"Mere","fijian":"Bula vinaka.","english":"Hello.","overlapIntended":false,"draft":false,"retimed":false}],"activities":[{"id":"7a1d2c3e-0000-4000-8000-000000000011","kind":"listen-repeat","segmentId":"6f1d2c3e-0000-4000-8000-000000000011","prompt":"Listen, then say it aloud.","options":[],"modelResponse":"Bula vinaka.","feedback":"Soften the b, like mb.","pronunciation":"mBOO-la vee-NAH-ka","required":true,"textAlternative":"Read the words and write them out."}]}',
+    '{}', 'e2e-seed', 0),
+  ('e2e-review-mobile-r1', 'e2e-review-mobile', 1,
+    '{"title":"Review mobile","level":"beginner","flags":["sensitiveCultural"],"excerpt":null,"segments":[{"id":"6f1d2c3e-0000-4000-8000-000000000012","startMs":0,"endMs":2000,"speaker":"Mere","fijian":"Bula vinaka.","english":"Hello.","overlapIntended":false,"draft":false,"retimed":false}],"activities":[{"id":"7a1d2c3e-0000-4000-8000-000000000012","kind":"listen-repeat","segmentId":"6f1d2c3e-0000-4000-8000-000000000012","prompt":"Listen, then say it aloud.","options":[],"modelResponse":"Bula vinaka.","feedback":"Soften the b, like mb.","pronunciation":"mBOO-la vee-NAH-ka","required":true,"textAlternative":"Read the words and write them out."}]}',
+    '{}', 'e2e-seed', 0);
+UPDATE learning_layer SET current_draft_revision_id = id || '-r1' WHERE id LIKE 'e2e-review-%';
+INSERT INTO learning_layer_submission (revision_id, submitted_by, submitted_at) VALUES
+  ('e2e-review-desktop-r1', 'e2e-seed', 0),
+  ('e2e-review-mobile-r1', 'e2e-seed', 0);

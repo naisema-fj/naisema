@@ -169,6 +169,7 @@ describe("adding Learning Layers", () => {
     expect(JSON.parse(row?.snapshot ?? "{}")).toEqual({
       title: "Greetings",
       level: "beginner",
+      flags: [],
       excerpt: { sourceStartMs: 10_000, sourceEndMs: 40_000 },
       segments: [],
       annotations: [],

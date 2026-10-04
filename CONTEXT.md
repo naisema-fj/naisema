@@ -117,7 +117,7 @@ _Avoid_: Licence (for the record), consent (for rights)
 One specific use a Rights Record grants: publish, excerpt, translate, transcribe, educational adaptation, commercial or AI training. Each is granted separately; none implies another.
 
 **Review Link**:
-A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account.
+A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account. In 1a it shows a Learning Layer Revision, lasts 14 days and logs every opening.
 _Avoid_: Preview URL, share link
 
 **Knowledge Holder**:
@@ -125,7 +125,7 @@ A person or authority with standing to permit use of culturally sensitive knowle
 _Avoid_: Elder (as a role), cultural reviewer
 
 **Knowledge Holder Approval**:
-A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions.
+A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions. For a Learning Layer it also names the Review Link they saw it through, and can carry private evidence.
 
 ## People and roles
 

@@ -10,6 +10,7 @@ import {
   saveLearningLayer,
   setAssignment,
 } from "~/lib/learning-layers.server";
+import { PUBLICATION_NAMES, type PublicationState } from "~/lib/review-names";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
 import type { Route } from "./+types/layer";
 
@@ -64,6 +65,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     videoTitle: layer.video.title,
     baseRevisionId: layer.currentRevision.id,
     revisionNumber: layer.currentRevision.number,
+    publicationState: layer.publicationState as PublicationState,
     snapshot: layer.currentRevision.snapshot,
     videoDurationMs: video.durationMs,
     orientation: video.orientation,
@@ -107,6 +109,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     clip: field("clip"),
     sourceStart: field("sourceStart"),
     sourceEnd: field("sourceEnd"),
+    sensitiveCultural: field("sensitiveCultural"),
     segments: field("segments"),
     annotations: field("annotations"),
     notes: field("notes"),
@@ -126,7 +129,14 @@ export default function LearningLayerEditor({ loaderData, actionData }: Route.Co
         <a href={`/admin/videos/${loaderData.videoId}/learning-layers`}>Learning Layers on {loaderData.videoTitle}</a>
       </p>
       <h1>{loaderData.snapshot.title}</h1>
-      <p className="meta">Revision {loaderData.revisionNumber} · Standard Fijian</p>
+      <p className="meta">
+        Revision {loaderData.revisionNumber} · Standard Fijian · {PUBLICATION_NAMES[loaderData.publicationState]}
+      </p>
+      <p>
+        <a href={`/admin/learning-layers/${loaderData.id}/revisions/${loaderData.revisionNumber}`}>
+          Review and publishing for revision {loaderData.revisionNumber}
+        </a>
+      </p>
       {loaderData.saved && <p role="status">Saved as revision {loaderData.revisionNumber}.</p>}
       <TimelineEditor
         // A new revision starts the editor afresh from what was saved.

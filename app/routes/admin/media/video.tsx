@@ -1,7 +1,9 @@
 import { data, Form } from "react-router";
 import { VideoPreview } from "~/components/video-preview";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { layersUsingVideoAsset } from "~/lib/layer-review.server";
 import { requireUploader } from "~/lib/media-access.server";
+import { PUBLICATION_NAMES } from "~/lib/review-names";
 import { formatBytes } from "~/lib/upload-rules";
 import { checkVideo, retryVideo, videoDetail } from "~/lib/video-assets.server";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
@@ -30,7 +32,7 @@ async function requireVideo(env: Env, request: Request, id: string) {
  */
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const { detail } = await requireVideo(env, request, params.id);
+  const { detail, db } = await requireVideo(env, request, params.id);
   const { video } = detail;
   let preview: { src: string; hls: boolean } | null = null;
   let previewError: string | null = null;
@@ -57,6 +59,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     provider: VIDEO_PROVIDER_NAMES[video.provider],
     providerId: video.providerId,
     environment: video.environment,
+    // What depends on this footage, so whoever retries or replaces it knows (VCMS-06).
+    layers: await layersUsingVideoAsset(db, video.id),
     preview,
     previewError,
   };
@@ -118,6 +122,21 @@ export default function VideoAssetPage({ loaderData, actionData }: Route.Compone
         </section>
       )}
       {video.previewError && <p role="alert">{video.previewError}</p>}
+      <section aria-labelledby="dependents-heading">
+        <h2 id="dependents-heading">Learning Layers on this video</h2>
+        {video.layers.length ? (
+          <ul>
+            {video.layers.map((layer) => (
+              <li key={layer.id}>
+                <a href={`/admin/learning-layers/${layer.id}`}>{layer.title}</a>
+                {` on ${layer.videoTitle}: ${PUBLICATION_NAMES[layer.publicationState]}`}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>None yet.</p>
+        )}
+      </section>
       <h2>Master</h2>
       <dl className="video-facts">
         <dt>Length</dt>

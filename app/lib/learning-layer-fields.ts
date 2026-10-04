@@ -1,5 +1,6 @@
 import type { Activity, ActivityProblem } from "./activities";
 import type { Annotation, AnnotationProblem, ContextNote, ExpressionDetails, NoteProblem } from "./annotations";
+import type { LayerFlag } from "./layer-review-rules";
 import type { ReviewType } from "./permissions";
 import { type Excerpt, formatTimecode, parseTimecode, type Segment, type SegmentProblem } from "./segment-rules";
 import { retokenise } from "./tokens";
@@ -14,6 +15,8 @@ import { retokenise } from "./tokens";
 export type LearningLayerSnapshot = {
   title: string;
   level: LayerLevel;
+  /** Its Content Flags: whether it needs a Knowledge Holder's approval (ADR-0003). */
+  flags: LayerFlag[];
   excerpt: Excerpt;
   segments: Segment[];
   annotations: Annotation[];
@@ -25,7 +28,7 @@ export type LearningLayerSnapshot = {
 
 /**
  * A stored snapshot with everything later work added filled in: Revisions saved before tokens,
- * Annotations or Activities existed have none.
+ * Annotations, Activities or flags existed have none.
  */
 export function withDefaults(
   snapshot: Partial<LearningLayerSnapshot> & Pick<LearningLayerSnapshot, "title" | "level">,
@@ -33,6 +36,7 @@ export function withDefaults(
   return {
     title: snapshot.title,
     level: snapshot.level,
+    flags: snapshot.flags ?? [],
     excerpt: snapshot.excerpt ?? null,
     segments: (snapshot.segments ?? []).map((segment) => ({
       ...segment,
@@ -63,7 +67,7 @@ export const layerSpan = (excerpt: Excerpt) =>
     ? `Excerpt ${formatTimecode(excerpt.sourceStartMs)} to ${formatTimecode(excerpt.sourceEndMs)}`
     : "Whole video";
 
-export type LayerDetails = { title: string; level: LayerLevel; excerpt: Excerpt };
+export type LayerDetails = { title: string; level: LayerLevel; flags: LayerFlag[]; excerpt: Excerpt };
 export type LayerDetailField = "title" | "level" | "sourceStartMs" | "sourceEndMs";
 
 /** Why a save was refused, with the problems found in each part, for the editor to show. */
@@ -83,11 +87,18 @@ export type ReadLayerDetails =
 const isLevel = (value: string): value is LayerLevel => Object.hasOwn(LAYER_LEVELS, value);
 
 /**
- * A Learning Layer's title, level and clip, as the form sends them: `clip` is "whole" or
- * "excerpt", and an Excerpt has source in and out times inside the video.
+ * A Learning Layer's title, level, cultural review flag and clip, as the form sends them: `clip`
+ * is "whole" or "excerpt", and an Excerpt has source in and out times inside the video.
  */
 export function readLayerDetails(
-  input: { title: string; level: string; clip: string; sourceStart: string; sourceEnd: string },
+  input: {
+    title: string;
+    level: string;
+    clip: string;
+    sourceStart: string;
+    sourceEnd: string;
+    sensitiveCultural?: string;
+  },
   videoDurationMs: number,
 ): ReadLayerDetails {
   const errors: Partial<Record<LayerDetailField, string>> = {};
@@ -107,7 +118,8 @@ export function readLayerDetails(
     if (start !== null && end !== null) excerpt = { sourceStartMs: start, sourceEndMs: end };
   }
   if (Object.keys(errors).length) return { ok: false, errors };
-  return { ok: true, details: { title, level: input.level as LayerLevel, excerpt } };
+  const flags: LayerFlag[] = input.sensitiveCultural === "on" ? ["sensitiveCultural"] : [];
+  return { ok: true, details: { title, level: input.level as LayerLevel, flags, excerpt } };
 }
 
 /**

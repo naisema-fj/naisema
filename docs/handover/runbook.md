@@ -281,6 +281,18 @@ The Expression library is at `/admin/expressions`, linked from **Learning Layers
 
 Educators see only the Learning Layers they are assigned to, under **Learning Layers** on the staff home page.
 
+### Reviewing and publishing a Learning Layer
+
+The code is in `app/lib/layer-review.server.ts`, `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
+
+1. **Flag:** tick **Culturally sensitive** in the editor when a Knowledge Holder must approve it. A Learning Layer on a Video flagged culturally sensitive starts ticked and can't be published unticked. Language review in Standard Fijian is always required.
+2. **Submit:** an editor or an assigned Educator submits the current revision. Editors then assign a language reviewer.
+3. **Review Link:** for a Knowledge Holder, issue a Review Link from the revision page, saying who it is for. Copy the address at once: it is shown only once. It opens on the public site with no sign-in, shows the revision watermarked "Draft for review", is never cached or indexed, and lasts 14 days. Every opening is logged, and the page lists how often each link was opened. **Revoke** stops it at once.
+4. **Knowledge Holder Approval:** once the link has been opened, an editor who didn't write or edit the revision records who approved it, how, the link they saw it through, any conditions, and optionally evidence (PDF or image), which is scanned and kept privately for editors.
+5. **Publish:** the revision page lists everything still missing. A Learning Layer publishes only when it is submitted with every required review approved; it has Segments with no unreviewed drafts or retimed Segments, nothing that lost its place, and a required Activity; its video has finished processing; and its Video's Rights Records grant Publish, Translate, Transcribe and Educational adaptation (and Excerpt for one on an Excerpt), with the footage's own record granting Publish. Withdrawing or archiving it leaves its Video as it is.
+
+Editors see three queues on **Learning Layers**: waiting for review, ready to publish, and held up by a video that failed processing. A video's page in the media library lists the Learning Layers on it, and a Video's rights page lists the Learning Layers that rely on its rights. Reviewers find Learning Layers in **Your reviews**.
+
 ## Custom domains
 
 Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging is public so testers anywhere can use it: it serves `staging.naisema.com` and stays reachable at its `workers.dev` address because `env.staging` sets `workers_dev: true` (Wrangler turns that address off by default once an environment has routes). The `workers.dev` address serves only the public site; staff tools answer on `admin.staging.naisema.com` alone.

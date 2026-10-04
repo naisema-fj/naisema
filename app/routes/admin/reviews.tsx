@@ -1,4 +1,5 @@
 import { cloudflareContext } from "~/lib/cloudflare";
+import { layerReviewQueue } from "~/lib/layer-review.server";
 import { can, type ReviewType } from "~/lib/permissions";
 import { reviewQueue } from "~/lib/review.server";
 import { REVIEW_NAMES } from "~/lib/review-names";
@@ -16,7 +17,22 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!can(actor, { action: "reviewQueue.view" })) {
     throw new Response("Only reviewers have a review queue.", { status: 403 });
   }
-  return { queue: await reviewQueue(db, actor.userId) };
+  const [items, layers] = await Promise.all([reviewQueue(db, actor.userId), layerReviewQueue(db, actor.userId)]);
+  return {
+    queue: [
+      ...items.map((entry) => ({
+        ...entry,
+        key: `item-${entry.contentItemId}`,
+        href: `/admin/articles/${entry.contentItemId}/revisions/${entry.number}`,
+      })),
+      ...layers.map((entry) => ({
+        ...entry,
+        key: `layer-${entry.learningLayerId}`,
+        title: `${entry.title} (Learning Layer)`,
+        href: `/admin/learning-layers/${entry.learningLayerId}/revisions/${entry.number}`,
+      })),
+    ],
+  };
 }
 
 export default function Reviews({ loaderData }: Route.ComponentProps) {
@@ -29,9 +45,9 @@ export default function Reviews({ loaderData }: Route.ComponentProps) {
       {loaderData.queue.length ? (
         <ul>
           {loaderData.queue.map((entry) => (
-            <li key={`${entry.contentItemId}-${entry.number}`}>
-              <a href={`/admin/articles/${entry.contentItemId}/revisions/${entry.number}`}>{entry.title}</a>, revision{" "}
-              {entry.number}: {entry.reviewTypes.map((type) => REVIEW_NAMES[type as ReviewType]).join(", ")}
+            <li key={`${entry.key}-${entry.number}`}>
+              <a href={entry.href}>{entry.title}</a>, revision {entry.number}:{" "}
+              {entry.reviewTypes.map((type) => REVIEW_NAMES[type as ReviewType]).join(", ")}
             </li>
           ))}
         </ul>

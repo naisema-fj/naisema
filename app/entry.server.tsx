@@ -44,10 +44,10 @@ export default async function handleRequest(
   // Vite's dev server injects its own inline scripts, so the policy applies to builds only.
   if (!import.meta.env.DEV) {
     const { env } = loadContext.get(cloudflareContext);
-    // Staff pages are never indexed, whatever the environment.
+    // Staff pages, and pages that say so (Review Links), are never indexed, whatever the environment.
     const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
     applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
-      allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost,
+      allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost && leafHandle(routerContext)?.noindex !== true,
       turnstile: leafHandle(routerContext)?.turnstile === true,
       video: leafHandle(routerContext)?.video === true ? { origin: videoPlaybackOrigin(env) } : null,
     });
@@ -57,13 +57,14 @@ export default async function handleRequest(
 
 /**
  * The page's own route `handle`: `hydrate: false` (root.tsx), `turnstile: true` for a public form,
- * `video: true` for a page that plays video or reads a video file's length.
+ * `video: true` for a page that plays video or reads a video file's length, `noindex: true` for a
+ * page never to be indexed.
  */
 function leafHandle(context: EntryContext) {
   const leaf = context.staticHandlerContext.matches.at(-1);
   return leaf
     ? (context.routeModules[leaf.route.id]?.handle as
-        | { hydrate?: boolean; turnstile?: boolean; video?: boolean }
+        | { hydrate?: boolean; turnstile?: boolean; video?: boolean; noindex?: boolean }
         | undefined)
     : undefined;
 }
