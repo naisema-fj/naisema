@@ -1,4 +1,5 @@
 import type { Segment } from "./segment-rules";
+import { retokenise } from "./tokens";
 
 /**
  * WebVTT import and export for a Learning Layer (VCMS-04, ADR-0008). Segments are the source of
@@ -144,6 +145,7 @@ export function importWebVtt(cues: Cue[], existing: Segment[], language: Segment
           overlapIntended: false,
           draft: true,
           retimed: false,
+          tokens: retokenise(existing.find((segment) => segment.id === id)?.tokens ?? [], cue.text),
         };
       }),
       matched: cues.length,

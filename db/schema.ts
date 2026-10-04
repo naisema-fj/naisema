@@ -917,3 +917,27 @@ export const learningLayerEducator = sqliteTable(
     index("learning_layer_educator_user_idx").on(table.userId),
   ],
 );
+
+/**
+ * An Expression (ADR-0011, VID-07): a word or multiword phrase with its general meaning, grammar
+ * note and pronunciation guidance, reused by Annotations across Learning Layers. An idiom also has
+ * its literal meaning. Each Learning Layer Revision keeps a copy of the Expressions it uses, so a
+ * later change here shows in a Learning Layer only when it is next saved, and is reviewed then.
+ */
+export const expression = sqliteTable(
+  "expression",
+  {
+    id: text("id").primaryKey(),
+    languageVariety: text("language_variety").notNull(),
+    headword: text("headword").notNull(),
+    generalMeaning: text("general_meaning").notNull(),
+    grammarNote: text("grammar_note").notNull().default(""),
+    pronunciation: text("pronunciation").notNull().default(""),
+    literalMeaning: text("literal_meaning"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedBy: text("updated_by").notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("expression_headword_idx").on(table.languageVariety, table.headword)],
+);

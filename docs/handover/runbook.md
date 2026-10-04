@@ -272,6 +272,12 @@ Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in 
 4. **Segments:** the timeline editor (`/admin/learning-layers/<id>`) shows the video with the captions over it, in landscape or vertical layout. Each Segment has a start and end, which can be typed, nudged 100 ms at a time with the arrow keys, or set from the playhead. It also has an optional speaker, the Fijian and an English translation. **Replay** plays one Segment. Problems are listed at the top, each naming its Segment and field, and a save with problems is refused. Every save is a new Revision; a save from an outdated Revision is refused so no one's work is overwritten.
 5. **WebVTT:** import a Fijian file to replace the Segments, or an English file to fill translations. Imported text is marked "Unreviewed draft" until someone presses **I've checked this text**. The saved Segments download as Fijian or English WebVTT.
 
+6. **Annotations:** under a Segment, select a word, or a first and last word, then **Annotate**. Link the selection to an Expression from the library or define a new one: the word or phrase, its general meaning, an optional grammar note and pronunciation guide, and for an idiom its literal meaning. Then say what it means at that moment, and whether it goes on the vocabulary list. Editing the Fijian keeps Annotations on their words. When a word an Annotation needs is gone, the Annotation is listed under **Annotations and notes to check**; select the words again and press **Move to the selected words**, or remove it.
+7. **Notes:** add cultural or context notes to a Segment or to the whole Learning Layer, each with who the knowledge comes from.
+8. **Vocabulary list:** shown under the Segments, built from the Annotations marked for it, with when each occurs.
+
+The Expression library is at `/admin/expressions`, linked from **Learning Layers**. Editors, and whoever added an Expression, can change it there; Learning Layers pick the change up when they are next saved.
+
 Educators see only the Learning Layers they are assigned to, under **Learning Layers** on the staff home page.
 
 ## Custom domains

@@ -34,6 +34,9 @@ export default function LearningLayers({ loaderData }: Route.ComponentProps) {
         <a href="/admin">Back to staff home</a>
       </p>
       <h1>Learning Layers</h1>
+      <p>
+        <a href="/admin/expressions">Expressions</a>: the words and phrases Annotations link to.
+      </p>
       <h2>{loaderData.isEditor ? "Every Learning Layer" : "Learning Layers assigned to you"}</h2>
       {loaderData.layers.length ? (
         <ul className="item-list">

@@ -69,6 +69,8 @@ export default [
     route("learning-layers/:id", "routes/admin/learning-layers/layer.tsx"),
     route("learning-layers/:id/webvtt/:language", "routes/admin/learning-layers/webvtt.ts"),
     route("videos/:id/learning-layers", "routes/admin/learning-layers/video.tsx"),
+    route("expressions", "routes/admin/expressions/index.tsx"),
+    route("expressions/:id", "routes/admin/expressions/expression.tsx"),
     route("media/uploads", "routes/admin/media/uploads.ts"),
     route("media/uploads/:id", "routes/admin/media/upload.ts"),
     route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),

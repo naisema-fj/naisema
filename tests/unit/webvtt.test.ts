@@ -10,6 +10,7 @@ const segment = (fields: Partial<Segment> & Pick<Segment, "startMs" | "endMs">):
   overlapIntended: false,
   draft: false,
   retimed: false,
+  tokens: [],
   ...fields,
 });
 
@@ -99,11 +100,28 @@ describe("round trips", () => {
   });
 
   it("keep Segment IDs when an exported Fijian file is edited and imported again, with their translations", () => {
-    const kept = segment({ startMs: 0, endMs: 1_000, fijian: "Bula", english: "Hello" });
+    const kept = segment({
+      startMs: 0,
+      endMs: 1_000,
+      fijian: "Bula",
+      english: "Hello",
+      tokens: [{ id: "bula", text: "Bula" }],
+    });
     const parsed = parseWebVtt(toWebVtt([kept], "fijian").replace("Bula", "Bula vinaka"));
     if (!parsed.ok) throw new Error(parsed.error);
     const imported = importWebVtt(parsed.cues, [kept], "fijian").segments;
-    expect(imported).toEqual([{ ...kept, fijian: "Bula vinaka", draft: true }]);
+    // The word that was there keeps its token ID, so its Annotations stay anchored.
+    expect(imported).toEqual([
+      {
+        ...kept,
+        fijian: "Bula vinaka",
+        draft: true,
+        tokens: [
+          { id: "bula", text: "Bula" },
+          { id: expect.any(String), text: "vinaka" },
+        ],
+      },
+    ]);
   });
 });
 

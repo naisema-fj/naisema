@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { type LearningLayerSnapshot, learningLayerReviewFields, readLayerDetails } from "~/lib/learning-layer-fields";
+import {
+  type LearningLayerSnapshot,
+  learningLayerReviewFields,
+  readLayerDetails,
+  withDefaults,
+} from "~/lib/learning-layer-fields";
 import { fingerprintsOf } from "~/lib/review-rules";
 
 const form = (fields: Partial<Record<"title" | "level" | "clip" | "sourceStart" | "sourceEnd", string>> = {}) => ({
@@ -65,8 +70,31 @@ describe("what each review covers", () => {
         overlapIntended: false,
         draft: true,
         retimed: false,
+        tokens: [{ id: "t1", text: "Bula" }],
       },
     ],
+    annotations: [
+      {
+        id: "n1",
+        segmentId: "a",
+        startTokenId: "t1",
+        endTokenId: "t1",
+        expressionId: "e1",
+        contextualMeaning: "Hello",
+        grammarNote: "",
+        inVocabulary: true,
+      },
+    ],
+    notes: [],
+    expressions: {
+      e1: {
+        headword: "bula",
+        generalMeaning: "life; hello",
+        grammarNote: "",
+        pronunciation: "mbula",
+        literalMeaning: null,
+      },
+    },
   };
 
   it("keeps language approval when only the timing changes, but not accessibility", async () => {
@@ -76,6 +104,35 @@ describe("what each review covers", () => {
     expect(after.language).toBe(before.language);
     expect(after.accessibility).not.toBe(before.accessibility);
     expect(after.editorial).not.toBe(before.editorial);
+  });
+
+  it("counts a change to an Annotation or the Expression it uses for language review", async () => {
+    const before = await fingerprintsOf(learningLayerReviewFields(snapshot, "standard-fijian"));
+    const meaning = { ...snapshot, annotations: [{ ...snapshot.annotations[0], contextualMeaning: "Hi there" }] };
+    const expression = { ...snapshot, expressions: { e1: { ...snapshot.expressions.e1, pronunciation: "bula" } } };
+    const vocabularyOnly = { ...snapshot, annotations: [{ ...snapshot.annotations[0], inVocabulary: false }] };
+    expect((await fingerprintsOf(learningLayerReviewFields(meaning, "standard-fijian"))).language).not.toBe(
+      before.language,
+    );
+    expect((await fingerprintsOf(learningLayerReviewFields(expression, "standard-fijian"))).language).not.toBe(
+      before.language,
+    );
+    expect((await fingerprintsOf(learningLayerReviewFields(vocabularyOnly, "standard-fijian"))).language).toBe(
+      before.language,
+    );
+  });
+
+  it("fills in what older Revisions lack, tokenising their Segments", () => {
+    const old = withDefaults({
+      title: "Old",
+      level: "beginner",
+      excerpt: null,
+      segments: [{ ...snapshot.segments[0], tokens: undefined as never, fijian: "Ni sa bula" }],
+    });
+    expect(old.annotations).toEqual([]);
+    expect(old.notes).toEqual([]);
+    expect(old.expressions).toEqual({});
+    expect(old.segments[0].tokens.map((token) => token.text)).toEqual(["Ni", "sa", "bula"]);
   });
 
   it("doesn't count marking a draft as reviewed as a change", async () => {
