@@ -34,7 +34,14 @@ let hls = null;
 
 // --- Loading: hls.js where Media Source Extensions exist, else native HLS (Safari) ---
 if (Hls.isSupported() && params.get("native") !== "1") {
-  hls = new Hls({ capLevelToPlayerSize: false, startLevel: -1 });
+  // ?maxBuffer=N shortens how far ahead hls.js buffers, so a seek can land somewhere not yet loaded.
+  const maxBuffer = Number(params.get("maxBuffer")) || 30;
+  hls = new Hls({
+    capLevelToPlayerSize: false,
+    startLevel: -1,
+    maxBufferLength: maxBuffer,
+    maxMaxBufferLength: maxBuffer,
+  });
   hls.loadSource(src);
   hls.attachMedia(video);
   hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
@@ -214,4 +221,12 @@ window.spike = {
   levels: () => (hls ? hls.levels.map((level) => level.height) : []),
   currentLevel: () => (hls ? hls.currentLevel : null),
   ready: () => video.readyState >= 2,
+  /** Whether the media at this time is already buffered. */
+  buffered: (ms) => {
+    const seconds = ms / 1000;
+    for (let range = 0; range < video.buffered.length; range++) {
+      if (video.buffered.start(range) <= seconds && seconds <= video.buffered.end(range)) return true;
+    }
+    return false;
+  },
 };

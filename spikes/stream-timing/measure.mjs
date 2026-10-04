@@ -28,6 +28,7 @@ import { chromium } from "@playwright/test";
 const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const CODEC = process.argv[2] ?? "vp9";
 const LOOPS_ONLY = process.argv.includes("--loops-only");
+const INTERRUPTIONS_ONLY = process.argv.includes("--interruptions-only");
 const SEGMENT_ID = process.env.SEGMENT ?? "s2";
 const CLIPS = ["landscape", "vertical"];
 const SPEEDS = [1, 0.75, 0.5];
@@ -89,7 +90,7 @@ function serve() {
   return new Promise((resolve) => server.listen(0, "127.0.0.1", () => resolve(server)));
 }
 
-async function openPlayer(browser, origin, clip) {
+async function openPlayer(browser, origin, clip, query = "") {
   const context = await browser.newContext();
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
@@ -97,7 +98,7 @@ async function openPlayer(browser, origin, clip) {
   await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
   await cdp.send("Network.emulateNetworkConditions", PROFILE);
   page.on("pageerror", (error) => console.error("page error:", error.message));
-  await page.goto(`${origin}/index.html?src=./media/${CODEC}/${clip}/master.m3u8`);
+  await page.goto(`${origin}/index.html?src=./media/${CODEC}/${clip}/master.m3u8${query}`);
   await page.evaluate(() => {
     document.getElementById("video").muted = true;
   });
@@ -215,35 +216,51 @@ async function qualityChanges(page, segment) {
   return results;
 }
 
-/** Drops the network for 4 s during a buffered loop, then while seeking to an unbuffered segment. */
-async function interruptions(page, cdp, segment) {
+/**
+ * Drops the network for 4 s during a buffered loop, then while seeking to a segment not yet
+ * buffered. A fresh page buffers only 6 s ahead, so the far segment (s6) really is unloaded; that
+ * is checked before the network drops.
+ */
+async function interruptions(browser, origin, clip, segment) {
   console.log("  interruptions");
-  const far = await page.evaluate(() => window.spike.segment("s6"));
-  const buffered = play(page, segment, 1, 3);
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-  await cdp.send("Network.emulateNetworkConditions", OFFLINE);
-  await new Promise((resolve) => setTimeout(resolve, 4000));
-  await cdp.send("Network.emulateNetworkConditions", PROFILE);
-  const bufferedResult = boundaries(segment, await buffered);
+  const { context, page, cdp } = await openPlayer(browser, origin, clip, "&maxBuffer=6");
+  try {
+    await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
+    const far = await page.evaluate(() => window.spike.segment("s6"));
+    const buffered = play(page, segment, 1, 3);
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await cdp.send("Network.emulateNetworkConditions", OFFLINE);
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await cdp.send("Network.emulateNetworkConditions", PROFILE);
+    const bufferedResult = boundaries(segment, await buffered);
 
-  await cdp.send("Network.emulateNetworkConditions", OFFLINE);
-  const started = Date.now();
-  const unbuffered = play(page, far, 1, 1);
-  await new Promise((resolve) => setTimeout(resolve, 4000));
-  await cdp.send("Network.emulateNetworkConditions", PROFILE);
-  const restoredAt = Date.now();
-  const farPasses = await unbuffered;
-  const finishedAt = Date.now();
-  const errors = await page.evaluate(() => window.spike.state.errors);
-  return {
-    whileLoopingBuffered: bufferedResult,
-    seekingUnbuffered: {
-      ...boundaries(far, farPasses),
-      offlineMs: restoredAt - started,
-      finishedAfterRestoreMs: finishedAt - restoredAt,
-    },
-    hlsErrors: errors,
-  };
+    const farWasBuffered = await page.evaluate((ms) => window.spike.buffered(ms), far.startMs);
+    await cdp.send("Network.emulateNetworkConditions", OFFLINE);
+    const started = Date.now();
+    let finishedAt = null;
+    const unbuffered = play(page, far, 1, 1).then((passes) => {
+      finishedAt = Date.now();
+      return passes;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    const finishedWhileOffline = finishedAt !== null;
+    await cdp.send("Network.emulateNetworkConditions", PROFILE);
+    const restoredAt = Date.now();
+    const farPasses = await unbuffered;
+    return {
+      whileLoopingBuffered: bufferedResult,
+      seekingUnbuffered: {
+        ...boundaries(far, farPasses),
+        farWasBuffered,
+        finishedWhileOffline,
+        offlineMs: restoredAt - started,
+        finishedAfterRestoreMs: finishedAt - restoredAt,
+      },
+      hlsErrors: await page.evaluate(() => window.spike.state.errors),
+    };
+  } finally {
+    await context.close();
+  }
 }
 
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
@@ -254,19 +271,19 @@ const report = { codec: CODEC, segmentId: SEGMENT_ID, browser: browser.version()
 try {
   for (const clip of CLIPS) {
     console.log(`${clip}: cold starts`);
-    const cold = LOOPS_ONLY ? null : await coldStarts(browser, origin, clip);
-    const { context, page, cdp } = await openPlayer(browser, origin, clip);
+    const cold = LOOPS_ONLY || INTERRUPTIONS_ONLY ? null : await coldStarts(browser, origin, clip);
+    const { context, page } = await openPlayer(browser, origin, clip);
     await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
     const segment = await page.evaluate((id) => window.spike.segment(id), SEGMENT_ID);
     if (!segment) throw new Error(`No segment "${SEGMENT_ID}" in player.js`);
     report.segment = segment;
     report.clips[clip] = {
       coldStarts: cold,
-      loops: await loops(page, segment),
-      qualityChanges: await qualityChanges(page, segment),
-      interruptions: await interruptions(page, cdp, segment),
+      loops: INTERRUPTIONS_ONLY ? {} : await loops(page, segment),
+      qualityChanges: INTERRUPTIONS_ONLY ? {} : await qualityChanges(page, segment),
     };
     await context.close();
+    report.clips[clip].interruptions = await interruptions(browser, origin, clip, segment);
   }
 } finally {
   await browser.close();
@@ -296,8 +313,9 @@ for (const [clip, result] of Object.entries(report.clips)) {
     }
   }
   const drop = result.interruptions;
+  const seek = drop.seekingUnbuffered;
   console.log(
-    `  offline while looping: worst ${drop.whileLoopingBuffered.worstMs} ms, ${drop.whileLoopingBuffered.stalled} stalled; offline seek: ${drop.seekingUnbuffered.stalled ? "stalled" : `finished ${drop.seekingUnbuffered.finishedAfterRestoreMs} ms after restore, worst ${drop.seekingUnbuffered.worstMs} ms`}; hls errors ${drop.hlsErrors.map((error) => error.details + (error.fatal ? "!" : "")).join(", ") || "none"}`,
+    `  offline while looping: worst ${drop.whileLoopingBuffered.worstMs} ms, ${drop.whileLoopingBuffered.stalled} stalled; offline seek (far segment buffered beforehand: ${seek.farWasBuffered}): ${seek.stalled ? "stalled" : seek.finishedWhileOffline ? "finished while still offline" : `finished ${seek.finishedAfterRestoreMs} ms after restore, worst ${seek.worstMs} ms`}; hls errors ${drop.hlsErrors.map((error) => error.details + (error.fatal ? "!" : "")).join(", ") || "none"}`,
   );
 }
 console.log(`\nwritten to ${file}`);
