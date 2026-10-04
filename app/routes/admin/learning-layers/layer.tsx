@@ -1,5 +1,6 @@
 import { data, Form, redirect } from "react-router";
 import { TimelineEditor } from "~/components/timeline-editor";
+import type { ActivityProblem } from "~/lib/activities";
 import type { AnnotationProblem, NoteProblem } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { detailsOf, listExpressions } from "~/lib/expressions.server";
@@ -91,6 +92,7 @@ type ActionData = {
   problems?: SegmentProblem[];
   annotationProblems?: AnnotationProblem[];
   noteProblems?: NoteProblem[];
+  activityProblems?: ActivityProblem[];
 };
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -121,6 +123,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     annotations: field("annotations"),
     notes: field("notes"),
     newExpressions: field("newExpressions"),
+    activities: field("activities"),
   });
   if (!saved.ok) return data<ActionData>(saved, { status: 400 });
   return redirect(`/admin/learning-layers/${layer.id}?saved=${saved.number}`);

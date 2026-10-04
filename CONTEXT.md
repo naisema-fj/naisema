@@ -55,11 +55,11 @@ _Avoid_: Caption, tooltip
 The Expressions an Educator chose from a Learning Layer's Annotations, each with the moments it occurs.
 
 **Activity**:
-A practice or comprehension task in a Learning Layer, with reviewed answers or a model response, feedback and an accessible alternative.
+A practice or comprehension task in a Learning Layer, on one Segment or the whole clip, with reviewed answers or a model response, feedback and an accessible text alternative. In 1a: listen and repeat (with the Educator's pronunciation guidance, never recorded), comprehension, listening discrimination, "what would you say next?" and the optional real-world prompt.
 _Avoid_: Quiz, exercise
 
 **Completion Rule**:
-The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
+The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). The Educator defines it by marking Activities required; with none required it can't be met. Watching alone never satisfies it, and real-world use is never required.
 _Avoid_: Finished, mastered, passed
 
 **Video Asset**:

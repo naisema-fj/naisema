@@ -87,6 +87,32 @@ describe("what each review covers", () => {
       },
     ],
     notes: [],
+    activities: [
+      {
+        id: "x1",
+        kind: "listen-repeat",
+        segmentId: "a",
+        prompt: "Listen, then say it aloud.",
+        options: [],
+        modelResponse: "Bula",
+        feedback: "Say the b softly, like mb.",
+        pronunciation: "mbula",
+        required: true,
+        textAlternative: "Read “Bula” and write it out.",
+      },
+      {
+        id: "x2",
+        kind: "real-world",
+        segmentId: null,
+        prompt: "Greet someone in Fijian this week.",
+        options: [],
+        modelResponse: "",
+        feedback: "",
+        pronunciation: "",
+        required: false,
+        textAlternative: "Write a greeting you could send someone.",
+      },
+    ],
     expressions: {
       e1: {
         headword: "bula",
@@ -133,6 +159,7 @@ describe("what each review covers", () => {
     expect(old.annotations).toEqual([]);
     expect(old.notes).toEqual([]);
     expect(old.expressions).toEqual({});
+    expect(old.activities).toEqual([]);
     expect(old.segments[0].tokens.map((token) => token.text)).toEqual(["Ni", "sa", "bula"]);
   });
 
@@ -140,5 +167,42 @@ describe("what each review covers", () => {
     const before = await fingerprintsOf(learningLayerReviewFields(snapshot, "standard-fijian"));
     const checked = { ...snapshot, segments: [{ ...snapshot.segments[0], draft: false }] };
     expect(await fingerprintsOf(learningLayerReviewFields(checked, "standard-fijian"))).toEqual(before);
+  });
+
+  it("counts an Activity's answers for language review, but not whether it's required", async () => {
+    const fields = async (change: Partial<LearningLayerSnapshot["activities"][number]>) =>
+      fingerprintsOf(
+        learningLayerReviewFields(
+          { ...snapshot, activities: [{ ...snapshot.activities[0], ...change }, snapshot.activities[1]] },
+          "standard-fijian",
+        ),
+      );
+    const before = await fingerprintsOf(learningLayerReviewFields(snapshot, "standard-fijian"));
+    const answer = await fields({ modelResponse: "Bula vinaka" });
+    expect(answer.language).not.toBe(before.language);
+    const optional = await fields({ required: false });
+    expect(optional.language).toBe(before.language);
+    expect(optional.editorial).not.toBe(before.editorial);
+    const alternative = await fields({ textAlternative: "Write out “Bula”." });
+    expect(alternative.accessibility).not.toBe(before.accessibility);
+  });
+
+  it("puts a real-world prompt before cultural and safeguarding review", async () => {
+    const before = await fingerprintsOf(learningLayerReviewFields(snapshot, "standard-fijian"));
+    const changed = await fingerprintsOf(
+      learningLayerReviewFields(
+        { ...snapshot, activities: [snapshot.activities[0], { ...snapshot.activities[1], prompt: "Ask an elder." }] },
+        "standard-fijian",
+      ),
+    );
+    expect(changed.cultural).not.toBe(before.cultural);
+    expect(changed.safeguarding).not.toBe(before.safeguarding);
+    const practice = await fingerprintsOf(
+      learningLayerReviewFields(
+        { ...snapshot, activities: [{ ...snapshot.activities[0], prompt: "Say it twice." }, snapshot.activities[1]] },
+        "standard-fijian",
+      ),
+    );
+    expect(practice.safeguarding).toBe(before.safeguarding);
   });
 });

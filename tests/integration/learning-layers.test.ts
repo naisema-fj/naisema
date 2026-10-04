@@ -174,6 +174,7 @@ describe("adding Learning Layers", () => {
       annotations: [],
       notes: [],
       expressions: {},
+      activities: [],
     });
     expect((await assigned.browser.fetch(`/admin/learning-layers/${added.id}`)).status).toBe(200);
 
@@ -687,5 +688,107 @@ describe("Annotations, Expressions and notes", () => {
     ).toBe(302);
     const flagged = (await snapshotOf(layerId)).annotations[0] as { needsCheck?: boolean };
     expect(flagged.needsCheck).toBe(true);
+  });
+});
+
+describe("Activities and the Completion Rule", () => {
+  async function layerWithSegment() {
+    const editor = await staff("editor", { role: "editor" });
+    const educator = await staff("educator", { role: "educator" });
+    const { id: videoId } = await video(editor, 30);
+    await assignToVideo(editor, videoId, educator);
+    const { id } = await addLayer(educator, videoId);
+    const segmentId = crypto.randomUUID();
+    const segments = [segment({ id: segmentId, startMs: 1_000, endMs: 3_000, fijian: "Bula vinaka" })];
+    return { educator, layerId: id as string, segmentId, segments };
+  }
+
+  const repeatAfter = (segmentId: string, fields: Record<string, unknown> = {}) => ({
+    id: crypto.randomUUID(),
+    kind: "listen-repeat",
+    segmentId,
+    prompt: "Listen, then say it aloud.",
+    options: [],
+    modelResponse: "Bula vinaka",
+    feedback: "Stress the second syllable of vinaka.",
+    pronunciation: "mBOO-la vee-NAH-ka",
+    required: true,
+    textAlternative: "Read “Bula vinaka” and write it out.",
+    ...fields,
+  });
+
+  const choose = (fields: Record<string, unknown> = {}) => ({
+    id: crypto.randomUUID(),
+    kind: "comprehension",
+    segmentId: null,
+    prompt: "Who is Mere greeting?",
+    options: [
+      { id: crypto.randomUUID(), text: "Her friend", correct: true },
+      { id: crypto.randomUUID(), text: "A stallholder", correct: false },
+    ],
+    modelResponse: "",
+    feedback: "She greets her friend Sera.",
+    pronunciation: "",
+    required: false,
+    textAlternative: "Read the transcript, then choose who Mere is greeting.",
+    ...fields,
+  });
+
+  type Saved = { activities: { id: string; kind: string; required: boolean; options: { id: string }[] }[] };
+  const activitiesOf = async (layerId: string) =>
+    (JSON.parse((await layer(layerId))?.snapshot ?? "{}") as Saved).activities;
+
+  it("saves Activities with their answers and required flags, keeping their IDs from one Revision to the next", async () => {
+    const { educator, layerId, segmentId, segments } = await layerWithSegment();
+    const activities = [repeatAfter(segmentId), choose()];
+    const saved = await save(educator, layerId, segments, { activities: JSON.stringify(activities) });
+    expect(saved.status, await saved.clone().text()).toBe(302);
+    const first = await activitiesOf(layerId);
+    expect(first.map(({ id, kind, required }) => ({ id, kind, required }))).toEqual([
+      { id: activities[0].id, kind: "listen-repeat", required: true },
+      { id: activities[1].id, kind: "comprehension", required: false },
+    ]);
+
+    // Making the comprehension check required keeps every ID, its choices' included.
+    const changed = [first[0], { ...first[1], required: true }];
+    expect((await save(educator, layerId, segments, { activities: JSON.stringify(changed) })).status).toBe(302);
+    const second = await activitiesOf(layerId);
+    expect(second.map((activity) => activity.id)).toEqual(first.map((activity) => activity.id));
+    expect(second[1].options.map((option) => option.id)).toEqual(first[1].options.map((option) => option.id));
+    expect(second[1].required).toBe(true);
+  });
+
+  it("refuses a required real-world prompt and a question without a correct answer, naming the Activity", async () => {
+    const { educator, layerId, segments } = await layerWithSegment();
+    const realWorld = choose({ kind: "real-world", options: [], feedback: "", required: true });
+    const unanswerable = choose({
+      options: [
+        { id: crypto.randomUUID(), text: "Her friend", correct: false },
+        { id: crypto.randomUUID(), text: "A stallholder", correct: false },
+      ],
+    });
+    const refused = await save(educator, layerId, segments, { activities: JSON.stringify([realWorld, unanswerable]) });
+    expect(refused.status).toBe(400);
+    const page = await refused.text();
+    expect(page).toContain("2 things in the Activities need fixing before this can be saved.");
+    expect(page).toContain("Activity 1 is a real-world prompt, which can never be required.");
+    expect(page).toContain("Activity 2 needs a correct choice.");
+  });
+
+  it("keeps an Activity whose Segment is removed, for the Educator to link again", async () => {
+    const { educator, layerId, segmentId, segments } = await layerWithSegment();
+    const activity = choose({ kind: "discrimination", segmentId, prompt: "Which word did you hear?" });
+    await save(educator, layerId, segments, { activities: JSON.stringify([activity]) });
+    const later = segment({ startMs: 4_000, endMs: 6_000, fijian: "Vinaka" });
+    expect((await save(educator, layerId, [later], { activities: JSON.stringify([activity]) })).status).toBe(302);
+    expect((await activitiesOf(layerId)).map((item) => item.id)).toEqual([activity.id]);
+    const page = await (await educator.browser.fetch(`/admin/learning-layers/${layerId}`)).text();
+    expect(page).toContain("Activity 1&#x27;s Segment was removed. Link it to another Segment or the whole clip.");
+  });
+
+  it("never lets a page use the microphone or camera", async () => {
+    const { educator, layerId } = await layerWithSegment();
+    const response = await educator.browser.fetch(`/admin/learning-layers/${layerId}`);
+    expect(response.headers.get("Permissions-Policy")).toBe("camera=(), microphone=(), geolocation=()");
   });
 });

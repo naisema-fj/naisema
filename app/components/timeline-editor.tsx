@@ -1,5 +1,6 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Form } from "react-router";
+import { type Activity, type ActivityProblem, activityProblems } from "~/lib/activities";
 import {
   type Annotation,
   type AnnotationProblem,
@@ -31,15 +32,17 @@ import {
 } from "~/lib/segment-rules";
 import { retokenise } from "~/lib/tokens";
 import { importWebVtt, parseWebVtt, type SegmentLanguage } from "~/lib/webvtt";
+import { ActivitiesEditor } from "./activities-editor";
 import { type ExpressionChoice, NotesEditor, SegmentAnnotations } from "./segment-annotations";
 import { VideoPreview } from "./video-preview";
 
 /**
  * The timeline editor for a Learning Layer's Segments (VCMS-02/04, docs/phase-1a-defaults.md §2):
  * time fields that take typed times, the arrow keys (100 ms a press) or the playhead; replaying a
- * Segment; WebVTT import; and a preview of the captions in landscape and vertical layouts. It
- * checks the Segments as they change and names the exact Segment and field; the server checks
- * them again when they are saved. Everything is kept in the page until it is saved.
+ * Segment; WebVTT import; and a preview of the captions in landscape and vertical layouts. Below
+ * them come the notes, the vocabulary list and the Activities. It checks everything as it changes
+ * and names the exact Segment or Activity and field; the server checks them again when they are
+ * saved. Everything is kept in the page until it is saved.
  */
 
 type Props = {
@@ -60,6 +63,7 @@ type Props = {
     problems?: SegmentProblem[];
     annotationProblems?: AnnotationProblem[];
     noteProblems?: NoteProblem[];
+    activityProblems?: ActivityProblem[];
   } | null;
 };
 
@@ -95,6 +99,7 @@ export function TimelineEditor({
 }: Props) {
   const [annotations, setAnnotations] = useState<Annotation[]>(snapshot.annotations);
   const [notes, setNotes] = useState<ContextNote[]>(snapshot.notes);
+  const [activities, setActivities] = useState<Activity[]>(snapshot.activities);
   const [newExpressions, setNewExpressions] = useState<ExpressionChoice[]>([]);
   const [title, setTitle] = useState(snapshot.title);
   const [level, setLevel] = useState<string>(snapshot.level);
@@ -250,6 +255,7 @@ export function TimelineEditor({
     [annotations, segments, expressionMap],
   );
   const noteIssues = useMemo(() => noteProblems(notes, segments), [notes, segments]);
+  const activityIssues = useMemo(() => activityProblems(activities, segments), [activities, segments]);
   const annotationProblemMap = new Map(annotationIssues.map((problem) => [problem.annotationId, problem.message]));
   const noteProblemMap = new Map(noteIssues.map((problem) => [problem.noteId, problem.message]));
   const segmentIds = new Set(segments.map((segment) => segment.id));
@@ -278,6 +284,21 @@ export function TimelineEditor({
     return changed.length ? [{ id, copy, now, changed }] : [];
   });
   const removeAnnotation = (id: string) => setAnnotations((current) => current.filter((item) => item.id !== id));
+  // Guidance to start a listen-and-repeat Activity from: each annotated Expression's pronunciation.
+  const pronunciationFor = (segmentId: string) =>
+    annotations
+      .filter((annotation) => annotation.segmentId === segmentId)
+      .flatMap((annotation) => {
+        const expression = expressionMap[annotation.expressionId];
+        return expression?.pronunciation ? [`${expression.headword}: ${expression.pronunciation}`] : [];
+      })
+      .join("; ");
+  const playActivity = (segmentId: string | null) => {
+    const segment = segments.find((item) => item.id === segmentId);
+    if (segment) return replay(segment);
+    seek(0);
+    video.current?.play().catch(() => setStatus("The video couldn't play. Press play on the video first."));
+  };
   const playing = segments.filter((segment) => segment.startMs <= playheadMs && playheadMs < segment.endMs);
   const detailError = (field: LayerDetailField) => refused?.errors?.[field];
 
@@ -303,6 +324,18 @@ export function TimelineEditor({
             {noteIssues.map((problem) => (
               <li key={problem.noteId}>
                 <a href={`#note-${problem.noteId}`}>{problem.message}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {activityIssues.length > 0 && (
+        <section aria-labelledby="activity-problems-heading" className="segment-problems">
+          <h2 id="activity-problems-heading">Activities to check</h2>
+          <ul>
+            {activityIssues.map((problem) => (
+              <li key={`${problem.activityId}-${problem.field}-${problem.message}`}>
+                <a href={`#activity-${problem.activityId}-${problem.field}`}>{problem.message}</a>
               </li>
             ))}
           </ul>
@@ -406,6 +439,7 @@ export function TimelineEditor({
           <input type="hidden" name="segments" value={JSON.stringify(segments)} />
           <input type="hidden" name="annotations" value={JSON.stringify(annotations)} />
           <input type="hidden" name="notes" value={JSON.stringify(notes)} />
+          <input type="hidden" name="activities" value={JSON.stringify(activities)} />
           <input
             type="hidden"
             name="newExpressions"
@@ -706,6 +740,22 @@ export function TimelineEditor({
             ) : (
               <p>Annotations added to the vocabulary list appear here, with when they occur.</p>
             )}
+          </section>
+
+          <section aria-labelledby="activities-heading">
+            <h2 id="activities-heading">Activities</h2>
+            <p className="hint">
+              Practice and comprehension for learners, each on a Segment or the whole clip. Speaking is never required:
+              every Activity has a text alternative, and nothing records anyone.
+            </p>
+            <ActivitiesEditor
+              activities={activities}
+              segments={segments}
+              problems={activityIssues}
+              onChange={setActivities}
+              onPlay={playActivity}
+              pronunciationFor={pronunciationFor}
+            />
           </section>
 
           <fieldset className="webvtt-tools">
