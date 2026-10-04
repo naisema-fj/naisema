@@ -3,7 +3,11 @@ import { contentItem, revision, videoAsset } from "~db/schema";
 import type { ArticleSnapshot } from "./article-fields";
 import type { Database } from "./db.server";
 
-/** A Video Content Item with its current draft's title and Content Flags, and the Video Asset it shows. */
+/**
+ * A Video Content Item with its current draft's title, the Video Asset it shows, and its Content
+ * Flags: those of its current draft and of its published Revision together, so a flag dropped in an
+ * unpublished draft still counts while the published Revision has it.
+ */
 export async function videoItem(db: Database, contentItemId: string) {
   const row = await db
     .select({ item: contentItem, snapshot: revision.snapshot })
@@ -17,5 +21,15 @@ export async function videoItem(db: Database, contentItemId: string) {
     ? await db.select().from(videoAsset).where(eq(videoAsset.id, snapshot.video.videoAssetId)).get()
     : undefined;
   if (!asset) return null;
-  return { id: row.item.id, title: snapshot.title, flags: snapshot.flags ?? [], video: asset };
+  const published = row.item.currentPublishedRevisionId
+    ? await db
+        .select({ snapshot: revision.snapshot })
+        .from(revision)
+        .where(eq(revision.id, row.item.currentPublishedRevisionId))
+        .get()
+    : undefined;
+  const flags = [
+    ...new Set([...(snapshot.flags ?? []), ...((published?.snapshot as ArticleSnapshot | undefined)?.flags ?? [])]),
+  ];
+  return { id: row.item.id, title: snapshot.title, flags, video: asset };
 }

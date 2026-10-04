@@ -6,24 +6,18 @@ import { readEvidenceFile } from "~/lib/evidence-file";
 import {
   archiveLayer,
   assignLayerReviewer,
-  decidableLayerRequirement,
   layerEligibility,
   publishLayerRevision,
   recordLayerDecision,
+  recordLayerKnowledgeHolderApproval,
   submitLayerRevision,
   withdrawLayer,
 } from "~/lib/layer-review.server";
 import { requireLayerRevision } from "~/lib/layer-revision-access.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
-import { reviewersFor } from "~/lib/review.server";
-import {
-  issueReviewLink,
-  recordLayerKnowledgeHolderApproval,
-  reviewLinkPath,
-  reviewLinksFor,
-  revokeReviewLink,
-} from "~/lib/review-links.server";
+import { decidableRequirement, reviewersFor } from "~/lib/review.server";
+import { issueReviewLink, reviewLinkPath, reviewLinksFor, revokeReviewLink } from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
 import type { Route } from "./+types/revision";
 
@@ -58,7 +52,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     isCurrent &&
     !review.submitted &&
     (isEditor || can(actor, { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: educatorIds } }));
-  const decideTypes = REVIEW_TYPES.filter((type) => decidableLayerRequirement(actor, review, type) !== null);
+  const decideTypes = REVIEW_TYPES.filter((type) => decidableRequirement(actor, review, type) !== null);
   const links = can(actor, { action: "reviewLink.issue" }) ? await reviewLinksFor(db, review.revisionId) : null;
   const published = review.layer.currentPublishedRevisionId
     ? await db.query.learningLayerRevision.findFirst({
@@ -66,7 +60,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         where: (row, { eq }) => eq(row.id, review.layer.currentPublishedRevisionId as string),
       })
     : undefined;
-  const canReadEvidence = can(actor, { action: "rightsEvidence.read" });
+  const canReadEvidence = can(actor, { action: "approvalEvidence.read" });
   return {
     layerId: review.layer.id,
     number: review.number,
@@ -150,7 +144,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     if (!issued.ok) return data<ActionData>({ error: issued.error }, { status: 400 });
     // The address is shown once: only a hash of its token is kept.
     const url = new URL(reviewLinkPath(issued.token), primaryPublicOrigin(env) || request.url).toString();
-    return data<ActionData>({ issued: { url, recipient: field("recipient") } });
+    return data<ActionData>({ issued: { url, recipient: issued.recipient } });
   }
 
   const result = await (async () => {
@@ -221,7 +215,7 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
       {done && DONE_MESSAGES[done] && !actionData && <p role="status">{DONE_MESSAGES[done]}</p>}
       {error && <p role="alert">{error}</p>}
       <h1>{snapshot.title}</h1>
-      <LayerRevisionView snapshot={snapshot} />
+      <LayerRevisionView snapshot={snapshot} languageVariety={review.languageVariety} />
 
       <ReviewPanel
         revisionNumber={number}

@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, lt, lte, notExists, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lt, lte, notExists, type SQL, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import {
   auditEvent,
@@ -9,22 +9,31 @@ import {
   learningLayerRevision,
   learningLayerSubmission,
   reviewLink,
+  reviewLinkAccess,
   revision,
   user,
 } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import { activeHold } from "./content-holds.server";
 import type { Database } from "./db.server";
+import { discardEvidence, scannedEvidence, storeEvidence } from "./evidence.server";
+import type { EvidenceFile } from "./evidence-file";
 import { layerFlags, layerReadinessProblems } from "./layer-review-rules";
 import { type LearningLayerSnapshot, withDefaults } from "./learning-layer-fields";
 import { type Actor, can, type ReviewType } from "./permissions";
 import type { Eligibility } from "./publication.server";
-import { onceOnly, reviewersFor, toRecordedDecision } from "./review.server";
+import {
+  decidableRequirement,
+  onceOnly,
+  type ReviewActionResult,
+  refuse,
+  reviewersFor,
+  toRecordedDecision,
+} from "./review.server";
 import { type PublicationState, REVIEW_NAMES, requirementName } from "./review-names";
 import {
   approvalsToCarryForward,
   type Fingerprints,
-  type ReviewRequirement,
   requiredReviewsSince,
   reviewProgress,
   revisionState,
@@ -41,10 +50,6 @@ import { videoItem } from "./video-items.server";
  * fingerprint is unchanged carry forward to the next Revision. A Learning Layer is published and
  * withdrawn on its own, apart from its Video, and only when `layerEligibility` says so.
  */
-
-export type ReviewActionResult = { ok: true } | { ok: false; error: string };
-
-const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
 
 /** Whoever added the Learning Layer and whoever saved it up to this Revision: their words are in it. */
 async function layerAuthorIds(db: Database, learningLayerId: string, upToNumber: number) {
@@ -268,8 +273,8 @@ export async function loadLayerReview(db: Database, revisionId: string) {
 
 export type LayerReview = NonNullable<Awaited<ReturnType<typeof loadLayerReview>>>;
 
-/** Only the current draft can be submitted or reviewed; older Revisions are superseded. */
-const isCurrent = (review: LayerReview) => review.layer.currentDraftRevisionId === review.revisionId;
+/** Only the latest Revision, the current draft, can be submitted or reviewed; older ones are superseded. */
+const isLatest = (review: LayerReview) => review.layer.currentDraftRevisionId === review.revisionId;
 
 /** An editor, or an Educator assigned to the Learning Layer, sends its current draft for review. */
 export async function submitLayerRevision(
@@ -284,7 +289,7 @@ export async function submitLayerRevision(
   ) {
     return refuse("Only editors and the Educators assigned to this Learning Layer can submit it for review.");
   }
-  if (!isCurrent(review)) return refuse("Only the latest revision can be submitted.");
+  if (!isLatest(review)) return refuse("Only the latest revision can be submitted.");
   if (review.submitted) return refuse("This revision has already been submitted.");
   return onceOnly(
     () =>
@@ -342,34 +347,6 @@ export async function assignLayerReviewer(
   );
 }
 
-/**
- * The requirement a reviewer would be deciding for this Review Type, if they may: the Revision
- * must need it (Knowledge Holder Approvals are recorded by editors instead), and the reviewer must
- * be assigned, scoped to it, and not have written or edited the Revision.
- */
-export function decidableLayerRequirement(
-  actor: Actor,
-  review: LayerReview,
-  reviewType: ReviewType,
-): ReviewRequirement | null {
-  const requirement = review.requirements.find(
-    (candidate) => candidate.reviewType === reviewType && !candidate.knowledgeHolder,
-  );
-  if (!requirement) return null;
-  const allowed = can(actor, {
-    action: "revision.review",
-    revision: {
-      authorIds: review.authorIds,
-      assignedReviewerIds: review.assignments
-        .filter((row) => row.reviewType === reviewType)
-        .map((row) => row.reviewerId),
-      reviewType,
-      languageVariety: requirement.languageVariety,
-    },
-  });
-  return allowed ? requirement : null;
-}
-
 const auditRefusal = (db: Database, actor: Actor, review: LayerReview, reason: string, reviewType?: ReviewType) =>
   recordAudit(db, {
     actorId: actor.userId,
@@ -387,12 +364,12 @@ export async function recordLayerDecision(
   decision: { reviewType: ReviewType; decision: "approved" | "rejected"; scope: string; notes: string },
 ): Promise<ReviewActionResult> {
   const { reviewType } = decision;
-  const requirement = decidableLayerRequirement(actor, review, reviewType);
+  const requirement = decidableRequirement(actor, review, reviewType);
   if (!requirement) {
     await auditRefusal(db, actor, review, "not allowed or not required", reviewType);
     return refuse("You can't review this revision for that Review Type.");
   }
-  if (!isCurrent(review) || !review.submitted) return refuse("Only a submitted, latest revision can be reviewed.");
+  if (!isLatest(review) || !review.submitted) return refuse("Only a submitted, latest revision can be reviewed.");
   if (decision.decision === "rejected" && !decision.notes) return refuse("Say what needs to change.");
   const id = crypto.randomUUID();
   await db.batch([
@@ -468,9 +445,15 @@ export async function layerReviewQueue(db: Database, reviewerId: string) {
  * Learning Layer on a Video hidden pending a Case is never eligible. It doesn't need its Video
  * published: the learner player (#29) serves it only on an eligible Video's page.
  */
-export async function layerEligibility(db: Database, review: LayerReview, now = new Date()): Promise<Eligibility> {
+export async function layerEligibility(
+  db: Database,
+  review: LayerReview,
+  now = new Date(),
+  /** Its Video, when the caller has already loaded it. */
+  loaded?: Awaited<ReturnType<typeof videoItem>>,
+): Promise<Eligibility> {
   const reasons: string[] = [];
-  const video = await videoItem(db, review.layer.contentItemId);
+  const video = loaded === undefined ? await videoItem(db, review.layer.contentItemId) : loaded;
   if (!video) return { eligible: false, reasons: ["Its Video no longer shows a Video Asset."] };
   if (await activeHold(db, video.id)) {
     reasons.push("Its Video is hidden while a Case about it is reviewed. The safeguarding lead can show it again.");
@@ -483,13 +466,13 @@ export async function layerEligibility(db: Database, review: LayerReview, now = 
   }
   reasons.push(...layerReadinessProblems(review.snapshot));
   if (video.video.state === "failed") {
-    reasons.push(`Its video failed processing: ${video.video.stateReason ?? "no reason was given"}`);
+    reasons.push(`Its video failed processing: ${video.video.stateReason ?? "no reason was given."}`);
   } else if (video.video.state !== "ready") {
     reasons.push("Its video hasn't finished processing.");
   }
   if (video.flags.includes("sensitiveCultural") && !review.flags.includes("sensitiveCultural")) {
     reasons.push(
-      "Its Video is marked culturally sensitive, so the Learning Layer needs a Knowledge Holder's approval too. Tick its cultural review flag.",
+      "Its Video is marked culturally sensitive, so the Learning Layer needs a Knowledge Holder's approval too. Tick Culturally sensitive in its editor.",
     );
   }
   reasons.push(
@@ -504,14 +487,20 @@ export async function layerEligibility(db: Database, review: LayerReview, now = 
   return reasons.length ? { eligible: false, reasons } : { eligible: true };
 }
 
-/** isLayerEligible for a Revision by its ID. */
+/** The eligibility decision for a Learning Layer Revision found by its ID, as the learner player will ask it. */
 export async function isLayerEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
   const review = await loadLayerReview(db, revisionId);
   if (!review) return { eligible: false, reasons: ["That revision doesn't exist."] };
   return layerEligibility(db, review, now);
 }
 
-const setLayerState = (db: Database, learningLayerId: string, values: Partial<typeof learningLayer.$inferInsert>) =>
+type LayerColumns = typeof learningLayer.$inferInsert;
+
+const setLayerState = (
+  db: Database,
+  learningLayerId: string,
+  values: { [Column in keyof LayerColumns]?: LayerColumns[Column] | SQL },
+) =>
   db
     .update(learningLayer)
     .set({ ...values, updatedAt: new Date() })
@@ -528,7 +517,7 @@ export async function publishLayerRevision(
 ): Promise<ReviewActionResult> {
   if (!can(actor, { action: "revision.publish" })) return refuse("Only editors can publish.");
   if (review.layer.publicationState === "archived") return refuse("Archived Learning Layers can't be published.");
-  if (!isCurrent(review)) return refuse("Only the latest revision can be published.");
+  if (!isLatest(review)) return refuse("Only the latest revision can be published.");
   const eligibility = await layerEligibility(db, review);
   if (!eligibility.eligible) {
     await recordAudit(db, {
@@ -541,16 +530,13 @@ export async function publishLayerRevision(
     return refuse(`Revision ${review.number} can't be published yet. ${eligibility.reasons.join(" ")}`);
   }
   await db.batch([
-    db
-      .update(learningLayer)
-      .set({
-        publicationState: "published",
-        currentPublishedRevisionId: review.revisionId,
-        firstPublishedAt: sql`coalesce(${learningLayer.firstPublishedAt}, ${Date.now()})`,
-        lastPublishedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(learningLayer.id, review.layer.id)),
+    setLayerState(db, review.layer.id, {
+      publicationState: "published",
+      currentPublishedRevisionId: review.revisionId,
+      // Republishing keeps the first publication date; the last one moves on.
+      firstPublishedAt: sql`coalesce(${learningLayer.firstPublishedAt}, ${Date.now()})`,
+      lastPublishedAt: new Date(),
+    }),
     auditInsert(db, {
       actorId: actor.userId,
       action: "learning_layer.published",
@@ -598,38 +584,56 @@ export async function archiveLayer(db: Database, actor: Actor, review: LayerRevi
 
 /**
  * The editors' queues for Learning Layers (VCMS-06): current drafts submitted but still missing a
- * review (or rejected), drafts ready to publish, and Learning Layers whose Video failed processing,
- * each with its Video. Evaluated live, like eligibility, so nothing goes stale.
+ * review (or rejected), with anything else they still need; drafts approved but held up, with why;
+ * drafts ready to publish; and Learning Layers whose video failed processing. Each shows its Video.
+ * Evaluated live, like eligibility, so nothing goes stale; 1a has few enough Learning Layers to
+ * work it out per request.
  */
-export async function layerQueues(db: Database) {
+export async function layerQueues(db: Database, now = new Date()) {
   const layers = await db
     .select({ id: learningLayer.id, revisionId: learningLayer.currentDraftRevisionId })
     .from(learningLayer)
     .where(inArray(learningLayer.publicationState, ["unpublished", "published", "withdrawn"]))
     .orderBy(desc(learningLayer.updatedAt));
   const missingReview: QueueEntry[] = [];
+  const heldUp: QueueEntry[] = [];
   const readyToPublish: QueueEntry[] = [];
   const failedProcessing: QueueEntry[] = [];
   for (const { revisionId } of layers) {
     const review = revisionId ? await loadLayerReview(db, revisionId) : null;
     if (!review) continue;
     const video = await videoItem(db, review.layer.contentItemId);
+    const waitingFor = review.progress
+      .filter((item) => item.status !== "approved")
+      .map((item) => `${requirementName(item.requirement)}${item.status === "rejected" ? " (rejected)" : ""}`);
+    const eligibility = await layerEligibility(db, review, now, video);
     const entry: QueueEntry = {
       learningLayerId: review.layer.id,
       number: review.number,
       title: review.snapshot.title,
       videoTitle: video?.title ?? null,
       publicationState: review.layer.publicationState,
-      waitingFor: review.progress
-        .filter((item) => item.status !== "approved")
-        .map((item) => `${requirementName(item.requirement)}${item.status === "rejected" ? " (rejected)" : ""}`),
+      waitingFor,
+      // What it needs besides its reviews: readiness, processing and rights.
+      blockers: eligibility.eligible
+        ? []
+        : eligibility.reasons.filter(
+            (reason) =>
+              reason !== "It hasn't been submitted for review." &&
+              !reason.endsWith(" is still needed.") &&
+              !reason.endsWith(" was rejected."),
+          ),
     };
     if (video?.video.state === "failed") failedProcessing.push({ ...entry, reason: video.video.stateReason });
-    if (review.submitted && entry.waitingFor.length) missingReview.push(entry);
-    const published = review.layer.currentPublishedRevisionId === review.revisionId;
-    if (!published && review.submitted && (await layerEligibility(db, review)).eligible) readyToPublish.push(entry);
+    if (!review.submitted) continue;
+    if (waitingFor.length) missingReview.push(entry);
+    else if (!eligibility.eligible) heldUp.push(entry);
+    // Ready unless this very revision is already out; a withdrawn one can be published again.
+    const live =
+      review.layer.publicationState === "published" && review.layer.currentPublishedRevisionId === review.revisionId;
+    if (eligibility.eligible && !live) readyToPublish.push(entry);
   }
-  return { missingReview, readyToPublish, failedProcessing };
+  return { missingReview, heldUp, readyToPublish, failedProcessing };
 }
 
 export type QueueEntry = {
@@ -639,6 +643,7 @@ export type QueueEntry = {
   videoTitle: string | null;
   publicationState: PublicationState;
   waitingFor: string[];
+  blockers: string[];
   reason?: string | null;
 };
 
@@ -667,4 +672,105 @@ export async function layersUsingVideoAsset(db: Database, videoAssetId: string) 
     videoTitle: (row.videoSnapshot as { title: string }).title,
     publicationState: row.publicationState as PublicationState,
   }));
+}
+
+export type KnowledgeHolderApproval = {
+  knowledgeHolderName: string;
+  method: string;
+  conditions: string;
+  scope: string;
+  notes: string;
+  reviewLinkId: string;
+  evidence: EvidenceFile | null;
+};
+
+/**
+ * An editor who didn't write or edit the Revision records a Knowledge Holder's approval of it: who
+ * gave it, how, the Review Link they saw this exact Revision through (which must have been opened),
+ * any conditions, and optional private evidence, which is quarantined and scanned like every upload
+ * and refused if the approval can't be written.
+ */
+export async function recordLayerKnowledgeHolderApproval(
+  env: Env,
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  approval: KnowledgeHolderApproval,
+): Promise<ReviewActionResult> {
+  if (!can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } })) {
+    await auditRefusal(db, actor, review, "knowledge holder approval not allowed");
+    return refuse("Only an editor who didn't write or edit this revision can record a Knowledge Holder Approval.");
+  }
+  if (!isLatest(review) || !review.submitted) return refuse("Only a submitted, latest revision can be reviewed.");
+  if (!review.requirements.some((requirement) => requirement.knowledgeHolder)) {
+    return refuse("This revision doesn't need a Knowledge Holder Approval.");
+  }
+  if (!approval.knowledgeHolderName || !approval.method) {
+    return refuse("Enter the Knowledge Holder's name and how they gave their approval.");
+  }
+  const link = await db.select().from(reviewLink).where(eq(reviewLink.id, approval.reviewLinkId)).get();
+  if (link?.revisionId !== review.revisionId) {
+    return refuse(`Choose the Review Link they saw revision ${review.number} through.`);
+  }
+  const opened = await db
+    .select({ id: reviewLinkAccess.id })
+    .from(reviewLinkAccess)
+    .where(and(eq(reviewLinkAccess.reviewLinkId, link.id), eq(reviewLinkAccess.outcome, "viewed")))
+    .get();
+  if (!opened) return refuse("That Review Link has never been opened, so it can't be how they saw this revision.");
+  const evidence = approval.evidence ? await storeEvidence(env, db, actor.userId, approval.evidence) : null;
+  const id = crypto.randomUUID();
+  try {
+    await db.batch([
+      db.insert(learningLayerApproval).values({
+        id,
+        revisionId: review.revisionId,
+        reviewType: "cultural",
+        decision: "approved",
+        reviewerId: actor.userId,
+        knowledgeHolderName: approval.knowledgeHolderName.slice(0, 200),
+        knowledgeHolderMethod: approval.method.slice(0, 200),
+        conditions: approval.conditions.slice(0, 2000) || null,
+        scope: approval.scope.slice(0, 500) || null,
+        notes: approval.notes.slice(0, 2000) || null,
+        reviewLinkId: link.id,
+        evidenceAssetId: evidence?.id ?? null,
+        evidenceKey: evidence?.destinationKey ?? null,
+        evidenceName: approval.evidence?.name ?? null,
+        evidenceType: approval.evidence?.type ?? null,
+        decidedAt: new Date(),
+      }),
+      auditInsert(db, {
+        actorId: actor.userId,
+        action: "knowledge_holder_approval.recorded",
+        objectType: "learning_layer_approval",
+        objectId: id,
+        details: { revisionId: review.revisionId, reviewLinkId: link.id, evidence: evidence !== null },
+      }),
+    ]);
+  } catch (error) {
+    if (evidence) await discardEvidence(env, db, actor.userId, evidence, "Its Knowledge Holder Approval wasn't saved.");
+    throw error;
+  }
+  return { ok: true };
+}
+
+/** A Knowledge Holder Approval's private evidence, for an editor, once its scan has passed. Each read is audited. */
+export async function readApprovalEvidence(env: Env, db: Database, actor: Actor, approvalId: string) {
+  if (!can(actor, { action: "approvalEvidence.read" })) return null;
+  const approval = await db.select().from(learningLayerApproval).where(eq(learningLayerApproval.id, approvalId)).get();
+  if (!approval?.evidenceKey) return null;
+  const evidence = await scannedEvidence(env, db, approval.evidenceAssetId, approval.evidenceKey);
+  if (!evidence || "unavailable" in evidence) return evidence;
+  await recordAudit(db, {
+    actorId: actor.userId,
+    action: "approval_evidence.read",
+    objectType: "learning_layer_approval",
+    objectId: approvalId,
+  });
+  return {
+    object: evidence.object,
+    name: approval.evidenceName ?? "evidence",
+    type: approval.evidenceType ?? "application/octet-stream",
+  };
 }

@@ -1,36 +1,60 @@
 import { and, count, desc, eq, isNull, max } from "drizzle-orm";
-import { learningLayerApproval, mediaAsset, reviewLink, reviewLinkAccess, user } from "~db/schema";
-import { auditInsert, recordAudit } from "./audit.server";
+import { reviewLink, reviewLinkAccess, user } from "~db/schema";
+import { auditInsert } from "./audit.server";
+import { activeHold } from "./content-holds.server";
 import type { Database } from "./db.server";
-import type { EvidenceFile } from "./evidence-file";
-import type { LayerReview, ReviewActionResult } from "./layer-review.server";
+import type { LayerReview } from "./layer-review.server";
 import { reviewLinkExpiry, reviewLinkState } from "./layer-review-rules";
-import { quarantineFile } from "./media.server";
 import { type Actor, can } from "./permissions";
+import { type ReviewActionResult, refuse } from "./review.server";
+import { mediaRightsFacts, rightsFactsFor } from "./rights.server";
+import { isPublishable, type RightsFacts } from "./rights-rules";
 import { hashToken, randomToken } from "./signed-tokens.server";
 
 /**
- * Review Links and Knowledge Holder Approvals for Learning Layers (ADR-0003, GOV-03). An editor
- * issues a Review Link to one exact Revision for someone without a staff account, such as a
- * Knowledge Holder: view-only, no sign-in, 14 days, revocable, and every opening logged. Only a
- * hash of its token is kept, so the address is shown once. The editor then records the Knowledge
- * Holder's approval, naming the link they saw it through, with any conditions and private evidence.
+ * Review Links (ADR-0003, GOV-03): an editor shares one exact Learning Layer Revision with someone
+ * without a staff account, such as a Knowledge Holder. A link is view-only, needs no sign-in, lasts
+ * 14 days and can be revoked, and every opening is logged. Its token is random rather than signed,
+ * so it needs no key and is revoked by a row; only a hash of it is kept, so the address is shown once.
  */
 
 /** The address a Review Link opens, on the public site. */
 export const reviewLinkPath = (token: string) => `/review/${token}`;
 
-/** An editor issues a Review Link to a submitted Revision; the token comes back once, to show. */
+/** A token as `randomToken` makes them: 32 bytes, base64url. Anything else is never looked up. */
+const TOKEN = /^[A-Za-z0-9_-]{43}$/;
+
+/** The Review Link with this token, whatever its state, or null. */
+async function findReviewLink(db: Database, token: string) {
+  if (!TOKEN.test(token)) return null;
+  return (
+    (await db
+      .select()
+      .from(reviewLink)
+      .where(eq(reviewLink.tokenHash, await hashToken(token)))
+      .get()) ?? null
+  );
+}
+
+/**
+ * An editor issues a Review Link to the latest Revision once it is submitted; the token comes back
+ * once, to show, with the name it was stored under.
+ */
 export async function issueReviewLink(
   db: Database,
   actor: Actor,
   review: LayerReview,
   recipient: string,
-): Promise<{ ok: true; token: string } | { ok: false; error: string }> {
-  if (!can(actor, { action: "reviewLink.issue" })) return { ok: false, error: "Only editors can issue Review Links." };
-  if (!review.submitted) return { ok: false, error: "Submit this revision for review before sharing it." };
+): Promise<{ ok: true; token: string; recipient: string } | { ok: false; error: string }> {
+  const fail = (error: string) => ({ ok: false as const, error });
+  if (!can(actor, { action: "reviewLink.issue" })) return fail("Only editors can issue Review Links.");
+  if (review.layer.publicationState === "archived") return fail("Archived Learning Layers can't be shared.");
+  if (review.layer.currentDraftRevisionId !== review.revisionId) {
+    return fail("Only the latest revision can be shared for review.");
+  }
+  if (!review.submitted) return fail("Submit this revision for review before sharing it.");
   const name = recipient.trim().slice(0, 200);
-  if (!name) return { ok: false, error: "Say who the Review Link is for." };
+  if (!name) return fail("Say who the Review Link is for.");
   const id = crypto.randomUUID();
   const token = randomToken();
   const now = new Date();
@@ -52,7 +76,7 @@ export async function issueReviewLink(
       details: { revisionId: review.revisionId, recipient: name },
     }),
   ]);
-  return { ok: true, token };
+  return { ok: true, token, recipient: name };
 }
 
 /** An editor revokes a Review Link to this Revision; it stops working at once. */
@@ -62,10 +86,10 @@ export async function revokeReviewLink(
   review: LayerReview,
   linkId: string,
 ): Promise<ReviewActionResult> {
-  if (!can(actor, { action: "reviewLink.issue" })) return { ok: false, error: "Only editors can revoke Review Links." };
+  if (!can(actor, { action: "reviewLink.issue" })) return refuse("Only editors can revoke Review Links.");
   const link = await db.select().from(reviewLink).where(eq(reviewLink.id, linkId)).get();
-  if (link?.revisionId !== review.revisionId) return { ok: false, error: "That Review Link isn't for this revision." };
-  if (link.revokedAt) return { ok: false, error: "That Review Link is already revoked." };
+  if (link?.revisionId !== review.revisionId) return refuse("That Review Link isn't for this revision.");
+  if (link.revokedAt) return refuse("That Review Link is already revoked.");
   await db.batch([
     db
       .update(reviewLink)
@@ -81,38 +105,54 @@ export async function revokeReviewLink(
   return { ok: true };
 }
 
+const logAccess = (db: Database, linkId: string, outcome: string, now: Date) =>
+  db.insert(reviewLinkAccess).values({ id: crypto.randomUUID(), reviewLinkId: linkId, outcome, accessedAt: now });
+
 /**
- * Opens a Review Link by its token, logging the opening whether or not it still works. Returns
- * the Revision it shows, or why not: an unknown token, an expired link or a revoked one.
+ * Opens a Review Link by its token, logging the opening whether or not it still works: "viewed",
+ * "expired" or "revoked". Returns the link, or why it doesn't open.
  */
 export async function openReviewLink(db: Database, token: string, now = new Date()) {
-  if (!token || token.length > 100) return { ok: false as const, reason: "unknown" as const };
-  const link = await db
-    .select()
-    .from(reviewLink)
-    .where(eq(reviewLink.tokenHash, await hashToken(token)))
-    .get();
+  const link = await findReviewLink(db, token);
   if (!link) return { ok: false as const, reason: "unknown" as const };
   const state = reviewLinkState(link, now);
-  await db.insert(reviewLinkAccess).values({
-    id: crypto.randomUUID(),
-    reviewLinkId: link.id,
-    outcome: state === "active" ? "viewed" : state,
-    accessedAt: now,
-  });
+  await logAccess(db, link.id, state === "active" ? "viewed" : state, now);
   if (state !== "active") return { ok: false as const, reason: state };
   return { ok: true as const, link };
 }
 
-/** Whether a Review Link is active right now, for playing its video while the page is open. */
-export async function activeReviewLink(db: Database, token: string, now = new Date()) {
-  if (!token || token.length > 100) return null;
-  const link = await db
-    .select()
-    .from(reviewLink)
-    .where(eq(reviewLink.tokenHash, await hashToken(token)))
-    .get();
-  return link && reviewLinkState(link, now) === "active" ? link : null;
+/**
+ * The active Review Link for playing its video, logging the start of each play ("played"): the
+ * first request of a play, not every range a player asks for after it. A link that no longer works
+ * is logged too.
+ */
+export async function reviewLinkForPlayback(db: Database, token: string, startsPlay: boolean, now = new Date()) {
+  const link = await findReviewLink(db, token);
+  if (!link) return null;
+  const state = reviewLinkState(link, now);
+  if (startsPlay || state !== "active") await logAccess(db, link.id, state === "active" ? "played" : state, now);
+  return state === "active" ? link : null;
+}
+
+/** Records that lapsed by withdrawal: a Publish grant was withdrawn and none is current. */
+const withdrawn = (records: RightsFacts[], now: Date) =>
+  records.some((record) => record.withdrawnAt && record.permittedUses.includes("publish")) &&
+  !isPublishable(records, now);
+
+/**
+ * Whether a Review Link may play its Video's footage now. A Review Link often comes before every
+ * right is recorded, so missing rights don't stop it; but footage whose Publish grant was withdrawn,
+ * on the Video or the file, or a Video hidden pending a Case, never plays to anyone outside.
+ */
+export async function reviewPlaybackAllowed(
+  db: Database,
+  video: { id: string; video: { id: string } },
+  now = new Date(),
+) {
+  if (await activeHold(db, video.id)) return false;
+  const whole = (await rightsFactsFor(db, { type: "content_item", id: video.id })).filter((record) => !record.part);
+  const [file] = await mediaRightsFacts(db, [video.video.id]);
+  return !withdrawn(whole, now) && !withdrawn(file?.records ?? [], now);
 }
 
 /** The Review Links to a Revision, newest first, with their state and how often they were opened. */
@@ -143,123 +183,4 @@ export async function reviewLinksFor(db: Database, revisionId: string, now = new
     views,
     lastViewedAt: lastViewedAt === null ? null : new Date(lastViewedAt),
   }));
-}
-
-export type KnowledgeHolderApproval = {
-  knowledgeHolderName: string;
-  method: string;
-  conditions: string;
-  scope: string;
-  notes: string;
-  reviewLinkId: string;
-  evidence: EvidenceFile | null;
-};
-
-/**
- * An editor who didn't write or edit the Revision records a Knowledge Holder's approval of it: who
- * gave it, how, the Review Link they saw this exact Revision through (which must have been opened),
- * any conditions, and optional private evidence, which is quarantined and scanned like every upload.
- */
-export async function recordLayerKnowledgeHolderApproval(
-  env: Env,
-  db: Database,
-  actor: Actor,
-  review: LayerReview,
-  approval: KnowledgeHolderApproval,
-): Promise<ReviewActionResult> {
-  if (!can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } })) {
-    await recordAudit(db, {
-      actorId: actor.userId,
-      action: "learning_layer_approval.refused",
-      objectType: "learning_layer_revision",
-      objectId: review.revisionId,
-      details: { reason: "knowledge holder approval not allowed" },
-    });
-    return {
-      ok: false,
-      error: "Only an editor who didn't write or edit this revision can record a Knowledge Holder Approval.",
-    };
-  }
-  if (review.layer.currentDraftRevisionId !== review.revisionId || !review.submitted) {
-    return { ok: false, error: "Only a submitted, latest revision can be reviewed." };
-  }
-  if (!review.requirements.some((requirement) => requirement.knowledgeHolder)) {
-    return { ok: false, error: "This revision doesn't need a Knowledge Holder Approval." };
-  }
-  if (!approval.knowledgeHolderName || !approval.method) {
-    return { ok: false, error: "Enter the Knowledge Holder's name and how they gave their approval." };
-  }
-  const link = await db.select().from(reviewLink).where(eq(reviewLink.id, approval.reviewLinkId)).get();
-  if (link?.revisionId !== review.revisionId) {
-    return { ok: false, error: `Choose the Review Link they saw revision ${review.number} through.` };
-  }
-  const opened = await db
-    .select({ id: reviewLinkAccess.id })
-    .from(reviewLinkAccess)
-    .where(and(eq(reviewLinkAccess.reviewLinkId, link.id), eq(reviewLinkAccess.outcome, "viewed")))
-    .get();
-  if (!opened) {
-    return { ok: false, error: "That Review Link has never been opened, so it can't be how they saw this revision." };
-  }
-  const evidence = approval.evidence
-    ? await quarantineFile(env, db, actor.userId, approval.evidence, "evidence")
-    : null;
-  const id = crypto.randomUUID();
-  await db.batch([
-    db.insert(learningLayerApproval).values({
-      id,
-      revisionId: review.revisionId,
-      reviewType: "cultural",
-      decision: "approved",
-      reviewerId: actor.userId,
-      knowledgeHolderName: approval.knowledgeHolderName.slice(0, 200),
-      knowledgeHolderMethod: approval.method.slice(0, 200),
-      conditions: approval.conditions.slice(0, 2000) || null,
-      scope: approval.scope.slice(0, 500) || null,
-      notes: approval.notes.slice(0, 2000) || null,
-      reviewLinkId: link.id,
-      evidenceAssetId: evidence?.id ?? null,
-      evidenceKey: evidence?.destinationKey ?? null,
-      evidenceName: approval.evidence?.name ?? null,
-      evidenceType: approval.evidence?.type ?? null,
-      decidedAt: new Date(),
-    }),
-    auditInsert(db, {
-      actorId: actor.userId,
-      action: "knowledge_holder_approval.recorded",
-      objectType: "learning_layer_approval",
-      objectId: id,
-      details: { revisionId: review.revisionId, reviewLinkId: link.id, evidence: evidence !== null },
-    }),
-  ]);
-  return { ok: true };
-}
-
-/**
- * A Knowledge Holder Approval's private evidence, for an editor, once its scan has passed. The read
- * is audited.
- */
-export async function readApprovalEvidence(env: Env, db: Database, actor: Actor, approvalId: string) {
-  if (!can(actor, { action: "rightsEvidence.read" })) return null;
-  const approval = await db.select().from(learningLayerApproval).where(eq(learningLayerApproval.id, approvalId)).get();
-  if (!approval?.evidenceKey || !approval.evidenceAssetId) return null;
-  const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, approval.evidenceAssetId)).get();
-  if (asset?.status !== "ready") {
-    return {
-      unavailable: asset?.statusReason ?? "This evidence is still being scanned for viruses. Try again shortly.",
-    };
-  }
-  const object = await env.EVIDENCE.get(approval.evidenceKey);
-  if (!object) return null;
-  await recordAudit(db, {
-    actorId: actor.userId,
-    action: "approval_evidence.read",
-    objectType: "learning_layer_approval",
-    objectId: approvalId,
-  });
-  return {
-    object,
-    name: approval.evidenceName ?? "evidence",
-    type: approval.evidenceType ?? "application/octet-stream",
-  };
 }

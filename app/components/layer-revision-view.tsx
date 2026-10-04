@@ -8,7 +8,14 @@ import { formatTimecode } from "~/lib/segment-rules";
  * with its words, Annotations and notes, the notes on the whole Learning Layer, and every Activity
  * with its answers. Shown to staff reviewing it and through a Review Link, so both see the same.
  */
-export function LayerRevisionView({ snapshot }: { snapshot: LearningLayerSnapshot }) {
+export function LayerRevisionView({
+  snapshot,
+  languageVariety,
+}: {
+  snapshot: LearningLayerSnapshot;
+  /** The Language Variety the Learning Layer teaches, as stored on it. */
+  languageVariety: string;
+}) {
   const segmentIds = new Set(snapshot.segments.map((segment) => segment.id));
   const segmentName = (id: string | null) => {
     const at = snapshot.segments.findIndex((segment) => segment.id === id);
@@ -22,8 +29,8 @@ export function LayerRevisionView({ snapshot }: { snapshot: LearningLayerSnapsho
         <dd>{LAYER_LEVELS[snapshot.level]}</dd>
         <dt>Built on</dt>
         <dd>{layerSpan(snapshot.excerpt)}</dd>
-        <dt>Language</dt>
-        <dd>Standard Fijian</dd>
+        <dt>Language Variety</dt>
+        <dd>{languageVariety === "standard-fijian" ? "Standard Fijian" : languageVariety}</dd>
       </dl>
 
       <h2>Segments</h2>

@@ -50,7 +50,13 @@ export default function LearningLayers({ loaderData }: Route.ComponentProps) {
             heading="Waiting for review"
             empty="Nothing submitted is waiting for a review."
             entries={loaderData.queues.missingReview}
-            detail={(entry) => `still needs ${entry.waitingFor.join(", ")}`}
+            detail={(entry) => [`still needs ${entry.waitingFor.join(", ")}.`, ...entry.blockers].join(" ")}
+          />
+          <Queue
+            heading="Approved but held up"
+            empty="Nothing approved is held up."
+            entries={loaderData.queues.heldUp}
+            detail={(entry) => entry.blockers.join(" ")}
           />
           <Queue
             heading="Ready to publish"

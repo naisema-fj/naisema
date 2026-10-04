@@ -53,6 +53,8 @@ export type Check =
   | { action: "content.withdraw" }
   /** Recording and withdrawing Rights Records, and reading the private evidence behind them. */
   | { action: "rights.manage" | "rightsEvidence.read" }
+  /** Reading the private evidence behind a Knowledge Holder Approval. */
+  | { action: "approvalEvidence.read" }
   /**
    * Uploading files and managing the media library (alt text). There is no public upload path
    * (docs/phase-1a-defaults.md §1).
@@ -121,6 +123,7 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "content.withdraw":
     case "rights.manage":
     case "rightsEvidence.read":
+    case "approvalEvidence.read":
       return hasRole("editor");
 
     case "media.upload":

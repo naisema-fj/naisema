@@ -78,6 +78,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["editor edits content", editor, { action: "content.edit" }, true],
   ["editor publishes eligible revisions", editor, { action: "revision.publish" }, true],
   ["editor issues review links", editor, { action: "reviewLink.issue" }, true],
+  ["editor reads Knowledge Holder Approval evidence", editor, { action: "approvalEvidence.read" }, true],
   [
     "editor records a knowledge holder approval on someone else's revision",
     editor,
