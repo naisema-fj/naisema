@@ -1,27 +1,35 @@
-// Measures the spike's player against issue #4's checks, in Chromium through Playwright:
+// Measures the spike's player against issue #4's checks, in Chromium through Playwright.
 //
-//   PLAYWRIGHT_CHROMIUM_EXECUTABLE=... node measure.mjs [vp9|h264]
+// Setup, once: run `pnpm install` at the repository root (this script uses its Playwright), then
+// `npm ci` in this folder (hls.js), then build the clips with make-clips.sh. Then:
 //
+//   PLAYWRIGHT_CHROMIUM_EXECUTABLE=... SEGMENT=s2 node measure.mjs [vp9|h264] [--loops-only]
+//
+// SEGMENT is one of player.js's segments: s2 starts on a keyframe, s5 between keyframes.
 // 1. Cold start: five runs per clip on the agreed profile (1.5 Mbps down, 150 ms latency), each in
-//    a fresh browser context; the first playable frame must arrive within 5 s in at least four.
-// 2. Loops: one segment played 10 times at 1×, 0.75× and 0.5×; every pass's first and last frame
-//    must be within ±100 ms of the segment's start and end, with no drift across passes.
-// 3. Quality change: a rendition switch forced mid-segment must keep the playhead in the segment.
-// 4. Captions: the native <track> built from the segment data shows the segment's cue throughout.
-// Results go to results/<codec>-<time>.json and a summary is printed.
+//    a fresh browser context; the first frame shown while playing must arrive within 5 s in at
+//    least four. Skipped with --loops-only.
+// 2. Loops: the segment played 10 times at 1×, 0.75× and 0.5×; the first and last frame shown in
+//    every pass (including any shown after the stop) must be within ±100 ms of its start and end.
+//    The segment's caption must become active within 100 ms of its start and stay active to within
+//    100 ms of its end.
+// 3. Quality changes: a rendition switch forced mid-pass, up and then down, at every speed; no
+//    frame may be shown outside the segment.
+// 4. Interruptions: the network dropped for 4 s while a buffered segment loops, and while seeking
+//    to a segment not yet buffered (s6), then restored; playback must carry on or recover.
+// Results go to results/<codec>-<segment>-<time>.json and a summary is printed.
 import { createReadStream, mkdirSync, statSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
-import { extname, join, normalize } from "node:path";
+import { extname, join, normalize, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createGzip } from "node:zlib";
 import { chromium } from "@playwright/test";
 
-const ROOT = new URL(".", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const CODEC = process.argv[2] ?? "vp9";
-const CLIPS = ["landscape", "vertical"];
-// s2 starts on a keyframe and ends on a frame; s5 starts between keyframes and ends between frames.
-const SEGMENTS = { s2: { id: "s2", startMs: 12000, endMs: 15500 }, s5: { id: "s5", startMs: 27340, endMs: 30890 } };
-const SEGMENT = SEGMENTS[process.env.SEGMENT ?? "s2"];
 const LOOPS_ONLY = process.argv.includes("--loops-only");
+const SEGMENT_ID = process.env.SEGMENT ?? "s2";
+const CLIPS = ["landscape", "vertical"];
 const SPEEDS = [1, 0.75, 0.5];
 const PROFILE = {
   offline: false,
@@ -29,6 +37,7 @@ const PROFILE = {
   downloadThroughput: (1.5e6 / 8) | 0,
   uploadThroughput: (0.75e6 / 8) | 0,
 };
+const OFFLINE = { offline: true, latency: 0, downloadThroughput: -1, uploadThroughput: -1 };
 const TOLERANCE_MS = 100;
 const TYPES = {
   ".html": "text/html",
@@ -39,14 +48,21 @@ const TYPES = {
   ".mp4": "video/mp4",
 };
 
-/** A static server for the spike folder, with byte ranges, as a CDN would answer. */
+/** A static server for this folder, compressing text and answering byte ranges, as a CDN would. */
 function serve() {
   const server = createServer((request, response) => {
-    const path = normalize(join(ROOT, decodeURIComponent(new URL(request.url, "http://x").pathname)));
-    if (!path.startsWith(ROOT)) return response.writeHead(403).end();
+    let path;
+    try {
+      path = normalize(join(ROOT, decodeURIComponent(new URL(request.url, "http://x").pathname)));
+    } catch {
+      return response.writeHead(400).end();
+    }
+    if (!path.startsWith(ROOT.endsWith(sep) ? ROOT : ROOT + sep)) return response.writeHead(403).end();
     let size;
     try {
-      size = statSync(path).size;
+      const stats = statSync(path);
+      if (!stats.isFile()) return response.writeHead(404).end();
+      size = stats.size;
     } catch {
       return response.writeHead(404).end();
     }
@@ -54,7 +70,8 @@ function serve() {
     const range = /bytes=(\d+)-(\d*)/.exec(request.headers.range ?? "");
     if (range) {
       const start = Number(range[1]);
-      const end = range[2] ? Number(range[2]) : size - 1;
+      const end = Math.min(range[2] ? Number(range[2]) : size - 1, size - 1);
+      if (start > end) return response.writeHead(416, { "Content-Range": `bytes */${size}` }).end();
       response.writeHead(206, {
         ...headers,
         "Content-Range": `bytes ${start}-${end}/${size}`,
@@ -62,7 +79,6 @@ function serve() {
       });
       return createReadStream(path, { start, end }).pipe(response);
     }
-    // Text (the page, scripts, playlists) is compressed, as Cloudflare's edge compresses it.
     if (/\.(html|m?js|m3u8)$/.test(path) && /gzip/.test(request.headers["accept-encoding"] ?? "")) {
       response.writeHead(200, { ...headers, "Content-Encoding": "gzip" });
       return createReadStream(path).pipe(createGzip()).pipe(response);
@@ -82,152 +98,206 @@ async function openPlayer(browser, origin, clip) {
   await cdp.send("Network.emulateNetworkConditions", PROFILE);
   page.on("pageerror", (error) => console.error("page error:", error.message));
   await page.goto(`${origin}/index.html?src=./media/${CODEC}/${clip}/master.m3u8`);
-  return { context, page };
+  await page.evaluate(() => {
+    document.getElementById("video").muted = true;
+  });
+  return { context, page, cdp };
 }
 
 async function coldStarts(browser, origin, clip) {
   const runs = [];
   for (let run = 0; run < 5; run++) {
     const { context, page } = await openPlayer(browser, origin, clip);
-    await page.evaluate(() => {
-      const video = document.getElementById("video");
-      video.muted = true;
-      return video.play().catch(() => undefined);
-    });
+    await page.evaluate(() =>
+      document
+        .getElementById("video")
+        .play()
+        .catch(() => undefined),
+    );
     const firstFrameMs = await page
-      .waitForFunction(() => window.spike?.state.firstFrameAt, null, { timeout: 30_000 })
+      .waitForFunction(() => window.spike?.state.firstPlayingFrameAt, null, { timeout: 30_000 })
       .then((handle) => handle.jsonValue())
       .catch(() => null);
     runs.push(firstFrameMs === null ? null : Math.round(firstFrameMs));
     console.log(`  run ${run + 1}: ${runs.at(-1)} ms`);
     await context.close();
   }
+  const within5s = runs.filter((ms) => ms !== null && ms <= 5000).length;
+  return { runs, within5s, ok: within5s >= 4 };
+}
+
+/** How far each pass's first and last frame, and its caption, were from the segment's edges. */
+function boundaries(segment, passes) {
+  const completed = passes.filter((pass) => !pass.stalled);
+  const startErrors = completed.map((pass) => pass.firstFrameMs - segment.startMs);
+  const endErrors = completed.map((pass) => pass.lastFrameMs - segment.endMs);
+  const cueEntry = completed.map((pass) => (pass.cueFirstMs === null ? null : pass.cueFirstMs - segment.startMs));
+  const cueExit = completed.map((pass) => (pass.cueLastMs === null ? null : pass.cueLastMs - segment.endMs));
+  const worst = Math.max(0, ...startErrors.map(Math.abs), ...endErrors.map(Math.abs));
+  const cueWorst = Math.max(
+    0,
+    ...[...cueEntry, ...cueExit].map((ms) => (ms === null ? Number.POSITIVE_INFINITY : Math.abs(ms))),
+  );
+  const stalled = passes.length - completed.length;
   return {
-    runs,
-    within5s: runs.filter((ms) => ms !== null && ms <= 5000).length,
-    passes: runs.filter((ms) => ms !== null && ms <= 5000).length >= 4,
+    startErrors,
+    endErrors,
+    framesAfterStop: completed.map((pass) => pass.framesAfterStop),
+    cueEntry,
+    cueExit,
+    worstMs: worst,
+    cueWorstMs: cueWorst,
+    stalled,
+    ok: stalled === 0 && worst <= TOLERANCE_MS && cueWorst <= TOLERANCE_MS,
   };
 }
 
-async function loops(page) {
+const play = (page, segment, speed, times) =>
+  page.evaluate(({ segment, speed, times }) => window.spike.playSegment({ ...segment, speed, times }), {
+    segment,
+    speed,
+    times,
+  });
+
+async function loops(page, segment) {
   const results = {};
   for (const speed of SPEEDS) {
-    console.log(`  ${speed}×`);
-    const passes = await page.evaluate(
-      async ({ segment, speed }) => {
-        const video = document.getElementById("video");
-        video.muted = true;
-        const cueMisses = [];
-        let inside = 0;
-        const stop = window.spike.watchFrames((mediaTime) => {
-          const ms = mediaTime * 1000;
-          // Away from the edges (where "time marches on" may lag a frame or two) the cue must show.
-          if (ms > segment.startMs + 250 && ms < segment.endMs - 250) {
-            inside += 1;
-            if (window.spike.activeCue() !== segment.id) cueMisses.push(Math.round(ms));
-          }
-        });
-        const result = await window.spike.playSegment({
-          startMs: segment.startMs,
-          endMs: segment.endMs,
-          speed,
-          times: 10,
-        });
-        stop();
-        return { passes: result, cueFrames: inside, cueMisses };
-      },
-      { segment: SEGMENT, speed },
-    );
-    const completed = passes.passes.filter((pass) => !pass.stalled);
-    const startErrors = completed.map((pass) => Math.round(pass.firstFrameMs - SEGMENT.startMs));
-    const endErrors = completed.map((pass) => Math.round(SEGMENT.endMs - pass.lastFrameMs));
-    const stalled = passes.passes.length - completed.length;
-    const worst = Math.max(0, ...startErrors.map(Math.abs), ...endErrors.map(Math.abs));
-    results[speed] = {
-      startErrors,
-      endErrors,
-      worstMs: worst,
-      stalled,
-      passes: stalled === 0 && worst <= TOLERANCE_MS,
-      cueFrames: passes.cueFrames,
-      cueMisses: passes.cueMisses,
-    };
+    console.log(`  loops at ${speed}×`);
+    results[speed] = boundaries(segment, await play(page, segment, speed, 10));
   }
   return results;
 }
 
-async function qualityChange(page) {
-  return page.evaluate(async (segment) => {
-    const video = document.getElementById("video");
-    video.muted = true;
-    const outside = [];
-    const stop = window.spike.watchFrames((mediaTime) => {
-      const ms = mediaTime * 1000;
-      if (ms < segment.startMs - 100 || ms > segment.endMs + 100) outside.push(Math.round(ms));
+/** Plays three passes, forcing a rendition change half-way through the second, and watches every frame. */
+async function forcedChange(page, segment, speed, direction) {
+  return page.evaluate(
+    async ({ segment, speed, direction }) => {
+      const outside = [];
+      const video = document.getElementById("video");
+      const watch = () => {
+        const ms = video.currentTime * 1000;
+        if (!video.paused && (ms < segment.startMs - 100 || ms > segment.endMs + 100)) outside.push(Math.round(ms));
+      };
+      video.addEventListener("timeupdate", watch);
+      const before = window.spike.currentLevel();
+      const loop = window.spike.playSegment({ ...segment, speed, times: 3 });
+      await new Promise((resolve) => setTimeout(resolve, ((segment.endMs - segment.startMs) / speed) * 1.5 + 300));
+      const forcedAtMs = Math.round(video.currentTime * 1000);
+      const forced = window.spike.forceQualityChange(direction);
+      const passes = await loop;
+      video.removeEventListener("timeupdate", watch);
+      return { before, forced, forcedAtMs, outside, passes };
+    },
+    { segment, speed, direction },
+  );
+}
+
+async function qualityChanges(page, segment) {
+  const results = {};
+  for (const speed of SPEEDS) {
+    console.log(`  quality changes at ${speed}×`);
+    const up = await forcedChange(page, segment, speed, 1);
+    const down = await forcedChange(page, segment, speed, -1);
+    results[speed] = [up, down].map((run) => {
+      const checked = boundaries(segment, run.passes);
+      const forcedInside = run.forcedAtMs >= segment.startMs && run.forcedAtMs <= segment.endMs;
+      return {
+        levels: `${run.before} → ${run.forced}`,
+        forcedAtMs: run.forcedAtMs,
+        forcedInside,
+        framesOutsideSegment: run.outside.length,
+        worstMs: checked.worstMs,
+        stalled: checked.stalled,
+        ok: forcedInside && run.outside.length === 0 && checked.ok,
+      };
     });
-    const before = window.spike.currentLevel();
-    let forcedAtMs = null;
-    const loop = window.spike.playSegment({ startMs: segment.startMs, endMs: segment.endMs, speed: 1, times: 3 });
-    // Mid-way through the second pass.
-    await new Promise((resolve) => setTimeout(resolve, (segment.endMs - segment.startMs) * 1.5));
-    forcedAtMs = Math.round(video.currentTime * 1000);
-    const forced = window.spike.forceQualityChange();
-    const passes = await loop;
-    stop();
-    return {
-      levels: window.spike.levels(),
-      before,
-      forced,
-      after: window.spike.currentLevel(),
-      forcedAtMs,
-      framesOutsideSegment: outside,
-      passes: passes.map((pass) =>
-        pass.stalled
-          ? { stalled: true }
-          : {
-              startErrorMs: Math.round(pass.firstFrameMs - segment.startMs),
-              endErrorMs: Math.round(segment.endMs - pass.lastFrameMs),
-            },
-      ),
-      switches: window.spike.state.levelSwitches,
-    };
-  }, SEGMENT);
+  }
+  return results;
+}
+
+/** Drops the network for 4 s during a buffered loop, then while seeking to an unbuffered segment. */
+async function interruptions(page, cdp, segment) {
+  console.log("  interruptions");
+  const far = await page.evaluate(() => window.spike.segment("s6"));
+  const buffered = play(page, segment, 1, 3);
+  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await cdp.send("Network.emulateNetworkConditions", OFFLINE);
+  await new Promise((resolve) => setTimeout(resolve, 4000));
+  await cdp.send("Network.emulateNetworkConditions", PROFILE);
+  const bufferedResult = boundaries(segment, await buffered);
+
+  await cdp.send("Network.emulateNetworkConditions", OFFLINE);
+  const started = Date.now();
+  const unbuffered = play(page, far, 1, 1);
+  await new Promise((resolve) => setTimeout(resolve, 4000));
+  await cdp.send("Network.emulateNetworkConditions", PROFILE);
+  const restoredAt = Date.now();
+  const farPasses = await unbuffered;
+  const finishedAt = Date.now();
+  const errors = await page.evaluate(() => window.spike.state.errors);
+  return {
+    whileLoopingBuffered: bufferedResult,
+    seekingUnbuffered: {
+      ...boundaries(far, farPasses),
+      offlineMs: restoredAt - started,
+      finishedAfterRestoreMs: finishedAt - restoredAt,
+    },
+    hlsErrors: errors,
+  };
 }
 
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
 const browser = await chromium.launch({ executablePath, args: ["--autoplay-policy=no-user-gesture-required"] });
 const server = await serve();
 const origin = `http://127.0.0.1:${server.address().port}`;
-const report = { codec: CODEC, browser: browser.version(), profile: PROFILE, segment: SEGMENT, clips: {} };
-for (const clip of CLIPS) {
-  console.log(`${clip}: cold starts`);
-  const cold = LOOPS_ONLY ? { runs: [], within5s: 0, passes: null } : await coldStarts(browser, origin, clip);
-  console.log(`${clip}: loops`);
-  const { context, page } = await openPlayer(browser, origin, clip);
-  await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
-  const loopResults = await loops(page);
-  console.log(`${clip}: quality change`);
-  const quality = await qualityChange(page);
-  await context.close();
-  report.clips[clip] = { coldStarts: cold, loops: loopResults, qualityChange: quality };
+const report = { codec: CODEC, segmentId: SEGMENT_ID, browser: browser.version(), profile: PROFILE, clips: {} };
+try {
+  for (const clip of CLIPS) {
+    console.log(`${clip}: cold starts`);
+    const cold = LOOPS_ONLY ? null : await coldStarts(browser, origin, clip);
+    const { context, page, cdp } = await openPlayer(browser, origin, clip);
+    await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
+    const segment = await page.evaluate((id) => window.spike.segment(id), SEGMENT_ID);
+    if (!segment) throw new Error(`No segment "${SEGMENT_ID}" in player.js`);
+    report.segment = segment;
+    report.clips[clip] = {
+      coldStarts: cold,
+      loops: await loops(page, segment),
+      qualityChanges: await qualityChanges(page, segment),
+      interruptions: await interruptions(page, cdp, segment),
+    };
+    await context.close();
+  }
+} finally {
+  await browser.close();
+  server.close();
 }
-await browser.close();
-server.close();
 
 mkdirSync(join(ROOT, "results"), { recursive: true });
-const file = join(ROOT, "results", `${CODEC}-${SEGMENT.id}-${new Date().toISOString().replaceAll(":", "-")}.json`);
+const file = join(ROOT, "results", `${CODEC}-${SEGMENT_ID}-${new Date().toISOString().replaceAll(":", "-")}.json`);
 writeFileSync(file, JSON.stringify(report, null, 2));
 for (const [clip, result] of Object.entries(report.clips)) {
   console.log(`\n${clip}`);
-  console.log(`  first frame (ms): ${result.coldStarts.runs.join(", ")} → ${result.coldStarts.within5s}/5 within 5 s`);
-  for (const [speed, loop] of Object.entries(result.loops)) {
+  if (result.coldStarts) {
     console.log(
-      `  ${speed}×: worst ${loop.worstMs} ms, ${loop.stalled} stalled; start ${loop.startErrors.join(" ")}; end ${loop.endErrors.join(" ")}; cue missing on ${loop.cueMisses.length}/${loop.cueFrames} frames`,
+      `  first frame playing (ms): ${result.coldStarts.runs.join(", ")} → ${result.coldStarts.within5s}/5 within 5 s`,
     );
   }
-  const q = result.qualityChange;
+  for (const [speed, loop] of Object.entries(result.loops)) {
+    console.log(
+      `  ${speed}×: worst ${loop.worstMs} ms, ${loop.stalled} stalled; start ${loop.startErrors.join(" ")}; end ${loop.endErrors.join(" ")}; after stop ${loop.framesAfterStop.join(" ")}; caption in ${loop.cueEntry.join(" ")}, out ${loop.cueExit.join(" ")}`,
+    );
+  }
+  for (const [speed, runs] of Object.entries(result.qualityChanges)) {
+    for (const run of runs) {
+      console.log(
+        `  quality ${speed}× ${run.levels} at ${run.forcedAtMs} ms: outside ${run.framesOutsideSegment}, worst ${run.worstMs} ms, ${run.stalled} stalled, ${run.ok ? "ok" : "FAILED"}`,
+      );
+    }
+  }
+  const drop = result.interruptions;
   console.log(
-    `  quality: level ${q.before} → forced ${q.forced} at ${q.forcedAtMs} ms; frames outside segment: ${q.framesOutsideSegment.length}; passes ${JSON.stringify(q.passes)}`,
+    `  offline while looping: worst ${drop.whileLoopingBuffered.worstMs} ms, ${drop.whileLoopingBuffered.stalled} stalled; offline seek: ${drop.seekingUnbuffered.stalled ? "stalled" : `finished ${drop.seekingUnbuffered.finishedAfterRestoreMs} ms after restore, worst ${drop.seekingUnbuffered.worstMs} ms`}; hls errors ${drop.hlsErrors.map((error) => error.details + (error.fatal ? "!" : "")).join(", ") || "none"}`,
   );
 }
 console.log(`\nwritten to ${file}`);

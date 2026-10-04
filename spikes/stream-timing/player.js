@@ -10,12 +10,12 @@ const src = params.get("src") ?? "./media/vp9/landscape/master.m3u8";
 
 /** In-memory segment data, as a Learning Layer Revision would hold it (ms). */
 const segments = [
-  { id: "s1", startMs: 4000, endMs: 7200, text: "Bula vinaka." },
+  // Starts on a keyframe (every 2 s) and ends on a frame (every 33.3 ms).
   { id: "s2", startMs: 12000, endMs: 15500, text: "Au lako mai Suva." },
-  { id: "s3", startMs: 21000, endMs: 23800, text: "Vinaka vakalevu." },
-  { id: "s4", startMs: 40500, endMs: 44250, text: "Sa moce." },
-  // Starts between keyframes (every 2 s) and ends between frames (every 33.3 ms): the hard case.
+  // Starts between keyframes and ends between frames: the hard case.
   { id: "s5", startMs: 27340, endMs: 30890, text: "Ni sa bula." },
+  // Well past what has been buffered from the start, for the interruption test.
+  { id: "s6", startMs: 55000, endMs: 58000, text: "Moce mada." },
 ];
 
 const say = (line) => {
@@ -23,10 +23,12 @@ const say = (line) => {
 };
 
 const state = {
-  /** Milliseconds from navigation start to the first frame presented: the first playable frame. */
+  /** Milliseconds from navigation start to the first frame presented, playing or not. */
   firstFrameAt: null,
+  /** Milliseconds from navigation start to the first frame presented while playing: the first playable frame. */
+  firstPlayingFrameAt: null,
   levelSwitches: [],
-  native: false,
+  errors: [],
 };
 let hls = null;
 
@@ -36,14 +38,19 @@ if (Hls.isSupported() && params.get("native") !== "1") {
   hls.loadSource(src);
   hls.attachMedia(video);
   hls.on(Hls.Events.LEVEL_SWITCHED, (_event, data) => {
-    state.levelSwitches.push({ level: data.level, at: video.currentTime });
+    state.levelSwitches.push({ level: data.level, atMs: Math.round(video.currentTime * 1000) });
     say(`level ${data.level} at ${video.currentTime.toFixed(3)} s`);
   });
-  hls.on(Hls.Events.ERROR, (_event, data) =>
-    say(`hls error: ${data.type} ${data.details}${data.fatal ? " (fatal)" : ""}`),
-  );
+  // Recovery, as production needs it: a fatal network error (the connection dropped for longer
+  // than hls.js retries) restarts loading; a fatal media error asks hls.js to rebuild the buffer.
+  hls.on(Hls.Events.ERROR, (_event, data) => {
+    state.errors.push({ details: data.details, fatal: data.fatal });
+    say(`hls error: ${data.type} ${data.details}${data.fatal ? " (fatal)" : ""}`);
+    if (!data.fatal) return;
+    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) setTimeout(() => hls.startLoad(), 1000);
+    else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) hls.recoverMediaError();
+  });
 } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-  state.native = true;
   video.src = src;
 } else {
   say("This browser can play neither hls.js nor native HLS.");
@@ -68,40 +75,46 @@ track.src = URL.createObjectURL(new Blob([vtt], { type: "text/vtt" }));
 video.append(track);
 track.track.mode = "hidden";
 
+/** The caption the browser treats as showing now (its active cue). */
+const activeCue = () => {
+  const cues = track.track.activeCues;
+  return cues?.length ? cues[0].id : null;
+};
+
 // --- Frame-accurate observation: requestVideoFrameCallback where it exists, else timeupdate ---
 const frameListeners = new Set();
+const noteFrame = (mediaTime) => {
+  const now = performance.now();
+  if (state.firstFrameAt === null) state.firstFrameAt = now;
+  if (state.firstPlayingFrameAt === null && !video.paused && mediaTime > 0) {
+    state.firstPlayingFrameAt = now;
+    say(`first frame while playing after ${Math.round(now)} ms`);
+  }
+  for (const listener of frameListeners) listener(mediaTime);
+};
 if ("requestVideoFrameCallback" in HTMLVideoElement.prototype) {
   const onFrame = (_now, metadata) => {
-    if (state.firstFrameAt === null) {
-      state.firstFrameAt = performance.now();
-      say(`first frame after ${Math.round(state.firstFrameAt)} ms`);
-    }
-    for (const listener of frameListeners) listener(metadata.mediaTime);
+    noteFrame(metadata.mediaTime);
     video.requestVideoFrameCallback(onFrame);
   };
   video.requestVideoFrameCallback(onFrame);
 } else {
-  video.addEventListener("timeupdate", () => {
-    if (state.firstFrameAt === null && video.currentTime > 0) state.firstFrameAt = performance.now();
-    for (const listener of frameListeners) listener(video.currentTime);
-  });
+  video.addEventListener("timeupdate", () => noteFrame(video.currentTime));
 }
 
-/** Resolves once a seek has finished. */
-function seekTo(seconds) {
-  return new Promise((resolve) => {
-    video.addEventListener("seeked", () => resolve(), { once: true });
-    video.currentTime = seconds;
-  });
-}
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Plays one segment from its start to its end, `times` over, at a speed. Each pass seeks to the
- * start, plays, and records the media time of the first frame presented and of the last frame
- * presented before stopping at the end, so the boundaries can be checked against the segment's
- * own times. A pass that doesn't reach its end in time is recorded as stalled rather than waited on.
+ * Plays one segment from its start to its end, `times` over, at a speed, and records for each
+ * pass what was actually on screen:
+ * - the first frame presented after the seek to the start, whether it came while still paused or
+ *   once playing (frames from before the seek are told apart by being nowhere near the start);
+ * - the last frame presented, including any presented after the stop, watched for 300 ms;
+ * - when the segment's caption became active and when it was last active.
+ * It stops on the last frame that starts at or before the end, judged from the frame interval, so
+ * the next frame would overshoot. A pass that doesn't reach its end in time is recorded as stalled.
  */
-async function playSegment({ startMs, endMs, speed = 1, times = 1, onPass }) {
+async function playSegment({ id, startMs, endMs, speed = 1, times = 1 }) {
   video.defaultPlaybackRate = speed;
   video.playbackRate = speed;
   video.preservesPitch = true;
@@ -111,87 +124,94 @@ async function playSegment({ startMs, endMs, speed = 1, times = 1, onPass }) {
   const allowanceMs = (endMs - startMs) / speed + 15_000;
   for (let pass = 0; pass < times; pass++) {
     video.pause();
-    await seekTo(start);
-    const result = await new Promise((resolve) => {
-      let first = null;
-      let last = null;
-      const finish = (stalled) => {
-        clearTimeout(watchdog);
-        frameListeners.delete(onFrame);
-        video.pause();
-        resolve({
-          pass,
-          speed,
-          stalled,
-          firstFrameMs: first === null ? null : first * 1000,
-          lastFrameMs: last === null ? null : last * 1000,
-        });
-      };
-      // Stop on the last frame that starts before the end: one more frame would overshoot.
-      const onFrame = (mediaTime) => {
-        if (first === null) first = mediaTime;
-        last = mediaTime;
-        if (mediaTime >= end - 1 / 60) finish(false);
-      };
-      const watchdog = setTimeout(() => finish(true), allowanceMs);
-      frameListeners.add(onFrame);
-      video.play().catch((error) => say(`play refused: ${error.message}`));
+    let first = null;
+    let last = null;
+    let previous = null;
+    let step = 1 / 30;
+    let cueFirst = null;
+    let cueLast = null;
+    let stopped = false;
+    let afterStop = 0;
+    let reachedEnd = null;
+    const ended = new Promise((resolve) => {
+      reachedEnd = resolve;
     });
+    const onFrame = (mediaTime) => {
+      if (first === null) {
+        if (Math.abs(mediaTime - start) > 0.5) return;
+        first = mediaTime;
+      }
+      if (stopped) afterStop += 1;
+      if (previous !== null && mediaTime - previous > 0 && mediaTime - previous < 0.2) step = mediaTime - previous;
+      previous = mediaTime;
+      last = Math.max(last ?? mediaTime, mediaTime);
+      if (activeCue() === id) {
+        cueFirst ??= mediaTime;
+        cueLast = mediaTime;
+      }
+      if (!stopped && mediaTime + step > end + 0.001) {
+        stopped = true;
+        video.pause();
+        reachedEnd();
+      }
+    };
+    frameListeners.add(onFrame);
+    const seeked = new Promise((resolve) => video.addEventListener("seeked", resolve, { once: true }));
+    video.currentTime = start;
+    await seeked;
+    video.play().catch((error) => say(`play refused: ${error.message}`));
+    const stalled = await Promise.race([ended.then(() => false), wait(allowanceMs).then(() => true)]);
+    video.pause();
+    await wait(300);
+    frameListeners.delete(onFrame);
+    const ms = (seconds) => (seconds === null ? null : Math.round(seconds * 1000));
+    const result = {
+      pass,
+      speed,
+      stalled,
+      firstFrameMs: ms(first),
+      lastFrameMs: ms(last),
+      framesAfterStop: afterStop,
+      cueFirstMs: ms(cueFirst),
+      cueLastMs: ms(cueLast),
+    };
     passes.push(result);
-    onPass?.(result);
     say(
-      result.stalled
+      stalled
         ? `pass ${pass + 1} at ${speed}×: stalled at ${video.currentTime.toFixed(3)} s`
-        : `pass ${pass + 1} at ${speed}×: ${result.firstFrameMs.toFixed(0)} → ${result.lastFrameMs.toFixed(0)} ms`,
+        : `pass ${pass + 1} at ${speed}×: ${result.firstFrameMs} → ${result.lastFrameMs} ms`,
     );
   }
   return passes;
 }
 
-/** The caption the browser shows now (active cue), as the track sees it. */
-const activeCue = () => {
-  const cues = track.track.activeCues;
-  return cues?.length ? cues[0].id : null;
-};
-
 /** Forces a different rendition at once (hls.js flushes the buffer and reloads from the playhead). */
-function forceQualityChange() {
+function forceQualityChange(direction = 1) {
   if (!hls || hls.levels.length < 2) return null;
-  const next = (hls.currentLevel + 1) % hls.levels.length;
+  const count = hls.levels.length;
+  const next = (((hls.currentLevel + direction) % count) + count) % count;
   hls.currentLevel = next;
   say(`forcing level ${next}`);
   return next;
 }
 
-document.getElementById("replay").addEventListener("click", () => {
+const fromForm = (times) => () =>
   playSegment({
     startMs: Number(document.getElementById("start").value),
     endMs: Number(document.getElementById("end").value),
     speed: Number(document.getElementById("speed").value),
+    times,
   });
-});
-document.getElementById("loop").addEventListener("click", () => {
-  playSegment({
-    startMs: Number(document.getElementById("start").value),
-    endMs: Number(document.getElementById("end").value),
-    speed: Number(document.getElementById("speed").value),
-    times: 10,
-  });
-});
-document.getElementById("switch").addEventListener("click", forceQualityChange);
+document.getElementById("replay").addEventListener("click", fromForm(1));
+document.getElementById("loop").addEventListener("click", fromForm(10));
+document.getElementById("switch").addEventListener("click", () => forceQualityChange());
 
 window.spike = {
   state,
-  segments,
+  segment: (id) => segments.find((segment) => segment.id === id) ?? null,
   playSegment,
   forceQualityChange,
-  activeCue,
   levels: () => (hls ? hls.levels.map((level) => level.height) : []),
   currentLevel: () => (hls ? hls.currentLevel : null),
   ready: () => video.readyState >= 2,
-  /** Calls `listener` with the media time of every frame presented, until the returned function is called. */
-  watchFrames: (listener) => {
-    frameListeners.add(listener);
-    return () => frameListeners.delete(listener);
-  },
 };
