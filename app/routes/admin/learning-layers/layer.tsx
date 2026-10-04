@@ -1,10 +1,8 @@
 import { data, Form, redirect } from "react-router";
 import { TimelineEditor } from "~/components/timeline-editor";
-import type { ActivityProblem } from "~/lib/activities";
-import type { AnnotationProblem, NoteProblem } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { detailsOf, listExpressions } from "~/lib/expressions.server";
-import type { LayerDetailField } from "~/lib/learning-layer-fields";
+import type { LayerRefusal } from "~/lib/learning-layer-fields";
 import {
   educatorChoices,
   openLearningLayer,
@@ -12,7 +10,6 @@ import {
   saveLearningLayer,
   setAssignment,
 } from "~/lib/learning-layers.server";
-import type { SegmentProblem } from "~/lib/segment-rules";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
 import type { Route } from "./+types/layer";
 
@@ -86,15 +83,6 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   };
 }
 
-type ActionData = {
-  error: string;
-  errors?: Partial<Record<LayerDetailField, string>>;
-  problems?: SegmentProblem[];
-  annotationProblems?: AnnotationProblem[];
-  noteProblems?: NoteProblem[];
-  activityProblems?: ActivityProblem[];
-};
-
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
   const { db, actor, layer } = await requireLayer(env, request, params.id);
@@ -108,7 +96,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       String(form.get("educatorId") ?? ""),
       intent === "assign",
     );
-    if (!result.ok) return data<ActionData>({ error: result.error }, { status: 400 });
+    if (!result.ok) return data<LayerRefusal>({ error: result.error }, { status: 400 });
     return redirect(`/admin/learning-layers/${layer.id}`);
   }
   const field = (name: string) => String(form.get(name) ?? "");
@@ -125,7 +113,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     newExpressions: field("newExpressions"),
     activities: field("activities"),
   });
-  if (!saved.ok) return data<ActionData>(saved, { status: 400 });
+  if (!saved.ok) return data<LayerRefusal>(saved, { status: 400 });
   return redirect(`/admin/learning-layers/${layer.id}?saved=${saved.number}`);
 }
 

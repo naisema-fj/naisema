@@ -1,7 +1,7 @@
-import type { Activity } from "./activities";
-import type { Annotation, ContextNote, ExpressionDetails } from "./annotations";
+import type { Activity, ActivityProblem } from "./activities";
+import type { Annotation, AnnotationProblem, ContextNote, ExpressionDetails, NoteProblem } from "./annotations";
 import type { ReviewType } from "./permissions";
-import { type Excerpt, formatTimecode, parseTimecode, type Segment } from "./segment-rules";
+import { type Excerpt, formatTimecode, parseTimecode, type Segment, type SegmentProblem } from "./segment-rules";
 import { retokenise } from "./tokens";
 
 /**
@@ -66,6 +66,16 @@ export const layerSpan = (excerpt: Excerpt) =>
 export type LayerDetails = { title: string; level: LayerLevel; excerpt: Excerpt };
 export type LayerDetailField = "title" | "level" | "sourceStartMs" | "sourceEndMs";
 
+/** Why a save was refused, with the problems found in each part, for the editor to show. */
+export type LayerRefusal = {
+  error: string;
+  errors?: Partial<Record<LayerDetailField, string>>;
+  problems?: SegmentProblem[];
+  annotationProblems?: AnnotationProblem[];
+  noteProblems?: NoteProblem[];
+  activityProblems?: ActivityProblem[];
+};
+
 export type ReadLayerDetails =
   | { ok: true; details: LayerDetails }
   | { ok: false; errors: Partial<Record<LayerDetailField, string>> };
@@ -103,12 +113,13 @@ export function readLayerDetails(
 /**
  * The parts of a Learning Layer each Review Type covers, which its fingerprints are taken over
  * (ADR-0003, ADR-0006). Language review covers the Fijian and English, the Variety taught, the
- * Annotations, the Expressions they use and the Activities' answers; cultural review the words,
- * who speaks, which part of the video is used, the Annotations, the cultural and context notes
- * and the real-world prompts; accessibility the captions as timed text, the notes and each
- * Activity's text alternative; safeguarding the words, notes, real-world prompts and what is
- * shown; editorial everything. Token IDs aren't covered: they only anchor Annotations. Which
- * Activities are required is editorial only: it changes no words.
+ * Annotations, the Expressions they use and the Activities' words and answers; cultural review
+ * the words, who speaks, which part of the video is used, the Annotations, the cultural and
+ * context notes and the Activities' words, which can carry context too; accessibility the
+ * captions as timed text, the notes and the Activities, which their text route shows;
+ * safeguarding the words, notes, real-world prompts and what is shown; editorial everything.
+ * Token IDs aren't covered: they only anchor Annotations. Which Activities are required, and their
+ * order, are editorial only: they change no words.
  */
 export function learningLayerReviewFields(
   snapshot: LearningLayerSnapshot,
@@ -118,14 +129,10 @@ export function learningLayerReviewFields(
   // Authoring state, not what a reviewer approves: the vocabulary choice and the check flag.
   const annotations = snapshot.annotations.map(({ inVocabulary, needsCheck, ...annotation }) => annotation);
   const { expressions, notes } = snapshot;
-  const activities = snapshot.activities.map(({ required, ...activity }) => activity);
+  const activities = snapshot.activities
+    .map(({ required, ...activity }) => activity)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const realWorld = activities.filter((activity) => activity.kind === "real-world");
-  const alternatives = snapshot.activities.map(({ id, kind, prompt, textAlternative }) => ({
-    id,
-    kind,
-    prompt,
-    textAlternative,
-  }));
   const spoken = snapshot.segments.map(({ id, fijian, english, speaker }) => ({ id, fijian, english, speaker }));
   const timed = snapshot.segments.map(({ id, startMs, endMs, fijian, english }) => ({
     id,
@@ -143,14 +150,14 @@ export function learningLayerReviewFields(
       annotations,
       expressions,
       notes,
-      realWorld,
+      activities,
     },
     editorial: {
       ...snapshot,
       segments: snapshot.segments.map(({ draft, retimed, tokens, ...segment }) => segment),
       annotations,
     },
-    accessibility: { title: snapshot.title, timed, notes, alternatives },
+    accessibility: { title: snapshot.title, timed, notes, activities },
     safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, notes, realWorld },
   };
 }

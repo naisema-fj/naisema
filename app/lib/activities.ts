@@ -1,4 +1,4 @@
-import { isRecord, readList, reference, text, UUID } from "./editor-lists";
+import { isRecord, type Read, readList, reference, text, UUID } from "./editor-lists";
 import type { Segment } from "./segment-rules";
 
 /**
@@ -53,16 +53,75 @@ export const ACTIVITY_LIMITS = {
   textAlternative: 1000,
 } as const;
 
-/** Which kinds offer choices, and whether they must. */
-const CHOICES: Record<ActivityKind, "required" | "optional" | "none"> = {
-  "listen-repeat": "none",
-  comprehension: "required",
-  discrimination: "required",
-  "next-line": "optional",
-  "real-world": "none",
+/**
+ * What each kind needs, in one place: whether it offers choices, whether it has a model response
+ * ("either" means choices, a model response or both), whether it needs a Segment, whether it can
+ * be required, whether it needs feedback, whether learners listen to it, and whether it carries
+ * pronunciation guidance.
+ */
+export const KIND_RULES: Record<
+  ActivityKind,
+  {
+    choices: "required" | "optional" | "none";
+    model: "required" | "either" | "optional" | "none";
+    needsSegment: boolean;
+    canBeRequired: boolean;
+    needsFeedback: boolean;
+    listens: boolean;
+    pronunciation: boolean;
+  }
+> = {
+  "listen-repeat": {
+    choices: "none",
+    model: "required",
+    needsSegment: true,
+    canBeRequired: true,
+    needsFeedback: true,
+    listens: true,
+    pronunciation: true,
+  },
+  comprehension: {
+    choices: "required",
+    model: "none",
+    needsSegment: false,
+    canBeRequired: true,
+    needsFeedback: true,
+    listens: false,
+    pronunciation: false,
+  },
+  discrimination: {
+    choices: "required",
+    model: "none",
+    needsSegment: false,
+    canBeRequired: true,
+    needsFeedback: true,
+    listens: true,
+    pronunciation: false,
+  },
+  "next-line": {
+    choices: "optional",
+    model: "either",
+    needsSegment: false,
+    canBeRequired: true,
+    needsFeedback: true,
+    listens: false,
+    pronunciation: false,
+  },
+  "real-world": {
+    choices: "none",
+    model: "optional",
+    needsSegment: false,
+    canBeRequired: false,
+    needsFeedback: false,
+    listens: false,
+    pronunciation: false,
+  },
 };
 
-export const usesChoices = (kind: ActivityKind) => CHOICES[kind] !== "none";
+export const usesChoices = (kind: ActivityKind) => KIND_RULES[kind].choices !== "none";
+
+/** Whether the Completion Rule counts an Activity: it is required, and its kind can be. */
+export const countsForCompletion = (activity: Activity) => activity.required && KIND_RULES[activity.kind].canBeRequired;
 export const isActivityKind = (value: unknown): value is ActivityKind =>
   typeof value === "string" && Object.hasOwn(ACTIVITY_KINDS, value);
 
@@ -75,8 +134,9 @@ export function forKind(activity: Activity, kind: ActivityKind): Activity {
     ...activity,
     kind,
     options: usesChoices(kind) ? activity.options : [],
-    pronunciation: kind === "listen-repeat" ? activity.pronunciation : "",
-    required: kind === "real-world" ? false : activity.required,
+    modelResponse: KIND_RULES[kind].model === "none" ? "" : activity.modelResponse,
+    pronunciation: KIND_RULES[kind].pronunciation ? activity.pronunciation : "",
+    required: KIND_RULES[kind].canBeRequired && activity.required,
   };
 }
 
@@ -98,25 +158,17 @@ export type ActivityProblem = { activityId: string; field: ActivityField; messag
 /** What each Activity still needs, naming it by its place in the list and the field to fix. */
 export function activityProblems(activities: Activity[], segments: Pick<Segment, "id">[]): ActivityProblem[] {
   const problems: ActivityProblem[] = [];
-  if (activities.length > ACTIVITY_LIMITS.activities) {
-    problems.push({
-      activityId: activities[ACTIVITY_LIMITS.activities].id,
-      field: "prompt",
-      message: `A Learning Layer can have at most ${ACTIVITY_LIMITS.activities} Activities.`,
-      revalidate: false,
-    });
-  }
   for (const [index, activity] of activities.entries()) {
     const name = `Activity ${index + 1}`;
     const problem = (field: ActivityField, message: string, revalidate = false) =>
       problems.push({ activityId: activity.id, field, message: `${name}${message}`, revalidate });
     if (activity.segmentId !== null && !segments.some((segment) => segment.id === activity.segmentId)) {
       problem("segmentId", "'s Segment was removed. Link it to another Segment or the whole clip.", true);
-    } else if (activity.kind === "listen-repeat" && activity.segmentId === null) {
+    } else if (KIND_RULES[activity.kind].needsSegment && activity.segmentId === null) {
       problem("segmentId", " needs the Segment to listen to and repeat.");
     }
     if (!activity.prompt.trim()) problem("prompt", " needs a prompt.");
-    const choices = CHOICES[activity.kind];
+    const { choices, model, needsFeedback, canBeRequired } = KIND_RULES[activity.kind];
     const offered = activity.options.length > 0;
     if (choices === "required" || (choices === "optional" && offered)) {
       if (activity.options.length < 2) problem("options", " needs at least two choices.");
@@ -128,16 +180,16 @@ export function activityProblems(activities: Activity[], segments: Pick<Segment,
         if (!activity.options.some((option) => option.correct)) problem("options", " needs a correct choice.");
       }
     }
-    if (activity.kind === "listen-repeat" && !activity.modelResponse.trim()) {
+    if (model === "required" && !activity.modelResponse.trim()) {
       problem("modelResponse", " needs the words to repeat.");
     }
-    if (activity.kind === "next-line" && !offered && !activity.modelResponse.trim()) {
+    if (model === "either" && !offered && !activity.modelResponse.trim()) {
       problem("modelResponse", " needs choices or a model response.");
     }
-    if (activity.kind !== "real-world" && !activity.feedback.trim()) {
+    if (needsFeedback && !activity.feedback.trim()) {
       problem("feedback", " needs feedback for after the learner answers.");
     }
-    if (activity.kind === "real-world" && activity.required) {
+    if (!canBeRequired && activity.required) {
       problem("required", " is a real-world prompt, which can never be required.");
     }
     if (!activity.textAlternative.trim()) {
@@ -155,10 +207,14 @@ function readOption(value: unknown): ActivityOption | null {
   return { id, text: text(value.text, ACTIVITY_LIMITS.option), correct: value.correct === true };
 }
 
-/** Activities as the editor sends them (JSON), each shaped to its kind. */
-export const readActivities = (json: string) =>
-  readList<Activity>(json, "Activities", (item) => {
+/**
+ * Activities as the editor sends them (JSON), each shaped to its kind. Refused if there are more
+ * than a Learning Layer holds, or one links to something that can't be a Segment.
+ */
+export function readActivities(json: string): Read<Activity> {
+  const read = readList<Activity>(json, "Activities", (item) => {
     if (!isActivityKind(item.kind)) return null;
+    if (item.segmentId !== null && !(typeof item.segmentId === "string" && UUID.test(item.segmentId))) return null;
     const sent = Array.isArray(item.options) ? item.options.slice(0, ACTIVITY_LIMITS.options + 1) : [];
     const options = sent.map(readOption);
     if (options.some((option) => option === null)) return null;
@@ -166,7 +222,7 @@ export const readActivities = (json: string) =>
     const activity: Activity = {
       id: reference(item.id),
       kind: item.kind,
-      segmentId: item.segmentId === null ? null : reference(item.segmentId),
+      segmentId: item.segmentId,
       prompt: text(item.prompt, ACTIVITY_LIMITS.prompt),
       options: options as ActivityOption[],
       modelResponse: text(item.modelResponse, ACTIVITY_LIMITS.modelResponse),
@@ -178,6 +234,11 @@ export const readActivities = (json: string) =>
     // A real-world prompt keeps a `required` it arrived with, so the check can say it's not allowed.
     return { ...forKind(activity, item.kind), required: activity.required };
   });
+  if (read.ok && read.items.length > ACTIVITY_LIMITS.activities) {
+    return { ok: false, error: `A Learning Layer can have at most ${ACTIVITY_LIMITS.activities} Activities.` };
+  }
+  return read;
+}
 
 /**
  * What a learner has done with an Activity. Taking its text alternative records the same two
@@ -192,7 +253,7 @@ export type ActivityProgress = { attempted: boolean; feedbackViewed: boolean; vi
  * Whether answers were right is a separate state and doesn't matter here.
  */
 export function completionProgress(activities: Activity[], progress: Record<string, ActivityProgress | undefined>) {
-  const required = activities.filter((activity) => activity.required && activity.kind !== "real-world");
+  const required = activities.filter(countsForCompletion);
   const done = required.filter((activity) => {
     const state = progress[activity.id];
     return Boolean(state?.attempted && state.feedbackViewed);

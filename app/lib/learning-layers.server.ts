@@ -10,12 +10,10 @@ import {
   videoAsset,
   videoEducator,
 } from "~db/schema";
-import { type ActivityProblem, activityProblems, readActivities } from "./activities";
+import { activityProblems, readActivities } from "./activities";
 import {
-  type AnnotationProblem,
   annotationProblems,
   annotationsToCheck,
-  type NoteProblem,
   noteProblems,
   readAnnotations,
   readNewExpressions,
@@ -28,6 +26,7 @@ import { expressionCopies, placeNewExpressions } from "./expressions.server";
 import {
   LAYER_LANGUAGE_VARIETY,
   type LayerDetailField,
+  type LayerRefusal,
   type LearningLayerSnapshot,
   learningLayerReviewFields,
   readLayerDetails,
@@ -35,7 +34,7 @@ import {
 } from "./learning-layer-fields";
 import { type Actor, can } from "./permissions";
 import { fingerprintsOf } from "./review-rules";
-import { clipDuration, readSegments, type SegmentProblem, segmentProblems } from "./segment-rules";
+import { clipDuration, readSegments, segmentProblems } from "./segment-rules";
 import { requireStaff } from "./staff.server";
 
 /**
@@ -316,17 +315,7 @@ export async function openLearningLayer(db: Database, actor: Actor, learningLaye
   return { ok: true as const, layer };
 }
 
-export type SaveLayerResult =
-  | { ok: true; number: number }
-  | {
-      ok: false;
-      error: string;
-      errors?: Partial<Record<LayerDetailField, string>>;
-      problems?: SegmentProblem[];
-      annotationProblems?: AnnotationProblem[];
-      noteProblems?: NoteProblem[];
-      activityProblems?: ActivityProblem[];
-    };
+export type SaveLayerResult = { ok: true; number: number } | ({ ok: false } & LayerRefusal);
 
 /**
  * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: its details, Segments,
@@ -428,7 +417,7 @@ export async function saveLearningLayer(
   if (activityIssues.length) {
     return {
       ok: false,
-      error: `${activityIssues.length === 1 ? "One thing in the Activities needs" : `${activityIssues.length} things in the Activities need`} fixing before this can be saved.`,
+      error: "Some Activities need fixing before this can be saved.",
       activityProblems: activityIssues,
     };
   }

@@ -232,6 +232,26 @@ export function vocabularyList(
   return [...entries.values()];
 }
 
+/**
+ * Pronunciation guidance to start a listen-and-repeat Activity from: the pronunciation of each
+ * Expression annotated in the Segment, in the order the Annotations were added, each once.
+ */
+export function pronunciationGuide(
+  annotations: Annotation[],
+  expressions: Record<string, Pick<ExpressionDetails, "headword" | "pronunciation">>,
+  segmentId: string,
+) {
+  const used = new Set(
+    annotations.filter((annotation) => annotation.segmentId === segmentId).map((annotation) => annotation.expressionId),
+  );
+  return [...used]
+    .flatMap((id) => {
+      const expression = expressions[id];
+      return expression?.pronunciation ? [`${expression.headword}: ${expression.pronunciation}`] : [];
+    })
+    .join("; ");
+}
+
 /** Annotations as the editor sends them (JSON). */
 export const readAnnotations = (json: string) =>
   readList<Annotation>(json, "Annotations", (item) => ({

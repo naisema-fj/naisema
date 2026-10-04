@@ -6,6 +6,7 @@ import {
   annotationsToCheck,
   type ContextNote,
   noteProblems,
+  pronunciationGuide,
   readExpressionDetails,
   vocabularyList,
 } from "~/lib/annotations";
@@ -239,5 +240,31 @@ describe("the vocabulary list", () => {
         occurrences: [{ segmentId: "s2", startMs: 4_000, text: "moce" }],
       },
     ]);
+  });
+});
+
+describe("pronunciation guidance from a Segment's Expressions", () => {
+  const on = (segmentId: string, expressionId: string) =>
+    ({
+      id: crypto.randomUUID(),
+      segmentId,
+      startTokenId: "t1",
+      endTokenId: "t1",
+      expressionId,
+      contextualMeaning: "",
+      grammarNote: "",
+      inVocabulary: false,
+      needsCheck: false,
+    }) satisfies Annotation;
+  const expressions = {
+    bula: { headword: "bula", pronunciation: "mbula" },
+    vinaka: { headword: "vinaka", pronunciation: "vee-NAH-ka" },
+    sega: { headword: "sega", pronunciation: "" },
+  };
+
+  it("lists each annotated Expression's pronunciation once, leaving out those without one", () => {
+    const annotations = [on("s1", "bula"), on("s1", "sega"), on("s1", "vinaka"), on("s1", "bula"), on("s2", "sega")];
+    expect(pronunciationGuide(annotations, expressions, "s1")).toBe("bula: mbula; vinaka: vee-NAH-ka");
+    expect(pronunciationGuide(annotations, expressions, "s2")).toBe("");
   });
 });

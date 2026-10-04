@@ -1,21 +1,21 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Form } from "react-router";
-import { type Activity, type ActivityProblem, activityProblems } from "~/lib/activities";
+import { type Activity, activityProblems } from "~/lib/activities";
 import {
   type Annotation,
-  type AnnotationProblem,
   annotationProblems,
   annotationsToCheck,
   type ContextNote,
   type ExpressionDetails,
-  type NoteProblem,
   noteProblems,
+  pronunciationGuide,
   vocabularyList,
 } from "~/lib/annotations";
 import {
   LAYER_LEVELS,
   LAYER_LIMITS,
   type LayerDetailField,
+  type LayerRefusal,
   type LearningLayerSnapshot,
 } from "~/lib/learning-layer-fields";
 import {
@@ -27,7 +27,6 @@ import {
   retimeExcerpt,
   type Segment,
   type SegmentField,
-  type SegmentProblem,
   segmentProblems,
 } from "~/lib/segment-rules";
 import { retokenise } from "~/lib/tokens";
@@ -57,14 +56,7 @@ type Props = {
   /** The Expression library for the Learning Layer's Language Variety, as it is now. */
   library: ExpressionChoice[];
   /** What the server refused, when a save was sent back. */
-  refused: {
-    error: string;
-    errors?: Partial<Record<LayerDetailField, string>>;
-    problems?: SegmentProblem[];
-    annotationProblems?: AnnotationProblem[];
-    noteProblems?: NoteProblem[];
-    activityProblems?: ActivityProblem[];
-  } | null;
+  refused: LayerRefusal | null;
 };
 
 const newSegment = (startMs: number, clipMs: number): Segment => ({
@@ -172,11 +164,12 @@ export function TimelineEditor({
     if (video.current) video.current.currentTime = (offsetMs + clipTimeMs) / 1000;
   };
 
-  const replay = (segment: Segment) => {
+  /** Plays from one time in the clip to another, such as a Segment or the whole Excerpt. */
+  const replay = ({ startMs, endMs }: { startMs: number; endMs: number }) => {
     const element = video.current;
     if (!element) return;
-    replaying.current = { startMs: segment.startMs, endMs: segment.endMs };
-    element.currentTime = (offsetMs + segment.startMs) / 1000;
+    replaying.current = { startMs, endMs };
+    element.currentTime = (offsetMs + startMs) / 1000;
     element.play().catch(() => {
       replaying.current = null;
       setStatus("The video couldn't play. Press play on the video first.");
@@ -284,21 +277,9 @@ export function TimelineEditor({
     return changed.length ? [{ id, copy, now, changed }] : [];
   });
   const removeAnnotation = (id: string) => setAnnotations((current) => current.filter((item) => item.id !== id));
-  // Guidance to start a listen-and-repeat Activity from: each annotated Expression's pronunciation.
-  const pronunciationFor = (segmentId: string) =>
-    annotations
-      .filter((annotation) => annotation.segmentId === segmentId)
-      .flatMap((annotation) => {
-        const expression = expressionMap[annotation.expressionId];
-        return expression?.pronunciation ? [`${expression.headword}: ${expression.pronunciation}`] : [];
-      })
-      .join("; ");
-  const playActivity = (segmentId: string | null) => {
-    const segment = segments.find((item) => item.id === segmentId);
-    if (segment) return replay(segment);
-    seek(0);
-    video.current?.play().catch(() => setStatus("The video couldn't play. Press play on the video first."));
-  };
+  // An Activity plays its Segment, or the whole clip when it has none (or its Segment was removed).
+  const playActivity = (segmentId: string | null) =>
+    replay(segments.find((item) => item.id === segmentId) ?? { startMs: 0, endMs: clipMs });
   const playing = segments.filter((segment) => segment.startMs <= playheadMs && playheadMs < segment.endMs);
   const detailError = (field: LayerDetailField) => refused?.errors?.[field];
 
@@ -754,7 +735,7 @@ export function TimelineEditor({
               problems={activityIssues}
               onChange={setActivities}
               onPlay={playActivity}
-              pronunciationFor={pronunciationFor}
+              pronunciationFor={(segmentId) => pronunciationGuide(annotations, expressionMap, segmentId)}
             />
           </section>
 
