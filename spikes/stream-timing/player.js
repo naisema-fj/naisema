@@ -139,6 +139,7 @@ async function playSegment({ id, startMs, endMs, speed = 1, times = 1 }) {
     let cueLast = null;
     let stopped = false;
     let afterStop = 0;
+    let largestJump = 0;
     let reachedEnd = null;
     const ended = new Promise((resolve) => {
       reachedEnd = resolve;
@@ -149,6 +150,7 @@ async function playSegment({ id, startMs, endMs, speed = 1, times = 1 }) {
         first = mediaTime;
       }
       if (stopped) afterStop += 1;
+      if (previous !== null) largestJump = Math.max(largestJump, mediaTime - previous);
       if (previous !== null && mediaTime - previous > 0 && mediaTime - previous < 0.2) step = mediaTime - previous;
       previous = mediaTime;
       last = Math.max(last ?? mediaTime, mediaTime);
@@ -179,6 +181,8 @@ async function playSegment({ id, startMs, endMs, speed = 1, times = 1 }) {
       firstFrameMs: ms(first),
       lastFrameMs: ms(last),
       framesAfterStop: afterStop,
+      /** The largest step forward between two frames shown: one frame normally, more after a skip. */
+      largestJumpMs: Math.round(largestJump * 1000),
       cueFirstMs: ms(cueFirst),
       cueLastMs: ms(cueLast),
     };
@@ -192,13 +196,18 @@ async function playSegment({ id, startMs, endMs, speed = 1, times = 1 }) {
   return passes;
 }
 
-/** Forces a different rendition at once (hls.js flushes the buffer and reloads from the playhead). */
-function forceQualityChange(direction = 1) {
+/**
+ * Forces a different rendition. "immediate" (hls.currentLevel) switches now, emptying the buffer
+ * and reloading from the playhead; "smooth" (hls.nextLevel) switches at the next fragment and keeps
+ * what is buffered, as hls.js's own adaptive switching does.
+ */
+function forceQualityChange(direction = 1, mode = "immediate") {
   if (!hls || hls.levels.length < 2) return null;
   const count = hls.levels.length;
   const next = (((hls.currentLevel + direction) % count) + count) % count;
-  hls.currentLevel = next;
-  say(`forcing level ${next}`);
+  if (mode === "smooth") hls.nextLevel = next;
+  else hls.currentLevel = next;
+  say(`forcing level ${next} (${mode})`);
   return next;
 }
 

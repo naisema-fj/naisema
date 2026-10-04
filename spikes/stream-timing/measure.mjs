@@ -29,6 +29,7 @@ const ROOT = fileURLToPath(new URL(".", import.meta.url));
 const CODEC = process.argv[2] ?? "vp9";
 const LOOPS_ONLY = process.argv.includes("--loops-only");
 const INTERRUPTIONS_ONLY = process.argv.includes("--interruptions-only");
+const QUALITY_ONLY = process.argv.includes("--quality-only");
 const SEGMENT_ID = process.env.SEGMENT ?? "s2";
 const CLIPS = ["landscape", "vertical"];
 const SPEEDS = [1, 0.75, 0.5];
@@ -170,9 +171,9 @@ async function loops(page, segment) {
 }
 
 /** Plays three passes, forcing a rendition change half-way through the second, and watches every frame. */
-async function forcedChange(page, segment, speed, direction) {
+async function forcedChange(page, segment, speed, direction, mode) {
   return page.evaluate(
-    async ({ segment, speed, direction }) => {
+    async ({ segment, speed, direction, mode }) => {
       const outside = [];
       const video = document.getElementById("video");
       const watch = () => {
@@ -184,34 +185,52 @@ async function forcedChange(page, segment, speed, direction) {
       const loop = window.spike.playSegment({ ...segment, speed, times: 3 });
       await new Promise((resolve) => setTimeout(resolve, ((segment.endMs - segment.startMs) / speed) * 1.5 + 300));
       const forcedAtMs = Math.round(video.currentTime * 1000);
-      const forced = window.spike.forceQualityChange(direction);
+      const errorsBefore = window.spike.state.errors.length;
+      const switchesBefore = window.spike.state.levelSwitches.length;
+      const forced = window.spike.forceQualityChange(direction, mode);
       const passes = await loop;
       video.removeEventListener("timeupdate", watch);
-      return { before, forced, forcedAtMs, outside, passes };
+      return {
+        before,
+        forced,
+        forcedAtMs,
+        outside,
+        passes,
+        errors: window.spike.state.errors.slice(errorsBefore),
+        switches: window.spike.state.levelSwitches.slice(switchesBefore),
+      };
     },
-    { segment, speed, direction },
+    { segment, speed, direction, mode },
   );
 }
 
 async function qualityChanges(page, segment) {
   const results = {};
-  for (const speed of SPEEDS) {
-    console.log(`  quality changes at ${speed}×`);
-    const up = await forcedChange(page, segment, speed, 1);
-    const down = await forcedChange(page, segment, speed, -1);
-    results[speed] = [up, down].map((run) => {
-      const checked = boundaries(segment, run.passes);
-      const forcedInside = run.forcedAtMs >= segment.startMs && run.forcedAtMs <= segment.endMs;
-      return {
-        levels: `${run.before} → ${run.forced}`,
-        forcedAtMs: run.forcedAtMs,
-        forcedInside,
-        framesOutsideSegment: run.outside.length,
-        worstMs: checked.worstMs,
-        stalled: checked.stalled,
-        ok: forcedInside && run.outside.length === 0 && checked.ok,
-      };
-    });
+  for (const mode of ["smooth", "immediate"]) {
+    for (const speed of SPEEDS) {
+      console.log(`  ${mode} quality changes at ${speed}×`);
+      const up = await forcedChange(page, segment, speed, 1, mode);
+      const down = await forcedChange(page, segment, speed, -1, mode);
+      results[`${mode} ${speed}`] = [up, down].map((run) => {
+        const checked = boundaries(segment, run.passes);
+        const forcedInside = run.forcedAtMs >= segment.startMs && run.forcedAtMs <= segment.endMs;
+        return {
+          mode,
+          levels: `${run.before} → ${run.forced}`,
+          forcedAtMs: run.forcedAtMs,
+          forcedInside,
+          framesOutsideSegment: run.outside.length,
+          worstMs: checked.worstMs,
+          stalled: checked.stalled,
+          startErrors: checked.startErrors,
+          endErrors: checked.endErrors,
+          largestJumpMs: Math.max(...run.passes.map((pass) => pass.largestJumpMs ?? 0)),
+          hlsErrors: run.errors.map((error) => error.details),
+          switches: run.switches,
+          ok: forcedInside && run.outside.length === 0 && checked.ok,
+        };
+      });
+    }
   }
   return results;
 }
@@ -271,7 +290,8 @@ const report = { codec: CODEC, segmentId: SEGMENT_ID, browser: browser.version()
 try {
   for (const clip of CLIPS) {
     console.log(`${clip}: cold starts`);
-    const cold = LOOPS_ONLY || INTERRUPTIONS_ONLY ? null : await coldStarts(browser, origin, clip);
+    const only = INTERRUPTIONS_ONLY || QUALITY_ONLY;
+    const cold = LOOPS_ONLY || only ? null : await coldStarts(browser, origin, clip);
     const { context, page } = await openPlayer(browser, origin, clip);
     await page.waitForFunction(() => window.spike?.ready(), null, { timeout: 30_000 });
     const segment = await page.evaluate((id) => window.spike.segment(id), SEGMENT_ID);
@@ -279,11 +299,11 @@ try {
     report.segment = segment;
     report.clips[clip] = {
       coldStarts: cold,
-      loops: INTERRUPTIONS_ONLY ? {} : await loops(page, segment),
+      loops: only ? {} : await loops(page, segment),
       qualityChanges: INTERRUPTIONS_ONLY ? {} : await qualityChanges(page, segment),
     };
     await context.close();
-    report.clips[clip].interruptions = await interruptions(browser, origin, clip, segment);
+    if (!QUALITY_ONLY) report.clips[clip].interruptions = await interruptions(browser, origin, clip, segment);
   }
 } finally {
   await browser.close();
@@ -305,14 +325,15 @@ for (const [clip, result] of Object.entries(report.clips)) {
       `  ${speed}×: worst ${loop.worstMs} ms, ${loop.stalled} stalled; start ${loop.startErrors.join(" ")}; end ${loop.endErrors.join(" ")}; after stop ${loop.framesAfterStop.join(" ")}; caption in ${loop.cueEntry.join(" ")}, out ${loop.cueExit.join(" ")}`,
     );
   }
-  for (const [speed, runs] of Object.entries(result.qualityChanges)) {
+  for (const [key, runs] of Object.entries(result.qualityChanges)) {
     for (const run of runs) {
       console.log(
-        `  quality ${speed}× ${run.levels} at ${run.forcedAtMs} ms: outside ${run.framesOutsideSegment}, worst ${run.worstMs} ms, ${run.stalled} stalled, ${run.ok ? "ok" : "FAILED"}`,
+        `  quality ${key}× ${run.levels} (largest jump ${run.largestJumpMs} ms) at ${run.forcedAtMs} ms: outside ${run.framesOutsideSegment}, worst ${run.worstMs} ms, ${run.stalled} stalled, ${run.ok ? "ok" : "FAILED"}; start ${run.startErrors.join(" ")}; end ${run.endErrors.join(" ")}; switched ${run.switches.map((change) => `${change.level}@${change.atMs}`).join(" ")}; hls ${run.hlsErrors.join(" ") || "none"}`,
       );
     }
   }
   const drop = result.interruptions;
+  if (!drop) continue;
   const seek = drop.seekingUnbuffered;
   console.log(
     `  offline while looping: worst ${drop.whileLoopingBuffered.worstMs} ms, ${drop.whileLoopingBuffered.stalled} stalled; offline seek (far segment buffered beforehand: ${seek.farWasBuffered}): ${seek.stalled ? "stalled" : seek.finishedWhileOffline ? "finished while still offline" : `finished ${seek.finishedAfterRestoreMs} ms after restore, worst ${seek.worstMs} ms`}; hls errors ${drop.hlsErrors.map((error) => error.details + (error.fatal ? "!" : "")).join(", ") || "none"}`,
