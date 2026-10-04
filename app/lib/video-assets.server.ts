@@ -9,6 +9,7 @@ import {
   canMoveVideo,
   formatVideoLength,
   lengthProblem,
+  ORIENTATION_NAMES,
   orientationOf,
   type ProviderUpdate,
   type VideoProviderName,
@@ -294,6 +295,34 @@ export function videoDetail(db: Database, id: string) {
     .innerJoin(user, eq(user.id, videoAsset.ownerId))
     .where(eq(videoAsset.id, id))
     .get();
+}
+
+/** A Video Asset that has finished processing, or undefined. */
+export const readyVideo = (db: Database, id: string) =>
+  db
+    .select()
+    .from(videoAsset)
+    .where(and(eq(videoAsset.id, id), eq(videoAsset.state, "ready")))
+    .get();
+
+/** Ready Video Assets, newest first, for a Video's choice of footage. */
+export async function videoChoices(db: Database) {
+  const rows = await db
+    .select({
+      id: videoAsset.id,
+      name: mediaAsset.name,
+      durationMs: videoAsset.durationMs,
+      orientation: videoAsset.orientation,
+    })
+    .from(videoAsset)
+    .innerJoin(mediaAsset, eq(mediaAsset.id, videoAsset.id))
+    .where(eq(videoAsset.state, "ready"))
+    .orderBy(desc(videoAsset.createdAt));
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    typeName: `${formatVideoLength(row.durationMs)}, ${ORIENTATION_NAMES[row.orientation].toLowerCase()}`,
+  }));
 }
 
 /** Every Video Asset's state, for the media library. */

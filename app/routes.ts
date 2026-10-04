@@ -64,6 +64,11 @@ export default [
     route("media/:id/rights", "routes/admin/media/rights.tsx"),
     route("media/:id/video", "routes/admin/media/video.tsx"),
     route("media/:id/video/master", "routes/admin/media/video-master.ts"),
+    // Learning Layers on Videos (app/lib/learning-layers.server.ts).
+    route("learning-layers", "routes/admin/learning-layers/index.tsx"),
+    route("learning-layers/:id", "routes/admin/learning-layers/layer.tsx"),
+    route("learning-layers/:id/webvtt/:language", "routes/admin/learning-layers/webvtt.ts"),
+    route("videos/:id/learning-layers", "routes/admin/learning-layers/video.tsx"),
     route("media/uploads", "routes/admin/media/uploads.ts"),
     route("media/uploads/:id", "routes/admin/media/upload.ts"),
     route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),

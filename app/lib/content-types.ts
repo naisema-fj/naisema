@@ -2,9 +2,10 @@
  * The kinds of Content Item (docs/decision-log.md, content types in 1a). Each shares the
  * Content Item / Revision model and the review and rights gates (ADR-0006, ADR-0007); a
  * Resource adds a file or link, an Episode its recording and transcript, a Creator Profile the
- * Creator's portrait and free sample, and a Page lives at a fixed address instead of an area.
+ * Creator's portrait and free sample, a Video its Video Asset (with Learning Layers on it), and a
+ * Page lives at a fixed address instead of an area.
  */
-export const CONTENT_TYPES = ["article", "resource", "episode", "creator", "page"] as const;
+export const CONTENT_TYPES = ["article", "resource", "episode", "creator", "video", "page"] as const;
 
 export type ContentType = (typeof CONTENT_TYPES)[number];
 
@@ -13,6 +14,7 @@ export const CONTENT_TYPE_NAMES: Record<ContentType, string> = {
   resource: "Resource",
   episode: "Episode",
   creator: "Creator Profile",
+  video: "Video",
   page: "Page",
 };
 

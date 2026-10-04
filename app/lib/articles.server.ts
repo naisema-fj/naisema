@@ -14,6 +14,7 @@ import { readResourceFields } from "./resource-fields";
 import { CONTENT_FLAGS, fingerprintsOf } from "./review-rules";
 import { getContentItem } from "./revisions.server";
 import { existingTopicIds } from "./topics.server";
+import { readyVideo } from "./video-assets.server";
 
 export type ArticleFormResult =
   | { ok: true; snapshot: ArticleSnapshot }
@@ -27,7 +28,8 @@ export const RELATED_LIMIT = 6;
  * Reads the content form. Title, summary, credit and at least one Topic are required on every
  * save, the body must pass the allowlist, and flagging language instruction needs the Language
  * Variety taught. A Resource also needs its file or link and what visitors read before using it;
- * an Episode needs its audio, host, recording date and length (its transcript can follow).
+ * an Episode needs its audio, host, recording date and length (its transcript can follow); a Video
+ * needs a Video Asset that has finished processing.
  */
 export async function readArticleForm(
   db: Database,
@@ -131,11 +133,19 @@ export async function readArticleForm(
       }
     }
   }
+  let video: ArticleSnapshot["video"];
+  if (type === "video") {
+    video = { videoAssetId: String(form.get("videoAssetId") ?? "") };
+    if (!video.videoAssetId || !(await readyVideo(db, video.videoAssetId))) {
+      errors.videoAssetId = "Choose a video that has finished processing.";
+    }
+  }
   const extras = {
     ...(relatedIds.length ? { relatedIds } : {}),
     ...(resource ? { resource } : {}),
     ...(episode ? { episode } : {}),
     ...(creator ? { creator } : {}),
+    ...(video ? { video } : {}),
   };
 
   if (!parsed.ok || Object.keys(errors).length) {

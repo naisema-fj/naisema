@@ -34,6 +34,10 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
     reasons.push("It is hidden while a Case about it is reviewed. The safeguarding lead can show it again.");
   }
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
+  // A Video's page plays it with the learner player, which comes later (#29).
+  if (review.contentItem.type === "video") {
+    reasons.push("Videos can't be published yet: their public page comes with the learner player.");
+  }
   for (const { requirement, status } of review.progress) {
     if (status === "approved") continue;
     const name = requirementName(requirement);

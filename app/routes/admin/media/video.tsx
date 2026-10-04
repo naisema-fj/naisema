@@ -5,7 +5,7 @@ import { requireUploader } from "~/lib/media-access.server";
 import { formatBytes } from "~/lib/upload-rules";
 import { checkVideo, retryVideo, videoDetail } from "~/lib/video-assets.server";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
-import { formatVideoLength, VIDEO_PROVIDER_NAMES, VIDEO_STATE_NAMES } from "~/lib/video-rules";
+import { formatVideoLength, ORIENTATION_NAMES, VIDEO_PROVIDER_NAMES, VIDEO_STATE_NAMES } from "~/lib/video-rules";
 import type { Route } from "./+types/video";
 
 // Plays the preview from the video provider, so the page's policy allows its media.
@@ -16,8 +16,6 @@ export const headers = () => ({ "Cache-Control": "private, no-store" });
 export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: `${loaderData?.name ?? "Video"} · Na iSema staff` }];
 }
-
-const ORIENTATION_NAMES = { landscape: "Landscape", portrait: "Vertical", square: "Square" } as const;
 
 async function requireVideo(env: Env, request: Request, id: string) {
   const staff = await requireUploader(env, request);

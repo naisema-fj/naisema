@@ -8,7 +8,7 @@ _Avoid_: NAISEMA, Naisema, NaiSema
 ## Content and learning
 
 **Content Item**:
-A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area. Its type is Article, Resource, Episode, Creator Profile or Page; all share Revisions and review.
+A canonical piece of published cultural or editorial material (story, article, Voices episode, resource) with one URL and a primary area. Its type is Article, Resource, Episode, Creator Profile, Video or Page; all share Revisions and review.
 _Avoid_: Cultural item, post, page (for content other than a Page)
 
 **Resource**:
@@ -20,6 +20,9 @@ _Avoid_: Podcast (until distribution to podcast apps is approved), show
 
 **Usage Terms**:
 What a Resource tells visitors they may do with it, in plain words (for example "free to print for teaching"). Not a Permitted Use, which is what a Rights Record grants Na iSema.
+
+**Video**:
+A Content Item showing one Video Asset, which Learning Layers are built on.
 
 **Page**:
 A Content Item backing one of the fixed site pages in the footer (About, Privacy and so on), at `/{slug}`, outside the primary areas and Topics.

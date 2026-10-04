@@ -262,6 +262,18 @@ Until these are set, a video fails with "Video processing isn't set up in this e
 
 **If a video stays processing:** open its page and press **Check with Stream now**. If Stream no longer has the video, the page says so; press **Try processing again**. The Worker logs "Video refresh failed" when the daily check can't reach Stream.
 
+## Learning Layers
+
+Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in `app/lib/learning-layers.server.ts`, `segment-rules.ts`, `webvtt.ts` and `components/timeline-editor.tsx`.
+
+1. **A Video:** an editor adds a Video under Content and chooses a Video Asset that has finished processing (see Video). It can't be published until the learner player exists.
+2. **Educators:** on the Video's edit page, **Learning Layers and Educators** opens `/admin/videos/<id>/learning-layers`, where editors assign Educators.
+3. **A Learning Layer:** an assigned Educator, or an editor, adds one on the whole video or on an Excerpt (in and out times), with a title and level. It teaches Standard Fijian.
+4. **Segments:** the timeline editor (`/admin/learning-layers/<id>`) shows the video with the captions over it, in landscape or vertical layout. Each Segment has a start and end, which can be typed, nudged 100 ms at a time with the arrow keys, or set from the playhead. It also has an optional speaker, the Fijian and an English translation. **Replay** plays one Segment. Problems are listed at the top, each naming its Segment and field, and a save with problems is refused. Every save is a new Revision; a save from an outdated Revision is refused so no one's work is overwritten.
+5. **WebVTT:** import a Fijian file to replace the Segments, or an English file to fill translations. Imported text is marked "Unreviewed draft" until someone presses **I've checked this text**. The saved Segments download as Fijian or English WebVTT.
+
+Educators see only the Learning Layers they are assigned to, under **Learning Layers** on the staff home page.
+
 ## Custom domains
 
 Domains are declared in `wrangler.jsonc` so the repository is the source of truth; don't add them in the dashboard. Staging is public so testers anywhere can use it: it serves `staging.naisema.com` and stays reachable at its `workers.dev` address because `env.staging` sets `workers_dev: true` (Wrangler turns that address off by default once an environment has routes). The `workers.dev` address serves only the public site; staff tools answer on `admin.staging.naisema.com` alone.

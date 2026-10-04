@@ -12,6 +12,7 @@ import {
 } from "~db/schema";
 import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
+import type { ContentType } from "./content-types";
 import type { Database } from "./db.server";
 import { type EpisodeDetails, episodeParts } from "./episode-fields";
 import { mediaAssetIdsIn } from "./media-in-use";
@@ -226,6 +227,7 @@ export async function loadReview(db: Database, revisionId: string) {
     number: row.revision.number,
     contentItem: {
       id: row.item.id,
+      type: row.item.type as ContentType,
       publicationState: row.item.publicationState as PublicationState,
       currentDraftRevisionId: row.item.currentDraftRevisionId,
       currentPublishedRevisionId: row.item.currentPublishedRevisionId,

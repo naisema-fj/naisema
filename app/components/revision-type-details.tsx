@@ -7,7 +7,7 @@ import { TranscriptParagraphs } from "./transcript-paragraphs";
 const MISSING_FILE = "A file no longer in the media library";
 
 /**
- * What a Resource or an Episode adds to a Revision, as its reviewers see it: everything a visitor
+ * What a Resource, Episode, Creator Profile or Video adds to a Revision, as its reviewers see it: everything a visitor
  * would rely on, so the review covers it. `fileName` names the media library file it uses.
  */
 export function RevisionTypeDetails({
@@ -22,7 +22,18 @@ export function RevisionTypeDetails({
   /** A Creator Profile's free sample, by its current title. */
   sampleTitle?: string | null;
 }) {
-  const { resource, episode, creator } = snapshot;
+  const { resource, episode, creator, video } = snapshot;
+  if (video) {
+    return (
+      <section aria-labelledby="type-details-heading">
+        <h2 id="type-details-heading">Video</h2>
+        <dl>
+          <dt>Footage</dt>
+          <dd>{fileName ?? MISSING_FILE}</dd>
+        </dl>
+      </section>
+    );
+  }
   if (creator) {
     return (
       <section aria-labelledby="type-details-heading">

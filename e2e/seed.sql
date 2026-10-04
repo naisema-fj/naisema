@@ -233,3 +233,51 @@ INSERT INTO search_entry (content_item_id, primary_area, format, title, summary,
 VALUES ('e2e-creator', 'connect', 'creator', 'Litia Vula', 'Sings and makes short films about home.',
   'E2E Ceremonies', 1790000000000)
 ON CONFLICT(content_item_id) DO NOTHING;
+
+-- One Educator per browser project for the timeline editor journey, each assigned to a Learning
+-- Layer on a Video; earlier runs' Revisions go first. The master isn't in local R2, so the preview
+-- shows no picture, which the journey doesn't need.
+UPDATE learning_layer SET current_draft_revision_id = NULL WHERE id LIKE 'e2e-layer-%';
+DELETE FROM learning_layer_educator WHERE learning_layer_id LIKE 'e2e-layer-%';
+DELETE FROM learning_layer_revision WHERE learning_layer_id LIKE 'e2e-layer-%';
+DELETE FROM learning_layer WHERE id LIKE 'e2e-layer-%';
+DELETE FROM user WHERE email LIKE 'e2e-author-%@naisema.test';
+INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
+  ('e2e-author-desktop', 'E2E Author', 'e2e-author-desktop-chromium@naisema.test', 0, 0, 0),
+  ('e2e-author-mobile', 'E2E Author', 'e2e-author-mobile-chromium@naisema.test', 0, 0, 0);
+INSERT INTO role_assignment (id, user_id, role, granted_by, granted_at) VALUES
+  ('e2e-author-desktop-role', 'e2e-author-desktop', 'educator', 'e2e-seed', 0),
+  ('e2e-author-mobile-role', 'e2e-author-mobile', 'educator', 'e2e-seed', 0);
+INSERT INTO media_asset (id, purpose, type, name, size, status, quarantine_key, destination_key, uploaded_by,
+  created_at, updated_at, scanned_at)
+VALUES ('e2e-ll-video', 'media', 'video/mp4', 'e2e-market.mp4', 2048, 'ready', 'uploads/e2e-ll-video',
+  'masters/e2e-ll-video', 'e2e-seed', 0, 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO video_asset (id, owner_id, master_key, provider, provider_id, state, duration_ms, width, height,
+  orientation, environment, created_at, updated_at, ready_at)
+VALUES ('e2e-ll-video', 'e2e-seed', 'masters/e2e-ll-video', 'local', 'local-e2e-ll-video', 'ready', 30000, 720, 1280,
+  'portrait', 'development', 0, 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO content_item (id, type, slug, primary_area, created_by, created_at, updated_at)
+VALUES ('e2e-video', 'video', 'e2e-market', 'learn', 'e2e-seed', 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO revision (id, content_item_id, number, snapshot, fingerprints, created_by, created_at)
+VALUES ('e2e-video-r1', 'e2e-video', 1,
+  '{"title":"At the market","summary":"Two friends meet at the Suva market.","credit":"Filmed by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[]},"sources":"","flags":[],"languageVariety":null,"video":{"videoAssetId":"e2e-ll-video"}}',
+  '{}', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+UPDATE content_item SET current_draft_revision_id = 'e2e-video-r1' WHERE id = 'e2e-video';
+INSERT INTO learning_layer (id, content_item_id, language_variety, created_by, created_at, updated_at) VALUES
+  ('e2e-layer-desktop', 'e2e-video', 'standard-fijian', 'e2e-seed', 0, 0),
+  ('e2e-layer-mobile', 'e2e-video', 'standard-fijian', 'e2e-seed', 0, 0);
+INSERT INTO learning_layer_revision (id, learning_layer_id, number, snapshot, fingerprints, created_by, created_at) VALUES
+  ('e2e-layer-desktop-r1', 'e2e-layer-desktop', 1,
+    '{"title":"Greetings desktop","level":"beginner","excerpt":null,"segments":[{"id":"6f1d2c3e-0000-4000-8000-000000000001","startMs":0,"endMs":2000,"speaker":"Mere","fijian":"Bula vinaka.","english":"","overlapIntended":false,"draft":false,"retimed":false}]}',
+    '{}', 'e2e-seed', 0),
+  ('e2e-layer-mobile-r1', 'e2e-layer-mobile', 1,
+    '{"title":"Greetings mobile","level":"beginner","excerpt":null,"segments":[{"id":"6f1d2c3e-0000-4000-8000-000000000002","startMs":0,"endMs":2000,"speaker":"Mere","fijian":"Bula vinaka.","english":"","overlapIntended":false,"draft":false,"retimed":false}]}',
+    '{}', 'e2e-seed', 0);
+UPDATE learning_layer SET current_draft_revision_id = id || '-r1' WHERE id LIKE 'e2e-layer-%';
+INSERT INTO learning_layer_educator (learning_layer_id, user_id, assigned_by, assigned_at) VALUES
+  ('e2e-layer-desktop', 'e2e-author-desktop', 'e2e-seed', 0),
+  ('e2e-layer-mobile', 'e2e-author-mobile', 'e2e-seed', 0);

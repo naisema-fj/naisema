@@ -75,6 +75,9 @@ export type Check =
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
   /** Approving or rejecting a Revision for one Review Type. */
   | { action: "revision.review"; revision: RevisionUnderReview }
+  /** Adding a Learning Layer to a Video: editors, and the Educators assigned to that Video. */
+  | { action: "learningLayer.create"; video: { assignedEducatorIds: string[] } }
+  /** Opening and editing a Learning Layer: editors, and the Educators assigned to it (VAC-05). */
   | { action: "learningLayer.author" | "learningLayer.submit"; learningLayer: { assignedEducatorIds: string[] } }
   | { action: "case.read" | "case.act"; case: { kind: CaseKind } }
   | { action: "case.decideAppeal"; case: { kind: CaseKind; decidedBy: string } }
@@ -151,7 +154,14 @@ export function can(actor: Actor | null, check: Check): boolean {
       );
     }
 
+    case "learningLayer.create":
+      return hasRole("editor") || (hasRole("educator") && check.video.assignedEducatorIds.includes(actor.userId));
+
     case "learningLayer.author":
+      return (
+        hasRole("editor") || (hasRole("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId))
+      );
+
     case "learningLayer.submit":
       return hasRole("educator") && check.learningLayer.assignedEducatorIds.includes(actor.userId);
 

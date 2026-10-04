@@ -28,6 +28,12 @@ export const MASTER_URL_SECONDS = 60 * 60;
 
 export type Orientation = "landscape" | "portrait" | "square";
 
+export const ORIENTATION_NAMES: Record<Orientation, string> = {
+  landscape: "Landscape",
+  portrait: "Vertical",
+  square: "Square",
+};
+
 /** Who holds a video's delivery copy: Cloudflare Stream, or the local stand-in in development and tests. */
 export type VideoProviderName = "stream" | "local";
 

@@ -12,6 +12,7 @@ import { publicItemChanged } from "~/lib/public-change.server";
 import { appendRevision } from "~/lib/revisions.server";
 import { changeSlug } from "~/lib/slugs.server";
 import { listTopics } from "~/lib/topics.server";
+import { videoChoices } from "~/lib/video-assets.server";
 import type { Route } from "./+types/edit";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -37,6 +38,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     files: article.type === "resource" ? await downloadChoices(db) : [],
     audio: article.type === "episode" ? await episodeAudioChoices(db) : [],
     images: article.type === "creator" ? await imageChoices(db) : [],
+    videos: article.type === "video" ? await videoChoices(db) : [],
   };
 }
 
@@ -117,6 +119,12 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
         <a href={`/admin/articles/${article.id}/history`}>Revision history</a>
         {" · "}
         <a href={`/admin/articles/${article.id}/rights`}>Rights Records</a>
+        {article.type === "video" && (
+          <>
+            {" · "}
+            <a href={`/admin/videos/${article.id}/learning-layers`}>Learning Layers and Educators</a>
+          </>
+        )}
       </p>
       <ArticleForm
         key={current.id}
@@ -124,6 +132,7 @@ export default function EditArticle({ loaderData, actionData }: Route.ComponentP
         files={loaderData.files}
         audio={loaderData.audio}
         images={loaderData.images}
+        videos={loaderData.videos}
         values={actionData?.values ?? current.snapshot}
         errors={actionData?.errors}
         topics={loaderData.topics}

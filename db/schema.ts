@@ -834,3 +834,86 @@ export const videoAsset = sqliteTable(
     index("video_asset_state_idx").on(table.state, table.updatedAt),
   ],
 );
+
+// --- Learning Layers (ADR-0001, ADR-0006) ---
+
+/**
+ * A Learning Layer on a Video (ADR-0001): a stable parent row pointing at its current draft
+ * Revision, like a Content Item. A Video may have several, each on the whole video or an Excerpt.
+ */
+export const learningLayer = sqliteTable(
+  "learning_layer",
+  {
+    id: text("id").primaryKey(),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    /** The Language Variety it teaches (Standard Fijian in 1a), which its language review must match. */
+    languageVariety: text("language_variety").notNull(),
+    currentDraftRevisionId: text("current_draft_revision_id").references(
+      (): AnySQLiteColumn => learningLayerRevision.id,
+    ),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("learning_layer_item_idx").on(table.contentItemId)],
+);
+
+/**
+ * A write-once snapshot of a Learning Layer (ADR-0006): its title, level, Excerpt and Segments,
+ * with one fingerprint per Review Type. Segments keep their IDs from Revision to Revision.
+ */
+export const learningLayerRevision = sqliteTable(
+  "learning_layer_revision",
+  {
+    id: text("id").primaryKey(),
+    learningLayerId: text("learning_layer_id")
+      .notNull()
+      .references(() => learningLayer.id),
+    number: integer("number").notNull(),
+    snapshot: text("snapshot", { mode: "json" }).notNull(),
+    fingerprints: text("fingerprints", { mode: "json" }).notNull().default({}),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [uniqueIndex("learning_layer_revision_number_idx").on(table.learningLayerId, table.number)],
+);
+
+/** An Educator an editor assigned to a Video, who may then add Learning Layers to it. */
+export const videoEducator = sqliteTable(
+  "video_educator",
+  {
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+    assignedBy: text("assigned_by").notNull(),
+    assignedAt: integer("assigned_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.contentItemId, table.userId] }),
+    index("video_educator_user_idx").on(table.userId),
+  ],
+);
+
+/** An Educator assigned to a Learning Layer, who may open and author it (VAC-05). */
+export const learningLayerEducator = sqliteTable(
+  "learning_layer_educator",
+  {
+    learningLayerId: text("learning_layer_id")
+      .notNull()
+      .references(() => learningLayer.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+    assignedBy: text("assigned_by").notNull(),
+    assignedAt: integer("assigned_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.learningLayerId, table.userId] }),
+    index("learning_layer_educator_user_idx").on(table.userId),
+  ],
+);

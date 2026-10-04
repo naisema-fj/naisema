@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 
 /**
  * A staff preview of a Video Asset through its signed playback address (ADR-0008): a native
@@ -7,9 +7,29 @@ import { useEffect, useRef, useState } from "react";
  * content security policy needs no `worker-src`. Never forces an immediate quality switch, and
  * recovers from a fatal error once (docs/spikes/stream-timing.md).
  */
-export function VideoPreview({ src, hls, label }: { src: string; hls: boolean; label: string }) {
+export function VideoPreview({
+  src,
+  hls,
+  label,
+  videoRef,
+  className = "video-preview",
+  children,
+}: {
+  src: string;
+  hls: boolean;
+  label: string;
+  /** Given the `<video>` element, for a timeline editor that reads and moves the playhead. */
+  videoRef?: RefObject<HTMLVideoElement | null>;
+  className?: string;
+  /** Shown over the video, such as the captions of the Segment playing. */
+  children?: ReactNode;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (videoRef) videoRef.current = video.current;
+  }, [videoRef]);
 
   useEffect(() => {
     const element = video.current;
@@ -50,9 +70,10 @@ export function VideoPreview({ src, hls, label }: { src: string; hls: boolean; l
   }, [src, hls]);
 
   return (
-    <figure className="video-preview">
+    <figure className={className}>
       {/* biome-ignore lint/a11y/useMediaCaption: a master's captions come from its reviewed Learning Layer Segments, not the file. */}
       <video ref={video} src={hls ? undefined : src} controls playsInline preload="metadata" aria-label={label} />
+      {children}
       {error && <p role="alert">{error}</p>}
     </figure>
   );

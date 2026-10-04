@@ -7,7 +7,7 @@ const MEDIA_PATH = new RegExp(`^/media/(?:images/${ASSET_ID}/|files/${ASSET_ID}$
 /**
  * The media library files a Revision shows or offers, each once: images and links in its body
  * that point at the media library (as a path on this site or on any of our hosts), a Resource's
- * file, an Episode's audio and a Creator's portrait. Each needs a current Rights Record of its own for the Revision to
+ * file, an Episode's audio, a Creator's portrait and a Video's master. Each needs a current Rights Record of its own for the Revision to
  * be public (#17, ADR-0007). Images from other sites are covered by the item's own Rights Record.
  */
 export function mediaAssetIdsIn(snapshot: ArticleSnapshot): string[] {
@@ -20,6 +20,7 @@ export function mediaAssetIdsIn(snapshot: ArticleSnapshot): string[] {
   if (snapshot.resource?.source.kind === "file") ids.add(snapshot.resource.source.assetId);
   if (snapshot.episode) ids.add(snapshot.episode.audioAssetId);
   if (snapshot.creator) ids.add(snapshot.creator.portraitAssetId);
+  if (snapshot.video) ids.add(snapshot.video.videoAssetId);
   return [...ids];
 }
 

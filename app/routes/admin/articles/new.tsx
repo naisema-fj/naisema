@@ -16,6 +16,7 @@ import type { Database } from "~/lib/db.server";
 import { downloadChoices, episodeAudioChoices, imageChoices } from "~/lib/media-delivery.server";
 import { createContentItem } from "~/lib/revisions.server";
 import { listTopics } from "~/lib/topics.server";
+import { videoChoices } from "~/lib/video-assets.server";
 import type { Route } from "./+types/new";
 
 /** The type being created, from `?type=` (an Article unless it says otherwise). */
@@ -31,15 +32,16 @@ export function meta({ loaderData }: Route.MetaArgs) {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { db } = await requireEditor(context.get(cloudflareContext).env, request);
   const type = typeOf(request);
-  const [topics, embeddable, files, audio, images, pages] = await Promise.all([
+  const [topics, embeddable, files, audio, images, videos, pages] = await Promise.all([
     listTopics(db),
     embeddableArticles(db),
     type === "resource" ? downloadChoices(db) : [],
     type === "episode" ? episodeAudioChoices(db) : [],
     type === "creator" ? imageChoices(db) : [],
+    type === "video" ? videoChoices(db) : [],
     type === "page" ? availablePages(db) : [],
   ]);
-  return { type, topics, embeddable, pages, files, audio, images };
+  return { type, topics, embeddable, pages, files, audio, images, videos };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -118,6 +120,7 @@ export default function NewContent({ loaderData, actionData }: Route.ComponentPr
           files={loaderData.files}
           audio={loaderData.audio}
           images={loaderData.images}
+          videos={loaderData.videos}
           area={
             type === "page"
               ? { choose: "page", pages: loaderData.pages }

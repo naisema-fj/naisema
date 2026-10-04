@@ -8,7 +8,7 @@ import type { ContentFlag } from "./review-rules";
 /**
  * Everything an editor writes on a Content Item; each save stores one of these as a Revision.
  * Every content type shares it (content-types.ts); a Resource also has `resource`, an Episode
- * `episode`.
+ * `episode`, a Creator Profile `creator` and a Video `video`.
  */
 export type ArticleSnapshot = {
   title: string;
@@ -30,9 +30,20 @@ export type ArticleSnapshot = {
   episode?: EpisodeDetails;
   /** A Creator Profile's location, languages, media, portrait and free sample. */
   creator?: CreatorDetails;
+  /** A Video's Video Asset; its Learning Layers are kept separately, each with its own Revisions. */
+  video?: VideoDetails;
 };
 
-export type ArticleField = keyof ArticleSnapshot | "primaryArea" | "page" | ResourceField | EpisodeField | CreatorField;
+export type VideoDetails = { videoAssetId: string };
+
+export type ArticleField =
+  | keyof ArticleSnapshot
+  | "primaryArea"
+  | "page"
+  | "videoAssetId"
+  | ResourceField
+  | EpisodeField
+  | CreatorField;
 export type FieldErrors = Partial<Record<ArticleField, string>>;
 
 /** Maximum lengths of the article's text fields, shared by the form and the server check. */
@@ -58,7 +69,11 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   // and the music and clips it uses are source and context; the date, length and distribution links
   // are editorial facts.
   const episode = snapshot.episode;
-  const recording = episode ? { audioAssetId: episode.audioAssetId, transcript: episode.transcript } : {};
+  // A Video's footage is what it says and shows, so every review covers which video it is.
+  const recording = {
+    ...(episode ? { audioAssetId: episode.audioAssetId, transcript: episode.transcript } : {}),
+    ...(snapshot.video ? { videoAssetId: snapshot.video.videoAssetId } : {}),
+  };
   const speakers = episode ? { host: episode.host, guests: episode.guests } : {};
   const sourcesUsed = episode ? { music: episode.music ?? [], archiveClips: episode.archiveClips ?? [] } : {};
   // A Creator Profile's portrait shows a person, so safeguarding covers it with the editorial facts.

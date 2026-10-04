@@ -19,6 +19,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     canManageStaff: can(actor, { action: "role.assign" }),
     canEditContent: can(actor, { action: "content.edit" }),
     canUpload: can(actor, { action: "media.upload" }),
+    worksOnLearningLayers:
+      can(actor, { action: "content.edit" }) || actor.roles.some((role) => role.role === "educator"),
     isReviewer: can(actor, { action: "reviewQueue.view" }),
     canManageSubmissions: can(actor, { action: "submission.manage" }),
     canPublishNotices: can(actor, { action: "notice.publish" }),
@@ -90,6 +92,11 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
       {loaderData.canUpload && (
         <p>
           <a href="/admin/media">Media library</a>
+        </p>
+      )}
+      {loaderData.worksOnLearningLayers && (
+        <p>
+          <a href="/admin/learning-layers">Learning Layers</a>
         </p>
       )}
       {loaderData.isReviewer && (

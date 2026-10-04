@@ -31,6 +31,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 const mediaAssetIdOf = (snapshot: ArticleSnapshot) =>
   snapshot.episode?.audioAssetId ??
   snapshot.creator?.portraitAssetId ??
+  snapshot.video?.videoAssetId ??
   (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

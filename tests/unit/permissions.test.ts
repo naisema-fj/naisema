@@ -123,6 +123,36 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
   [
+    "editor authors any learning layer",
+    editor,
+    { action: "learningLayer.author", learningLayer: { assignedEducatorIds: [] } },
+    true,
+  ],
+  [
+    "reviewer cannot author a learning layer, even if listed",
+    languageReviewer,
+    { action: "learningLayer.author", learningLayer: { assignedEducatorIds: ["lang-reviewer"] } },
+    false,
+  ],
+  [
+    "educator adds a learning layer to a video they are assigned to",
+    educator,
+    { action: "learningLayer.create", video: { assignedEducatorIds: ["educator"] } },
+    true,
+  ],
+  [
+    "educator cannot add a learning layer to a video they aren't assigned to",
+    educator,
+    { action: "learningLayer.create", video: { assignedEducatorIds: ["someone-else"] } },
+    false,
+  ],
+  [
+    "editor adds a learning layer to any video",
+    editor,
+    { action: "learningLayer.create", video: { assignedEducatorIds: [] } },
+    true,
+  ],
+  [
     "educator submits an assigned learning layer for review",
     educator,
     { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: ["educator"] } },

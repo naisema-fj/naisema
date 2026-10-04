@@ -34,6 +34,8 @@ type Props = {
   audio?: MediaChoice[];
   /** Media library images, for a Creator's portrait. */
   images?: MediaChoice[];
+  /** Video Assets that have finished processing, for a Video. */
+  videos?: MediaChoice[];
   /** The Revision this form was opened from, so a save can't silently replace a newer one. */
   baseRevisionId?: string;
   submitLabel: string;
@@ -49,6 +51,7 @@ export function ArticleForm({
   files = [],
   audio = [],
   images = [],
+  videos = [],
   baseRevisionId,
   submitLabel,
 }: Props) {
@@ -319,6 +322,30 @@ export function ArticleForm({
             aria-describedby={describedBy("resourceUsageTerms")}
           />
           {fieldError("resourceUsageTerms")}
+        </fieldset>
+      )}
+
+      {type === "video" && (
+        <fieldset>
+          <legend>Video</legend>
+          <label htmlFor="videoAssetId">Footage</label>
+          <p id="videoAssetId-hint" className="hint">
+            A video from the media library that has finished processing. Learning Layers are added once it is saved.
+          </p>
+          <select
+            id="videoAssetId"
+            name="videoAssetId"
+            defaultValue={values.video?.videoAssetId ?? ""}
+            aria-describedby={errors.videoAssetId ? "videoAssetId-hint videoAssetId-error" : "videoAssetId-hint"}
+          >
+            <option value="">Choose the video</option>
+            {videos.map((file) => (
+              <option key={file.id} value={file.id}>
+                {file.name} ({file.typeName})
+              </option>
+            ))}
+          </select>
+          {fieldError("videoAssetId")}
         </fieldset>
       )}
 
