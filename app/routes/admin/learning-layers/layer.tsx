@@ -2,7 +2,7 @@ import { data, Form, redirect } from "react-router";
 import { TimelineEditor } from "~/components/timeline-editor";
 import type { AnnotationProblem, NoteProblem } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { listExpressions } from "~/lib/expressions.server";
+import { detailsOf, listExpressions } from "~/lib/expressions.server";
 import type { LayerDetailField } from "~/lib/learning-layer-fields";
 import {
   educatorChoices,
@@ -73,13 +73,10 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     previewError,
     saved: saved === String(layer.currentRevision.number),
     isEditor,
-    library: (await listExpressions(db, layer.languageVariety)).map((row) => ({
+    // The whole library, so every Expression can be chosen (1a's library is small).
+    library: (await listExpressions(db, layer.languageVariety, "", 10_000)).map((row) => ({
       id: row.id,
-      headword: row.headword,
-      generalMeaning: row.generalMeaning,
-      grammarNote: row.grammarNote,
-      pronunciation: row.pronunciation,
-      literalMeaning: row.literalMeaning,
+      ...detailsOf(row),
     })),
     educators: layer.assignedEducators,
     choices: isEditor

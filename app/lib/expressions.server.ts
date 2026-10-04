@@ -2,7 +2,7 @@ import { and, asc, eq, inArray, like, or, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 import { expression } from "~db/schema";
 import type { ExpressionDetails, NewExpression } from "./annotations";
-import { auditInsert } from "./audit.server";
+import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { type Actor, can } from "./permissions";
 
@@ -26,7 +26,7 @@ export const detailsOf = (row: LibraryExpression): ExpressionDetails => ({
 });
 
 /** A Language Variety's Expressions, by word or phrase, optionally matching a search. */
-export function listExpressions(db: Database, languageVariety: string, search = "") {
+export function listExpressions(db: Database, languageVariety: string, search = "", limit = 500) {
   const term = search.trim().replace(/[%_]/g, "");
   return db
     .select()
@@ -38,7 +38,7 @@ export function listExpressions(db: Database, languageVariety: string, search = 
       ),
     )
     .orderBy(asc(sql`lower(${expression.headword})`))
-    .limit(500);
+    .limit(limit);
 }
 
 export const getExpression = (db: Database, id: string) =>
@@ -51,84 +51,135 @@ export async function expressionsById(db: Database, ids: string[]) {
   return new Map(rows.map((row) => [row.id, row]));
 }
 
-const sameKey = (value: string) => value.trim().toLowerCase();
+/** A headword as matched: Unicode lower case and composed, so "Ā" and "ā" are the same word. */
+export const headwordKey = (headword: string) => headword.trim().normalize("NFC").toLowerCase();
+
+const EXPRESSION_FIELDS = ["headword", "generalMeaning", "grammarNote", "pronunciation", "literalMeaning"] as const;
+
+/** Whether two Expressions say exactly the same, case aside: only then is one reused for the other. */
+const sameDetails = (a: ExpressionDetails, b: ExpressionDetails) =>
+  EXPRESSION_FIELDS.every(
+    (field) =>
+      (a[field] === null) === (b[field] === null) && headwordKey(a[field] ?? "") === headwordKey(b[field] ?? ""),
+  );
+
+/** The most new Expressions one save may add. */
+export const MAX_NEW_EXPRESSIONS = 100;
+
+export type Placed =
+  | {
+      ok: true;
+      /** The library ID each Expression the editor defined ends up as. */
+      ids: Map<string, string>;
+      inserts: BatchItem<"sqlite">[];
+      added: (ExpressionDetails & { id: string })[];
+    }
+  | { ok: false; error: string };
 
 /**
  * Prepares Expressions defined while annotating: each either matches one already in the library
- * (the same word or phrase and meaning) or is to be inserted. Returns how the editor's IDs map to
- * library IDs, and the inserts to run in the save's batch.
+ * saying exactly the same (so the Educator's notes are never dropped for another's) or is to be
+ * inserted with the ID the editor gave it. An ID that is already another Expression's is refused,
+ * never swapped, so no Annotation is moved to a different Expression.
  */
 export async function placeNewExpressions(
   db: Database,
   actorId: string,
   languageVariety: string,
   items: NewExpression[],
-) {
-  const ids = new Map<string, string>();
-  const inserts: BatchItem<"sqlite">[] = [];
-  const added: (ExpressionDetails & { id: string })[] = [];
-  const existingIds = await expressionsById(
+): Promise<Placed> {
+  if (items.length > MAX_NEW_EXPRESSIONS) {
+    return { ok: false, error: `Save after adding at most ${MAX_NEW_EXPRESSIONS} new Expressions at a time.` };
+  }
+  const taken = await expressionsById(
     db,
     items.map((item) => item.id),
   );
+  if (taken.size)
+    return { ok: false, error: "A new Expression's ID is already in use. Reload the editor and try again." };
+  const keys = [...new Set(items.map((item) => headwordKey(item.details.headword)))];
+  const candidates = keys.length
+    ? await db
+        .select()
+        .from(expression)
+        .where(and(eq(expression.languageVariety, languageVariety), inArray(expression.headwordKey, keys)))
+    : [];
+  const ids = new Map<string, string>();
+  const inserts: BatchItem<"sqlite">[] = [];
+  const added: (ExpressionDetails & { id: string })[] = [];
   const now = new Date();
   for (const item of items) {
-    const same = await db
-      .select({ id: expression.id })
-      .from(expression)
-      .where(
-        and(
-          eq(expression.languageVariety, languageVariety),
-          eq(sql`lower(${expression.headword})`, sameKey(item.details.headword)),
-          eq(sql`lower(${expression.generalMeaning})`, sameKey(item.details.generalMeaning)),
-        ),
-      )
-      .get();
-    const twin = added.find(
-      (other) =>
-        sameKey(other.headword) === sameKey(item.details.headword) &&
-        sameKey(other.generalMeaning) === sameKey(item.details.generalMeaning),
-    );
-    if (same || twin) {
-      ids.set(item.id, (same?.id ?? twin?.id) as string);
+    const existing =
+      candidates.find((row) => sameDetails(detailsOf(row), item.details))?.id ??
+      added.find((other) => sameDetails(other, item.details))?.id;
+    if (existing) {
+      ids.set(item.id, existing);
       continue;
     }
-    // An ID already in the library for another Expression is never reused for a new one.
-    const id = existingIds.has(item.id) ? crypto.randomUUID() : item.id;
-    ids.set(item.id, id);
-    added.push({ id, ...item.details });
+    ids.set(item.id, item.id);
+    added.push({ id: item.id, ...item.details });
     inserts.push(
       db.insert(expression).values({
-        id,
+        id: item.id,
         languageVariety,
         ...item.details,
+        headwordKey: headwordKey(item.details.headword),
         createdBy: actorId,
         createdAt: now,
         updatedBy: actorId,
         updatedAt: now,
       }),
-      auditInsert(db, {
-        actorId,
-        action: "expression.created",
-        objectType: "expression",
-        objectId: id,
-      }),
+      auditInsert(db, { actorId, action: "expression.created", objectType: "expression", objectId: item.id }),
     );
   }
-  return { ids, inserts, added };
+  return { ok: true, ids, inserts, added };
 }
 
-/** Whether someone may change an Expression in the library: editors, and whoever added it. */
-export const canEditExpression = (actor: Actor, row: LibraryExpression) =>
-  can(actor, { action: "content.edit" }) || row.createdBy === actor.userId;
+/**
+ * The copy of each Expression a Revision's Annotations use, by ID: those just added, and those in
+ * the library for the Learning Layer's Language Variety. Annotations linked to anything else are
+ * left without one, which their check then reports.
+ */
+export async function expressionCopies(
+  db: Database,
+  languageVariety: string,
+  ids: string[],
+  added: (ExpressionDetails & { id: string })[],
+) {
+  const library = await expressionsById(db, ids);
+  const copies: Record<string, ExpressionDetails> = {};
+  for (const id of ids) {
+    const fresh = added.find((item) => item.id === id);
+    const row = library.get(id);
+    if (fresh) {
+      const { id: _, ...details } = fresh;
+      copies[id] = details;
+    } else if (row?.languageVariety === languageVariety) {
+      copies[id] = detailsOf(row);
+    }
+  }
+  return copies;
+}
 
-/** Changes an Expression in the library. */
+/** Whether someone may change an Expression in the library (`expression.edit`). */
+export const canEditExpression = (actor: Actor, row: LibraryExpression) =>
+  can(actor, { action: "expression.edit", expression: { createdBy: row.createdBy } });
+
+/** Changes an Expression in the library; a refused attempt is audited. */
 export async function updateExpression(db: Database, actor: Actor, row: LibraryExpression, details: ExpressionDetails) {
-  if (!canEditExpression(actor, row)) return false;
+  if (!canEditExpression(actor, row)) {
+    await recordAudit(db, {
+      actorId: actor.userId,
+      action: "expression.refused",
+      objectType: "expression",
+      objectId: row.id,
+    });
+    return false;
+  }
   await db.batch([
     db
       .update(expression)
-      .set({ ...details, updatedBy: actor.userId, updatedAt: new Date() })
+      .set({ ...details, headwordKey: headwordKey(details.headword), updatedBy: actor.userId, updatedAt: new Date() })
       .where(eq(expression.id, row.id)),
     auditInsert(db, {
       actorId: actor.userId,

@@ -930,6 +930,8 @@ export const expression = sqliteTable(
     id: text("id").primaryKey(),
     languageVariety: text("language_variety").notNull(),
     headword: text("headword").notNull(),
+    /** The headword as matched: Unicode lower case, so "Ā" and "ā" are the same word. */
+    headwordKey: text("headword_key").notNull(),
     generalMeaning: text("general_meaning").notNull(),
     grammarNote: text("grammar_note").notNull().default(""),
     pronunciation: text("pronunciation").notNull().default(""),
@@ -939,5 +941,5 @@ export const expression = sqliteTable(
     updatedBy: text("updated_by").notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [index("expression_headword_idx").on(table.languageVariety, table.headword)],
+  (table) => [index("expression_headword_idx").on(table.languageVariety, table.headwordKey)],
 );

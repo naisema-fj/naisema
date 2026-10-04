@@ -47,6 +47,42 @@ describe("re-tokenising after an edit", () => {
     expect(retokenise(before, "sa vinaka", ids).map((token) => token.id)).toEqual(["b", "d"]);
   });
 
+  it("lets the later of two equal words keep the ID, whichever side the copy was typed or deleted", () => {
+    const before = [
+      { id: "n", text: "ni" },
+      { id: "k", text: "koro" },
+    ];
+    counter = 0;
+    expect(retokenise(before, "ni ni koro", ids)).toEqual([
+      { id: "t1", text: "ni" },
+      { id: "n", text: "ni" },
+      { id: "k", text: "koro" },
+    ]);
+    expect(
+      retokenise(
+        [
+          { id: "a", text: "ni" },
+          { id: "b", text: "ni" },
+          { id: "k", text: "koro" },
+        ],
+        "ni koro",
+        ids,
+      ),
+    ).toEqual([
+      { id: "b", text: "ni" },
+      { id: "k", text: "koro" },
+    ]);
+  });
+
+  it("keeps every unchanged word's ID through a whole edit, compared once with the text before it", () => {
+    const before = [
+      { id: "v", text: "vale" },
+      { id: "n", text: "ni" },
+      { id: "k", text: "koro" },
+    ];
+    expect(retokenise(before, "vale nikua ni koro", ids).filter((token) => token.text !== "nikua")).toEqual(before);
+  });
+
   it("treats a word whose spelling changed as a new word", () => {
     const before = [
       { id: "a", text: "Bula" },

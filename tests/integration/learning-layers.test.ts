@@ -534,6 +534,49 @@ describe("Annotations, Expressions and notes", () => {
     expect(await refused.text()).toContain("Explain what the idiom means beyond its literal translation.");
   });
 
+  it("adds only the new Expressions an Annotation uses, and matches the library across capitals", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const headword = `Āvā-${crypto.randomUUID().slice(0, 6)}`;
+    const used = crypto.randomUUID();
+    const unused = crypto.randomUUID();
+    const plain = [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }];
+    await save(educator, layerId, plain, {
+      annotations: JSON.stringify([annotationOn(words.id, words.tokens[0].id, words.tokens[0].id, used)]),
+      newExpressions: JSON.stringify([
+        newExpression(used, { headword, generalMeaning: "a test word" }),
+        newExpression(unused, { headword: `unused-${crypto.randomUUID()}` }),
+      ]),
+    });
+    expect(await env.DB.prepare("SELECT id FROM expression WHERE id = ?1").bind(unused).first()).toBeNull();
+
+    const again = crypto.randomUUID();
+    await save(educator, layerId, plain, {
+      annotations: JSON.stringify([annotationOn(words.id, words.tokens[1].id, words.tokens[1].id, again)]),
+      newExpressions: JSON.stringify([
+        newExpression(again, { headword: headword.toLowerCase(), generalMeaning: "a test word" }),
+      ]),
+    });
+    expect((await snapshotOf(layerId)).annotations[0].expressionId).toBe(used);
+  });
+
+  it("refuses a new Expression whose ID another Expression already has, rather than moving Annotations", async () => {
+    const { educator, layerId, segment: words } = await layerWithWords();
+    const first = crypto.randomUUID();
+    const plain = [{ ...words, startMs: 1_000, endMs: 3_000, english: "", speaker: "" }];
+    await save(educator, layerId, plain, {
+      annotations: JSON.stringify([annotationOn(words.id, words.tokens[0].id, words.tokens[0].id, first)]),
+      newExpressions: JSON.stringify([newExpression(first, { headword: `taken-${crypto.randomUUID().slice(0, 6)}` })]),
+    });
+
+    const refused = await save(educator, layerId, plain, {
+      annotations: JSON.stringify([annotationOn(words.id, words.tokens[0].id, words.tokens[0].id, first)]),
+      newExpressions: JSON.stringify([newExpression(first, { headword: "something else" })]),
+    });
+
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("already in use");
+  });
+
   it("lets editors and whoever added an Expression change it in the library", async () => {
     const { editor, educator, layerId, segment: words } = await layerWithWords();
     const temporary = crypto.randomUUID();
@@ -557,6 +600,12 @@ describe("Annotations, Expressions and notes", () => {
     };
 
     expect((await other.browser.fetch(`/admin/expressions/${expressionId}`, { form })).status).toBe(403);
+    const refusals = await env.DB.prepare(
+      "SELECT COUNT(*) AS count FROM audit_event WHERE action = 'expression.refused' AND object_id = ?1 AND actor_id = ?2",
+    )
+      .bind(expressionId, other.userId)
+      .first<{ count: number }>();
+    expect(refusals?.count).toBe(1);
     expect((await educator.browser.fetch(`/admin/expressions/${expressionId}`, { form })).status).toBe(302);
     expect(
       (await editor.browser.fetch(`/admin/expressions/${expressionId}`, { form: { ...form, pronunciation: "vinaka" } }))

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "1a68bc12-16f3-4d50-baa6-ca1653ecd0a5",
+  "id": "dffaaad6-d337-4a85-af8a-8fd2c020d7df",
   "prevId": "559a1f76-a3c8-451c-aad3-774fe6ca515a",
   "tables": {
     "account": {
@@ -939,6 +939,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "headword_key": {
+          "name": "headword_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "general_meaning": {
           "name": "general_meaning",
           "type": "text",
@@ -1003,7 +1010,7 @@
           "name": "expression_headword_idx",
           "columns": [
             "language_variety",
-            "headword"
+            "headword_key"
           ],
           "isUnique": false
         }

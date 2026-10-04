@@ -27,7 +27,8 @@ const key = (word: string) => word.normalize("NFC").toLowerCase();
 
 /**
  * Tokens for a text, keeping the IDs of `previous` tokens whose words are still there, in the
- * same order. `newId` makes an ID for each new word.
+ * same order. `newId` makes an ID for each new word. Diff once against the tokens from before an
+ * edit, not after every keystroke: a half-typed word in between can match the wrong word.
  */
 export function retokenise(previous: Token[], text: string, newId: () => string = () => crypto.randomUUID()): Token[] {
   const words = tokenTexts(text);
@@ -44,15 +45,18 @@ export function retokenise(previous: Token[], text: string, newId: () => string 
   const tokens: Token[] = [];
   let i = 0;
   let j = 0;
+  // Where the same word appears more than once, the match is made as late as it can be: a word
+  // typed in front of the same word is the new one, and of two equal words the earlier is the one
+  // deleted. Which copy an edit meant can't be told from the words alone.
   while (j < after.length) {
-    if (i < before.length && before[i] === after[j]) {
+    if (i < before.length && lengths[i + 1][j] === lengths[i][j]) {
+      i++;
+    } else if (lengths[i][j + 1] === lengths[i][j]) {
+      tokens.push({ id: newId(), text: words[j] });
+      j++;
+    } else {
       tokens.push({ id: previous[i].id, text: words[j] });
       i++;
-      j++;
-    } else if (i < before.length && lengths[i + 1][j] >= lengths[i][j + 1]) {
-      i++;
-    } else {
-      tokens.push({ id: newId(), text: words[j] });
       j++;
     }
   }
