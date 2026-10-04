@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
 import { isLayerEligible } from "~/lib/layer-review.server";
 import { isEligible } from "~/lib/publication.server";
+import { hashToken, randomToken } from "~/lib/signed-tokens.server";
 import { languageReviewerRole, post, type Staff, staff, topic } from "./support/articles";
 import { recordMediaRights, recordRights } from "./support/rights";
 import { readyVideoAsset } from "./support/video";
@@ -302,7 +303,38 @@ describe("Review Links and Knowledge Holder Approvals", () => {
     const [link] = (await linkRows(layerId)).results;
     expect(link.expiresAt - link.createdAt).toBe(14 * 86_400_000);
     expect((await SELF.fetch(`${PUBLIC}${path}/video`)).status).toBe(200);
-    expect((await accesses(link.id)).results).toEqual([{ outcome: "viewed" }]);
+    // A player's later ranges belong to the same play.
+    const later = await SELF.fetch(`${PUBLIC}${path}/video`, { headers: { Range: "bytes=100-" } });
+    expect(later.status).toBe(206);
+    await later.arrayBuffer();
+    expect((await accesses(link.id)).results).toEqual([{ outcome: "viewed" }, { outcome: "played" }]);
+  });
+
+  it("stops playing the footage once its Publish grant is withdrawn, and can only be revoked", async () => {
+    const { editor, videoId, layerId, path } = await issuedLink();
+    expect((await recordRights(editor.browser, videoId, { uses: ["publish"] })).status).toBe(302);
+    const [record] = (await recordsOf(videoId)).results;
+    await editor.browser.fetch(`/admin/articles/${videoId}/rights`, {
+      form: { intent: "withdraw", recordId: record.id, reason: "The family withdrew it." },
+    });
+    const html = await (await SELF.fetch(`${PUBLIC}${path}`)).text();
+    expect(html).toContain("The video can&#x27;t be played right now.");
+    expect((await SELF.fetch(`${PUBLIC}${path}/video`)).status).toBe(404);
+
+    const [link] = (await linkRows(layerId)).results;
+    await expect(
+      env.DB.prepare("UPDATE review_link SET expires_at = ?1 WHERE id = ?2")
+        .bind(Date.now() + 1e9, link.id)
+        .run(),
+    ).rejects.toThrow(/only be revoked/);
+  });
+
+  it("can only be issued for the latest revision", async () => {
+    const { editor, educator, layerId, number } = await issuedLink();
+    await save(educator, layerId, { sensitiveCultural: "on", ...readyContent({ english: "Hello there" }) });
+    const refused = await act(editor, layerId, number, { intent: "issueLink", recipient: "Ratu Joni" });
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("Only the latest revision can be shared for review.");
   });
 
   it("stops working once revoked or expired, still logging the attempt", async () => {
@@ -312,13 +344,18 @@ describe("Review Links and Knowledge Holder Approvals", () => {
     expect((await SELF.fetch(`${PUBLIC}${path}`)).status).toBe(410);
     expect((await SELF.fetch(`${PUBLIC}${path}/video`)).status).toBe(403);
 
-    const other = await issuedLink();
-    const [expiring] = (await linkRows(other.layerId)).results;
-    await env.DB.prepare("UPDATE review_link SET expires_at = ?1 WHERE id = ?2")
-      .bind(Date.now() - 1, expiring.id)
+    // A link issued 15 days ago has expired.
+    const token = randomToken();
+    const expiring = { id: crypto.randomUUID() };
+    await env.DB.prepare(
+      `INSERT INTO review_link (id, revision_id, token_hash, recipient, created_by, created_at, expires_at)
+       SELECT ?1, revision_id, ?2, 'Ratu Joni', created_by, ?3, ?4 FROM review_link WHERE id = ?5`,
+    )
+      .bind(expiring.id, await hashToken(token), Date.now() - 15 * 86_400_000, Date.now() - 86_400_000, link.id)
       .run();
-    expect((await SELF.fetch(`${PUBLIC}${other.path}`)).status).toBe(410);
-    expect((await accesses(link.id)).results).toEqual([{ outcome: "revoked" }]);
+    expect((await SELF.fetch(`${PUBLIC}/review/${token}`)).status).toBe(410);
+    // The page and the video were both tried.
+    expect((await accesses(link.id)).results).toEqual([{ outcome: "revoked" }, { outcome: "revoked" }]);
     expect((await accesses(expiring.id)).results).toEqual([{ outcome: "expired" }]);
     expect((await SELF.fetch(`${PUBLIC}/review/not-a-real-token`)).status).toBe(404);
   });
@@ -402,5 +439,22 @@ describe("queues and dependent items (VCMS-06)", () => {
     expect(reviews).toContain(`/admin/learning-layers/${layerId}/revisions/${number}`);
     const videoPage = await (await editor.browser.fetch(`/admin/media/${assetId}/video`)).text();
     expect(videoPage).toContain(`/admin/learning-layers/${layerId}`);
+  });
+
+  it("lists a withdrawn Learning Layer as ready to publish again", async () => {
+    const { editor, educator, reviewer, videoId, assetId, layerId, number } = await authoredLayer();
+    await act(educator, layerId, number, { intent: "submit" });
+    await act(editor, layerId, number, { intent: "assign", reviewType: "language", reviewerId: reviewer.userId });
+    await act(reviewer, layerId, number, { intent: "decide", reviewType: "language", decision: "approved" });
+    await grantRights(editor, videoId, assetId);
+    await act(editor, layerId, number, { intent: "publish" });
+    const ready = async () =>
+      (await (await editor.browser.fetch("/admin/learning-layers")).text()).match(
+        /Ready to publish<\/h2>([\s\S]*?)<\/section>/,
+      )?.[1] ?? "";
+    expect(await ready()).not.toContain(`/admin/learning-layers/${layerId}/revisions`);
+    expect((await act(editor, layerId, number, { intent: "withdraw" })).status).toBe(302);
+    expect((await layerRow(layerId))?.state).toBe("withdrawn");
+    expect(await ready()).toContain(`/admin/learning-layers/${layerId}/revisions/${number}`);
   });
 });

@@ -304,7 +304,7 @@ export type Review = NonNullable<Awaited<ReturnType<typeof loadReview>>>;
 
 export type ReviewActionResult = { ok: true } | { ok: false; error: string };
 
-const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
+export const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
 
 /** Only the current draft can be submitted or reviewed; older Revisions are superseded. */
 const isCurrent = (review: Review) => review.contentItem.currentDraftRevisionId === review.revisionId;
@@ -404,9 +404,14 @@ export async function assignReviewer(
 /**
  * The requirement a reviewer would be deciding for this Review Type, if they may decide it: the
  * Revision must need that review (Knowledge Holder Approvals are recorded by editors instead), and
- * can() must allow this reviewer, which rules out anyone who authored or edited the Revision.
+ * can() must allow this reviewer, which rules out anyone who authored or edited the Revision. The
+ * same for a Content Item's Revision and a Learning Layer's.
  */
-export function decidableRequirement(actor: Actor, review: Review, reviewType: ReviewType): ReviewRequirement | null {
+export function decidableRequirement(
+  actor: Actor,
+  review: Pick<Review, "requirements" | "authorIds" | "assignments">,
+  reviewType: ReviewType,
+): ReviewRequirement | null {
   const requirement = review.requirements.find(
     (candidate) => candidate.reviewType === reviewType && !candidate.knowledgeHolder,
   );
