@@ -15,17 +15,13 @@ import {
   stageNeighbours,
   stageText,
 } from "~/lib/immersion";
-import { LEARNER_PATHS, type LearnerLayerState, withQueued } from "~/lib/learner-progress";
+import { LEARNER_PATHS, type LearnerLayerState } from "~/lib/learner-progress";
 import {
   captionsFor,
   DEFAULT_PREFERENCES,
   type LayerSession,
-  loadLayerSession,
-  loadPreferences,
   newLayerSession,
   type SupportPreferences,
-  saveLayerSession,
-  savePreferences,
 } from "~/lib/learner-session";
 import { type LearningEvent, type Support, sendLearningEvent } from "~/lib/learning-events";
 import {
@@ -37,10 +33,9 @@ import {
   type Replay,
   replayStep,
 } from "~/lib/player-rules";
-import { progressQueue } from "~/lib/progress-queue.client";
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
 import { ActivityCard } from "./activity-card";
-import { SaveStatus, SaveToggle, useProgressQueue } from "./learner-account";
+import { SaveStatus, SaveToggle, useLearnerStore, useQueueStatus } from "./learner-account";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
 
 /**
@@ -52,10 +47,9 @@ import { type CaptionTrack, VideoPreview } from "./video-preview";
  * in the language taught and in English switched independently, a transcript that follows the
  * video and seeks from any line without taking focus, word and phrase meanings, replaying a line
  * once or on a loop, three speeds, and the Activities with feedback and retries. An Excerpt plays
- * only between its in and out times. For a visitor, progress and support choices are kept in the
- * tab's session (app/lib/learner-session.ts); for a signed-in learner, they start from their
- * account and every change goes through the progress queue (app/lib/progress-queue.client.ts),
- * which says when it is saved. Learning events carry IDs only.
+ * only between its in and out times. Progress and support choices are kept in a learner store
+ * (app/lib/learner-store.ts): the tab's for a visitor; for a signed-in learner, their account's,
+ * through the progress queue, which says when each change is saved. Learning events carry IDs only.
  */
 
 type Props = {
@@ -113,76 +107,43 @@ export function LearnerPlayer(props: Props) {
     [view.annotations, expressions],
   );
 
-  // What the learner has done and chosen: for a visitor, kept for this tab only; for a signed-in
-  // learner, what their account holds with anything still queued on top. Read after hydration, so
-  // the server's page and the first render match.
+  // What the learner has done and chosen, from the learner store (app/lib/learner-store.ts): for a
+  // visitor, kept for this tab only; for a signed-in learner, what their account holds with anything
+  // still queued on top. Read after hydration, so the server's page and the first render match.
   const { learner, contentItemId } = props;
   const userId = learner?.userId ?? null;
   const [session, setSession] = useState<LayerSession>(() => newLayerSession(props.revisionId));
   const [support, setSupport] = useState<SupportPreferences>(DEFAULT_PREFERENCES);
   const [saved, setSaved] = useState({ words: learner?.savedWords ?? [], video: learner?.videoSaved ?? false });
   const [loaded, setLoaded] = useState(false);
-  const { status: queueStatus, record } = useProgressQueue(userId);
+  const store = useLearnerStore({ layerId, revisionId: props.revisionId, contentItemId }, learner, segments);
+  const record = store.record;
+  const queueStatus = useQueueStatus(userId);
   // The place in the clip the learner was last at, kept so opening a stage doesn't lose it.
   const place = useRef({ positionMs: learner?.resumeMs ?? 0, segmentId: null as string | null });
-  // biome-ignore lint/correctness/useExhaustiveDependencies: loaded once per page; the account state comes with it.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: read once per stage; the store comes with the page.
   useEffect(() => {
-    if (!learner) {
-      const stored = loadLayerSession(layerId, props.revisionId);
-      setSession({ ...stored, progress: recordVisit(stored.progress, stage) });
-      setSupport(loadPreferences());
-      setLoaded(true);
-      return;
-    }
     let live = true;
-    progressQueue(learner.userId)
-      .pending()
-      .then((queued) => {
-        if (!live) return;
-        const shown = withQueued(
-          {
-            progress: learner.progress,
-            captions: learner.captions,
-            preferences: learner.preferences,
-            savedWords: learner.savedWords,
-            videoSaved: learner.videoSaved,
-          },
-          queued,
-          { layerId, revisionId: props.revisionId, contentItemId },
-        );
-        const complete = progressSummary(view.required, shown.progress).completion.complete;
-        setSession({
-          revisionId: props.revisionId,
-          progress: recordVisit(shown.progress, stage),
-          completedSent: complete,
-          captions: shown.captions,
-        });
-        setSupport(shown.preferences);
-        setSaved({ words: shown.savedWords, video: shown.videoSaved });
-        setLoaded(true);
-        // The place to keep: the latest one still queued on this device, else the account's.
-        const queuedPlace = [...queued]
-          .reverse()
-          .find(
-            (event) => event.type === "position" && event.layerId === layerId && event.revisionId === props.revisionId,
-          );
-        const resumeMs = learner.resumeMs ?? 0;
-        place.current =
-          queuedPlace?.type === "position"
-            ? { positionMs: queuedPlace.positionMs, segmentId: queuedPlace.segmentId }
-            : { positionMs: resumeMs, segmentId: currentSegment(segments, resumeMs)?.id ?? null };
-        record({ type: "position", layerId, revisionId: props.revisionId, stage, ...place.current });
+    store.load().then((start) => {
+      if (!live) return;
+      // Completing is announced once: not again for progress already complete.
+      const complete = progressSummary(view.required, start.progress).completion.complete;
+      setSession({
+        revisionId: props.revisionId,
+        progress: recordVisit(start.progress, stage),
+        completedSent: complete,
+        captions: start.captions,
       });
+      setSupport(start.preferences);
+      setSaved({ words: start.savedWords, video: start.videoSaved });
+      setLoaded(true);
+      if (start.place) place.current = start.place;
+      record({ type: "position", layerId, revisionId: props.revisionId, stage, ...place.current });
+    });
     return () => {
       live = false;
     };
-  }, [layerId, props.revisionId, stage]);
-  useEffect(() => {
-    if (loaded && !learner) saveLayerSession(layerId, session);
-  }, [loaded, learner, layerId, session]);
-  useEffect(() => {
-    if (loaded && !learner) savePreferences(support);
-  }, [loaded, learner, support]);
+  }, [store, stage]);
   const send = useCallback((event: LearningEvent) => sendLearningEvent(layerId, event), [layerId]);
   const toggled = (name: Support) => send({ name: "support_toggled", support: name });
   const updateSupport = (change: Partial<SupportPreferences>) => {

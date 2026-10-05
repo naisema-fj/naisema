@@ -262,7 +262,7 @@ export type ShownState = {
  */
 export function withQueued(
   shown: ShownState,
-  queued: ProgressEvent[],
+  queued: (ProgressEvent | EventFields)[],
   on: { layerId: string; revisionId: string; contentItemId: string },
 ): ShownState {
   let { progress, captions, preferences, savedWords, videoSaved } = shown;

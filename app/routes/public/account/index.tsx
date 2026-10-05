@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { data, Form, Link, redirect } from "react-router";
-import { SaveStatus, useProgressQueue } from "~/components/learner-account";
+import { SaveStatus, useQueueStatus } from "~/components/learner-account";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { stageText } from "~/lib/immersion";
 import { languageName, languageTag } from "~/lib/language-variety";
@@ -102,7 +102,7 @@ function ForgetsQueue({
   className?: string;
   children: React.ReactNode;
 }) {
-  const { status } = useProgressQueue(userId);
+  const status = useQueueStatus(userId);
   return (
     <Form
       method="post"
@@ -128,7 +128,7 @@ function ForgetsQueue({
 export default function YourLearning({ loaderData, actionData }: Route.ComponentProps) {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
-  const { status } = useProgressQueue(hydrated ? loaderData.userId : null);
+  const status = useQueueStatus(hydrated ? loaderData.userId : null);
   const result = actionData && "done" in actionData ? actionData.done : null;
   const deleteError = actionData && "deleteError" in actionData ? actionData.deleteError : null;
   const error = actionData && "error" in actionData ? actionData.error : null;

@@ -1,27 +1,46 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
-import type { EventFields } from "~/lib/learner-progress";
-import { LEARNER_PATHS } from "~/lib/learner-progress";
-import { progressQueue, type QueueStatus } from "~/lib/progress-queue.client";
+import { LEARNER_PATHS, type LearnerLayerState } from "~/lib/learner-progress";
+import { accountStore, type LearnerStore, type StoreScope, sessionTab, tabStore } from "~/lib/learner-store";
+import { IDLE_STATUS, type QueueStatus } from "~/lib/progress-queue";
+import { progressQueue } from "~/lib/progress-queue.client";
+import type { Segment } from "~/lib/segment-rules";
 
 /**
- * A signed-in learner's side of the player (#33): sending each change through the progress queue,
- * and saying honestly whether it has reached their account (VTECH-05). Nothing is called saved
- * until the server has acknowledged it.
+ * A learner's side of the player (#33): the store it keeps their changes in (app/lib/learner-store.ts),
+ * and, for a signed-in learner, saying honestly whether each change has reached their account
+ * (VTECH-05). Nothing is called saved until the server has acknowledged it.
  */
 
-const IDLE: QueueStatus = { ready: false, waiting: 0, refused: [], sending: false, retrying: false, signedOut: false };
-
-/** The queue's status for a signed-in learner, and a way to send changes; for a visitor, nothing. */
-export function useProgressQueue(userId: string | null) {
-  const [status, setStatus] = useState<QueueStatus>(IDLE);
+/** The progress queue's status for a signed-in learner; for a visitor, nothing. */
+export function useQueueStatus(userId: string | null) {
+  const [status, setStatus] = useState<QueueStatus>(IDLE_STATUS);
   useEffect(() => (userId ? progressQueue(userId).subscribe(setStatus) : undefined), [userId]);
-  /** Queues a change; resolves to its ID, or null for a visitor. */
-  const record = useCallback(
-    (event: EventFields): Promise<string | null> => (userId ? progressQueue(userId).add(event) : Promise.resolve(null)),
-    [userId],
-  );
-  return { status, record };
+  return status;
+}
+
+/**
+ * The player's store on a Learning Layer's published Revision: the account's for a signed-in
+ * learner, the tab's for a visitor. Nothing is read or sent until it is used, after hydration.
+ */
+export function useLearnerStore(
+  scope: StoreScope,
+  learner: (LearnerLayerState & { userId: string }) | null,
+  segments: Segment[],
+): LearnerStore {
+  const { layerId, revisionId, contentItemId } = scope;
+  return useMemo(() => {
+    const on = { layerId, revisionId, contentItemId };
+    if (!learner) return tabStore(sessionTab, on);
+    // The queue is the browser's (a .client module), so it is reached only once a change is made.
+    const queue = () => progressQueue(learner.userId);
+    return accountStore(
+      { pending: () => queue().pending(), add: (event) => queue().add(event) },
+      learner,
+      on,
+      segments,
+    );
+  }, [layerId, revisionId, contentItemId, learner, segments]);
 }
 
 const changes = (count: number) => `${count} ${count === 1 ? "change" : "changes"}`;
