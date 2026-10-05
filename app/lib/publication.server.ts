@@ -9,6 +9,7 @@ import { loadReview, type Review, type ReviewActionResult } from "./review.serve
 import { requirementName } from "./review-names";
 import { mediaRightsFacts, rightsFactsFor } from "./rights.server";
 import { assetRightsProblems, rightsProblems } from "./rights-rules";
+import { readyVideo } from "./video-assets.server";
 
 export type Eligibility = { eligible: true } | { eligible: false; reasons: string[] };
 
@@ -34,9 +35,8 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
     reasons.push("It is hidden while a Case about it is reviewed. The safeguarding lead can show it again.");
   }
   if (!review.submitted) reasons.push("It hasn't been submitted for review.");
-  // A Video's page plays it with the learner player, which comes later (#29).
-  if (review.contentItem.type === "video") {
-    reasons.push("Videos can't be published yet: their public page comes with the learner player.");
+  if (review.videoAssetId && !(await readyVideo(db, review.videoAssetId))) {
+    reasons.push("Its video hasn't finished processing.");
   }
   for (const { requirement, status } of review.progress) {
     if (status === "approved") continue;
@@ -46,8 +46,12 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
   if (review.resourceAssetId && !(await readyDownload(db, review.resourceAssetId))) {
     reasons.push("Its file isn't in the media library as a PDF or audio file that has passed its virus scan.");
   }
-  if (review.episode && !(await readyEpisodeAudio(db, review.episode.audioAssetId))) {
+  const recording = review.episode?.recording;
+  if (recording?.kind === "audio" && !(await readyEpisodeAudio(db, recording.assetId))) {
     reasons.push("Its audio isn't in the media library as an MP3 or M4A file that has passed its virus scan.");
+  }
+  if (recording?.kind === "video" && !(await readyVideo(db, recording.assetId))) {
+    reasons.push("Its video hasn't finished processing.");
   }
   if (review.episode && !review.episode.hasTranscript) {
     reasons.push("It has no transcript yet. Every Episode is published with a reviewed transcript.");

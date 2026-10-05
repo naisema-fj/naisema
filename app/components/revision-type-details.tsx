@@ -89,10 +89,17 @@ export function RevisionTypeDetails({
   return (
     <section aria-labelledby="type-details-heading">
       <h2 id="type-details-heading">Episode</h2>
-      {/* biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the transcript below (WCAG 1.2.1). */}
-      <audio controls preload="none" src={audioPath} aria-label="Audio of this revision" />
+      {episode.videoAssetId ? (
+        <p>
+          A video Episode: <a href={`/admin/media/${episode.videoAssetId}/video`}>watch its video</a> in the media
+          library.
+        </p>
+      ) : (
+        // biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the transcript below (WCAG 1.2.1).
+        <audio controls preload="none" src={audioPath} aria-label="Audio of this revision" />
+      )}
       <dl>
-        <dt>Audio file</dt>
+        <dt>{episode.videoAssetId ? "Video file" : "Audio file"}</dt>
         <dd>{fileName ?? MISSING_FILE}</dd>
         <dt>Host</dt>
         <dd>{episode.host}</dd>

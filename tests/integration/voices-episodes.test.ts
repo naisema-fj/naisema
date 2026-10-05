@@ -5,6 +5,7 @@ import { type Scanner, scanUpload } from "~/lib/scan.server";
 import { act, approve, articleForm, currentRevision, post, type Staff, staff, topic } from "./support/articles";
 import { completeUpload, sendPart, startUpload } from "./support/media";
 import { recordMediaRights, recordRights } from "./support/rights";
+import { readyVideoAsset } from "./support/video";
 
 const PUBLIC = "https://naisema.test";
 const visit = (path: string, init: RequestInit = {}) => SELF.fetch(`${PUBLIC}${path}`, { redirect: "manual", ...init });
@@ -113,6 +114,45 @@ describe("Voices Episodes", () => {
     const voices = await read("/voices");
     expect(voices).toContain("Talanoa with Ratu Joni");
     expect(voices).toContain("Episode · 32 min");
+  });
+
+  it("can play a video in place of audio, never cached, with its transcript beside it", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const videoId = await readyVideoAsset(editor, { seconds: 20, width: 1280, height: 720 });
+    expect((await recordMediaRights(editor.browser, videoId)).status).toBe(302);
+    const id = await createEpisode(editor, { episodeRecording: "video", episodeVideoAssetId: videoId });
+    const row = await env.DB.prepare(
+      "SELECT r.snapshot FROM content_item c JOIN revision r ON r.id = c.current_draft_revision_id WHERE c.id = ?1",
+    )
+      .bind(id)
+      .first<{ snapshot: string }>();
+    const snapshot = JSON.parse(row?.snapshot ?? "{}");
+    expect(snapshot.episode).toMatchObject({ audioAssetId: "", videoAssetId: videoId });
+    await publishEpisode(editor, id);
+
+    const page = await visit(await pathOf(id));
+    expect(page.headers.get("Cache-Control")).toBe("private, no-store");
+    const html = await page.text();
+    expect(html).toContain(`/videos/${id}/stream`);
+    expect(html).not.toContain("<audio");
+    expect(html).toContain("Who&#x27;s speaking");
+    expect(html).toContain('<strong class="speaker">Mere: </strong>Bula vinaka, Ratu.');
+    expect(await (await visit(`/videos/${id}/playback`)).json()).toEqual({ src: `/videos/${id}/stream`, hls: false });
+    expect((await visit(`/episodes/${id}/audio`)).status).toBe(404);
+  });
+
+  it("refuse a video that hasn't finished processing", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const response = await post(
+      editor,
+      "/admin/articles/new?type=episode",
+      articleForm(
+        await topic(editor),
+        episodeFields("", { episodeRecording: "video", episodeVideoAssetId: crypto.randomUUID() }),
+      ),
+    );
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("Choose a video that has finished processing.");
   });
 
   it("can't be published without a transcript, and always need its accessibility review", async () => {

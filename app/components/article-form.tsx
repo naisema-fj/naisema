@@ -352,7 +352,37 @@ export function ArticleForm({
       {type === "episode" && (
         <fieldset>
           <legend>Episode</legend>
-          <label htmlFor="episodeAudioAssetId">Audio</label>
+          <fieldset className="episode-recording">
+            <legend>Recording</legend>
+            <label className="checkbox">
+              <input type="radio" name="episodeRecording" value="audio" defaultChecked={!episode?.videoAssetId} /> Audio
+            </label>
+            <label className="checkbox">
+              <input
+                type="radio"
+                name="episodeRecording"
+                value="video"
+                defaultChecked={Boolean(episode?.videoAssetId)}
+              />{" "}
+              Video, in place of audio
+            </label>
+          </fieldset>
+          <label htmlFor="episodeVideoAssetId">Video (for a video Episode)</label>
+          <select
+            id="episodeVideoAssetId"
+            name="episodeVideoAssetId"
+            defaultValue={episode?.videoAssetId ?? ""}
+            aria-describedby={describedBy("episodeVideoAssetId")}
+          >
+            <option value="">Choose the video</option>
+            {videos.map((file) => (
+              <option key={file.id} value={file.id}>
+                {file.name} ({file.typeName})
+              </option>
+            ))}
+          </select>
+          {fieldError("episodeVideoAssetId")}
+          <label htmlFor="episodeAudioAssetId">Audio (for an audio Episode)</label>
           <select
             id="episodeAudioAssetId"
             name="episodeAudioAssetId"

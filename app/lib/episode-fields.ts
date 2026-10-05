@@ -2,17 +2,19 @@ import { latestToday } from "./calendar";
 import type { RightsPart } from "./rights-rules";
 
 /**
- * What a Na iSema Voices Episode adds to a Content Item (docs/phase-1a-defaults.md §9): its audio
- * from the media library, who is speaking, the music and archive clips it uses, when it was
- * recorded, how long it is, its transcript and the approved places it is also distributed. Stored
- * in the Episode's Revision snapshot. Video Episodes arrive with the video pipeline (#16).
+ * What a Na iSema Voices Episode adds to a Content Item (docs/phase-1a-defaults.md §9): its
+ * recording from the media library (audio, or a video in its place), who is speaking, the music and
+ * archive clips it uses, when it was recorded, how long it is, its transcript and the approved
+ * places it is also distributed. Stored in the Episode's Revision snapshot.
  */
 
 export type DistributionLink = { label: string; url: string };
 
 export type EpisodeDetails = {
-  /** A media library MP3 or M4A that has passed its scan. */
+  /** A media library MP3 or M4A that has passed its scan; empty for a video Episode. */
   audioAssetId: string;
+  /** A video Episode's recording: a Video Asset that has finished processing, in place of audio. */
+  videoAssetId?: string;
   host: string;
   guests: string[];
   /** The music it uses, one piece each ("Isa Lei, 1962 recording"); absent in early Revisions. */
@@ -40,7 +42,9 @@ export const EPISODE_LIMITS = {
 } as const;
 
 export type EpisodeField =
+  | "episodeRecording"
   | "episodeAudioAssetId"
+  | "episodeVideoAssetId"
   | "episodeHost"
   | "episodeGuests"
   | "episodeMusic"
@@ -64,8 +68,12 @@ export function readEpisodeFields(form: FormData, today = new Date()): EpisodeFi
   const errors: Partial<Record<EpisodeField, string>> = {};
   const field = (name: EpisodeField) => String(form.get(name) ?? "").trim();
 
-  const audioAssetId = field("episodeAudioAssetId");
-  if (!audioAssetId) errors.episodeAudioAssetId = "Choose the audio from the media library.";
+  // Audio, or a video in its place.
+  const video = field("episodeRecording") === "video";
+  const audioAssetId = video ? "" : field("episodeAudioAssetId");
+  const videoAssetId = video ? field("episodeVideoAssetId") : "";
+  if (!video && !audioAssetId) errors.episodeAudioAssetId = "Choose the audio from the media library.";
+  if (video && !videoAssetId) errors.episodeVideoAssetId = "Choose the video from the media library.";
 
   const host = field("episodeHost");
   if (!host) errors.episodeHost = "Enter who hosts this Episode.";
@@ -118,7 +126,17 @@ export function readEpisodeFields(form: FormData, today = new Date()): EpisodeFi
     errors.episodeDistribution = "Enter each link as a full web address starting with https://.";
   }
 
-  const values = { audioAssetId, host, guests, music, archiveClips, recordedOn, transcript, distribution };
+  const values = {
+    audioAssetId,
+    ...(video ? { videoAssetId } : {}),
+    host,
+    guests,
+    music,
+    archiveClips,
+    recordedOn,
+    transcript,
+    distribution,
+  };
   if (Object.keys(errors).length || durationSeconds === null) {
     return {
       ok: false,
@@ -128,6 +146,12 @@ export function readEpisodeFields(form: FormData, today = new Date()): EpisodeFi
   }
   return { ok: true, details: { ...values, durationSeconds } };
 }
+
+/** An Episode's recording: its audio, or the video in its place. */
+export const episodeRecording = (details: Pick<EpisodeDetails, "audioAssetId" | "videoAssetId">) =>
+  details.videoAssetId
+    ? ({ kind: "video", assetId: details.videoAssetId } as const)
+    : ({ kind: "audio", assetId: details.audioAssetId } as const);
 
 /** "32:10" or "1:05:00" as seconds; null for anything else, or for no time at all. */
 export function parseDuration(value: string): number | null {
