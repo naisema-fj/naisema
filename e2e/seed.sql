@@ -316,3 +316,50 @@ UPDATE learning_layer SET current_draft_revision_id = id || '-r1' WHERE id LIKE 
 INSERT INTO learning_layer_submission (revision_id, submitted_by, submitted_at) VALUES
   ('e2e-review-desktop-r1', 'e2e-seed', 0),
   ('e2e-review-mobile-r1', 'e2e-seed', 0);
+
+-- A published Video with real footage (e2e/fixtures/market.mp4, put into local R2 when the suite
+-- starts) and a published Learning Layer on it, for the learner player journey (VAC-02).
+INSERT INTO media_asset (id, purpose, type, name, size, status, quarantine_key, destination_key, uploaded_by,
+  created_at, updated_at, scanned_at)
+VALUES ('e2e-public-video', 'media', 'video/mp4', 'e2e-market-talanoa.mp4', 421464, 'ready', 'uploads/e2e-public-video',
+  'masters/e2e-public-video', 'e2e-seed', 0, 0, 0)
+ON CONFLICT(id) DO UPDATE SET size = excluded.size;
+INSERT INTO video_asset (id, owner_id, master_key, provider, provider_id, state, duration_ms, width, height,
+  orientation, environment, created_at, updated_at, ready_at)
+VALUES ('e2e-public-video', 'e2e-seed', 'masters/e2e-public-video', 'local', 'local-e2e-public-video', 'ready', 10000,
+  360, 640, 'portrait', 'development', 0, 0, 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-public-video-file-rights', 'media_asset', 'e2e-public-video', 'E2E Films', '["publish"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO content_item (id, type, slug, primary_area, created_by, created_at, updated_at,
+  publication_state, first_published_at, last_published_at)
+VALUES ('e2e-public-video', 'video', 'e2e-market-talanoa', 'learn', 'e2e-seed', 0, 0, 'published',
+  1790000000000, 1790000000000)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO revision (id, content_item_id, number, snapshot, fingerprints, created_by, created_at)
+VALUES ('e2e-public-video-r1', 'e2e-public-video', 1, '{"title":"Talanoa at the market","summary":"Two friends meet at the Suva market.","credit":"Filmed by the E2E suite","topicIds":["e2e-topic-ceremonies"],"body":{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Mere and Sera meet by the fruit stalls."}]}]},"sources":"","flags":[],"languageVariety":null,"video":{"videoAssetId":"e2e-public-video"}}', '{}', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+UPDATE content_item SET current_draft_revision_id = 'e2e-public-video-r1',
+  current_published_revision_id = 'e2e-public-video-r1' WHERE id = 'e2e-public-video';
+INSERT INTO revision_submission (revision_id, submitted_by, submitted_at) VALUES ('e2e-public-video-r1', 'e2e-seed', 0)
+ON CONFLICT(revision_id) DO NOTHING;
+INSERT INTO rights_record (id, subject_type, subject_id, rights_holder, permitted_uses, guardian_permission,
+  evidence_key, evidence_name, evidence_type, created_by, created_at)
+VALUES ('e2e-public-video-rights', 'content_item', 'e2e-public-video', 'E2E Films',
+  '["publish","translate","transcribe","educationalAdaptation"]', 0,
+  'rights/e2e', 'permission.pdf', 'application/pdf', 'e2e-seed', 0)
+ON CONFLICT(id) DO NOTHING;
+INSERT INTO learning_layer (id, content_item_id, language_variety, publication_state, first_published_at,
+  last_published_at, created_by, created_at, updated_at)
+VALUES ('e2e-layer-public', 'e2e-public-video', 'standard-fijian', 'published', 1790000000000, 1790000000000,
+  'e2e-seed', 0, 0);
+INSERT INTO learning_layer_revision (id, learning_layer_id, number, snapshot, fingerprints, created_by, created_at)
+VALUES ('e2e-layer-public-r1', 'e2e-layer-public', 1, '{"title":"Greetings at the market","level":"beginner","flags":[],"excerpt":null,"segments":[{"id":"6f1d2c3e-0000-4000-8000-000000000021","startMs":0,"endMs":2000,"speaker":"Mere","fijian":"Ni sa bula vinaka.","english":"Hello.","overlapIntended":false,"draft":false,"retimed":false,"tokens":[{"id":"7b1d2c3e-0000-4000-8000-00000001001","text":"Ni"},{"id":"7b1d2c3e-0000-4000-8000-00000001002","text":"sa"},{"id":"7b1d2c3e-0000-4000-8000-00000001003","text":"bula"},{"id":"7b1d2c3e-0000-4000-8000-00000001004","text":"vinaka"}]},{"id":"6f1d2c3e-0000-4000-8000-000000000022","startMs":2000,"endMs":4500,"speaker":"Sera","fijian":"Au lako mai Suva.","english":"I come from Suva.","overlapIntended":false,"draft":false,"retimed":false,"tokens":[{"id":"7b1d2c3e-0000-4000-8000-00000002001","text":"Au"},{"id":"7b1d2c3e-0000-4000-8000-00000002002","text":"lako"},{"id":"7b1d2c3e-0000-4000-8000-00000002003","text":"mai"},{"id":"7b1d2c3e-0000-4000-8000-00000002004","text":"Suva"}]}],"annotations":[{"id":"8c1d2c3e-0000-4000-8000-000000000001","segmentId":"6f1d2c3e-0000-4000-8000-000000000021","startTokenId":"7b1d2c3e-0000-4000-8000-00000001003","endTokenId":"7b1d2c3e-0000-4000-8000-00000001004","expressionId":"9d1d2c3e-0000-4000-8000-000000000001","contextualMeaning":"Hello, to a friend","grammarNote":"","inVocabulary":true,"needsCheck":false}],"notes":[],"expressions":{"9d1d2c3e-0000-4000-8000-000000000001":{"headword":"bula vinaka","generalMeaning":"hello; good health","grammarNote":"","pronunciation":"mBOO-la vee-NAH-ka","literalMeaning":null}},"activities":[{"id":"aa1d2c3e-0000-4000-8000-000000000001","kind":"comprehension","segmentId":null,"prompt":"Where does Sera come from?","options":[{"id":"ab1d2c3e-0000-4000-8000-000000000001","text":"Suva","correct":true},{"id":"ab1d2c3e-0000-4000-8000-000000000002","text":"Levuka","correct":false}],"modelResponse":"","feedback":"She says she comes from Suva.","pronunciation":"","required":true,"textAlternative":"Read the transcript, then choose where Sera comes from."}]}', '{}', 'e2e-seed', 0);
+UPDATE learning_layer SET current_draft_revision_id = 'e2e-layer-public-r1',
+  current_published_revision_id = 'e2e-layer-public-r1' WHERE id = 'e2e-layer-public';
+INSERT INTO learning_layer_submission (revision_id, submitted_by, submitted_at) VALUES ('e2e-layer-public-r1', 'e2e-seed', 0);
+INSERT INTO learning_layer_approval (id, revision_id, review_type, language_variety, decision, reviewer_id, decided_at)
+VALUES ('e2e-layer-public-language', 'e2e-layer-public-r1', 'language', 'standard-fijian', 'approved', 'e2e-seed', 0);

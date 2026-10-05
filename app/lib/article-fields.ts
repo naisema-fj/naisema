@@ -71,7 +71,9 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   const episode = snapshot.episode;
   // A Video's footage is what it says and shows, so every review covers which video it is.
   const recording = {
-    ...(episode ? { audioAssetId: episode.audioAssetId, transcript: episode.transcript } : {}),
+    ...(episode
+      ? { audioAssetId: episode.audioAssetId, videoAssetId: episode.videoAssetId, transcript: episode.transcript }
+      : {}),
     ...(snapshot.video ? { videoAssetId: snapshot.video.videoAssetId } : {}),
   };
   const speakers = episode ? { host: episode.host, guests: episode.guests } : {};

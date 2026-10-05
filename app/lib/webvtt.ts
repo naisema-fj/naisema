@@ -103,12 +103,13 @@ export function parseWebVtt(input: string): ParsedWebVtt {
 }
 
 /** One language's text as a WebVTT file; Segments without text in that language are left out. */
-export function toWebVtt(segments: Segment[], language: SegmentLanguage) {
+export function toWebVtt(segments: Segment[], language: SegmentLanguage, { offsetMs = 0 }: { offsetMs?: number } = {}) {
   const blocks = segments
     .filter((segment) => segment[language].trim())
     .map((segment) => {
       const voice = segment.speaker ? `<v ${escapeText(segment.speaker)}>` : "";
-      return `${segment.id}\n${writeTime(segment.startMs)} --> ${writeTime(segment.endMs)}\n${voice}${escapeText(segment[language])}\n`;
+      const times = `${writeTime(segment.startMs + offsetMs)} --> ${writeTime(segment.endMs + offsetMs)}`;
+      return `${segment.id}\n${times}\n${voice}${escapeText(segment[language])}\n`;
     });
   return ["WEBVTT", "", ...blocks.flatMap((block) => [block.trimEnd(), ""])].join("\n");
 }

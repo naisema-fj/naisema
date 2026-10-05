@@ -28,6 +28,7 @@ export default [
     route("connect/creators/:slug", "routes/public/connect/creator.tsx"),
     route(":area", "routes/public/area.tsx"),
     route(":area/:slug", "routes/public/article.tsx"),
+    route(":area/:slug/language/:layerId", "routes/public/learning-layer.tsx"),
   ]),
   // Review Links: one exact Learning Layer Revision for a Knowledge Holder, never cached or indexed.
   route("review/:token", "routes/public/review-link.tsx"),
@@ -39,6 +40,10 @@ export default [
   route("media/files/:id", "routes/media/file.ts"),
   route("resources/:id/download", "routes/public/resource-download.ts"),
   route("episodes/:id/audio", "routes/public/episode-audio.ts"),
+  // Public Videos and their Learning Layers' captions, decided on every request (app/lib/public-video.server.ts).
+  route("videos/:itemId/playback", "routes/public/video-playback.ts"),
+  route("videos/:itemId/stream", "routes/public/video-stream.ts"),
+  route("language/:layerId/captions/:language", "routes/public/layer-captions.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
   // Cloudflare Stream's signed processing reports (app/lib/video-assets.server.ts).
   route("webhooks/stream", "routes/public/stream-webhook.ts"),

@@ -78,7 +78,7 @@ async function save(who: Staff, layerId: string, segments: unknown[], fields: Re
 }
 
 describe("Video Content Items", () => {
-  it("show a Video Asset that has finished processing, and can't be published until the learner player exists", async () => {
+  it("show a Video Asset that has finished processing, and need their own rights to be published", async () => {
     const editor = await staff("editor", { role: "editor" });
     const { id, assetId } = await video(editor);
 
@@ -93,9 +93,8 @@ describe("Video Content Items", () => {
     const eligibility = await isEligible(getDb(env.DB), revision?.id as string);
     expect(eligibility.eligible).toBe(false);
     if (!eligibility.eligible) {
-      expect(eligibility.reasons).toContain(
-        "Videos can't be published yet: their public page comes with the learner player.",
-      );
+      // Its footage has finished processing, so only rights stand in the way.
+      expect(eligibility.reasons).not.toContain("Its video hasn't finished processing.");
       // The footage needs a Rights Record of its own, like any media library file.
       expect(eligibility.reasons).toContain("The file talanoa.mp4 has no current Rights Record granting Publish.");
     }

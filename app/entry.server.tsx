@@ -6,6 +6,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { createNonce, NonceContext } from "~/lib/security-headers";
 import { applySecurityHeaders } from "~/lib/security-policy";
 import { videoPlaybackOrigin } from "~/lib/video-provider.server";
+import { pageHydrates, pagePlaysVideo, type RouteHandle } from "./lib/route-handle";
 
 export default async function handleRequest(
   request: Request,
@@ -49,27 +50,27 @@ export default async function handleRequest(
     applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
       allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost && leafHandle(routerContext)?.noindex !== true,
       turnstile: leafHandle(routerContext)?.turnstile === true,
-      video: leafHandle(routerContext)?.video === true ? { origin: videoPlaybackOrigin(env) } : null,
+      video: pagePlaysVideo(leafHandle(routerContext), leafData(routerContext))
+        ? { origin: videoPlaybackOrigin(env) }
+        : null,
     });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
 }
 
-/**
- * The page's own route `handle`: `hydrate: false` (root.tsx), `turnstile: true` for a public form,
- * `video: true` for a page that plays video or reads a video file's length, `noindex: true` for a
- * page never to be indexed.
- */
+/** The page's own route `handle` (app/lib/route-handle.ts). */
 function leafHandle(context: EntryContext) {
   const leaf = context.staticHandlerContext.matches.at(-1);
-  return leaf
-    ? (context.routeModules[leaf.route.id]?.handle as
-        | { hydrate?: boolean; turnstile?: boolean; video?: boolean; noindex?: boolean }
-        | undefined)
-    : undefined;
+  return leaf ? (context.routeModules[leaf.route.id]?.handle as RouteHandle | undefined) : undefined;
+}
+
+/** The page's own loader data, which a handle can depend on. */
+function leafData(context: EntryContext) {
+  const leaf = context.staticHandlerContext.matches.at(-1);
+  return leaf ? context.staticHandlerContext.loaderData[leaf.route.id] : undefined;
 }
 
 /** Whether the page will load client JavaScript: routes opt out with `handle = { hydrate: false }`. */
 function hydrates(context: EntryContext) {
-  return leafHandle(context)?.hydrate !== false;
+  return pageHydrates(leafHandle(context), leafData(context));
 }

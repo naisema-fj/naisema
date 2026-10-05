@@ -1,6 +1,6 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import type { EmbeddedItem } from "~/components/article-body-view";
-import { contentItem, mediaAsset, revision, slugRedirect, topic } from "~db/schema";
+import { contentItem, learningLayer, mediaAsset, revision, slugRedirect, topic } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, embeddedItemIds } from "./article-body";
 import type { ArticleSnapshot } from "./article-fields";
@@ -15,12 +15,16 @@ import {
   transcriptParagraphs,
 } from "./episode-fields";
 import { itemPath } from "./item-paths";
+import { layerEligibility, loadLayerReview } from "./layer-review.server";
+import { LAYER_LEVELS, type LearningLayerSnapshot, layerSpan } from "./learning-layer-fields";
 import { imagePath } from "./media-delivery.server";
 import { eligibilityFor } from "./publication.server";
 import { AGE_GUIDANCE, linkHost, type ResourceDetails } from "./resource-fields";
 import { loadReview } from "./review.server";
 import { reviewLabels } from "./review-labels";
 import { formatBytes, UPLOAD_TYPE_NAMES } from "./upload-rules";
+import { readyVideo } from "./video-assets.server";
+import type { Orientation } from "./video-rules";
 
 /**
  * What the public site may show (ADR-0007). Every item goes through the eligibility decision at
@@ -62,9 +66,12 @@ export type PublicResource = {
   | { kind: "link"; url: string; host: string; checkedOn: string }
 );
 
-/** An Episode as a visitor sees it: the player's source, who speaks, and the full transcript. */
+/**
+ * An Episode as a visitor sees it: the player's source (none for a video Episode, which plays as a
+ * Video does), who speaks, and the full transcript.
+ */
 export type PublicEpisode = {
-  audioPath: string;
+  audioPath: string | null;
   audioType: string;
   host: string;
   guests: string[];
@@ -88,6 +95,22 @@ export type PublicCreator = {
 
 export type RelatedItem = { title: string; path: string; typeName: string; summary: string };
 
+/** A Learning Layer a visitor can open from its Video's page: "Explore the language". */
+export type PublicLayerCard = { id: string; title: string; level: string; span: string; path: string };
+
+/**
+ * A Video as visitors see it: its footage's shape (kept, never cropped), where a short-lived address
+ * to play it comes from, and the Learning Layers that are public on it right now.
+ */
+export type PublicVideo = {
+  playbackPath: string;
+  width: number;
+  height: number;
+  orientation: Orientation;
+  durationMs: number;
+  layers: PublicLayerCard[];
+};
+
 export type PublicArticle = {
   id: string;
   type: ContentType;
@@ -106,6 +129,7 @@ export type PublicArticle = {
   resource: PublicResource | null;
   episode: PublicEpisode | null;
   creator: PublicCreator | null;
+  video: PublicVideo | null;
   related: RelatedItem[];
   firstPublishedAt: Date | null;
   lastPublishedAt: Date | null;
@@ -118,7 +142,7 @@ export type PublicLookup =
   | { kind: "missing" };
 
 /** Types that live at /{area}/{slug}. */
-const AREA_TYPES = ["article", "resource", "episode"] as const;
+const AREA_TYPES = ["article", "resource", "episode", "video"] as const;
 
 /**
  * The item at /{area}/{slug}: the published, eligible Article, Resource or Episode; a redirect from an old
@@ -206,6 +230,11 @@ async function publicView(
     resource: snapshot.resource ? await publicResource(db, item.id, snapshot.resource) : null,
     episode: snapshot.episode ? await publicEpisode(db, item.id, snapshot.episode) : null,
     creator: snapshot.creator ? await publicCreator(db, snapshot.title, snapshot.creator, now) : null,
+    // A Video's footage, or a video Episode's recording.
+    video: await (async () => {
+      const footage = snapshot.video?.videoAssetId ?? snapshot.episode?.videoAssetId;
+      return footage ? publicVideo(db, item, footage, now) : null;
+    })(),
     related: await relatedItems(db, snapshot.relatedIds ?? [], now),
     firstPublishedAt: item.firstPublishedAt,
     lastPublishedAt: item.lastPublishedAt,
@@ -234,13 +263,11 @@ async function publicResource(db: Database, itemId: string, details: ResourceDet
 }
 
 async function publicEpisode(db: Database, itemId: string, details: EpisodeDetails): Promise<PublicEpisode> {
-  const asset = await db
-    .select({ type: mediaAsset.type })
-    .from(mediaAsset)
-    .where(eq(mediaAsset.id, details.audioAssetId))
-    .get();
+  const asset = details.audioAssetId
+    ? await db.select({ type: mediaAsset.type }).from(mediaAsset).where(eq(mediaAsset.id, details.audioAssetId)).get()
+    : undefined;
   return {
-    audioPath: episodeAudioPath(itemId),
+    audioPath: details.videoAssetId ? null : episodeAudioPath(itemId),
     audioType: asset?.type ?? "audio/mpeg",
     host: details.host,
     guests: details.guests,
@@ -272,6 +299,78 @@ async function publicCreator(db: Database, name: string, details: CreatorDetails
     mediaTypes: details.mediaTypes.map((type) => MEDIA_TYPES[type]),
     sample: sample ?? null,
   };
+}
+
+/** Where a Video's short-lived playback address comes from: through the Video, so eligibility is decided each time. */
+export const videoPlaybackPath = (itemId: string) => `/videos/${itemId}/playback`;
+
+/** A Learning Layer's player, under its Video's address. */
+export const layerPath = (item: ItemRow, layerId: string) => `${itemPath(item)}/language/${layerId}`;
+
+async function publicVideo(db: Database, item: ItemRow, videoAssetId: string, now: Date): Promise<PublicVideo | null> {
+  const asset = await readyVideo(db, videoAssetId);
+  if (!asset) return null;
+  return {
+    playbackPath: videoPlaybackPath(item.id),
+    width: asset.width,
+    height: asset.height,
+    orientation: asset.orientation,
+    durationMs: asset.durationMs,
+    layers: (await publicLayers(db, item.id, now)).map(({ id, snapshot }) => ({
+      id,
+      title: snapshot.title,
+      level: LAYER_LEVELS[snapshot.level],
+      span: layerSpan(snapshot.excerpt),
+      path: layerPath(item, id),
+    })),
+  };
+}
+
+/**
+ * The Learning Layers public on a Video right now: published, and their published Revision eligible
+ * (ADR-0007). The Video itself is public, since only its public page asks (#28's serving rule).
+ */
+async function publicLayers(db: Database, contentItemId: string, now: Date) {
+  const rows = await db
+    .select({ id: learningLayer.id, revisionId: learningLayer.currentPublishedRevisionId })
+    .from(learningLayer)
+    .where(and(eq(learningLayer.contentItemId, contentItemId), eq(learningLayer.publicationState, "published")))
+    .orderBy(asc(learningLayer.createdAt));
+  const shown = await Promise.all(
+    rows.map(async ({ id, revisionId }) => {
+      if (!revisionId) return null;
+      const review = await loadLayerReview(db, revisionId);
+      if (!review || !(await layerEligibility(db, review, now)).eligible) return null;
+      return { id, snapshot: review.snapshot, languageVariety: review.layer.languageVariety };
+    }),
+  );
+  return shown.filter((layer) => layer !== null);
+}
+
+export type PublicLayerLookup =
+  | {
+      kind: "found";
+      video: PublicArticle;
+      layer: { id: string; snapshot: LearningLayerSnapshot; languageVariety: string };
+    }
+  | Exclude<PublicLookup, { kind: "found" }>;
+
+/**
+ * A Learning Layer's player at /{area}/{slug}/language/{id}: found only while both its Video and the
+ * Learning Layer itself are public right now. An old Video address redirects to the new one.
+ */
+export async function findPublicLayer(
+  db: Database,
+  area: PrimaryArea,
+  slug: string,
+  layerId: string,
+  now = new Date(),
+): Promise<PublicLayerLookup> {
+  const found = await findPublicArticle(db, area, slug, now, ["video"]);
+  if (found.kind === "moved") return { kind: "moved", to: `${found.to}/language/${layerId}` };
+  if (found.kind !== "found") return found;
+  const layer = (await publicLayers(db, found.article.id, now)).find((candidate) => candidate.id === layerId);
+  return layer ? { kind: "found", video: found.article, layer } : { kind: "missing" };
 }
 
 /** Where an Episode's audio streams from: through the Episode, so eligibility is decided each time. */

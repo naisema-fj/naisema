@@ -5,6 +5,7 @@ import { RevisionTypeDetails } from "~/components/revision-type-details";
 import type { ArticleSnapshot } from "~/lib/article-fields";
 import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { episodeRecording } from "~/lib/episode-fields";
 import { mediaName } from "~/lib/media.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
@@ -29,7 +30,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 /** The media library file a Resource offers or an Episode plays, if any. */
 const mediaAssetIdOf = (snapshot: ArticleSnapshot) =>
-  snapshot.episode?.audioAssetId ??
+  (snapshot.episode ? episodeRecording(snapshot.episode).assetId : null) ??
   snapshot.creator?.portraitAssetId ??
   snapshot.video?.videoAssetId ??
   (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);

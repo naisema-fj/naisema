@@ -128,13 +128,27 @@ An item can be published, and later served, only while a current Rights Record g
 
 ## Public site
 
-The public site (`app/routes/public/`, styles in `app/styles/public.css`, design record in `DESIGN.md`) serves the homepage, the six area pages at `/{area}`, Articles at `/{area}/{slug}`, the footer pages, `/sitemap.xml` and `/robots.txt`. Public pages ship no client JavaScript (`script-src 'none'`).
+The public site (`app/routes/public/`, styles in `app/styles/public.css`, design record in `DESIGN.md`) serves the homepage, the six area pages at `/{area}`, Articles, Resources, Episodes and Videos at `/{area}/{slug}`, Learning Layers at `/{area}/{slug}/language/{id}`, the footer pages, `/sitemap.xml` and `/robots.txt`. Public pages ship no client JavaScript (`script-src 'none'`), except pages that play video: a Video, a video Episode and a Learning Layer's player. Those load the player's script with a per-response nonce and are never cached (`Cache-Control: private, no-store`), because they carry a signed playback address.
 
 - **What is shown:** only an item's current published Revision, and only while it is eligible (ADR-0007). A withdrawn or archived item answers 410; a draft, a never-published item or one that has lost its rights answers 404. Review Labels come from the approvals actually recorded on the published Revision; there is no "verified" label.
 - **Changing an address:** editors change an item's slug from its edit page ("Web address"). The old slug is kept in `slug_redirect` and answers with a 301 to the new address while the item is eligible; no item, including the same one, can take an old slug again, because browsers keep permanent redirects and moving back would loop.
 - **Caching:** public HTML and the sitemap are cached at the edge for at most 5 minutes (`Cache-Control: public, max-age=60, s-maxage=300`); errors are never cached and the admin host is never cached. Publishing, withdrawing, archiving, a rights withdrawal or a slug change purges the affected pages (`/`, the area, the item and the sitemap) for every origin in the `PUBLIC_ORIGINS` var in `wrangler.jsonc`; review decisions purge the item's pages too. Staging's `workers.dev` address isn't listed, so it relies on the 5-minute ceiling; add it to `PUBLIC_ORIGINS` if testers use it. Query strings are ignored, so each page has one cached copy. The Worker purges its own data centre through the Cache API; to purge every data centre, set the `CLOUDFLARE_ZONE_ID` var and the `CACHE_PURGE_TOKEN` secret (a token with **Zone › Cache Purge › Purge**, limited to the `naisema.com` zone). Without them, other data centres can serve a page for up to 5 minutes after a change, which is the stated limit. Cached pages are keyed by the deployed Worker version (the `CF_VERSION_METADATA` binding), so a deploy starts with an empty cache and never serves pages that point at the previous build's stylesheet.
 - **Sitemap and robots:** `/sitemap.xml` lists the homepage, the six areas and every item in the search index (see Public search). `/robots.txt` disallows everything unless `ALLOW_INDEXING = "true"`, and then disallows only `/admin`.
 - **Fonts:** Jost and Literata are self-hosted from the `@fontsource-variable` packages (SIL Open Font License 1.1); nothing is loaded from a font CDN.
+
+## Learner player
+
+A published Video's page plays its footage and lists, under **Explore the language**, the Learning Layers that are public on it. A Learning Layer is shown only while both its own published Revision and its Video's published Revision are eligible (decision log 1a-14), so withdrawing either, a rights withdrawal or a Case hold takes it down on the next request. The player (`app/components/learner-player.tsx`) has:
+
+- Fijian and English captions, switched independently. They are native `<track>`s generated on each request from the published Segments at `/language/<id>/captions/fijian` and `/english`, and are never uploaded to Stream.
+- A transcript that follows the video and seeks from any Segment.
+- Word and phrase meanings opened by tap, click or keyboard, and the vocabulary list.
+- Replay of a Segment once or on a loop, with a Stop button.
+- Three speeds: normal, 0.75× and 0.5×.
+
+An Excerpt's Learning Layer plays only between its in and out times. Players ask `/videos/<item id>/playback` for a new signed address when theirs runs out. Locally, videos play from `/videos/<item id>/stream`. The e2e suite puts a short real clip (`e2e/fixtures/market.mp4`) into local R2 when it starts, so its journey plays real footage.
+
+A Voices Episode can use a video in place of audio (**Recording: Video** on its form). It then plays like a Video, with its transcript, and needs the video to have finished processing and the file its own Rights Record.
 
 ## Public search
 

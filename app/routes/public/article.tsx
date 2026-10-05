@@ -1,23 +1,46 @@
-import { Link, redirect } from "react-router";
+import { data, Link, redirect } from "react-router";
 import { ContentLetter } from "~/components/public/content-letter";
 import { isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { findPublicArticle } from "~/lib/public.server";
-import { publicHeaders } from "~/lib/public-cache.server";
+import { PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
+import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
+import type { RouteHandle } from "~/lib/route-handle";
 import type { Route } from "./+types/article";
 
-export const handle = { hydrate: false };
-export const headers = publicHeaders;
+/**
+ * A page with footage (a Video, or a video Episode) plays it, so it hydrates; every other item's
+ * page ships no JavaScript.
+ */
+const playsVideo = (loaderData: unknown) => Boolean((loaderData as { video?: unknown } | undefined)?.video);
+
+export const handle: RouteHandle = { hydrate: playsVideo, video: playsVideo };
+
+/**
+ * Edge-cached, except a page with footage: it carries a signed playback address and a nonce for
+ * its scripts, so it is never kept (ADR-0007, ADR-0008).
+ */
+export function headers({ loaderHeaders, errorHeaders }: Route.HeadersArgs) {
+  if (errorHeaders) return { "Cache-Control": "no-store" };
+  return { "Cache-Control": loaderHeaders.get("Cache-Control") ?? PUBLIC_CACHE_CONTROL };
+}
 
 export async function loader({ params, context }: Route.LoaderArgs) {
   if (!isPrimaryArea(params.area)) throw new Response("Not found", { status: 404 });
-  const db = getDb(context.get(cloudflareContext).env.DB);
+  const { env } = context.get(cloudflareContext);
+  const db = getDb(env.DB);
   const found = await findPublicArticle(db, params.area, params.slug);
   if (found.kind === "moved") throw redirect(found.to, 301);
   if (found.kind === "withdrawn") throw new Response("Withdrawn", { status: 410 });
   if (found.kind === "missing") throw new Response("Not found", { status: 404 });
-  return found.article;
+  const { article } = found;
+  if (!article.video) return data({ ...article, playback: null });
+  const video = await publicVideoItem(db, article.id);
+  return data(
+    { ...article, playback: video ? await playbackFor(env, video) : null },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -39,7 +62,7 @@ export default function Article({ loaderData: article }: Route.ComponentProps) {
           <li aria-current="page">{article.title}</li>
         </ol>
       </nav>
-      <ContentLetter item={article} />
+      <ContentLetter item={article} playback={article.playback} />
     </main>
   );
 }
