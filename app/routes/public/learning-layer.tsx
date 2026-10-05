@@ -40,6 +40,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const view = learnerView(snapshot, readStage(new URL(request.url).searchParams.get("stage")));
   return data({
     layerId: layer.id,
+    revisionId: layer.revisionId,
     playerPath: `/${params.area}/${params.slug}/language/${layer.id}`,
     title: snapshot.title,
     videoTitle: video.title,

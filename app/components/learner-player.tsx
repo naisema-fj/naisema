@@ -6,16 +6,27 @@ import {
   IMMERSION_STAGES,
   type LearnerView,
   progressSummary,
-  type REAL_WORLD_CHOICES,
+  type RealWorldChoice,
   recordAnswer,
   recordRealWorld,
   recordVisit,
   type StageId,
+  stageHasActivities,
   stageNeighbours,
   stageText,
 } from "~/lib/immersion";
-import { type LearnerSession, loadSession, NEW_SESSION, saveSession, sendLearningEvent } from "~/lib/learner-session";
-import type { LearningEvent, Support } from "~/lib/learning-events";
+import {
+  captionsFor,
+  DEFAULT_PREFERENCES,
+  type LayerSession,
+  loadLayerSession,
+  loadPreferences,
+  newLayerSession,
+  type SupportPreferences,
+  saveLayerSession,
+  savePreferences,
+} from "~/lib/learner-session";
+import { type LearningEvent, type Support, sendLearningEvent } from "~/lib/learning-events";
 import {
   annotatedRuns,
   currentSegment,
@@ -44,6 +55,8 @@ import { type CaptionTrack, VideoPreview } from "./video-preview";
 
 type Props = {
   layerId: string;
+  /** The published Revision shown; progress belongs to it. */
+  revisionId: string;
   /** The player's address, without a stage. */
   playerPath: string;
   title: string;
@@ -69,7 +82,7 @@ const SPEED_NAMES: Record<PlaybackSpeed, string> = { 1: "Normal", 0.75: "Slower 
 /** How a line of the transcript is named to visitors. */
 const lineName = (index: number) => `Line ${index + 1}`;
 
-const REAL_WORLD_SAID: Record<keyof typeof REAL_WORLD_CHOICES, string> = {
+const REAL_WORLD_SAID: Record<RealWorldChoice, string> = {
   reflect: "you'll reflect on it",
   tried: "you tried it",
   later: "maybe later",
@@ -81,6 +94,7 @@ export function LearnerPlayer(props: Props) {
   const { segments, expressions, stage } = view;
   const stageAt = IMMERSION_STAGES.findIndex((item) => item.id === stage);
   const text = stageText(stage, language.name);
+  const nameOf = (id: StageId) => stageText(id, language.name).name;
   const stagePath = (id: StageId) => `${props.playerPath}?stage=${id}`;
   const { previous, next } = stageNeighbours(stage);
 
@@ -92,44 +106,43 @@ export function LearnerPlayer(props: Props) {
 
   // What the learner has done and chosen, kept for this tab only. Read after hydration, so the
   // server's page and the first render match.
-  const [session, setSession] = useState<LearnerSession>(NEW_SESSION);
+  const [session, setSession] = useState<LayerSession>(() => newLayerSession(props.revisionId));
+  const [support, setSupport] = useState<SupportPreferences>(DEFAULT_PREFERENCES);
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    const stored = loadSession(layerId);
+    const stored = loadLayerSession(layerId, props.revisionId);
     setSession({ ...stored, progress: recordVisit(stored.progress, stage) });
+    setSupport(loadPreferences());
     setLoaded(true);
-  }, [layerId, stage]);
+  }, [layerId, props.revisionId, stage]);
   useEffect(() => {
-    if (loaded) saveSession(layerId, session);
+    if (loaded) saveLayerSession(layerId, session);
   }, [loaded, layerId, session]);
+  useEffect(() => {
+    if (loaded) savePreferences(support);
+  }, [loaded, support]);
   const send = useCallback((event: LearningEvent) => sendLearningEvent(layerId, event), [layerId]);
-  const toggled = (support: Support) => send({ name: "support_toggled", support });
-  const { support } = session;
-  const updateSupport = (change: Partial<LearnerSession["support"]>) =>
-    setSession((current) => ({ ...current, support: { ...current.support, ...change } }));
+  const toggled = (name: Support) => send({ name: "support_toggled", support: name });
+  const updateSupport = (change: Partial<SupportPreferences>) => setSupport((current) => ({ ...current, ...change }));
 
-  // Captions start as the stage sets them, except that the accessibility preference never lets a
-  // stage hide the captions in the language taught; a learner's own choice in a stage is kept.
-  const captions = support.captions[stage] ?? {
-    taught: view.captions.taught || support.alwaysCaptions,
-    english: view.captions.english,
-  };
+  const captions = captionsFor(view.captions, session.captions[stage], support.alwaysCaptions);
   const taught = captions.taught;
   const english = Boolean(props.tracks.english) && captions.english;
   const setCaptions = (change: Partial<typeof captions>) =>
-    updateSupport({ captions: { ...support.captions, [stage]: { ...captions, ...change } } });
+    setSession((current) => ({
+      ...current,
+      captions: { ...current.captions, [stage]: { ...captions, ...change, underAlways: support.alwaysCaptions } },
+    }));
   const speed = support.speed;
 
   // The listening stages hide the transcript until the learner asks for it.
   const [transcriptAsked, setTranscriptAsked] = useState(false);
   const transcriptShown = !view.listening || support.alwaysCaptions || transcriptAsked;
-  // English a stage left off the page, fetched only when the learner asks for a line of it.
-  const [englishLines, setEnglishLines] = useState<Record<string, string> | null>(null);
-  const [revealed, setRevealed] = useState<string[]>([]);
+  // English a stage left off the page, fetched a line at a time when the learner asks for it.
+  const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [helpOpen, setHelpOpen] = useState(false);
   const [helpStatus, setHelpStatus] = useState("");
-  const englishOf = (segment: Segment) =>
-    segment.english || (revealed.includes(segment.id) ? (englishLines?.[segment.id] ?? "") : "");
+  const englishOf = (segment: Segment) => segment.english || revealed[segment.id] || "";
 
   const video = useRef<HTMLVideoElement | null>(null);
   // The line playing is state; the playhead itself is read every frame and kept in a ref.
@@ -288,21 +301,18 @@ export function LearnerPlayer(props: Props) {
   const revealEnglish = async () => {
     if (!helpLine) return;
     toggled("english-line");
-    let lines = englishLines;
-    if (!lines) {
+    let words = revealed[helpLine.id];
+    if (words === undefined) {
       try {
-        const response = await fetch(`/language/${layerId}/english`);
+        const response = await fetch(`/language/${layerId}/english/${helpLine.id}`);
         if (!response.ok) throw new Error(String(response.status));
-        const body = (await response.json()) as { lines: { segmentId: string; english: string }[] };
-        lines = Object.fromEntries(body.lines.map((line) => [line.segmentId, line.english]));
-        setEnglishLines(lines);
+        words = ((await response.json()) as { english: string }).english;
+        setRevealed((current) => ({ ...current, [helpLine.id]: words as string }));
       } catch {
         setHelpStatus("The English couldn't be fetched just now. Try again in a moment.");
         return;
       }
     }
-    setRevealed((current) => (current.includes(helpLine.id) ? current : [...current, helpLine.id]));
-    const words = lines[helpLine.id];
     setHelpStatus(
       words ? `${lineOf(helpLine.id)} in English: ${words}` : `${lineOf(helpLine.id)} has no English translation yet.`,
     );
@@ -312,12 +322,10 @@ export function LearnerPlayer(props: Props) {
   const answered = (activityId: string, correct: boolean | null) => {
     send({ name: "activity_attempted", activityId });
     send({ name: "feedback_viewed", activityId });
-    setSession((current) => {
-      const progress = recordAnswer(current.progress, activityId, correct);
-      const done = progressSummary(view.required, progress).completion.complete;
-      if (done && !current.completedSent) send({ name: "learning_completed" });
-      return { ...current, progress, completedSent: current.completedSent || done };
-    });
+    const progress = recordAnswer(session.progress, activityId, correct);
+    const done = progressSummary(view.required, progress).completion.complete;
+    if (done && !session.completedSent) send({ name: "learning_completed" });
+    setSession({ ...session, progress, completedSent: session.completedSent || done });
   };
 
   const summary = progressSummary(view.required, session.progress);
@@ -350,7 +358,7 @@ export function LearnerPlayer(props: Props) {
             return (
               <li key={id} className={id === stage ? "current" : visited ? "visited" : undefined}>
                 <Link to={stagePath(id)} reloadDocument aria-current={id === stage ? "step" : undefined}>
-                  <span className="step-number">{index + 1}</span> {stageText(id, language.name).name}
+                  <span className="step-number">{index + 1}</span> {nameOf(id)}
                   {visited && <span className="visually-hidden"> (visited)</span>}
                 </Link>
               </li>
@@ -495,21 +503,21 @@ export function LearnerPlayer(props: Props) {
                 {!view.meanings && (
                   <li>
                     <Link to={stagePath("words")} reloadDocument>
-                      Word meanings are in step 3: {stageText("words", language.name).name}
+                      Word meanings are in step 3: {nameOf("words")}
                     </Link>
                   </li>
                 )}
                 {previous && (
                   <li>
                     <Link to={stagePath(previous)} reloadDocument>
-                      Go back a step: {stageText(previous, language.name).name}
+                      Go back a step: {nameOf(previous)}
                     </Link>
                   </li>
                 )}
                 {next && (
                   <li>
                     <Link to={stagePath(next)} reloadDocument>
-                      Skip to the next step: {stageText(next, language.name).name}
+                      Skip to the next step: {nameOf(next)}
                     </Link>
                   </li>
                 )}
@@ -563,12 +571,12 @@ export function LearnerPlayer(props: Props) {
           </ol>
         </section>
       ) : (
-        ["practise", "respond", "use-it"].includes(stage) && (
+        stageHasActivities(stage) && (
           <p>
             There's nothing to do in this step here.{" "}
             {next && (
               <Link to={stagePath(next)} reloadDocument>
-                Go on to {stageText(next, language.name).name}
+                Go on to {nameOf(next)}
               </Link>
             )}
           </p>
@@ -711,12 +719,12 @@ export function LearnerPlayer(props: Props) {
       <nav aria-label="Next and previous steps" className="stage-pager">
         {previous && (
           <Link to={stagePath(previous)} reloadDocument>
-            Previous step: {stageText(previous, language.name).name}
+            Previous step: {nameOf(previous)}
           </Link>
         )}
         {next && (
           <Link to={stagePath(next)} reloadDocument>
-            Next step: {stageText(next, language.name).name}
+            Next step: {nameOf(next)}
           </Link>
         )}
       </nav>
@@ -737,7 +745,7 @@ export function LearnerPlayer(props: Props) {
                 {remaining.map(({ id, left }) => (
                   <li key={id}>
                     <Link to={stagePath(id)} reloadDocument>
-                      {stageText(id, language.name).name}
+                      {nameOf(id)}
                     </Link>
                     : {left} to do
                   </li>
@@ -770,12 +778,7 @@ export function LearnerPlayer(props: Props) {
               type="checkbox"
               checked={support.alwaysCaptions}
               onChange={(event) => {
-                const on = event.target.checked;
-                // Turning it on shows the captions here too.
-                updateSupport({
-                  alwaysCaptions: on,
-                  captions: on ? { ...support.captions, [stage]: { ...captions, taught: true } } : support.captions,
-                });
+                updateSupport({ alwaysCaptions: event.target.checked });
                 toggled("always-captions");
               }}
             />{" "}

@@ -1551,6 +1551,14 @@ blockquote.notice-wording {
 }
 
 /* The immersion route around the player (app/components/learner-player.tsx). */
+.public .stage-pager a,
+.public .stage-help a,
+.public .learner-progress a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
 .public .stage-steps ol {
   display: flex;
   flex-wrap: wrap;
@@ -1692,7 +1700,7 @@ blockquote.notice-wording {
 
 .public .learner-activities .checkbox {
   display: block;
-  min-height: 2rem;
+  min-height: 2.75rem;
 }
 
 .public .activity-alternative {
@@ -1755,5 +1763,5 @@ blockquote.notice-wording {
 
 .public .learner-settings .checkbox {
   display: block;
-  min-height: 2rem;
+  min-height: 2.75rem;
 }

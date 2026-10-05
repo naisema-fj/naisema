@@ -13,6 +13,9 @@ import type { LearningLayerSnapshot } from "./learning-layer-fields";
  * revisited without penalty. Pure, so the player and the server share it.
  */
 
+/** Which captions are showing: the language taught's, and English. */
+export type CaptionChoice = { taught: boolean; english: boolean };
+
 /**
  * What each stage puts on the page. `english` sends the lines' English (and the English caption
  * track, shown when `captions.english`); `meanings` sends word and phrase meanings, which are
@@ -21,7 +24,7 @@ import type { LearningLayerSnapshot } from "./learning-layer-fields";
  */
 type StagePolicy = {
   id: string;
-  captions: { taught: boolean; english: boolean };
+  captions: CaptionChoice;
   english: boolean;
   meanings: boolean;
   listening: boolean;
@@ -63,9 +66,10 @@ export type StageId = (typeof IMMERSION_STAGES)[number]["id"];
 
 const STAGE_IDS: readonly string[] = IMMERSION_STAGES.map((stage) => stage.id);
 
+export const isStageId = (value: unknown): value is StageId => typeof value === "string" && STAGE_IDS.includes(value);
+
 /** The stage an address asks for; the guided route starts at watching naturally. */
-export const readStage = (value: string | null): StageId =>
-  value && STAGE_IDS.includes(value) ? (value as StageId) : "watch";
+export const readStage = (value: string | null): StageId => (isStageId(value) ? value : "watch");
 
 /** The stages either side of one, or null past either end. */
 export function stageNeighbours(id: StageId) {
@@ -122,6 +126,9 @@ export function stageText(id: StageId, language: string) {
 }
 
 const stagePolicy = (id: StageId): StagePolicy => IMMERSION_STAGES.find((stage) => stage.id === id) as StagePolicy;
+
+/** Whether Activities are done in a stage. */
+export const stageHasActivities = (id: StageId) => stagePolicy(id).kinds.length > 0;
 
 /** The stage an Activity is done in, by its kind. */
 export const stageOfActivity = (activity: Pick<Activity, "kind">) =>

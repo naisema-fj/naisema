@@ -44,7 +44,7 @@ export default [
   route("videos/:itemId/playback", "routes/public/video-playback.ts"),
   route("videos/:itemId/stream", "routes/public/video-stream.ts"),
   route("language/:layerId/captions/:language", "routes/public/layer-captions.ts"),
-  route("language/:layerId/english", "routes/public/layer-english.ts"),
+  route("language/:layerId/english/:segmentId", "routes/public/layer-english.ts"),
   route("language/:layerId/events", "routes/public/layer-events.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
   // Cloudflare Stream's signed processing reports (app/lib/video-assets.server.ts).

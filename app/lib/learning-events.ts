@@ -74,3 +74,16 @@ export const eventDetail = (event: LearningEvent) =>
       : "support" in event
         ? [event.support]
         : [];
+
+/**
+ * Sends a learning event without waiting for it, so it never holds up the page; `keepalive` lets it
+ * finish when the learner moves to another stage.
+ */
+export function sendLearningEvent(layerId: string, event: LearningEvent) {
+  fetch(`/language/${layerId}/events`, {
+    method: "POST",
+    body: JSON.stringify(event),
+    headers: { "Content-Type": "application/json" },
+    keepalive: true,
+  }).catch(() => undefined);
+}

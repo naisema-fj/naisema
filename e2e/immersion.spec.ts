@@ -85,6 +85,14 @@ test("a visitor follows the immersion route: hidden captions, help, Activities, 
   await repeat.getByRole("button", { name: "I've said it" }).click();
   await expect(repeat.getByRole("status")).toContainText("Say: Ni sa bula vinaka.");
   await expect(progress.getByRole("status")).toHaveText("1 of 2 needed Activities done.");
+  // Listening discrimination, optional, checked like a question.
+  const discrimination = page.getByRole("region", { name: "Activity 2" });
+  await expect(discrimination).toContainText("Which place does Sera name?");
+  await expect(discrimination.getByRole("button", { name: "Play the line" })).toBeVisible();
+  await discrimination.getByLabel("Suva").check();
+  await discrimination.getByRole("button", { name: "Check my answer" }).click();
+  await expect(discrimination.getByRole("status")).toContainText("That's right.");
+  await expect(progress).toContainText("Answers right: 1 of 1.");
   await expectNoAxeViolations(page);
 
   // 7. Respond, by the text route: a wrong answer, a retry, then the right one.
@@ -96,16 +104,26 @@ test("a visitor follows the immersion route: hidden captions, help, Activities, 
   await expect(question).toContainText("Read the transcript, then choose where Sera comes from.");
   await question.getByLabel("Levuka").check();
   await question.getByRole("button", { name: "Check my answer" }).click();
-  await expect(question.getByRole("status")).toContainText("Not quite. The answer is: Suva.");
-  // Answering, right or not, with its feedback seen completes the lesson.
+  // A wrong answer keeps the right one back until asked, so trying again still means something.
+  await expect(question.getByRole("status")).toContainText("Not quite.");
+  await expect(question.getByRole("status")).not.toContainText("The answer is");
+  // Answering, right or not, with its feedback seen completes the Learning Layer.
   await expect(progress.getByRole("status")).toHaveText("You've completed Greetings at the market.");
-  await expect(progress).toContainText("Answers right: 0 of 1.");
+  await expect(progress).toContainText("Answers right: 1 of 2.");
+  await question.getByRole("button", { name: "Show the answer" }).click();
+  await expect(question.getByRole("status")).toContainText("The answer is: Suva.");
   await question.getByRole("button", { name: "Try again" }).click();
   await question.getByLabel("Suva").check();
   await question.getByRole("button", { name: "Check my answer" }).click();
   await expect(question.getByRole("status")).toContainText("That's right.");
-  await expect(progress).toContainText("Answers right: 1 of 1.");
+  await expect(progress).toContainText("Answers right: 2 of 2.");
   await expect(progress.getByRole("status")).toHaveText("You've completed Greetings at the market.");
+  // What would you say next: said aloud, then the model response.
+  const nextLine = page.getByRole("region", { name: "Activity 2" });
+  await expect(nextLine).toContainText("Mere greets you. What would you say back?");
+  await nextLine.getByRole("button", { name: "I've said it" }).click();
+  await expect(nextLine.getByRole("status")).toContainText("You could say: Io, bula vinaka.");
+  await expect(progress).toContainText("Activities tried: 4.");
 
   // 8. Use it with someone: optional, private, and nothing to fill in about anyone.
   await step(page, /Use it with someone/);

@@ -350,7 +350,7 @@ export type PublicLayerLookup =
   | {
       kind: "found";
       video: PublicArticle;
-      layer: { id: string; snapshot: LearningLayerSnapshot; languageVariety: string };
+      layer: { id: string; revisionId: string; snapshot: LearningLayerSnapshot; languageVariety: string };
     }
   | Exclude<PublicLookup, { kind: "found" }>;
 
@@ -380,7 +380,12 @@ export async function findPublicLayer(
   return {
     kind: "found",
     video: found.article,
-    layer: { id: layerId, snapshot: review.snapshot, languageVariety: review.layer.languageVariety },
+    layer: {
+      id: layerId,
+      revisionId: review.revisionId,
+      snapshot: review.snapshot,
+      languageVariety: review.layer.languageVariety,
+    },
   };
 }
 

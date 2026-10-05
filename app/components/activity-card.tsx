@@ -43,6 +43,7 @@ export function ActivityCard({
   const [chosen, setChosen] = useState<string | null>(null);
   const [written, setWritten] = useState("");
   const [answered, setAnswered] = useState(false);
+  const [answerShown, setAnswerShown] = useState(false);
   const [reflection, setReflection] = useState<RealWorldChoice | null>(null);
   const choice = activity.options.find((option) => option.id === chosen);
   const correct = activity.options.filter((option) => option.correct).map((option) => option.text);
@@ -116,7 +117,11 @@ export function ActivityCard({
             </>
           )}
           {reflection && activity.feedback && <p>{activity.feedback}</p>}
-          {activity.modelResponse && reflection && <p className="meta">For example: {activity.modelResponse}</p>}
+          {activity.modelResponse && reflection && (
+            <p className="meta">
+              For example: <span lang={languageTag}>{activity.modelResponse}</span>
+            </p>
+          )}
         </fieldset>
       ) : hasChoices ? (
         <fieldset disabled={answered}>
@@ -167,12 +172,10 @@ export function ActivityCard({
 
       {answered && (
         <div className="activity-feedback" role="status">
-          {hasChoices && choice && (
-            <p>
-              {choice.correct
-                ? "That's right."
-                : `Not quite. ${correct.length === 1 ? "The answer is" : "Answers are"}: ${correct.join(", ")}.`}
-            </p>
+          {hasChoices && choice && <p>{choice.correct ? "That's right." : "Not quite."}</p>}
+          {/* A wrong answer keeps the right one back, so trying again still means something. */}
+          {hasChoices && choice && !choice.correct && answerShown && (
+            <p>{`${correct.length === 1 ? "The answer is" : "Answers are"}: ${correct.join(", ")}.`}</p>
           )}
           {activity.modelResponse && (
             <p>
@@ -186,12 +189,18 @@ export function ActivityCard({
             type="button"
             onClick={() => {
               setAnswered(false);
+              setAnswerShown(false);
               setChosen(null);
               setWritten("");
             }}
           >
             Try again
           </button>
+          {hasChoices && choice && !choice.correct && !answerShown && (
+            <button type="button" onClick={() => setAnswerShown(true)}>
+              Show the answer
+            </button>
+          )}
         </div>
       )}
     </section>

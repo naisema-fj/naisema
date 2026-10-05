@@ -2,13 +2,15 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { recordEvent } from "~/lib/events.server";
 import { eventDetail, readLearningEvent } from "~/lib/learning-events";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { publicLayerById } from "~/lib/public-video.server";
 import type { Route } from "./+types/layer-events";
 
-/** Larger than any event the player sends. */
-const MAX_BYTES = 1_024;
+/** Longer, in characters, than any event the player sends. */
+const MAX_LENGTH = 1_024;
 
-const reply = (status: number) => new Response(null, { status, headers: { "Cache-Control": "no-store" } });
+const reply = (status: number, headers: Record<string, string> = {}) =>
+  new Response(null, { status, headers: { "Cache-Control": PRIVATE_NO_STORE, ...headers } });
 
 /**
  * POST /language/:layerId/events — one learning event from the immersion player, recorded by the
@@ -16,12 +18,12 @@ const reply = (status: number) => new Response(null, { status, headers: { "Cache
  * public (ADR-0007). Anyone can send one, so counts are indicative, as for `content_opened`.
  */
 export async function action({ params, request, context }: Route.ActionArgs) {
-  if (request.method !== "POST") return reply(405);
+  if (request.method !== "POST") return reply(405, { Allow: "POST" });
   const { env } = context.get(cloudflareContext);
   const layer = await publicLayerById(getDb(env.DB), params.layerId);
   if (!layer) return reply(404);
   const body = await request.text();
-  if (body.length > MAX_BYTES) return reply(413);
+  if (body.length > MAX_LENGTH) return reply(413);
   let sent: unknown;
   try {
     sent = JSON.parse(body);
@@ -34,6 +36,7 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   return reply(204);
 }
 
+/** Events are only ever sent, never read. */
 export function loader() {
-  return reply(405);
+  return reply(405, { Allow: "POST" });
 }

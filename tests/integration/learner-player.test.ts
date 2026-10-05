@@ -196,16 +196,17 @@ describe("the immersion route", () => {
     expect(await (await visit(`${player}?stage=practise`)).text()).not.toContain("Who is Mere greeting?");
   });
 
-  it("gives the lines' English only when asked, and only while the Learning Layer is public", async () => {
+  it("gives one line's English when asked, and only while the Learning Layer is public", async () => {
     const { editor, layerId, number } = await publishedLayer();
-    const response = await visit(`/language/${layerId}/english`);
+    const segmentId = JSON.parse((await layerRow(layerId))?.snapshot as string).segments[0].id;
+    const response = await visit(`/language/${layerId}/english/${segmentId}`);
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    const { lines } = await response.json<{ lines: { segmentId: string; english: string }[] }>();
-    expect(lines.map((line) => line.english)).toEqual(["Hello"]);
+    expect(await response.json()).toEqual({ english: "Hello" });
+    expect((await visit(`/language/${layerId}/english/${crypto.randomUUID()}`)).status).toBe(404);
 
     expect((await act(editor, layerId, number, { intent: "withdraw" })).status).toBe(302);
-    expect((await visit(`/language/${layerId}/english`)).status).toBe(404);
+    expect((await visit(`/language/${layerId}/english/${segmentId}`)).status).toBe(404);
   });
 
   it("records learning events by the Learning Layer's own IDs only, refusing anything else", async () => {
@@ -223,7 +224,7 @@ describe("the immersion route", () => {
     ]) {
       const response = await post(events, event);
       expect(response.status, JSON.stringify(event)).toBe(204);
-      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(response.headers.get("Cache-Control")).toBe("private, no-store");
     }
     for (const event of [
       { name: "segment_replayed", segmentId: crypto.randomUUID() },
