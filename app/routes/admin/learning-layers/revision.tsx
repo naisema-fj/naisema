@@ -3,12 +3,16 @@ import { LayerRevisionView } from "~/components/layer-revision-view";
 import { ReviewPanel } from "~/components/review-panel";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
-import { recordLayerKnowledgeHolderApproval, submitLayerRevision } from "~/lib/layer-review.server";
+import {
+  layerReviewAbilities,
+  recordLayerKnowledgeHolderApproval,
+  submitLayerRevision,
+} from "~/lib/layer-review.server";
 import { requireLayerRevision } from "~/lib/layer-revision-access.server";
-import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
+import { REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import { changeLayerPublication } from "~/lib/publication.server";
-import { assignReviewer, decidableRequirement, recordDecision, reviewersFor } from "~/lib/review.server";
+import { assignReviewer, recordDecision, reviewersFor } from "~/lib/review.server";
 import {
   issueReviewLink,
   reviewLinkPath,
@@ -40,26 +44,16 @@ const LINK_STATES = { active: "Active", expired: "Expired", revoked: "Revoked" }
  * Knowledge Holder Approvals, and publishing or withdrawing the Learning Layer on its own.
  */
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const { db, actor, review, educatorIds } = await requireLayerRevision(
-    request,
-    context.get(cloudflareContext).env,
-    params,
-  );
-  const isEditor = can(actor, { action: "content.edit" });
+  const { db, actor, review } = await requireLayerRevision(request, context.get(cloudflareContext).env, params);
+  const { canShareLinks, canReadEvidence, ...abilities } = layerReviewAbilities(actor, review);
   const isCurrent = review.layer.currentDraftRevisionId === review.revisionId;
-  const canSubmit =
-    isCurrent &&
-    !review.submitted &&
-    (isEditor || can(actor, { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: educatorIds } }));
-  const decideTypes = REVIEW_TYPES.filter((type) => decidableRequirement(actor, review, type) !== null);
-  const links = can(actor, { action: "reviewLink.issue" }) ? await reviewLinksFor(db, review.revisionId) : null;
+  const links = canShareLinks ? await reviewLinksFor(db, review.revisionId) : null;
   const published = review.layer.currentPublishedRevisionId
     ? await db.query.learningLayerRevision.findFirst({
         columns: { number: true },
         where: (row, { eq }) => eq(row.id, review.layer.currentPublishedRevisionId as string),
       })
     : undefined;
-  const canReadEvidence = can(actor, { action: "approvalEvidence.read" });
   return {
     layerId: review.layer.id,
     number: review.number,
@@ -86,19 +80,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publishedNumber: published?.number ?? null,
     },
     eligibility: forStaff(await layerRevisionEligibility(db, review)),
-    abilities: {
-      isEditor,
-      canSubmit,
-      decideTypes: isCurrent && review.submitted ? decideTypes : [],
-      canRecordKnowledgeHolder:
-        isCurrent &&
-        review.submitted &&
-        review.requirements.some((requirement) => requirement.knowledgeHolder) &&
-        can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } }),
-      canPublish: can(actor, { action: "revision.publish" }),
-      canWithdraw: can(actor, { action: "content.withdraw" }),
-    },
-    reviewerChoices: isEditor
+    abilities,
+    reviewerChoices: abilities.isEditor
       ? Object.fromEntries(
           await Promise.all(
             [...new Set(review.requirements.map((requirement) => requirement.reviewType))].map(

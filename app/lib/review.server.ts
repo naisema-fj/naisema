@@ -21,7 +21,7 @@ import type { ContentType } from "./content-types";
 import type { Database } from "./db.server";
 import type { EpisodeDetails } from "./episode-fields";
 import { mediaAssetIdsIn } from "./media-in-use";
-import { type Actor, can, type ReviewType } from "./permissions";
+import { type Actor, can, REVIEW_TYPES, type ReviewType } from "./permissions";
 import { type PublicationState, REVIEW_NAMES } from "./review-names";
 import {
   approvalsToCarryForward,
@@ -504,9 +504,12 @@ export async function submitDraft(db: Database, actor: Actor, review: ReviewCore
   );
 }
 
+/** Who may send a Content Item's draft for review: an editor. */
+const maySubmitContent = (actor: Actor) => can(actor, { action: "content.edit" });
+
 /** An editor sends a Content Item's current draft for review; language instruction needs its Variety first. */
 export async function submitRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
-  if (!can(actor, { action: "content.edit" })) return refuse("Only editors can submit for review.");
+  if (!maySubmitContent(actor)) return refuse("Only editors can submit for review.");
   const ready = isCurrent(review) && !review.submitted;
   if (ready && review.languageVariety === null && review.flags.includes("languageInstruction")) {
     return refuse("Language instruction needs its Language Variety before it can be submitted.");
@@ -669,7 +672,7 @@ export async function knowledgeHolderRefusal(
   review: ReviewCore,
   approval: Pick<KnowledgeHolderDetails, "knowledgeHolderName" | "method">,
 ): Promise<ReviewActionResult | null> {
-  if (!can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } })) {
+  if (!mayRecordKnowledgeHolder(actor, review)) {
     await auditRefusal(db, actor, review, "knowledge holder approval not allowed");
     return refuse("Only an editor who didn't write or edit this revision can record a Knowledge Holder Approval.");
   }
@@ -734,6 +737,48 @@ export async function recordKnowledgeHolderApproval(
   await db.batch([...knowledgeHolderInserts(db, actor, review, approval)]);
   return { ok: true };
 }
+
+// --- What someone may do ---
+
+/** Whether this person may record a Knowledge Holder Approval: an editor who didn't write or edit the Revision. */
+const mayRecordKnowledgeHolder = (actor: Actor, review: Pick<ReviewCore, "authorIds">) =>
+  can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } });
+
+/** What a review page offers someone, so it never offers what the action itself would refuse. */
+export type ReviewAbilities = {
+  isEditor: boolean;
+  canSubmit: boolean;
+  /** The Review Types they may decide on this Revision now. */
+  decideTypes: ReviewType[];
+  canRecordKnowledgeHolder: boolean;
+  canPublish: boolean;
+  canWithdraw: boolean;
+};
+
+/**
+ * What this person may do on a loaded review, asked with the same rules the actions check: submit
+ * the latest draft if `maySubmit` (each kind says who may), decide the Review Types they are
+ * allowed to on a submitted latest Revision, record a Knowledge Holder Approval where one is
+ * needed, and publish or withdraw.
+ */
+export function reviewAbilities(actor: Actor, review: ReviewCore, maySubmit: boolean): ReviewAbilities {
+  const open = isCurrent(review) && review.submitted;
+  return {
+    isEditor: can(actor, { action: "content.edit" }),
+    canSubmit: maySubmit && isCurrent(review) && !review.submitted,
+    decideTypes: open ? REVIEW_TYPES.filter((type) => decidableRequirement(actor, review, type) !== null) : [],
+    canRecordKnowledgeHolder:
+      open &&
+      review.requirements.some((requirement) => requirement.knowledgeHolder) &&
+      mayRecordKnowledgeHolder(actor, review),
+    canPublish: can(actor, { action: "revision.publish" }),
+    canWithdraw: can(actor, { action: "content.withdraw" }),
+  };
+}
+
+/** What this person may do on a Content Item Revision's review. */
+export const contentReviewAbilities = (actor: Actor, review: Review) =>
+  reviewAbilities(actor, review, maySubmitContent(actor));
 
 // --- Reviewers' queues ---
 

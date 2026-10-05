@@ -24,6 +24,7 @@ import {
   LEARNING_LAYER_REVIEW,
   type ReviewActionResult,
   refuse,
+  reviewAbilities,
   reviewCore,
   reviewQueue,
   submitDraft,
@@ -116,20 +117,32 @@ type LayerApprovalRow = Pick<
 
 export type LayerReview = NonNullable<Awaited<ReturnType<typeof loadLayerReview>>>;
 
+/** Who may send a Learning Layer's draft for review: an editor, or an Educator assigned to it. */
+const maySubmitLayer = (actor: Actor, review: Pick<LayerReview, "educatorIds">) =>
+  can(actor, { action: "content.edit" }) ||
+  can(actor, { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: review.educatorIds } });
+
 /** An editor, or an Educator assigned to the Learning Layer, sends its current draft for review. */
 export async function submitLayerRevision(
   db: Database,
   actor: Actor,
   review: LayerReview,
 ): Promise<ReviewActionResult> {
-  if (
-    !can(actor, { action: "content.edit" }) &&
-    !can(actor, { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: review.educatorIds } })
-  ) {
+  if (!maySubmitLayer(actor, review)) {
     return refuse("Only editors and the Educators assigned to this Learning Layer can submit it for review.");
   }
   return submitDraft(db, actor, review);
 }
+
+/**
+ * What this person may do on a Learning Layer Revision's review: what every review offers, and
+ * whether they may share it through Review Links and read Knowledge Holder approval evidence.
+ */
+export const layerReviewAbilities = (actor: Actor, review: LayerReview) => ({
+  ...reviewAbilities(actor, review, maySubmitLayer(actor, review)),
+  canShareLinks: can(actor, { action: "reviewLink.issue" }),
+  canReadEvidence: can(actor, { action: "approvalEvidence.read" }),
+});
 
 /** Submitted Learning Layer Revisions waiting on this reviewer, for their review queue. */
 export const layerReviewQueue = (db: Database, reviewerId: string) =>

@@ -6,12 +6,12 @@ import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { mainMedia } from "~/lib/content-kinds";
 import { mediaName } from "~/lib/media.server";
-import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
+import { REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { changePublication } from "~/lib/publication.server";
 import {
   assignReviewer,
-  decidableRequirement,
+  contentReviewAbilities,
   recordDecision,
   recordKnowledgeHolderApproval,
   reviewersFor,
@@ -35,9 +35,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     params,
   );
   const topicNames = await topicNamer(db);
-  const isEditor = can(actor, { action: "content.edit" });
-  const isCurrent = review.contentItem.currentDraftRevisionId === review.revisionId;
-  const decideTypes = REVIEW_TYPES.filter((reviewType) => decidableRequirement(actor, review, reviewType) !== null);
+  const abilities = contentReviewAbilities(actor, review);
   const published =
     review.contentItem.currentPublishedRevisionId &&
     (await db.query.revision.findFirst({
@@ -69,19 +67,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publishedNumber: published ? published.number : null,
     },
     eligibility: forStaff(await revisionEligibility(db, review)),
-    abilities: {
-      isEditor,
-      canSubmit: isEditor && isCurrent && !review.submitted,
-      decideTypes: isCurrent && review.submitted ? decideTypes : [],
-      canRecordKnowledgeHolder:
-        isCurrent &&
-        review.submitted &&
-        review.requirements.some((requirement) => requirement.knowledgeHolder) &&
-        can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } }),
-      canPublish: can(actor, { action: "revision.publish" }),
-      canWithdraw: can(actor, { action: "content.withdraw" }),
-    },
-    reviewerChoices: isEditor
+    abilities,
+    reviewerChoices: abilities.isEditor
       ? Object.fromEntries(
           await Promise.all(
             [...new Set(review.requirements.map((requirement) => requirement.reviewType))].map(
