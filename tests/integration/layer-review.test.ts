@@ -1,7 +1,7 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
+import { issueToken } from "~/lib/access-links";
 import { getDb } from "~/lib/db.server";
-import { hashToken, randomToken } from "~/lib/signed-tokens.server";
 import { isEligible, isLayerEligible, reasonTexts } from "~/lib/visibility.server";
 import { languageReviewerRole, staff } from "./support/articles";
 import { act, authoredLayer, grantRights, layerRow, readyContent, recordsOf, save } from "./support/layers";
@@ -223,13 +223,13 @@ describe("Review Links and Knowledge Holder Approvals", () => {
     expect((await SELF.fetch(`${PUBLIC}${path}/video`)).status).toBe(403);
 
     // A link issued 15 days ago has expired.
-    const token = randomToken();
+    const { token, tokenHash } = await issueToken();
     const expiring = { id: crypto.randomUUID() };
     await env.DB.prepare(
       `INSERT INTO review_link (id, revision_id, token_hash, recipient, created_by, created_at, expires_at)
        SELECT ?1, revision_id, ?2, 'Ratu Joni', created_by, ?3, ?4 FROM review_link WHERE id = ?5`,
     )
-      .bind(expiring.id, await hashToken(token), Date.now() - 15 * 86_400_000, Date.now() - 86_400_000, link.id)
+      .bind(expiring.id, tokenHash, Date.now() - 15 * 86_400_000, Date.now() - 86_400_000, link.id)
       .run();
     expect((await SELF.fetch(`${PUBLIC}/review/${token}`)).status).toBe(410);
     // The page and the video were both tried.

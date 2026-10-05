@@ -1,5 +1,6 @@
 import { and, count, desc, eq, isNull, max } from "drizzle-orm";
 import { reviewLink, reviewLinkAccess, user } from "~db/schema";
+import { issueToken, tokenHashOf } from "./access-links";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
 import type { LayerReview } from "./layer-review.server";
@@ -8,31 +9,22 @@ import { type Actor, can } from "./permissions";
 import { type ReviewActionResult, refuse } from "./review.server";
 import { rightsFactsFor } from "./rights.server";
 import { isPublishable } from "./rights-rules";
-import { hashToken, randomToken } from "./signed-tokens.server";
 
 /**
  * Review Links (ADR-0003, GOV-03): an editor shares one exact Learning Layer Revision with someone
  * without a staff account, such as a Knowledge Holder. A link is view-only, needs no sign-in, lasts
- * 14 days and can be revoked, and every opening is logged. Its token is random rather than signed,
- * so it needs no key and is revoked by a row; only a hash of it is kept, so the address is shown once.
+ * 14 days and can be revoked, and every opening is logged. Its token, and how it is kept, are every
+ * access link's (app/lib/access-links.ts).
  */
 
 /** The address a Review Link opens, on the public site. */
 export const reviewLinkPath = (token: string) => `/review/${token}`;
 
-/** A token as `randomToken` makes them: 32 bytes, base64url. Anything else is never looked up. */
-const TOKEN = /^[A-Za-z0-9_-]{43}$/;
-
 /** The Review Link with this token, whatever its state, or null. */
 async function findReviewLink(db: Database, token: string) {
-  if (!TOKEN.test(token)) return null;
-  return (
-    (await db
-      .select()
-      .from(reviewLink)
-      .where(eq(reviewLink.tokenHash, await hashToken(token)))
-      .get()) ?? null
-  );
+  const tokenHash = await tokenHashOf(token);
+  if (!tokenHash) return null;
+  return (await db.select().from(reviewLink).where(eq(reviewLink.tokenHash, tokenHash)).get()) ?? null;
 }
 
 /**
@@ -55,13 +47,13 @@ export async function issueReviewLink(
   const name = recipient.trim().slice(0, 200);
   if (!name) return fail("Say who the Review Link is for.");
   const id = crypto.randomUUID();
-  const token = randomToken();
+  const { token, tokenHash } = await issueToken();
   const now = new Date();
   await db.batch([
     db.insert(reviewLink).values({
       id,
       revisionId: review.revisionId,
-      tokenHash: await hashToken(token),
+      tokenHash,
       recipient: name,
       createdBy: actor.userId,
       createdAt: now,

@@ -1,5 +1,6 @@
-import { and, asc, desc, eq, gt, inArray, isNull, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { consentRecord, mediaAsset, notice, submission, uploadLink, uploadLinkFile, user } from "~db/schema";
+import { issueToken, linkExpiry, linkState, tokenHashOf } from "./access-links";
 import { auditInsert } from "./audit.server";
 import { fijiToday } from "./calendar";
 import { consentInserts, shownNotices, subscribeOrForget, withdrawalLink } from "./consent.server";
@@ -8,7 +9,6 @@ import { letterText, sendEmail } from "./email.server";
 import { logError } from "./log.server";
 import { can } from "./permissions";
 import { DAY_MS } from "./rights-rules";
-import { hashToken, randomToken } from "./signed-tokens.server";
 import { requireStaff } from "./staff.server";
 import { activeHolders } from "./staff-roles.server";
 import {
@@ -277,13 +277,13 @@ export async function sendUploadLink(
 ) {
   const found = await db.select().from(submission).where(eq(submission.id, id)).get();
   if (!found || !takesUploads(found.type)) return null;
-  const token = randomToken();
+  const { token, tokenHash } = await issueToken();
   const linkId = crypto.randomUUID();
-  const expiresAt = new Date(now.getTime() + UPLOAD_LINK_DAYS * DAY_MS);
+  const expiresAt = linkExpiry(now, UPLOAD_LINK_DAYS);
   await db.insert(uploadLink).values({
     id: linkId,
     submissionId: id,
-    tokenHash: await hashToken(token),
+    tokenHash,
     issuedBy: actorId,
     issuedAt: now,
     expiresAt,
@@ -316,22 +316,22 @@ export async function sendUploadLink(
   return { linkId, expiresAt };
 }
 
-/** The upload link a token opens, while it still works. */
+/**
+ * The upload link a token opens, while it still works (app/lib/access-links.ts): it is closed once
+ * the contributor finishes or a newer one is sent.
+ */
 export async function openUploadLink(db: Database, token: string, now = new Date()) {
-  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
+  const tokenHash = await tokenHashOf(token);
+  if (!tokenHash) return null;
   const row = await db
     .select({ link: uploadLink, name: submission.name })
     .from(uploadLink)
     .innerJoin(submission, eq(submission.id, uploadLink.submissionId))
-    .where(
-      and(
-        eq(uploadLink.tokenHash, await hashToken(token)),
-        isNull(uploadLink.finishedAt),
-        gt(uploadLink.expiresAt, now),
-      ),
-    )
+    .where(eq(uploadLink.tokenHash, tokenHash))
     .get();
-  return row ?? null;
+  return row && linkState({ expiresAt: row.link.expiresAt, closedAt: row.link.finishedAt }, now) === "active"
+    ? row
+    : null;
 }
 
 /** The files sent so far through a link. */

@@ -1,8 +1,8 @@
+import { linkExpiry, linkState } from "./access-links";
 import { activityProblems, countsForCompletion } from "./activities";
 import { annotationProblems, noteProblems } from "./annotations";
 import type { LearningLayerSnapshot } from "./learning-layer-fields";
 import type { ContentFlag } from "./review-rules";
-import { DAY_MS } from "./rights-rules";
 
 /**
  * The review and publishing rules particular to Learning Layers (ADR-0001, ADR-0003, VCMS-05/06).
@@ -62,12 +62,12 @@ export function layerReadinessProblems(snapshot: LearningLayerSnapshot): string[
 /** How long a Review Link works for. */
 export const REVIEW_LINK_DAYS = 14;
 
-export const reviewLinkExpiry = (now: Date) => new Date(now.getTime() + REVIEW_LINK_DAYS * DAY_MS);
+export const reviewLinkExpiry = (now: Date) => linkExpiry(now, REVIEW_LINK_DAYS);
 
 export type ReviewLinkState = "active" | "expired" | "revoked";
 
-/** A Review Link works until it is revoked or reaches its expiry; at that very moment it has expired. */
+/** A Review Link works until it is revoked or reaches its expiry (access-links.ts). */
 export function reviewLinkState(link: { expiresAt: Date; revokedAt: Date | null }, now: Date): ReviewLinkState {
-  if (link.revokedAt) return "revoked";
-  return link.expiresAt > now ? "active" : "expired";
+  const state = linkState({ expiresAt: link.expiresAt, closedAt: link.revokedAt }, now);
+  return state === "closed" ? "revoked" : state;
 }

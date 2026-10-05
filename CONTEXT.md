@@ -125,7 +125,7 @@ _Avoid_: Licence (for the record), consent (for rights)
 One specific use a Rights Record grants: publish, excerpt, translate, transcribe, educational adaptation, commercial or AI training. Each is granted separately; none implies another.
 
 **Review Link**:
-A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account. In 1a it shows a Learning Layer Revision, lasts 14 days and logs every opening.
+A view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account. Its address carries a random token that is kept only as a hash, so the address is shown once; revoking it closes it at once. In 1a it shows a Learning Layer Revision, lasts 14 days and logs every opening.
 _Avoid_: Preview URL, share link
 
 **Knowledge Holder**:
