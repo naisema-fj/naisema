@@ -62,6 +62,14 @@ _Avoid_: Quiz, exercise
 The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). The Educator defines it by marking Activities required; with none required it can't be met. Watching alone never satisfies it, and real-world use is never required.
 _Avoid_: Finished, mastered, passed
 
+**Immersion Route**:
+The guided order of eight Stages a Learner is led through on a Learning Layer, from watching naturally to using it with someone. Any Stage can be opened, skipped or revisited, and help asked for, without penalty.
+_Avoid_: Lesson plan, course
+
+**Stage**:
+One step of the Immersion Route, deciding what the player shows (which captions, whether English is on the page at all, meanings, notes) and which Activities are done in it.
+_Avoid_: Level, step (in the record; learners read "step")
+
 **Video Asset**:
 A video source master kept as Na iSema's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
 _Avoid_: Stream video (for the master), clip

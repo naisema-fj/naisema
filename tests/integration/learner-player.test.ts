@@ -77,7 +77,7 @@ describe("a Video's public page", () => {
 describe("the learner player", () => {
   it("opens without an account, with native caption tracks, the transcript and word meanings", async () => {
     const { player, story, layerId } = await publishedLayer();
-    const page = await visit(player);
+    const page = await visit(`${player}?stage=support`);
     expect(page.status).toBe(200);
     expect(page.headers.get("Cache-Control")).toBe("private, no-store");
     const html = await page.text();
@@ -163,5 +163,80 @@ describe("the learner player", () => {
     const page = await (await visit(story)).text();
     expect(page).not.toContain(`/language/${layerId}`);
     expect((await visit(`/videos/${videoId}/playback`)).status).toBe(200);
+  });
+});
+
+describe("the immersion route", () => {
+  const post = (path: string, body: unknown) =>
+    visit(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+  it("starts at watching naturally, with no English anywhere on the page, until a stage gives it", async () => {
+    const { player, layerId } = await publishedLayer();
+    for (const path of [player, `${player}?stage=watch`, `${player}?stage=listen-again`, `${player}?stage=captions`]) {
+      const page = await visit(path);
+      expect(page.status, path).toBe(200);
+      const html = await page.text();
+      expect(html, path).toContain("Bula vinaka");
+      expect(html, path).not.toContain("Hello");
+      expect(html, path).not.toContain(`/language/${layerId}/captions/english`);
+      // Nor the Activities, whose answers are English.
+      expect(html, path).not.toContain("She greets her friend Sera.");
+    }
+    const support = await (await visit(`${player}?stage=support`)).text();
+    expect(support).toContain("Hello");
+    expect(support).toContain(`/language/${layerId}/captions/english`);
+    // An unknown stage is the start of the route.
+    expect(await (await visit(`${player}?stage=nonsense`)).text()).not.toContain("Hello");
+  });
+
+  it("offers each Activity in its stage", async () => {
+    const { player } = await publishedLayer();
+    const respond = await (await visit(`${player}?stage=respond`)).text();
+    expect(respond).toContain("Who is Mere greeting?");
+    expect(await (await visit(`${player}?stage=practise`)).text()).not.toContain("Who is Mere greeting?");
+  });
+
+  it("gives the lines' English only when asked, and only while the Learning Layer is public", async () => {
+    const { editor, layerId, number } = await publishedLayer();
+    const response = await visit(`/language/${layerId}/english`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+    const { lines } = await response.json<{ lines: { segmentId: string; english: string }[] }>();
+    expect(lines.map((line) => line.english)).toEqual(["Hello"]);
+
+    expect((await act(editor, layerId, number, { intent: "withdraw" })).status).toBe(302);
+    expect((await visit(`/language/${layerId}/english`)).status).toBe(404);
+  });
+
+  it("records learning events by the Learning Layer's own IDs only, refusing anything else", async () => {
+    const { layerId, editor, number } = await publishedLayer();
+    const snapshot = JSON.parse((await layerRow(layerId))?.snapshot as string);
+    const segmentId = snapshot.segments[0].id;
+    const activityId = snapshot.activities[0].id;
+    const events = `/language/${layerId}/events`;
+    for (const event of [
+      { name: "segment_replayed", segmentId },
+      { name: "support_toggled", support: "english-captions" },
+      { name: "activity_attempted", activityId },
+      { name: "feedback_viewed", activityId },
+      { name: "learning_completed" },
+    ]) {
+      const response = await post(events, event);
+      expect(response.status, JSON.stringify(event)).toBe(204);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+    }
+    for (const event of [
+      { name: "segment_replayed", segmentId: crypto.randomUUID() },
+      { name: "activity_attempted", activityId: segmentId },
+      { name: "support_toggled", support: "my name is Mere" },
+      { name: "learner_profiled", learnerId: "someone" },
+      "not an event",
+    ]) {
+      expect((await post(events, event)).status, JSON.stringify(event)).toBe(400);
+    }
+    expect((await visit(events)).status).toBe(405);
+
+    expect((await act(editor, layerId, number, { intent: "withdraw" })).status).toBe(302);
+    expect((await post(events, { name: "learning_completed" })).status).toBe(404);
   });
 });

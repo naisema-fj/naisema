@@ -34,6 +34,13 @@ test("a visitor explores a video story's language: captions, transcript, meaning
   await page.getByRole("link", { name: "Greetings at the market" }).click();
   await expect(page.getByRole("heading", { name: "Greetings at the market", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Back to the story: Talanoa at the market" }).first()).toBeVisible();
+  // The guided route starts by watching; every tool is together in the English and context support step.
+  await expect(page.getByRole("heading", { name: "Step 1 of 8: Watch naturally" })).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Steps", exact: true })
+    .getByRole("link", { name: /English and context support/ })
+    .click();
+  await expect(page.getByRole("heading", { name: "Step 4 of 8: English and context support" })).toBeVisible();
   await page
     .locator("video")
     .evaluate((element: HTMLVideoElement) =>

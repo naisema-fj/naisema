@@ -3,6 +3,7 @@ import { LearnerPlayer } from "~/components/learner-player";
 import { isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
+import { learnerView, readStage } from "~/lib/immersion";
 import { languageName, languageTag } from "~/lib/language-variety";
 import { playWindow } from "~/lib/player-rules";
 import { findPublicLayer, videoPlaybackPath } from "~/lib/public.server";
@@ -19,10 +20,12 @@ export function headers() {
 }
 
 /**
- * GET /:area/:slug/language/:layerId — a Learning Layer's immersion player, open to everyone
- * without an account, while both its Video and the Learning Layer are public (VAC-01).
+ * GET /:area/:slug/language/:layerId?stage= — a Learning Layer's immersion player, open to everyone
+ * without an account, while both its Video and the Learning Layer are public (VAC-01). Each stage
+ * of the immersion route is its own page, sent only what that stage shows (app/lib/immersion.ts),
+ * so English a stage leaves out is never on the page.
  */
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ params, request, context }: Route.LoaderArgs) {
   if (!isPrimaryArea(params.area)) throw new Response("Not found", { status: 404 });
   const { env } = context.get(cloudflareContext);
   const db = getDb(env.DB);
@@ -34,7 +37,10 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const item = await publicVideoItem(db, video.id);
   if (!item || !video.video) throw new Response("Not found", { status: 404 });
   const { snapshot } = layer;
+  const view = learnerView(snapshot, readStage(new URL(request.url).searchParams.get("stage")));
   return data({
+    layerId: layer.id,
+    playerPath: `/${params.area}/${params.slug}/language/${layer.id}`,
     title: snapshot.title,
     videoTitle: video.title,
     storyPath: `/${params.area}/${params.slug}`,
@@ -45,12 +51,10 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     orientation: video.video.orientation,
     span: playWindow(snapshot.excerpt, video.video.durationMs),
     language: { tag: languageTag(layer.languageVariety), name: languageName(layer.languageVariety) },
-    segments: snapshot.segments,
-    annotations: snapshot.annotations,
-    expressions: snapshot.expressions,
+    view,
     tracks: {
       taught: `/language/${layer.id}/captions/fijian`,
-      english: `/language/${layer.id}/captions/english`,
+      english: view.englishTrack ? `/language/${layer.id}/captions/english` : null,
     },
   });
 }

@@ -1,6 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { Annotation, ExpressionDetails } from "~/lib/annotations";
+import { NOTE_KINDS } from "~/lib/annotations";
+import {
+  IMMERSION_STAGES,
+  type LearnerView,
+  progressSummary,
+  type REAL_WORLD_CHOICES,
+  recordAnswer,
+  recordRealWorld,
+  recordVisit,
+  type StageId,
+  stageNeighbours,
+  stageText,
+} from "~/lib/immersion";
+import { type LearnerSession, loadSession, NEW_SESSION, saveSession, sendLearningEvent } from "~/lib/learner-session";
+import type { LearningEvent, Support } from "~/lib/learning-events";
 import {
   annotatedRuns,
   currentSegment,
@@ -11,20 +26,26 @@ import {
   replayStep,
 } from "~/lib/player-rules";
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
+import { ActivityCard } from "./activity-card";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
 
 /**
- * The immersion player for one Learning Layer (VID-02–07): the video in its own shape, captions in
- * the language taught and in English switched independently, a transcript that follows the video
- * and seeks from any line without taking focus, word and phrase meanings opened by tap, click or
- * keyboard, a list of every word and phrase with all its meanings as the way to reach them without
- * opening them in place, replaying a line once or on a loop, and three speeds. An Excerpt plays
- * only between its in and out times. Captions are native tracks generated from the published
- * Segments. The transcript is server-rendered and always shows both languages, so it can be read
- * even if the video never plays.
+ * The immersion player for one Learning Layer (VID-02–09, VID-12, §05A). It guides a learner
+ * through eight stages, from watching naturally to using what they learned with someone, and any
+ * stage can be opened, skipped or revisited, and help asked for, without penalty. Each stage is its
+ * own page and is sent only what it shows (app/lib/immersion.ts), so English a stage leaves out
+ * comes only when the learner asks for it. Around the stages: the video in its own shape, captions
+ * in the language taught and in English switched independently, a transcript that follows the
+ * video and seeks from any line without taking focus, word and phrase meanings, replaying a line
+ * once or on a loop, three speeds, and the Activities with feedback and retries. An Excerpt plays
+ * only between its in and out times. Progress and support choices are kept in the tab's session
+ * (app/lib/learner-session.ts); learning events carry IDs only.
  */
 
 type Props = {
+  layerId: string;
+  /** The player's address, without a stage. */
+  playerPath: string;
   title: string;
   videoTitle: string;
   storyPath: string;
@@ -37,10 +58,10 @@ type Props = {
   span: { startMs: number; endMs: number };
   /** The language taught: its tag for `lang` and its tracks, and its name as visitors read it. */
   language: { tag: string; name: string };
-  segments: Segment[];
-  annotations: Annotation[];
-  expressions: Record<string, ExpressionDetails>;
-  tracks: { taught: string; english: string };
+  /** What this stage shows. */
+  view: LearnerView;
+  /** The caption tracks; English only in stages that show it. */
+  tracks: { taught: string; english: string | null };
 };
 
 const SPEED_NAMES: Record<PlaybackSpeed, string> = { 1: "Normal", 0.75: "Slower (0.75×)", 0.5: "Slowest (0.5×)" };
@@ -48,17 +69,69 @@ const SPEED_NAMES: Record<PlaybackSpeed, string> = { 1: "Normal", 0.75: "Slower 
 /** How a line of the transcript is named to visitors. */
 const lineName = (index: number) => `Line ${index + 1}`;
 
+const REAL_WORLD_SAID: Record<keyof typeof REAL_WORLD_CHOICES, string> = {
+  reflect: "you'll reflect on it",
+  tried: "you tried it",
+  later: "maybe later",
+  skip: "you skipped it",
+};
+
 export function LearnerPlayer(props: Props) {
-  const { span, segments, expressions, language } = props;
+  const { span, view, language, layerId } = props;
+  const { segments, expressions, stage } = view;
+  const stageAt = IMMERSION_STAGES.findIndex((item) => item.id === stage);
+  const text = stageText(stage, language.name);
+  const stagePath = (id: StageId) => `${props.playerPath}?stage=${id}`;
+  const { previous, next } = stageNeighbours(stage);
+
   // Only Annotations whose Expression the Revision carries can open a meaning.
   const annotations = useMemo(
-    () => props.annotations.filter((annotation) => expressions[annotation.expressionId]),
-    [props.annotations, expressions],
+    () => view.annotations.filter((annotation) => expressions[annotation.expressionId]),
+    [view.annotations, expressions],
   );
+
+  // What the learner has done and chosen, kept for this tab only. Read after hydration, so the
+  // server's page and the first render match.
+  const [session, setSession] = useState<LearnerSession>(NEW_SESSION);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const stored = loadSession(layerId);
+    setSession({ ...stored, progress: recordVisit(stored.progress, stage) });
+    setLoaded(true);
+  }, [layerId, stage]);
+  useEffect(() => {
+    if (loaded) saveSession(layerId, session);
+  }, [loaded, layerId, session]);
+  const send = useCallback((event: LearningEvent) => sendLearningEvent(layerId, event), [layerId]);
+  const toggled = (support: Support) => send({ name: "support_toggled", support });
+  const { support } = session;
+  const updateSupport = (change: Partial<LearnerSession["support"]>) =>
+    setSession((current) => ({ ...current, support: { ...current.support, ...change } }));
+
+  // Captions start as the stage sets them, except that the accessibility preference never lets a
+  // stage hide the captions in the language taught; a learner's own choice in a stage is kept.
+  const captions = support.captions[stage] ?? {
+    taught: view.captions.taught || support.alwaysCaptions,
+    english: view.captions.english,
+  };
+  const taught = captions.taught;
+  const english = Boolean(props.tracks.english) && captions.english;
+  const setCaptions = (change: Partial<typeof captions>) =>
+    updateSupport({ captions: { ...support.captions, [stage]: { ...captions, ...change } } });
+  const speed = support.speed;
+
+  // The listening stages hide the transcript until the learner asks for it.
+  const [transcriptAsked, setTranscriptAsked] = useState(false);
+  const transcriptShown = !view.listening || support.alwaysCaptions || transcriptAsked;
+  // English a stage left off the page, fetched only when the learner asks for a line of it.
+  const [englishLines, setEnglishLines] = useState<Record<string, string> | null>(null);
+  const [revealed, setRevealed] = useState<string[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [helpStatus, setHelpStatus] = useState("");
+  const englishOf = (segment: Segment) =>
+    segment.english || (revealed.includes(segment.id) ? (englishLines?.[segment.id] ?? "") : "");
+
   const video = useRef<HTMLVideoElement | null>(null);
-  const [taught, setTaught] = useState(true);
-  const [english, setEnglish] = useState(true);
-  const [speed, setSpeed] = useState<PlaybackSpeed>(1);
   // The line playing is state; the playhead itself is read every frame and kept in a ref.
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [replay, setReplay] = useState<(Replay & { segmentId: string }) | null>(null);
@@ -183,6 +256,7 @@ export function LearnerPlayer(props: Props) {
     replayRef.current = next;
     setReplay(next);
     setStatus("");
+    send({ name: "segment_replayed", segmentId: segment.id });
     element.currentTime = (span.startMs + segment.startMs) / 1000;
     element.play().catch(() => {
       replayRef.current = null;
@@ -197,6 +271,69 @@ export function LearnerPlayer(props: Props) {
     setReplay(null);
   };
 
+  const playClip = () => {
+    const element = video.current;
+    if (!element) return;
+    element.currentTime = span.startMs / 1000;
+    element.play().catch(() => setStatus("The video couldn't play. Press play on the video first."));
+  };
+
+  // The line the learner is on: the one playing, or the last one played, or the first.
+  const [lastLine, setLastLine] = useState<string | null>(null);
+  useEffect(() => {
+    if (playingId) setLastLine(playingId);
+  }, [playingId]);
+  const helpLine = segments.find((segment) => segment.id === (playingId ?? lastLine)) ?? segments[0];
+
+  const revealEnglish = async () => {
+    if (!helpLine) return;
+    toggled("english-line");
+    let lines = englishLines;
+    if (!lines) {
+      try {
+        const response = await fetch(`/language/${layerId}/english`);
+        if (!response.ok) throw new Error(String(response.status));
+        const body = (await response.json()) as { lines: { segmentId: string; english: string }[] };
+        lines = Object.fromEntries(body.lines.map((line) => [line.segmentId, line.english]));
+        setEnglishLines(lines);
+      } catch {
+        setHelpStatus("The English couldn't be fetched just now. Try again in a moment.");
+        return;
+      }
+    }
+    setRevealed((current) => (current.includes(helpLine.id) ? current : [...current, helpLine.id]));
+    const words = lines[helpLine.id];
+    setHelpStatus(
+      words ? `${lineOf(helpLine.id)} in English: ${words}` : `${lineOf(helpLine.id)} has no English translation yet.`,
+    );
+  };
+
+  // Answering an Activity: progress, its events, and completion, sent once.
+  const answered = (activityId: string, correct: boolean | null) => {
+    send({ name: "activity_attempted", activityId });
+    send({ name: "feedback_viewed", activityId });
+    setSession((current) => {
+      const progress = recordAnswer(current.progress, activityId, correct);
+      const done = progressSummary(view.required, progress).completion.complete;
+      if (done && !current.completedSent) send({ name: "learning_completed" });
+      return { ...current, progress, completedSent: current.completedSent || done };
+    });
+  };
+
+  const summary = progressSummary(view.required, session.progress);
+  const remaining = IMMERSION_STAGES.flatMap(({ id }) => {
+    const left = view.required.filter(
+      (activity) => activity.stage === id && !session.progress.activities[activity.id]?.attempted,
+    ).length;
+    return left ? [{ id, left }] : [];
+  });
+  const notesFor = (segmentId: string | null) =>
+    view.notes.filter((note) =>
+      segmentId === null
+        ? note.segmentId === null || !segments.some((segment) => segment.id === note.segmentId)
+        : note.segmentId === segmentId,
+    );
+
   return (
     <div className="learner-player">
       <p>
@@ -205,6 +342,29 @@ export function LearnerPlayer(props: Props) {
         </Link>
       </p>
       <h1>{props.title}</h1>
+
+      <nav aria-label="Steps" className="stage-steps">
+        <ol>
+          {IMMERSION_STAGES.map(({ id }, index) => {
+            const visited = loaded && session.progress.visited.includes(id) && id !== stage;
+            return (
+              <li key={id} className={id === stage ? "current" : visited ? "visited" : undefined}>
+                <Link to={stagePath(id)} reloadDocument aria-current={id === stage ? "step" : undefined}>
+                  <span className="step-number">{index + 1}</span> {stageText(id, language.name).name}
+                  {visited && <span className="visually-hidden"> (visited)</span>}
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      <section aria-labelledby="stage-heading" className="stage-intro">
+        <h2 id="stage-heading">
+          Step {stageAt + 1} of {IMMERSION_STAGES.length}: {text.name}
+        </h2>
+        <p>{text.guide}</p>
+      </section>
 
       <div className="player-stage">
         {props.playback ? (
@@ -217,12 +377,12 @@ export function LearnerPlayer(props: Props) {
               className="public-video"
               aspectRatio={`${props.width} / ${props.height}`}
               refreshPath={props.refreshPath}
-              tracks={
-                [
-                  { src: props.tracks.taught, srclang: language.tag, label: language.name },
-                  { src: props.tracks.english, srclang: "en", label: "English" },
-                ] satisfies CaptionTrack[]
-              }
+              tracks={[
+                { src: props.tracks.taught, srclang: language.tag, label: language.name } satisfies CaptionTrack,
+                ...(props.tracks.english
+                  ? [{ src: props.tracks.english, srclang: "en", label: "English" } satisfies CaptionTrack]
+                  : []),
+              ]}
             />
           </div>
         ) : (
@@ -232,20 +392,44 @@ export function LearnerPlayer(props: Props) {
         <div className="player-controls">
           <fieldset className="caption-switches">
             <legend>Captions</legend>
-            <button type="button" aria-pressed={taught} onClick={() => setTaught(!taught)}>
+            <button
+              type="button"
+              aria-pressed={taught}
+              onClick={() => {
+                setCaptions({ taught: !taught });
+                toggled("fijian-captions");
+              }}
+            >
               {language.name}
               <span aria-hidden="true">{taught ? ": on" : ": off"}</span>
             </button>
-            <button type="button" aria-pressed={english} onClick={() => setEnglish(!english)}>
-              English
-              <span aria-hidden="true">{english ? ": on" : ": off"}</span>
-            </button>
+            {props.tracks.english && (
+              <button
+                type="button"
+                aria-pressed={english}
+                onClick={() => {
+                  setCaptions({ english: !english });
+                  toggled("english-captions");
+                }}
+              >
+                English
+                <span aria-hidden="true">{english ? ": on" : ": off"}</span>
+              </button>
+            )}
           </fieldset>
           <fieldset className="speed-choice">
             <legend>Speed</legend>
             {PLAYBACK_SPEEDS.map((value) => (
               <label key={value}>
-                <input type="radio" name="speed" checked={speed === value} onChange={() => setSpeed(value)} />{" "}
+                <input
+                  type="radio"
+                  name="speed"
+                  checked={speed === value}
+                  onChange={() => {
+                    updateSupport({ speed: value });
+                    toggled("speed");
+                  }}
+                />{" "}
                 {SPEED_NAMES[value]}
               </label>
             ))}
@@ -259,111 +443,357 @@ export function LearnerPlayer(props: Props) {
             </p>
           )}
           {status && <p role="status">{status}</p>}
+
+          <div className="help-control">
+            <button
+              type="button"
+              aria-expanded={helpOpen}
+              aria-controls="stage-help"
+              onClick={() => {
+                if (!helpOpen) toggled("help");
+                setHelpOpen(!helpOpen);
+              }}
+            >
+              Need help?
+            </button>
+            <div id="stage-help" hidden={!helpOpen} className="stage-help">
+              <p>Asking for help never counts against you.</p>
+              <ul>
+                {view.listening && !transcriptShown && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTranscriptAsked(true);
+                        toggled("transcript");
+                      }}
+                    >
+                      Show the transcript
+                    </button>
+                  </li>
+                )}
+                {!taught && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCaptions({ taught: true });
+                        toggled("fijian-captions");
+                      }}
+                    >
+                      Show the {language.name} captions
+                    </button>
+                  </li>
+                )}
+                {!props.tracks.english && helpLine && (
+                  <li>
+                    <button type="button" onClick={revealEnglish}>
+                      Show the English for {lineOf(helpLine.id).toLowerCase()}
+                    </button>
+                  </li>
+                )}
+                {!view.meanings && (
+                  <li>
+                    <Link to={stagePath("words")} reloadDocument>
+                      Word meanings are in step 3: {stageText("words", language.name).name}
+                    </Link>
+                  </li>
+                )}
+                {previous && (
+                  <li>
+                    <Link to={stagePath(previous)} reloadDocument>
+                      Go back a step: {stageText(previous, language.name).name}
+                    </Link>
+                  </li>
+                )}
+                {next && (
+                  <li>
+                    <Link to={stagePath(next)} reloadDocument>
+                      Skip to the next step: {stageText(next, language.name).name}
+                    </Link>
+                  </li>
+                )}
+              </ul>
+              <p role="status" className="help-status">
+                {helpStatus}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <section aria-labelledby="transcript-heading" className="transcript">
-        <h2 id="transcript-heading">Transcript</h2>
-        <p className="hint">Underlined words open their meaning. A line's time plays the video from there.</p>
-        <ol className="transcript-list">
-          {segments.map((segment, index) => {
-            const label = lineName(index);
-            const runs = runsBySegment.get(segment.id) ?? [];
-            const isPlaying = playingId === segment.id;
-            return (
-              <li
-                key={segment.id}
-                className={isPlaying ? "transcript-segment playing" : "transcript-segment"}
-                aria-current={isPlaying ? "true" : undefined}
-              >
-                <h3 className="visually-hidden">{label}</h3>
-                <div className="segment-tools">
-                  <button type="button" onClick={() => seek(segment)}>
-                    {formatTimecode(segment.startMs)}
-                    <span className="visually-hidden">: play from {label.toLowerCase()}</span>
-                  </button>
-                  <button type="button" onClick={() => startReplay(segment, false)}>
-                    Replay<span className="visually-hidden"> {label.toLowerCase()}</span>
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={replay?.segmentId === segment.id && replay.loop}
-                    onClick={() =>
-                      replay?.segmentId === segment.id && replay.loop ? stopReplay() : startReplay(segment, true)
+      {view.activities.length > 0 ? (
+        <section aria-labelledby="activities-heading" className="learner-activities">
+          <h2 id="activities-heading">Activities</h2>
+          <ol className="activity-list">
+            {view.activities.map((activity, index) => {
+              const label = `Activity ${index + 1}`;
+              const segment = segments.find((item) => item.id === activity.segmentId);
+              return (
+                <li key={activity.id}>
+                  <h3>
+                    {label}
+                    <span className="meta">
+                      {activity.kind === "real-world"
+                        ? " · optional and private"
+                        : activity.required
+                          ? " · needed to complete"
+                          : " · optional"}
+                    </span>
+                  </h3>
+                  <ActivityCard
+                    id={`activity-${activity.id}`}
+                    label={label}
+                    activity={activity}
+                    languageTag={language.tag}
+                    initialViaText={support.textRoute}
+                    onPlay={() => (segment ? startReplay(segment, false) : playClip())}
+                    onAnswer={(correct) => answered(activity.id, correct)}
+                    onRouteChange={() => toggled("text-route")}
+                    onReflect={(choice) =>
+                      setSession((current) => ({
+                        ...current,
+                        progress: recordRealWorld(current.progress, activity.id, choice),
+                      }))
                     }
-                  >
-                    Loop<span className="visually-hidden"> {label.toLowerCase()}</span>
-                  </button>
-                </div>
-                {segment.speaker && <p className="speaker">{segment.speaker}</p>}
-                <div lang={language.tag} className="transcript-fijian">
-                  {runs.map((run, at) =>
-                    run.annotationId ? (
-                      <MeaningButton
-                        // Runs are fixed for a line, so their order is a stable key.
-                        // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-                        key={at}
-                        run={run.text}
-                        languageTag={language.tag}
-                        annotation={annotations.find((item) => item.id === run.annotationId) as Annotation}
-                        expression={
-                          expressions[
-                            (annotations.find((item) => item.id === run.annotationId) as Annotation).expressionId
-                          ]
-                        }
-                        open={open === run.annotationId}
-                        onToggle={(next) => setOpen(next ? run.annotationId : null)}
-                      />
-                    ) : (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-                      <span key={at}>{run.text}</span>
-                    ),
-                  )}
-                </div>
-                {segment.english && <p className="transcript-english">{segment.english}</p>}
-              </li>
-            );
-          })}
-        </ol>
-      </section>
+                  />
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ) : (
+        ["practise", "respond", "use-it"].includes(stage) && (
+          <p>
+            There's nothing to do in this step here.{" "}
+            {next && (
+              <Link to={stagePath(next)} reloadDocument>
+                Go on to {stageText(next, language.name).name}
+              </Link>
+            )}
+          </p>
+        )
+      )}
 
-      <section aria-labelledby="meanings-heading" className="vocabulary">
-        <h2 id="meanings-heading">Words and meanings</h2>
-        {meanings.length ? (
-          <dl className="vocabulary-list">
-            {meanings.map(({ expressionId, expression, keyWord, places }) => (
-              <div key={expressionId}>
-                <dt>
-                  <span lang={language.tag}>{expression.headword}</span>
-                  {keyWord && <span className="key-word"> Key word</span>}
-                </dt>
-                <dd>
-                  <p>Generally: {expression.generalMeaning}</p>
-                  {expression.literalMeaning && <p>Literally: {expression.literalMeaning}</p>}
-                  {expression.grammarNote && <p>Grammar: {expression.grammarNote}</p>}
-                  {expression.pronunciation && <p>Said: {expression.pronunciation}</p>}
-                  <ul className="occurrences">
-                    {places.map((place) => (
-                      <li key={place.annotationId}>
-                        <button
-                          type="button"
-                          onClick={() => seek(segments.find((item) => item.id === place.segmentId) as Segment)}
-                        >
-                          <span lang={language.tag}>“{place.text}”</span> at {formatTimecode(place.startMs)}
-                        </button>{" "}
-                        Here: {place.meaning}
-                        {place.grammarNote && `. Grammar: ${place.grammarNote}`}
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </div>
-            ))}
-          </dl>
-        ) : (
-          <p>No words are explained in this lesson yet.</p>
+      {view.notes.length > 0 && (
+        <section aria-labelledby="notes-heading" className="context-notes">
+          <h2 id="notes-heading">Culture and context</h2>
+          <ul>
+            {[null, ...segments.map((segment) => segment.id)].flatMap((segmentId) =>
+              notesFor(segmentId).map((note) => (
+                <li key={note.id}>
+                  <p>
+                    <strong>{NOTE_KINDS[note.kind]}</strong>
+                    {segmentId && ` on ${lineOf(segmentId).toLowerCase()}`}: {note.text}
+                  </p>
+                  <p className="meta">From {note.attribution}</p>
+                </li>
+              )),
+            )}
+          </ul>
+        </section>
+      )}
+
+      {transcriptShown ? (
+        <section aria-labelledby="transcript-heading" className="transcript">
+          <h2 id="transcript-heading">Transcript</h2>
+          <p className="hint">
+            {annotations.length ? "Underlined words open their meaning. " : ""}A line's time plays the video from there.
+          </p>
+          <ol className="transcript-list">
+            {segments.map((segment, index) => {
+              const label = lineName(index);
+              const runs = runsBySegment.get(segment.id) ?? [];
+              const isPlaying = playingId === segment.id;
+              const translation = englishOf(segment);
+              return (
+                <li
+                  key={segment.id}
+                  className={isPlaying ? "transcript-segment playing" : "transcript-segment"}
+                  aria-current={isPlaying ? "true" : undefined}
+                >
+                  <h3 className="visually-hidden">{label}</h3>
+                  <div className="segment-tools">
+                    <button type="button" onClick={() => seek(segment)}>
+                      {formatTimecode(segment.startMs)}
+                      <span className="visually-hidden">: play from {label.toLowerCase()}</span>
+                    </button>
+                    <button type="button" onClick={() => startReplay(segment, false)}>
+                      Replay<span className="visually-hidden"> {label.toLowerCase()}</span>
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={replay?.segmentId === segment.id && replay.loop}
+                      onClick={() =>
+                        replay?.segmentId === segment.id && replay.loop ? stopReplay() : startReplay(segment, true)
+                      }
+                    >
+                      Loop<span className="visually-hidden"> {label.toLowerCase()}</span>
+                    </button>
+                  </div>
+                  {segment.speaker && <p className="speaker">{segment.speaker}</p>}
+                  <div lang={language.tag} className="transcript-fijian">
+                    {runs.map((run, at) =>
+                      run.annotationId ? (
+                        <MeaningButton
+                          // Runs are fixed for a line, so their order is a stable key.
+                          // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+                          key={at}
+                          run={run.text}
+                          languageTag={language.tag}
+                          annotation={annotations.find((item) => item.id === run.annotationId) as Annotation}
+                          expression={
+                            expressions[
+                              (annotations.find((item) => item.id === run.annotationId) as Annotation).expressionId
+                            ]
+                          }
+                          open={open === run.annotationId}
+                          onToggle={(next) => setOpen(next ? run.annotationId : null)}
+                        />
+                      ) : (
+                        // biome-ignore lint/suspicious/noArrayIndexKey: see above.
+                        <span key={at}>{run.text}</span>
+                      ),
+                    )}
+                  </div>
+                  {translation && <p className="transcript-english">{translation}</p>}
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      ) : (
+        <p className="hint">
+          The transcript is hidden while you listen. Choose "Need help?" to show it, or the {language.name} captions.
+        </p>
+      )}
+
+      {view.meanings && (
+        <section aria-labelledby="meanings-heading" className="vocabulary">
+          <h2 id="meanings-heading">Words and meanings</h2>
+          {meanings.length ? (
+            <dl className="vocabulary-list">
+              {meanings.map(({ expressionId, expression, keyWord, places }) => (
+                <div key={expressionId}>
+                  <dt>
+                    <span lang={language.tag}>{expression.headword}</span>
+                    {keyWord && <span className="key-word"> Key word</span>}
+                  </dt>
+                  <dd>
+                    <p>Generally: {expression.generalMeaning}</p>
+                    {expression.literalMeaning && <p>Literally: {expression.literalMeaning}</p>}
+                    {expression.grammarNote && <p>Grammar: {expression.grammarNote}</p>}
+                    {expression.pronunciation && <p>Said: {expression.pronunciation}</p>}
+                    <ul className="occurrences">
+                      {places.map((place) => (
+                        <li key={place.annotationId}>
+                          <button
+                            type="button"
+                            onClick={() => seek(segments.find((item) => item.id === place.segmentId) as Segment)}
+                          >
+                            <span lang={language.tag}>“{place.text}”</span> at {formatTimecode(place.startMs)}
+                          </button>{" "}
+                          Here: {place.meaning}
+                          {place.grammarNote && `. Grammar: ${place.grammarNote}`}
+                        </li>
+                      ))}
+                    </ul>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p>No words are explained here yet.</p>
+          )}
+        </section>
+      )}
+
+      <nav aria-label="Next and previous steps" className="stage-pager">
+        {previous && (
+          <Link to={stagePath(previous)} reloadDocument>
+            Previous step: {stageText(previous, language.name).name}
+          </Link>
         )}
-      </section>
+        {next && (
+          <Link to={stagePath(next)} reloadDocument>
+            Next step: {stageText(next, language.name).name}
+          </Link>
+        )}
+      </nav>
+
+      <aside aria-labelledby="progress-heading" className="learner-progress">
+        <h2 id="progress-heading">Your progress</h2>
+        {loaded && (
+          <>
+            <p role="status">
+              {summary.completion.required === 0
+                ? "There's nothing to complete here yet."
+                : summary.completion.complete
+                  ? `You've completed ${props.title}.`
+                  : `${summary.completion.done} of ${summary.completion.required} needed Activities done.`}
+            </p>
+            {remaining.length > 0 && (
+              <ul>
+                {remaining.map(({ id, left }) => (
+                  <li key={id}>
+                    <Link to={stagePath(id)} reloadDocument>
+                      {stageText(id, language.name).name}
+                    </Link>
+                    : {left} to do
+                  </li>
+                ))}
+              </ul>
+            )}
+            {summary.answers.checked > 0 && (
+              <p>
+                Answers right: {summary.answers.right} of {summary.answers.checked}.
+              </p>
+            )}
+            {summary.practised > 0 && <p>Activities tried: {summary.practised}.</p>}
+            {Object.entries(summary.realWorld).map(([id, choice]) => (
+              <p key={id}>Using it with someone: {REAL_WORLD_SAID[choice]}.</p>
+            ))}
+          </>
+        )}
+        <p className="meta">
+          Completing it means trying each needed Activity and seeing its feedback. Watching alone doesn't complete it,
+          and right answers aren't needed.
+        </p>
+        <p className="meta">
+          Your progress is kept only on this device, until you close this tab. Keeping it across devices needs an
+          optional Learner Account.
+        </p>
+        <fieldset className="learner-settings">
+          <legend>Your settings</legend>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={support.alwaysCaptions}
+              onChange={(event) => {
+                const on = event.target.checked;
+                // Turning it on shows the captions here too.
+                updateSupport({
+                  alwaysCaptions: on,
+                  captions: on ? { ...support.captions, [stage]: { ...captions, taught: true } } : support.captions,
+                });
+                toggled("always-captions");
+              }}
+            />{" "}
+            Always show the {language.name} captions and the transcript
+          </label>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={support.textRoute}
+              onChange={(event) => {
+                updateSupport({ textRoute: event.target.checked });
+                toggled("text-route");
+              }}
+            />{" "}
+            Start Activities in their text versions
+          </label>
+        </fieldset>
+      </aside>
 
       <p>
         <Link to={props.storyPath} reloadDocument>

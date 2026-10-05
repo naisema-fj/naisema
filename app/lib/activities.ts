@@ -121,7 +121,8 @@ export const KIND_RULES: Record<
 export const usesChoices = (kind: ActivityKind) => KIND_RULES[kind].choices !== "none";
 
 /** Whether the Completion Rule counts an Activity: it is required, and its kind can be. */
-export const countsForCompletion = (activity: Activity) => activity.required && KIND_RULES[activity.kind].canBeRequired;
+export const countsForCompletion = (activity: Pick<Activity, "kind" | "required">) =>
+  activity.required && KIND_RULES[activity.kind].canBeRequired;
 export const isActivityKind = (value: unknown): value is ActivityKind =>
   typeof value === "string" && Object.hasOwn(ACTIVITY_KINDS, value);
 
@@ -252,7 +253,10 @@ export type ActivityProgress = { attempted: boolean; feedbackViewed: boolean; vi
  * Learning Layer with nothing required can't be completed. Real-world prompts never count.
  * Whether answers were right is a separate state and doesn't matter here.
  */
-export function completionProgress(activities: Activity[], progress: Record<string, ActivityProgress | undefined>) {
+export function completionProgress(
+  activities: Pick<Activity, "id" | "kind" | "required">[],
+  progress: Record<string, ActivityProgress | undefined>,
+) {
   const required = activities.filter(countsForCompletion);
   const done = required.filter((activity) => {
     const state = progress[activity.id];

@@ -15,6 +15,7 @@ import {
   usesChoices,
 } from "~/lib/activities";
 import type { Segment } from "~/lib/segment-rules";
+import { ActivityCard } from "./activity-card";
 
 /**
  * A Learning Layer's Activities (VID-08/09/12, VCMS-03): what each asks, its reviewed answers or
@@ -130,6 +131,9 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
       <ol className="activity-list">
         {activities.map((activity, index) => {
           const name = `Activity ${index + 1}`;
+          // What was done in its preview, against the Activity as it is now.
+          const record = (state: ActivityProgress) =>
+            setProgress((current) => ({ ...current, [activity.id]: { signature: signature(activity), state } }));
           const fieldId = (field: ActivityField | "pronunciation" | "kind") => `activity-${activity.id}-${field}`;
           const errors = (field: ActivityField) =>
             problems.filter((problem) => problem.activityId === activity.id && problem.field === field);
@@ -359,16 +363,18 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
                 </button>
               </div>
               {previewing.has(activity.id) && (
-                <ActivityPreview
+                <ActivityCard
                   // A changed Activity starts its preview afresh.
                   key={signature(activity)}
                   id={`activity-${activity.id}-preview`}
-                  name={name}
+                  label={`Learner preview of ${name}`}
                   activity={activity}
+                  languageTag="fj"
+                  note={<p className="meta">Learner preview. Nothing here is saved or recorded.</p>}
                   onPlay={() => onPlay(activity.segmentId)}
-                  onProgress={(state) =>
-                    setProgress((current) => ({ ...current, [activity.id]: { signature: signature(activity), state } }))
-                  }
+                  onAnswer={(_correct, viaText) => record({ attempted: true, feedbackViewed: true, viaText })}
+                  // Switching route starts the preview of the Activity again.
+                  onRouteChange={() => record({ attempted: false, feedbackViewed: false })}
                 />
               )}
             </li>
@@ -393,183 +399,5 @@ export function ActivitiesEditor({ activities, segments, problems, onChange, onP
         </button>
       </div>
     </div>
-  );
-}
-
-const REFLECTIONS = {
-  reflect: "I'll reflect on it",
-  tried: "I tried it",
-  later: "Maybe later",
-  skip: "Skip",
-} as const;
-
-/**
- * An Activity as a learner sees it, with its text route. Trying it and seeing its feedback are
- * reported up for the Completion Rule; a real-world prompt reports nothing, and its reflection
- * stays in the page.
- */
-function ActivityPreview({
-  id,
-  name,
-  activity,
-  onPlay,
-  onProgress,
-}: {
-  id: string;
-  name: string;
-  activity: Activity;
-  onPlay: () => void;
-  onProgress: (progress: ActivityProgress) => void;
-}) {
-  const [viaText, setViaText] = useState(false);
-  const [chosen, setChosen] = useState<string | null>(null);
-  const [written, setWritten] = useState("");
-  const [answered, setAnswered] = useState(false);
-  const [reflection, setReflection] = useState<keyof typeof REFLECTIONS | null>(null);
-  const answer = () => {
-    setAnswered(true);
-    // The feedback appears with the answer, so both are recorded together.
-    onProgress({ attempted: true, feedbackViewed: true, viaText });
-  };
-  const choice = activity.options.find((option) => option.id === chosen);
-  const correct = activity.options.filter((option) => option.correct).map((option) => option.text);
-  const hasChoices = activity.options.length > 0;
-  const { listens } = KIND_RULES[activity.kind];
-
-  return (
-    <section id={id} className="activity-preview" aria-label={`Learner preview of ${name}`}>
-      <p className="meta">Learner preview. Nothing here is saved or recorded.</p>
-      {activity.kind !== "real-world" && (
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={viaText}
-            onChange={(event) => {
-              // Switching route starts the Activity again.
-              setViaText(event.target.checked);
-              setAnswered(false);
-              setWritten("");
-              onProgress({ attempted: false, feedbackViewed: false });
-            }}
-          />{" "}
-          Use the text version
-        </label>
-      )}
-      <p>{activity.prompt}</p>
-      {viaText ? (
-        <p className="activity-alternative">{activity.textAlternative}</p>
-      ) : (
-        listens && (
-          <button type="button" onClick={onPlay}>
-            {activity.segmentId ? "Play the Segment" : "Play the clip"}
-          </button>
-        )
-      )}
-
-      {activity.kind === "real-world" ? (
-        <fieldset>
-          <legend>What would you like to do?</legend>
-          {Object.entries(REFLECTIONS).map(([value, label]) => (
-            <label key={value} className="checkbox">
-              <input
-                type="radio"
-                name={`${id}-reflection`}
-                checked={reflection === value}
-                onChange={() => setReflection(value as keyof typeof REFLECTIONS)}
-              />{" "}
-              {label}
-            </label>
-          ))}
-          {reflection === "reflect" && (
-            <>
-              <label htmlFor={`${id}-reflect`}>Your reflection (private: it stays on your device)</label>
-              <textarea
-                id={`${id}-reflect`}
-                rows={2}
-                value={written}
-                onChange={(event) => setWritten(event.target.value)}
-              />
-            </>
-          )}
-          {reflection && activity.feedback && <p>{activity.feedback}</p>}
-          {activity.modelResponse && reflection && <p className="meta">For example: {activity.modelResponse}</p>}
-        </fieldset>
-      ) : hasChoices ? (
-        <fieldset disabled={answered}>
-          <legend>Choose an answer</legend>
-          {activity.options.map((option) => (
-            <label key={option.id} className="checkbox">
-              <input
-                type="radio"
-                name={`${id}-choice`}
-                checked={chosen === option.id}
-                onChange={() => setChosen(option.id)}
-              />{" "}
-              {option.text}
-            </label>
-          ))}
-          <button type="button" disabled={!chosen} onClick={answer}>
-            Check my answer
-          </button>
-        </fieldset>
-      ) : (
-        <>
-          {(viaText || activity.kind === "next-line") && (
-            <>
-              <label htmlFor={`${id}-written`}>
-                {viaText
-                  ? activity.kind === "listen-repeat"
-                    ? "Write it out"
-                    : "Write what you would say"
-                  : "Or write it (optional)"}
-              </label>
-              <textarea
-                id={`${id}-written`}
-                rows={2}
-                lang="fj"
-                value={written}
-                disabled={answered}
-                onChange={(event) => setWritten(event.target.value)}
-              />
-            </>
-          )}
-          {!viaText && <p className="hint">Say it aloud, as many times as you like. Nothing is recorded.</p>}
-          {/* By the text route, writing it is the attempt. */}
-          <button type="button" disabled={answered || (viaText && !written.trim())} onClick={answer}>
-            {viaText ? "Check what I wrote" : "I've said it"}
-          </button>
-        </>
-      )}
-
-      {answered && (
-        <div className="activity-feedback" role="status">
-          {hasChoices && choice && (
-            <p>
-              {choice.correct
-                ? "That's right."
-                : `Not quite. ${correct.length === 1 ? "The answer is" : "Answers are"}: ${correct.join(", ")}.`}
-            </p>
-          )}
-          {activity.modelResponse && (
-            <p>
-              {activity.kind === "listen-repeat" ? "Say: " : "You could say: "}
-              <span lang="fj">{activity.modelResponse}</span>
-            </p>
-          )}
-          {activity.pronunciation && <p>Pronunciation: {activity.pronunciation}</p>}
-          <p>{activity.feedback}</p>
-          <button
-            type="button"
-            onClick={() => {
-              setAnswered(false);
-              setChosen(null);
-              setWritten("");
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      )}
-    </section>
   );
 }
