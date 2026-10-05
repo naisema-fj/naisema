@@ -2,7 +2,7 @@ import type { ArticleSnapshot } from "~/lib/article-fields";
 import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
-import { distributionText, type EpisodeDetails, formatDuration } from "~/lib/episode-fields";
+import { distributionText, type EpisodeDetails, episodeRecording, formatDuration } from "~/lib/episode-fields";
 import { mediaName } from "~/lib/media.server";
 import { bodyLines, type DiffLine, diffLines } from "~/lib/revision-diff";
 import { getRevision } from "~/lib/revisions.server";
@@ -35,8 +35,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     { label: "Topics", before: topics(from.snapshot.topicIds), after: topics(to.snapshot.topicIds) },
     { label: "Credit", before: from.snapshot.credit, after: to.snapshot.credit },
     ...episodeFields(from.snapshot.episode, to.snapshot.episode, {
-      before: await mediaName(db, from.snapshot.episode?.audioAssetId ?? null),
-      after: await mediaName(db, to.snapshot.episode?.audioAssetId ?? null),
+      before: await mediaName(db, from.snapshot.episode ? episodeRecording(from.snapshot.episode).assetId : null),
+      after: await mediaName(db, to.snapshot.episode ? episodeRecording(to.snapshot.episode).assetId : null),
     }),
   ];
   const transcript = (snapshot: ArticleSnapshot) =>
@@ -68,7 +68,7 @@ function episodeFields(
 ) {
   if (!before && !after) return [];
   const audio = (episode: EpisodeDetails | undefined, name: string | null) =>
-    episode ? `${name ?? "A file no longer in the media library"} (${episode.audioAssetId})` : "";
+    episode ? `${name ?? "A file no longer in the media library"} (${episodeRecording(episode).assetId})` : "";
   const facts = (episode: EpisodeDetails | undefined) => ({
     host: episode?.host ?? "",
     guests: episode?.guests.join(", ") ?? "",

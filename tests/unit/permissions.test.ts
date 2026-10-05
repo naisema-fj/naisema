@@ -78,6 +78,7 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["editor edits content", editor, { action: "content.edit" }, true],
   ["editor publishes eligible revisions", editor, { action: "revision.publish" }, true],
   ["editor issues review links", editor, { action: "reviewLink.issue" }, true],
+  ["editor reads Knowledge Holder Approval evidence", editor, { action: "approvalEvidence.read" }, true],
   [
     "editor records a knowledge holder approval on someone else's revision",
     editor,
@@ -150,6 +151,30 @@ const rows: [string, Actor | null, Check, boolean][] = [
     "editor adds a learning layer to any video",
     editor,
     { action: "learningLayer.create", video: { assignedEducatorIds: [] } },
+    true,
+  ],
+  [
+    "educator changes an Expression they added",
+    educator,
+    { action: "expression.edit", expression: { createdBy: "educator", usedByOthers: false } },
+    true,
+  ],
+  [
+    "educator cannot change an Expression they added once another's Learning Layer uses it",
+    educator,
+    { action: "expression.edit", expression: { createdBy: "educator", usedByOthers: true } },
+    false,
+  ],
+  [
+    "educator cannot change another's Expression",
+    educator,
+    { action: "expression.edit", expression: { createdBy: "someone-else", usedByOthers: false } },
+    false,
+  ],
+  [
+    "editor changes any Expression",
+    editor,
+    { action: "expression.edit", expression: { createdBy: "someone-else", usedByOthers: true } },
     true,
   ],
   [

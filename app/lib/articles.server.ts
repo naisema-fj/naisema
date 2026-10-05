@@ -6,7 +6,7 @@ import { ARTICLE_LIMITS, type ArticleSnapshot, articleReviewFields, type FieldEr
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import { readCreatorFields } from "./creator-fields";
 import type { Database } from "./db.server";
-import { readEpisodeFields } from "./episode-fields";
+import { episodeRecording, readEpisodeFields } from "./episode-fields";
 import { INFO_PAGES } from "./info-pages";
 import { toLanguageVariety } from "./language-variety";
 import { readyDownload, readyEpisodeAudio, readyImage } from "./media-delivery.server";
@@ -108,8 +108,12 @@ export async function readArticleForm(
       episode = read.values as ArticleSnapshot["episode"];
     } else {
       episode = read.details;
-      if (!(await readyEpisodeAudio(db, read.details.audioAssetId))) {
+      const recording = episodeRecording(read.details);
+      if (recording.kind === "audio" && !(await readyEpisodeAudio(db, recording.assetId))) {
         errors.episodeAudioAssetId = "Choose an MP3 or M4A file that has passed its virus scan.";
+      }
+      if (recording.kind === "video" && !(await readyVideo(db, recording.assetId))) {
+        errors.episodeVideoAssetId = "Choose a video that has finished processing.";
       }
     }
   }

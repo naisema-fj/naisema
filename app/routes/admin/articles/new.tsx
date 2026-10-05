@@ -38,7 +38,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     type === "resource" ? downloadChoices(db) : [],
     type === "episode" ? episodeAudioChoices(db) : [],
     type === "creator" ? imageChoices(db) : [],
-    type === "video" ? videoChoices(db) : [],
+    type === "video" || type === "episode" ? videoChoices(db) : [],
     type === "page" ? availablePages(db) : [],
   ]);
   return { type, topics, embeddable, pages, files, audio, images, videos };

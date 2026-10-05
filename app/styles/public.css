@@ -1390,3 +1390,378 @@ blockquote.notice-wording {
     gap: 0.15rem;
   }
 }
+
+/* A Video's footage (story pages and the learner player): its own shape, never cropped, never
+   taller than the screen, so a vertical video stays whole on a phone. */
+.public .video-frame {
+  max-width: 100%;
+  margin: 1rem auto 0;
+}
+
+.public .video-frame.video-portrait {
+  width: min(100%, calc(80vh * 9 / 16));
+}
+
+.public .public-video {
+  margin: 0;
+}
+
+/* The shape comes from the footage (an inline aspect-ratio), so a message below never overflows it. */
+.public .public-video video {
+  display: block;
+  width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  background: var(--teal-950);
+}
+
+.public .explore-language {
+  margin-top: 1.5rem;
+}
+
+/* The learner player (app/components/learner-player.tsx). */
+.public .player-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: 1rem;
+  font-family: var(--font-ui);
+}
+
+.public .player-controls fieldset {
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.75rem;
+}
+
+.public .caption-switches button,
+.public .segment-tools button,
+.public .replay-status button,
+.public .occurrences button,
+.public .meaning-popover button {
+  min-height: 2.75rem;
+  margin: 0.15rem 0.35rem 0.15rem 0;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--teal-700);
+  background: var(--sheet);
+  color: var(--teal-900);
+  font: inherit;
+  cursor: pointer;
+}
+
+.public .key-word {
+  margin-left: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--step--1, 0.9rem);
+  color: var(--masi);
+}
+
+.public .caption-switches button[aria-pressed="true"],
+.public .segment-tools button[aria-pressed="true"] {
+  background: var(--teal-900);
+  color: var(--sheet);
+}
+
+.public .speed-choice label {
+  display: block;
+  min-height: 2rem;
+}
+
+.public .replay-status {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.public .transcript-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.public .transcript-segment {
+  padding: 0.75rem;
+  border-left: 4px solid transparent;
+}
+
+.public .transcript-segment.playing {
+  border-left-color: var(--masi);
+  background: var(--masi-200);
+}
+
+.public .transcript-fijian {
+  font-size: var(--step-1);
+  margin: 0.25rem 0;
+  white-space: normal;
+}
+
+.public .transcript-english {
+  color: var(--ink-soft);
+  margin: 0.25rem 0;
+  white-space: normal;
+}
+
+.public .meaning-word {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.public .meaning-word[aria-expanded="true"] {
+  background: var(--teal-100);
+}
+
+.public .meaning-popover {
+  display: block;
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  border: 1px solid var(--teal-700);
+  background: var(--sheet);
+  font-family: var(--font-ui);
+  font-size: var(--step-0);
+}
+
+.public .meaning-popover:focus {
+  outline: 3px solid var(--teal-700);
+  outline-offset: 2px;
+}
+
+.public .meaning-headword {
+  display: block;
+  font-weight: 600;
+}
+
+.public .meaning-line {
+  display: block;
+}
+
+.public .occurrences {
+  padding-left: 0;
+  list-style: none;
+}
+
+.public .public-video > p[role="alert"] {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: var(--sheet);
+  color: var(--ink);
+}
+
+/* The immersion route around the player (app/components/learner-player.tsx). */
+.public .stage-pager a,
+.public .stage-help a,
+.public .learner-progress a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.public .stage-steps ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+}
+
+.public .stage-steps a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+  color: var(--teal-900);
+  text-decoration: none;
+}
+
+.public .stage-steps a:hover {
+  border-color: var(--teal-700);
+}
+
+.public .stage-steps .step-number {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.public .stage-steps .visited a {
+  border-color: var(--teal-700);
+  background: var(--teal-100);
+}
+
+.public .stage-steps a[aria-current="step"] {
+  border-color: var(--teal-900);
+  background: var(--teal-900);
+  color: var(--sheet);
+}
+
+.public .stage-intro {
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid var(--masi);
+  background: var(--sheet);
+}
+
+.public .stage-intro h2 {
+  margin: 0 0 0.25rem;
+  font-size: var(--step-1);
+}
+
+.public .stage-intro p {
+  margin: 0;
+}
+
+.public .help-control {
+  flex-basis: 100%;
+}
+
+.public .help-control > button,
+.public .stage-help button,
+.public .learner-activities button {
+  min-height: 2.75rem;
+  margin: 0.15rem 0.35rem 0.15rem 0;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--teal-700);
+  background: var(--sheet);
+  color: var(--teal-900);
+  font: inherit;
+  cursor: pointer;
+}
+
+.public .help-control > button[aria-expanded="true"] {
+  background: var(--teal-900);
+  color: var(--sheet);
+}
+
+.public .learner-activities button:disabled {
+  border-color: var(--rule);
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.public .stage-help {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+}
+
+.public .stage-help ul {
+  margin: 0.5rem 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.public .stage-help li {
+  margin: 0.25rem 0;
+}
+
+.public .help-status:empty {
+  display: none;
+}
+
+.public .learner-activities .activity-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.public .learner-activities h3 {
+  margin: 1.25rem 0 0;
+  font-size: var(--step-0);
+}
+
+.public .learner-activities .activity-preview {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+}
+
+.public .learner-activities fieldset {
+  border: 0;
+  margin: 0.5rem 0;
+  padding: 0;
+}
+
+.public .learner-activities textarea {
+  display: block;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0.25rem 0 0.5rem;
+  font: inherit;
+}
+
+.public .learner-activities .checkbox {
+  display: block;
+  min-height: 2.75rem;
+}
+
+.public .activity-alternative {
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--teal-700);
+}
+
+.public .activity-feedback {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--teal-100);
+}
+
+.public .meta {
+  color: var(--ink-soft);
+  font-size: var(--step--1);
+}
+
+.public .context-notes ul {
+  padding-left: 0;
+  list-style: none;
+}
+
+.public .context-notes li {
+  margin: 0.75rem 0;
+  padding-left: 0.75rem;
+  border-left: 4px solid var(--masi);
+}
+
+.public .context-notes p {
+  margin: 0;
+}
+
+.public .stage-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  font-family: var(--font-ui);
+}
+
+.public .learner-progress {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--rule);
+  background: var(--sheet);
+}
+
+.public .learner-progress h2 {
+  margin-top: 0;
+  font-size: var(--step-1);
+}
+
+.public .learner-settings {
+  margin-top: 0.75rem;
+  border: 1px solid var(--rule);
+  padding: 0.5rem 0.75rem;
+}
+
+.public .learner-settings .checkbox {
+  display: block;
+  min-height: 2.75rem;
+}

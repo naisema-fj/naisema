@@ -53,6 +53,8 @@ export type Check =
   | { action: "content.withdraw" }
   /** Recording and withdrawing Rights Records, and reading the private evidence behind them. */
   | { action: "rights.manage" | "rightsEvidence.read" }
+  /** Reading the private evidence behind a Knowledge Holder Approval. */
+  | { action: "approvalEvidence.read" }
   /**
    * Uploading files and managing the media library (alt text). There is no public upload path
    * (docs/phase-1a-defaults.md §1).
@@ -75,6 +77,11 @@ export type Check =
   | { action: "knowledgeHolderApproval.record"; revision: { authorIds: string[] } }
   /** Approving or rejecting a Revision for one Review Type. */
   | { action: "revision.review"; revision: RevisionUnderReview }
+  /**
+   * Changing an Expression in the library: editors, and the Educator who added it while no
+   * Learning Layer they aren't assigned to uses it.
+   */
+  | { action: "expression.edit"; expression: { createdBy: string; usedByOthers: boolean } }
   /** Adding a Learning Layer to a Video: editors, and the Educators assigned to that Video. */
   | { action: "learningLayer.create"; video: { assignedEducatorIds: string[] } }
   /** Opening and editing a Learning Layer: editors, and the Educators assigned to it (VAC-05). */
@@ -116,6 +123,7 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "content.withdraw":
     case "rights.manage":
     case "rightsEvidence.read":
+    case "approvalEvidence.read":
       return hasRole("editor");
 
     case "media.upload":
@@ -153,6 +161,12 @@ export function can(actor: Actor | null, check: Check): boolean {
           (revision.reviewType !== "language" || assignment.languageVariety === revision.languageVariety),
       );
     }
+
+    case "expression.edit":
+      return (
+        hasRole("editor") ||
+        (hasRole("educator") && check.expression.createdBy === actor.userId && !check.expression.usedByOthers)
+      );
 
     case "learningLayer.create":
       return hasRole("editor") || (hasRole("educator") && check.video.assignedEducatorIds.includes(actor.userId));

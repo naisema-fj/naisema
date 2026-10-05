@@ -14,13 +14,13 @@ function AreaLinks() {
     <ul className="area-links">
       {PRIMARY_AREAS.map((area) => (
         <li key={area}>
-          <Link to={`/${area}`} aria-current={current === area ? "page" : undefined}>
+          <Link reloadDocument to={`/${area}`} aria-current={current === area ? "page" : undefined}>
             {AREA_NAMES[area]}
           </Link>
         </li>
       ))}
       <li className="search-item">
-        <Link to="/search" aria-current={current === "search" ? "page" : undefined}>
+        <Link reloadDocument to="/search" aria-current={current === "search" ? "page" : undefined}>
           Search
         </Link>
       </li>
@@ -33,7 +33,7 @@ function SiteHeader() {
     <header className="site-header">
       <div className="airmail-band" />
       <div className="site-header-inner">
-        <Link to="/" className="wordmark">
+        <Link reloadDocument to="/" className="wordmark">
           Na iSema
         </Link>
         <nav aria-label="Main" className="site-nav">
@@ -60,17 +60,25 @@ function SiteFooter() {
           <ul className="footer-links">
             {INFO_PAGES.map((page) => (
               <li key={page.path}>
-                <Link to={`/${page.path}`}>{page.title}</Link>
+                <Link reloadDocument to={`/${page.path}`}>
+                  {page.title}
+                </Link>
               </li>
             ))}
             <li>
-              <Link to={`/forms/${SUBMISSION_TYPES.enquiry.path}`}>{SUBMISSION_TYPES.enquiry.title}</Link>
+              <Link reloadDocument to={`/forms/${SUBMISSION_TYPES.enquiry.path}`}>
+                {SUBMISSION_TYPES.enquiry.title}
+              </Link>
             </li>
             <li>
-              <Link to="/newsletter">Newsletter</Link>
+              <Link reloadDocument to="/newsletter">
+                Newsletter
+              </Link>
             </li>
             <li>
-              <Link to="/report">Report a problem</Link>
+              <Link reloadDocument to="/report">
+                Report a problem
+              </Link>
             </li>
           </ul>
         </nav>
@@ -118,7 +126,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           <h1>{title}</h1>
           <p>{text}</p>
           <p>
-            <Link to="/">Go to the Na iSema home page</Link>
+            <Link reloadDocument to="/">
+              Go to the Na iSema home page
+            </Link>
           </p>
         </article>
       </main>

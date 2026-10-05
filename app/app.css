@@ -450,3 +450,147 @@ a {
 .playhead output {
   font-variant-numeric: tabular-nums;
 }
+
+/* Annotating a Segment (app/components/segment-annotations.tsx). */
+.tokens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.token {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #d6d3cc;
+  border-radius: 0.25rem;
+  background: #fff;
+  font: inherit;
+}
+
+.token.annotated {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.token[aria-pressed="true"] {
+  border-color: #1d3557;
+  background: #1d3557;
+  color: #fff;
+}
+
+.annotation-list {
+  padding-left: 1rem;
+}
+
+.annotation-form,
+.note {
+  margin: 0.5rem 0;
+}
+
+.vocabulary-list dt {
+  font-weight: 600;
+}
+
+.vocabulary-list dd {
+  margin: 0 0 0.5rem;
+}
+
+.caption-meanings {
+  margin: 0 0 0.5rem;
+  padding-left: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Activities and their learner preview (app/components/activities-editor.tsx). */
+.activity-list {
+  padding-left: 0;
+  list-style: none;
+}
+
+.activity {
+  border-top: 1px solid #d6d3cc;
+  padding: 0.75rem 0;
+}
+
+.activity h3,
+.completion-rule h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.activity textarea,
+.activity input:not([type="checkbox"], [type="radio"]) {
+  max-width: 100%;
+}
+
+.activity-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  align-items: end;
+  margin-bottom: 0.5rem;
+}
+
+.activity-preview {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #d6d3cc;
+  border-radius: 0.25rem;
+  background: #fff;
+}
+
+.activity-alternative {
+  border-left: 4px solid #1d3557;
+  padding-left: 0.75rem;
+}
+
+.activity-feedback {
+  margin-top: 0.5rem;
+}
+
+/* A Review Link (app/routes/public/review-link.tsx): watermarked as a draft throughout. */
+.review-link-page {
+  background-image: repeating-linear-gradient(-30deg, transparent 0 9rem, rgb(164 22 26 / 0.06) 9rem 9.5rem);
+}
+
+.draft-watermark {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #a4161a;
+  color: #a4161a;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.draft-video {
+  position: relative;
+}
+
+.draft-watermark-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgb(255 255 255 / 0.55);
+  font-size: clamp(1.25rem, 6vw, 3rem);
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 0 0 0.5rem rgb(0 0 0 / 0.6);
+  pointer-events: none;
+  transform: rotate(-20deg);
+}
+
+.issued-link code {
+  overflow-wrap: anywhere;
+}
+
+.segment-english {
+  color: #4a4a4a;
+}
+
+/* A player's error, over its dark frame (app/components/video-preview.tsx). */
+figure > p[role="alert"] {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  color: #a4161a;
+}

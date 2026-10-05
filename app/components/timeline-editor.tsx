@@ -1,9 +1,21 @@
 import { type ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Form } from "react-router";
+import { type Activity, activityProblems } from "~/lib/activities";
+import {
+  type Annotation,
+  annotationProblems,
+  annotationsToCheck,
+  type ContextNote,
+  type ExpressionDetails,
+  noteProblems,
+  pronunciationGuide,
+  vocabularyList,
+} from "~/lib/annotations";
 import {
   LAYER_LEVELS,
   LAYER_LIMITS,
   type LayerDetailField,
+  type LayerRefusal,
   type LearningLayerSnapshot,
 } from "~/lib/learning-layer-fields";
 import {
@@ -15,18 +27,21 @@ import {
   retimeExcerpt,
   type Segment,
   type SegmentField,
-  type SegmentProblem,
   segmentProblems,
 } from "~/lib/segment-rules";
+import { retokenise } from "~/lib/tokens";
 import { importWebVtt, parseWebVtt, type SegmentLanguage } from "~/lib/webvtt";
+import { ActivitiesEditor } from "./activities-editor";
+import { type ExpressionChoice, NotesEditor, SegmentAnnotations } from "./segment-annotations";
 import { VideoPreview } from "./video-preview";
 
 /**
  * The timeline editor for a Learning Layer's Segments (VCMS-02/04, docs/phase-1a-defaults.md §2):
  * time fields that take typed times, the arrow keys (100 ms a press) or the playhead; replaying a
- * Segment; WebVTT import; and a preview of the captions in landscape and vertical layouts. It
- * checks the Segments as they change and names the exact Segment and field; the server checks
- * them again when they are saved. Everything is kept in the page until it is saved.
+ * Segment; WebVTT import; and a preview of the captions in landscape and vertical layouts. Below
+ * them come the notes, the vocabulary list and the Activities. It checks everything as it changes
+ * and names the exact Segment or Activity and field; the server checks them again when they are
+ * saved. Everything is kept in the page until it is saved.
  */
 
 type Props = {
@@ -38,12 +53,10 @@ type Props = {
   orientation: "landscape" | "portrait" | "square";
   preview: { src: string; hls: boolean } | null;
   previewError: string | null;
+  /** The Expression library for the Learning Layer's Language Variety, as it is now. */
+  library: ExpressionChoice[];
   /** What the server refused, when a save was sent back. */
-  refused: {
-    error: string;
-    errors?: Partial<Record<LayerDetailField, string>>;
-    problems?: SegmentProblem[];
-  } | null;
+  refused: LayerRefusal | null;
 };
 
 const newSegment = (startMs: number, clipMs: number): Segment => ({
@@ -56,6 +69,7 @@ const newSegment = (startMs: number, clipMs: number): Segment => ({
   overlapIntended: false,
   draft: false,
   retimed: false,
+  tokens: [],
 });
 
 const excerptFields = (excerpt: Excerpt) => ({
@@ -72,10 +86,16 @@ export function TimelineEditor({
   orientation,
   preview,
   previewError,
+  library,
   refused,
 }: Props) {
+  const [annotations, setAnnotations] = useState<Annotation[]>(snapshot.annotations);
+  const [notes, setNotes] = useState<ContextNote[]>(snapshot.notes);
+  const [activities, setActivities] = useState<Activity[]>(snapshot.activities);
+  const [newExpressions, setNewExpressions] = useState<ExpressionChoice[]>([]);
   const [title, setTitle] = useState(snapshot.title);
   const [level, setLevel] = useState<string>(snapshot.level);
+  const [sensitiveCultural, setSensitiveCultural] = useState(snapshot.flags.includes("sensitiveCultural"));
   const [clipForm, setClipForm] = useState(excerptFields(snapshot.excerpt));
   const [excerpt, setExcerpt] = useState<Excerpt>(snapshot.excerpt);
   const [clipError, setClipError] = useState("");
@@ -145,11 +165,12 @@ export function TimelineEditor({
     if (video.current) video.current.currentTime = (offsetMs + clipTimeMs) / 1000;
   };
 
-  const replay = (segment: Segment) => {
+  /** Plays from one time in the clip to another, such as a Segment or the whole Excerpt. */
+  const replay = ({ startMs, endMs }: { startMs: number; endMs: number }) => {
     const element = video.current;
     if (!element) return;
-    replaying.current = { startMs: segment.startMs, endMs: segment.endMs };
-    element.currentTime = (offsetMs + segment.startMs) / 1000;
+    replaying.current = { startMs, endMs };
+    element.currentTime = (offsetMs + startMs) / 1000;
     element.play().catch(() => {
       replaying.current = null;
       setStatus("The video couldn't play. Press play on the video first.");
@@ -211,6 +232,55 @@ export function TimelineEditor({
     (clipForm.clip === "excerpt" &&
       (parseTimecode(clipForm.sourceStart) !== excerpt?.sourceStartMs ||
         parseTimecode(clipForm.sourceEnd) !== excerpt?.sourceEndMs));
+  // Expressions to choose from: the library as it is now, Expressions this Revision copied that
+  // aren't in it, and new ones defined since opening the editor.
+  const choices = useMemo(() => {
+    const byId = new Map<string, ExpressionChoice>();
+    for (const [id, details] of Object.entries(snapshot.expressions)) byId.set(id, { id, ...details });
+    for (const choice of [...library, ...newExpressions]) byId.set(choice.id, choice);
+    return [...byId.values()].sort((a, b) => a.headword.localeCompare(b.headword));
+  }, [snapshot.expressions, library, newExpressions]);
+  const expressionMap = useMemo(
+    () => Object.fromEntries(choices.map(({ id, ...details }) => [id, details])) as Record<string, ExpressionDetails>,
+    [choices],
+  );
+  const annotationIssues = useMemo(
+    () => annotationProblems(annotations, segments, new Set(Object.keys(expressionMap))),
+    [annotations, segments, expressionMap],
+  );
+  const noteIssues = useMemo(() => noteProblems(notes, segments), [notes, segments]);
+  const activityIssues = useMemo(() => activityProblems(activities, segments), [activities, segments]);
+  const annotationProblemMap = new Map(annotationIssues.map((problem) => [problem.annotationId, problem.message]));
+  const noteProblemMap = new Map(noteIssues.map((problem) => [problem.noteId, problem.message]));
+  const segmentIds = new Set(segments.map((segment) => segment.id));
+  const orphanAnnotations = annotations.filter((annotation) => !segmentIds.has(annotation.segmentId));
+  const vocabulary = useMemo(
+    () => vocabularyList(segments, annotations, expressionMap),
+    [segments, annotations, expressionMap],
+  );
+  const usedNew = newExpressions.filter((expression) =>
+    annotations.some((annotation) => annotation.expressionId === expression.id),
+  );
+  const saveAnnotation = (annotation: Annotation, newExpression: ExpressionChoice | null) => {
+    if (newExpression) setNewExpressions((current) => [...current, newExpression]);
+    setAnnotations((current) =>
+      current.some((item) => item.id === annotation.id)
+        ? current.map((item) => (item.id === annotation.id ? annotation : item))
+        : [...current, annotation],
+    );
+  };
+  // Expressions changed in the library since this Revision copied them: saving takes the new
+  // wording, so the Educator sees both first.
+  const libraryChanges = Object.entries(snapshot.expressions).flatMap(([id, copy]) => {
+    const now = library.find((choice) => choice.id === id);
+    if (!now) return [];
+    const changed = EXPRESSION_FIELD_NAMES.filter(([field]) => (copy[field] ?? "") !== (now[field] ?? ""));
+    return changed.length ? [{ id, copy, now, changed }] : [];
+  });
+  const removeAnnotation = (id: string) => setAnnotations((current) => current.filter((item) => item.id !== id));
+  // An Activity plays its Segment, or the whole clip when it has none (or its Segment was removed).
+  const playActivity = (segmentId: string | null) =>
+    replay(segments.find((item) => item.id === segmentId) ?? { startMs: 0, endMs: clipMs });
   const playing = segments.filter((segment) => segment.startMs <= playheadMs && playheadMs < segment.endMs);
   const detailError = (field: LayerDetailField) => refused?.errors?.[field];
 
@@ -223,6 +293,35 @@ export function TimelineEditor({
         <div role="alert" className="form-errors">
           <p>{refused.error}</p>
         </div>
+      )}
+      {(annotationIssues.length > 0 || noteIssues.length > 0) && (
+        <section aria-labelledby="annotation-problems-heading" className="segment-problems">
+          <h2 id="annotation-problems-heading">Annotations and notes to check</h2>
+          <ul>
+            {annotationIssues.map((problem) => (
+              <li key={problem.annotationId}>
+                <a href={`#annotation-${problem.annotationId}`}>{problem.message}</a>
+              </li>
+            ))}
+            {noteIssues.map((problem) => (
+              <li key={problem.noteId}>
+                <a href={`#note-${problem.noteId}`}>{problem.message}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {activityIssues.length > 0 && (
+        <section aria-labelledby="activity-problems-heading" className="segment-problems">
+          <h2 id="activity-problems-heading">Activities to check</h2>
+          <ul>
+            {activityIssues.map((problem) => (
+              <li key={`${problem.activityId}-${problem.field}-${problem.message}`}>
+                <a href={`#activity-${problem.activityId}-${problem.field}`}>{problem.message}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
       {shown.length > 0 && (
         <section aria-labelledby="problems-heading" className="segment-problems">
@@ -286,6 +385,18 @@ export function TimelineEditor({
           ) : (
             <p role="alert">{previewError ?? "The video can't be previewed yet."}</p>
           )}
+          {playing.some((segment) => annotations.some((annotation) => annotation.segmentId === segment.id)) && (
+            <ul className="caption-meanings" aria-label="Words annotated in the Segment playing">
+              {annotations
+                .filter((annotation) => playing.some((segment) => segment.id === annotation.segmentId))
+                .map((annotation) => (
+                  <li key={annotation.id}>
+                    <span lang="fj">{expressionMap[annotation.expressionId]?.headword}</span>:{" "}
+                    {annotation.contextualMeaning}
+                  </li>
+                ))}
+            </ul>
+          )}
           <p className="playhead">
             Playhead <output>{formatTimecode(playheadMs)}</output> of {formatTimecode(clipMs)}
             {outsideClip && " (the video is outside the Excerpt)"}
@@ -308,6 +419,21 @@ export function TimelineEditor({
           <input type="hidden" name="intent" value="save" />
           <input type="hidden" name="baseRevisionId" value={baseRevisionId} />
           <input type="hidden" name="segments" value={JSON.stringify(segments)} />
+          <input type="hidden" name="annotations" value={JSON.stringify(annotations)} />
+          <input type="hidden" name="notes" value={JSON.stringify(notes)} />
+          <input type="hidden" name="activities" value={JSON.stringify(activities)} />
+          <input
+            type="hidden"
+            name="newExpressions"
+            value={JSON.stringify(
+              usedNew.map(({ id, literalMeaning, ...details }) => ({
+                id,
+                ...details,
+                idiom: literalMeaning !== null,
+                literalMeaning: literalMeaning ?? "",
+              })),
+            )}
+          />
           <input type="hidden" name="clip" value={excerpt ? "excerpt" : "whole"} />
           <input type="hidden" name="sourceStart" value={excerpt ? formatTimecode(excerpt.sourceStartMs) : ""} />
           <input type="hidden" name="sourceEnd" value={excerpt ? formatTimecode(excerpt.sourceEndMs) : ""} />
@@ -330,6 +456,15 @@ export function TimelineEditor({
               </option>
             ))}
           </select>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              name="sensitiveCultural"
+              checked={sensitiveCultural}
+              onChange={(event) => setSensitiveCultural(event.target.checked)}
+            />{" "}
+            Culturally sensitive: needs a Knowledge Holder's approval
+          </label>
           <fieldset>
             <legend id="built-on">Built on</legend>
             <label>
@@ -432,6 +567,20 @@ export function TimelineEditor({
                     aria-invalid={problemFor(segment.id, "fijian") ? true : undefined}
                     aria-describedby={problemFor(segment.id, "fijian") ? `${field("fijian")}-error` : undefined}
                     onChange={(event) => update(index, { fijian: event.target.value })}
+                    // Once the edit is done, its words are matched with those from before it, so words
+                    // still there keep their token IDs and their Annotations (ADR-0011).
+                    onBlur={() => {
+                      const tokens = retokenise(segment.tokens, segment.fijian);
+                      // Where the edit changed how often an annotated word appears, ask the Educator
+                      // to check the Annotation is on the right copy.
+                      const toCheck = new Set(annotationsToCheck(annotations, segment.id, segment.tokens, tokens));
+                      if (toCheck.size) {
+                        setAnnotations((current) =>
+                          current.map((item) => (toCheck.has(item.id) ? { ...item, needsCheck: true } : item)),
+                        );
+                      }
+                      update(index, { tokens });
+                    }}
                   />
                   {problemFor(segment.id, "fijian") && (
                     <p className="field-error" id={`${field("fijian")}-error`}>
@@ -454,6 +603,22 @@ export function TimelineEditor({
                     />{" "}
                     Overlaps the Segment before on purpose
                   </label>
+                  <SegmentAnnotations
+                    segment={segment}
+                    label={label}
+                    annotations={annotations.filter((annotation) => annotation.segmentId === segment.id)}
+                    problems={annotationProblemMap}
+                    choices={choices}
+                    onSave={saveAnnotation}
+                    onRemove={removeAnnotation}
+                  />
+                  <NotesEditor
+                    segmentId={segment.id}
+                    label={label}
+                    notes={notes}
+                    problems={noteProblemMap}
+                    onChange={setNotes}
+                  />
                   <div className="segment-actions">
                     {segment.draft && (
                       <button type="button" onClick={() => update(index, { draft: false })}>
@@ -492,6 +657,98 @@ export function TimelineEditor({
             </button>
           </div>
 
+          {orphanAnnotations.length > 0 && (
+            <section aria-labelledby="orphans-heading" className="segment-problems">
+              <h2 id="orphans-heading">Annotations whose Segment was removed</h2>
+              <ul>
+                {orphanAnnotations.map((annotation) => (
+                  <li key={annotation.id} id={`annotation-${annotation.id}`}>
+                    {expressionMap[annotation.expressionId]?.headword ?? "An Annotation"}:{" "}
+                    {annotation.contextualMeaning}{" "}
+                    <button type="button" onClick={() => removeAnnotation(annotation.id)}>
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {libraryChanges.length > 0 && (
+            <section aria-labelledby="library-changes-heading" className="segment-problems">
+              <h2 id="library-changes-heading">Updated in the library since this Learning Layer was saved</h2>
+              <p className="hint">Saving uses the new wording, which is reviewed with the Learning Layer.</p>
+              <ul>
+                {libraryChanges.map(({ id, copy, now, changed }) => (
+                  <li key={id}>
+                    <span lang="fj">{now.headword}</span>
+                    <ul>
+                      {changed.map(([field, name]) => (
+                        <li key={field}>
+                          {name}: “{copy[field] ?? "none"}” becomes “{now[field] ?? "none"}”
+                        </li>
+                      ))}
+                    </ul>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section aria-labelledby="layer-notes-heading">
+            <h2 id="layer-notes-heading">Notes on the whole Learning Layer</h2>
+            <p className="hint">
+              Cultural or context notes about the whole clip, each with who the knowledge comes from.
+            </p>
+            <NotesEditor
+              segmentId={null}
+              label="the whole Learning Layer"
+              notes={notes}
+              problems={noteProblemMap}
+              onChange={setNotes}
+              include={(note) => note.segmentId === null || !segmentIds.has(note.segmentId)}
+            />
+          </section>
+
+          <section aria-labelledby="vocabulary-heading">
+            <h2 id="vocabulary-heading">Vocabulary list</h2>
+            {vocabulary.length ? (
+              <dl className="vocabulary-list">
+                {vocabulary.map((entry) => (
+                  <div key={entry.expressionId}>
+                    <dt lang="fj">{entry.headword}</dt>
+                    <dd>
+                      {entry.generalMeaning}
+                      <span className="meta">
+                        {entry.occurrences
+                          .map((occurrence) => `“${occurrence.text}” at ${formatTimecode(occurrence.startMs)}`)
+                          .join(" · ")}
+                      </span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p>Annotations added to the vocabulary list appear here, with when they occur.</p>
+            )}
+          </section>
+
+          <section aria-labelledby="activities-heading">
+            <h2 id="activities-heading">Activities</h2>
+            <p className="hint">
+              Practice and comprehension for learners, each on a Segment or the whole clip. Speaking is never required:
+              every Activity has a text alternative, and nothing records anyone.
+            </p>
+            <ActivitiesEditor
+              activities={activities}
+              segments={segments}
+              problems={activityIssues}
+              onChange={setActivities}
+              onPlay={playActivity}
+              pronunciationFor={(segmentId) => pronunciationGuide(annotations, expressionMap, segmentId)}
+            />
+          </section>
+
           <fieldset className="webvtt-tools">
             <legend>WebVTT</legend>
             <label htmlFor="import-fijian">Import Fijian (replaces the Segments)</label>
@@ -523,6 +780,15 @@ export function TimelineEditor({
     </div>
   );
 }
+
+/** An Expression's fields as staff read them, for showing what changed in the library. */
+const EXPRESSION_FIELD_NAMES = [
+  ["headword", "Word or phrase"],
+  ["generalMeaning", "General meaning"],
+  ["literalMeaning", "Literal meaning"],
+  ["grammarNote", "Grammar note"],
+  ["pronunciation", "Pronunciation"],
+] as const;
 
 /**
  * One of a Segment's times: typed ("1:01.250"), moved 100 ms by the up and down arrow keys (which

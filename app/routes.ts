@@ -28,7 +28,11 @@ export default [
     route("connect/creators/:slug", "routes/public/connect/creator.tsx"),
     route(":area", "routes/public/area.tsx"),
     route(":area/:slug", "routes/public/article.tsx"),
+    route(":area/:slug/language/:layerId", "routes/public/learning-layer.tsx"),
   ]),
+  // Review Links: one exact Learning Layer Revision for a Knowledge Holder, never cached or indexed.
+  route("review/:token", "routes/public/review-link.tsx"),
+  route("review/:token/video", "routes/public/review-link-video.ts"),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
   // Media library files that passed their scan (app/lib/media-delivery.server.ts).
@@ -36,6 +40,12 @@ export default [
   route("media/files/:id", "routes/media/file.ts"),
   route("resources/:id/download", "routes/public/resource-download.ts"),
   route("episodes/:id/audio", "routes/public/episode-audio.ts"),
+  // Public Videos and their Learning Layers' captions, decided on every request (app/lib/public-video.server.ts).
+  route("videos/:itemId/playback", "routes/public/video-playback.ts"),
+  route("videos/:itemId/stream", "routes/public/video-stream.ts"),
+  route("language/:layerId/captions/:language", "routes/public/layer-captions.ts"),
+  route("language/:layerId/english/:segmentId", "routes/public/layer-english.ts"),
+  route("language/:layerId/events", "routes/public/layer-events.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
   // Cloudflare Stream's signed processing reports (app/lib/video-assets.server.ts).
   route("webhooks/stream", "routes/public/stream-webhook.ts"),
@@ -68,7 +78,11 @@ export default [
     route("learning-layers", "routes/admin/learning-layers/index.tsx"),
     route("learning-layers/:id", "routes/admin/learning-layers/layer.tsx"),
     route("learning-layers/:id/webvtt/:language", "routes/admin/learning-layers/webvtt.ts"),
+    route("learning-layers/:id/revisions/:number", "routes/admin/learning-layers/revision.tsx"),
+    route("learning-layers/approvals/:approvalId/evidence", "routes/admin/learning-layers/evidence.tsx"),
     route("videos/:id/learning-layers", "routes/admin/learning-layers/video.tsx"),
+    route("expressions", "routes/admin/expressions/index.tsx"),
+    route("expressions/:id", "routes/admin/expressions/expression.tsx"),
     route("media/uploads", "routes/admin/media/uploads.ts"),
     route("media/uploads/:id", "routes/admin/media/upload.ts"),
     route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),
