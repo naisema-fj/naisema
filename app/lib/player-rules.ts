@@ -1,4 +1,4 @@
-import { type Annotation, tokenRange } from "./annotations";
+import { type Annotation, type ExpressionDetails, tokenRange } from "./annotations";
 import type { Excerpt, Segment } from "./segment-rules";
 import { tokenSpans } from "./tokens";
 
@@ -81,4 +81,61 @@ export function annotatedRuns(segment: Pick<Segment, "fijian" | "tokens">, annot
   });
   push(segment.fijian.slice(at), null);
   return runs;
+}
+
+export type MeaningEntry = {
+  expressionId: string;
+  expression: ExpressionDetails;
+  /** The Educator chose it for the vocabulary list. */
+  keyWord: boolean;
+  places: {
+    annotationId: string;
+    segmentId: string;
+    startMs: number;
+    text: string;
+    meaning: string;
+    grammarNote: string;
+  }[];
+};
+
+/**
+ * Every annotated word or phrase, for the list beside the transcript that reaches each meaning
+ * without opening it in place (VID-05): each Expression once, in the order first heard, with every
+ * place it is heard and what it means there. Annotations whose words are gone are left out.
+ */
+export function meaningsList(
+  segments: Segment[],
+  annotations: Annotation[],
+  expressions: Record<string, ExpressionDetails>,
+): MeaningEntry[] {
+  const placed = annotations.flatMap((annotation) => {
+    const segment = segments.find((item) => item.id === annotation.segmentId);
+    const expression = expressions[annotation.expressionId];
+    if (!segment || !expression) return [];
+    const { start, end } = tokenRange(segment, annotation);
+    if (start < 0 || end < start) return [];
+    const run = annotatedRuns(segment, [annotation]).find((item) => item.annotationId === annotation.id);
+    return run ? [{ annotation, segment, start, text: run.text }] : [];
+  });
+  placed.sort((a, b) => a.segment.startMs - b.segment.startMs || a.start - b.start);
+  const entries = new Map<string, MeaningEntry>();
+  for (const { annotation, segment, text } of placed) {
+    const entry = entries.get(annotation.expressionId) ?? {
+      expressionId: annotation.expressionId,
+      expression: expressions[annotation.expressionId],
+      keyWord: false,
+      places: [],
+    };
+    entry.keyWord ||= annotation.inVocabulary;
+    entry.places.push({
+      annotationId: annotation.id,
+      segmentId: segment.id,
+      startMs: segment.startMs,
+      text,
+      meaning: annotation.contextualMeaning,
+      grammarNote: annotation.grammarNote,
+    });
+    entries.set(annotation.expressionId, entry);
+  }
+  return [...entries.values()];
 }

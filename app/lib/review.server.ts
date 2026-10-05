@@ -10,7 +10,7 @@ import {
   roleAssignment,
   user,
 } from "~db/schema";
-import type { ArticleSnapshot } from "./article-fields";
+import { type ArticleSnapshot, footageOf } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { ContentType } from "./content-types";
 import type { Database } from "./db.server";
@@ -239,8 +239,8 @@ export async function loadReview(db: Database, revisionId: string) {
     flags,
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
-    /** A Video's footage, which must have finished processing for the Video to be public. */
-    videoAssetId: content.video?.videoAssetId ?? null,
+    /** Its footage (a Video's, or a video Episode's), which must have finished processing to be public. */
+    videoAssetId: footageOf(content),
     /** A Creator Profile's free sample, which must itself be public for the profile to be. */
     creatorSampleId: content.creator?.sampleItemId ?? null,
     /** The media library files the Revision shows or offers; each needs rights of its own. */

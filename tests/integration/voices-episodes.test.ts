@@ -137,7 +137,10 @@ describe("Voices Episodes", () => {
     expect(html).not.toContain("<audio");
     expect(html).toContain("Who&#x27;s speaking");
     expect(html).toContain('<strong class="speaker">Mere: </strong>Bula vinaka, Ratu.');
-    expect(await (await visit(`/videos/${id}/playback`)).json()).toEqual({ src: `/videos/${id}/stream`, hls: false });
+    expect(await (await visit(`/videos/${id}/playback`)).json()).toMatchObject({
+      src: expect.stringMatching(`^/videos/${id}/stream\\?v=`),
+      hls: false,
+    });
     expect((await visit(`/episodes/${id}/audio`)).status).toBe(404);
   });
 

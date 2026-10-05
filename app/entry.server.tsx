@@ -3,10 +3,10 @@ import { renderToReadableStream } from "react-dom/server";
 import type { EntryContext, RouterContextProvider } from "react-router";
 import { ServerRouter } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { pageHydrates, pagePlaysVideo, type RouteHandle } from "~/lib/route-handle";
 import { createNonce, NonceContext } from "~/lib/security-headers";
 import { applySecurityHeaders } from "~/lib/security-policy";
 import { videoPlaybackOrigin } from "~/lib/video-provider.server";
-import { pageHydrates, pagePlaysVideo, type RouteHandle } from "./lib/route-handle";
 
 export default async function handleRequest(
   request: Request,

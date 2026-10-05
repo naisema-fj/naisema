@@ -19,6 +19,9 @@ export const PUBLIC_CACHE_SECONDS = 300;
 /** The Workers default cache; app code is typed against the browser's CacheStorage, which lacks it. */
 const edgeCache = () => (caches as unknown as { default: Cache }).default;
 
+/** For a public answer that carries something short-lived or must be decided afresh each time. */
+export const PRIVATE_NO_STORE = "private, no-store";
+
 /** The Cache-Control a public route sends to be edge-cached; browsers keep it for a minute. */
 export const PUBLIC_CACHE_CONTROL = `public, max-age=60, s-maxage=${PUBLIC_CACHE_SECONDS}`;
 
@@ -34,9 +37,12 @@ export function publicCacheKey(env: Env, url: string) {
   return key.toString();
 }
 
-/** Serves a public GET from the edge cache when it can, and caches cacheable answers. */
+/**
+ * Serves a public GET from the edge cache when it can, and caches cacheable answers. Data requests
+ * (`*.data`, a client-side navigation's loader data) are never cached: purges only reach pages.
+ */
 export async function servePublic(request: Request, env: Env, ctx: ExecutionContext, render: () => Promise<Response>) {
-  if (request.method !== "GET") return render();
+  if (request.method !== "GET" || new URL(request.url).pathname.endsWith(".data")) return render();
   const cache = edgeCache();
   const key = publicCacheKey(env, request.url);
   const hit = await cache.match(key);

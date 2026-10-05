@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Annotation } from "~/lib/annotations";
-import { annotatedRuns, currentSegment, PLAYBACK_SPEEDS, playWindow, replayStep } from "~/lib/player-rules";
+import {
+  annotatedRuns,
+  currentSegment,
+  meaningsList,
+  PLAYBACK_SPEEDS,
+  playWindow,
+  replayStep,
+} from "~/lib/player-rules";
 import type { Segment } from "~/lib/segment-rules";
 import { retokenise } from "~/lib/tokens";
 import { toWebVtt } from "~/lib/webvtt";
@@ -104,5 +111,51 @@ describe("a Segment's words with their meanings", () => {
       { text: " ", annotationId: null },
       { text: "bula", annotationId: "n2" },
     ]);
+  });
+});
+
+describe("every meaning, for the list beside the transcript", () => {
+  const annotation = (id: string, segmentId: string, start: string, end: string, expressionId: string) =>
+    ({
+      id,
+      segmentId,
+      startTokenId: start,
+      endTokenId: end,
+      expressionId,
+      contextualMeaning: `meaning ${id}`,
+      grammarNote: "",
+      inVocabulary: id === "n1",
+      needsCheck: false,
+    }) satisfies Annotation;
+  const expressions = {
+    e1: {
+      headword: "bula",
+      generalMeaning: "life; hello",
+      grammarNote: "",
+      pronunciation: "mbula",
+      literalMeaning: null,
+    },
+    e2: { headword: "lako", generalMeaning: "go", grammarNote: "A verb.", pronunciation: "", literalMeaning: null },
+  };
+  const segments = [segment("a", 0, 2_000, "Bula, bula"), segment("b", 2_000, 4_000, "Au lako")];
+
+  it("lists each Expression once, in the order first heard, with every place and what it means there", () => {
+    const list = meaningsList(
+      segments,
+      [
+        annotation("n2", "b", "b-t2", "b-t2", "e2"),
+        annotation("n1", "a", "a-t1", "a-t1", "e1"),
+        annotation("n3", "a", "a-t2", "a-t2", "e1"),
+        annotation("gone", "a", "x", "x", "e2"),
+      ],
+      expressions,
+    );
+    expect(list.map((entry) => entry.expression.headword)).toEqual(["bula", "lako"]);
+    expect(list[0]).toMatchObject({ keyWord: true });
+    expect(list[0].places).toEqual([
+      { annotationId: "n1", segmentId: "a", startMs: 0, text: "Bula", meaning: "meaning n1", grammarNote: "" },
+      { annotationId: "n3", segmentId: "a", startMs: 0, text: "bula", meaning: "meaning n3", grammarNote: "" },
+    ]);
+    expect(list[1]).toMatchObject({ keyWord: false, places: [{ annotationId: "n2", text: "lako" }] });
   });
 });

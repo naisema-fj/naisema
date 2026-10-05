@@ -3,8 +3,10 @@ import { LearnerPlayer } from "~/components/learner-player";
 import { isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
+import { languageName, languageTag } from "~/lib/language-variety";
 import { playWindow } from "~/lib/player-rules";
 import { findPublicLayer, videoPlaybackPath } from "~/lib/public.server";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
 import type { RouteHandle } from "~/lib/route-handle";
 import type { Route } from "./+types/learning-layer";
@@ -13,7 +15,7 @@ export const handle: RouteHandle = { video: true };
 
 /** The page carries a signed playback address and a nonce for its scripts, so it is never kept. */
 export function headers() {
-  return { "Cache-Control": "private, no-store" };
+  return { "Cache-Control": PRIVATE_NO_STORE };
 }
 
 /**
@@ -41,12 +43,13 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     width: video.video.width,
     height: video.video.height,
     orientation: video.video.orientation,
-    window: playWindow(snapshot.excerpt, video.video.durationMs),
+    span: playWindow(snapshot.excerpt, video.video.durationMs),
+    language: { tag: languageTag(layer.languageVariety), name: languageName(layer.languageVariety) },
     segments: snapshot.segments,
     annotations: snapshot.annotations,
     expressions: snapshot.expressions,
     tracks: {
-      fijian: `/language/${layer.id}/captions/fijian`,
+      taught: `/language/${layer.id}/captions/fijian`,
       english: `/language/${layer.id}/captions/english`,
     },
   });

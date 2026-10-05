@@ -3,7 +3,7 @@ import type { EmbeddedItem } from "~/components/article-body-view";
 import { contentItem, learningLayer, mediaAsset, revision, slugRedirect, topic } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, embeddedItemIds } from "./article-body";
-import type { ArticleSnapshot } from "./article-fields";
+import { type ArticleSnapshot, footageOf } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import { type CreatorDetails, MEDIA_TYPES } from "./creator-fields";
 import type { Database } from "./db.server";
@@ -230,9 +230,8 @@ async function publicView(
     resource: snapshot.resource ? await publicResource(db, item.id, snapshot.resource) : null,
     episode: snapshot.episode ? await publicEpisode(db, item.id, snapshot.episode) : null,
     creator: snapshot.creator ? await publicCreator(db, snapshot.title, snapshot.creator, now) : null,
-    // A Video's footage, or a video Episode's recording.
     video: await (async () => {
-      const footage = snapshot.video?.videoAssetId ?? snapshot.episode?.videoAssetId;
+      const footage = footageOf(snapshot);
       return footage ? publicVideo(db, item, footage, now) : null;
     })(),
     related: await relatedItems(db, snapshot.relatedIds ?? [], now),
@@ -330,7 +329,7 @@ async function publicVideo(db: Database, item: ItemRow, videoAssetId: string, no
  * The Learning Layers public on a Video right now: published, and their published Revision eligible
  * (ADR-0007). The Video itself is public, since only its public page asks (#28's serving rule).
  */
-async function publicLayers(db: Database, contentItemId: string, now: Date) {
+export async function publicLayers(db: Database, contentItemId: string, now = new Date()) {
   const rows = await db
     .select({ id: learningLayer.id, revisionId: learningLayer.currentPublishedRevisionId })
     .from(learningLayer)
@@ -369,8 +368,20 @@ export async function findPublicLayer(
   const found = await findPublicArticle(db, area, slug, now, ["video"]);
   if (found.kind === "moved") return { kind: "moved", to: `${found.to}/language/${layerId}` };
   if (found.kind !== "found") return found;
-  const layer = (await publicLayers(db, found.article.id, now)).find((candidate) => candidate.id === layerId);
-  return layer ? { kind: "found", video: found.article, layer } : { kind: "missing" };
+  // The Video's page has just decided which of its Learning Layers are public.
+  if (!found.article.video?.layers.some((card) => card.id === layerId)) return { kind: "missing" };
+  const row = await db
+    .select({ revisionId: learningLayer.currentPublishedRevisionId })
+    .from(learningLayer)
+    .where(eq(learningLayer.id, layerId))
+    .get();
+  const review = row?.revisionId ? await loadLayerReview(db, row.revisionId) : null;
+  if (!review) return { kind: "missing" };
+  return {
+    kind: "found",
+    video: found.article,
+    layer: { id: layerId, snapshot: review.snapshot, languageVariety: review.layer.languageVariety },
+  };
 }
 
 /** Where an Episode's audio streams from: through the Episode, so eligibility is decided each time. */

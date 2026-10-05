@@ -105,7 +105,10 @@ describe("the learner player", () => {
     const { editor, videoId, layerId, number, player } = await publishedLayer();
     const playback = await visit(`/videos/${videoId}/playback`);
     expect(playback.headers.get("Cache-Control")).toBe("private, no-store");
-    expect(await playback.json()).toEqual({ src: `/videos/${videoId}/stream`, hls: false });
+    expect(await playback.json()).toMatchObject({
+      src: expect.stringMatching(`^/videos/${videoId}/stream\\?v=`),
+      hls: false,
+    });
     const range = await visit(`/videos/${videoId}/stream`, { headers: { Range: "bytes=0-99" } });
     expect(range.status).toBe(206);
     await range.arrayBuffer();
@@ -126,5 +129,39 @@ describe("the learner player", () => {
     await editor.browser.fetch(`/admin/articles/${videoId}/revisions/${videoNumber}`, { form: { intent: "withdraw" } });
     expect((await visit(`/videos/${videoId}/playback`)).status).toBe(404);
     expect((await visit(`/videos/${videoId}/stream`)).status).toBe(404);
+  });
+
+  it("hides every Learning Layer when only its Video is withdrawn", async () => {
+    const { editor, videoId, layerId, player, story } = await publishedLayer();
+    const { number } = (await env.DB.prepare(
+      "SELECT r.number FROM content_item c JOIN revision r ON r.id = c.current_published_revision_id WHERE c.id = ?1",
+    )
+      .bind(videoId)
+      .first<{ number: number }>()) as { number: number };
+    const withdrawn = await editor.browser.fetch(`/admin/articles/${videoId}/revisions/${number}`, {
+      form: { intent: "withdraw" },
+    });
+    expect(withdrawn.status).toBe(302);
+    expect((await layerRow(layerId))?.state).toBe("published");
+    expect((await visit(story)).status).toBe(410);
+    expect((await visit(player)).status).toBe(410);
+    expect((await visit(`/language/${layerId}/captions/fijian`)).status).toBe(404);
+  });
+
+  it("takes a Learning Layer down once its teaching rights go, leaving the Video playing", async () => {
+    const { editor, videoId, layerId, player, story } = await publishedLayer();
+    const { results } = await env.DB.prepare(
+      "SELECT id, permitted_uses AS uses FROM rights_record WHERE subject_id = ?1",
+    )
+      .bind(videoId)
+      .all<{ id: string; uses: string }>();
+    const teaching = results.find((record) => record.uses.includes("translate"));
+    await editor.browser.fetch(`/admin/articles/${videoId}/rights`, {
+      form: { intent: "withdraw", recordId: teaching?.id as string, reason: "No longer for teaching." },
+    });
+    expect((await visit(player)).status).toBe(404);
+    const page = await (await visit(story)).text();
+    expect(page).not.toContain(`/language/${layerId}`);
+    expect((await visit(`/videos/${videoId}/playback`)).status).toBe(200);
   });
 });
