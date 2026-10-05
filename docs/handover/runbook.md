@@ -146,11 +146,22 @@ A published Video's page plays its footage and lists, under **Explore the langua
 - Replay of a Segment once or on a loop, with a Stop button.
 - Three speeds: normal, 0.75× and 0.5×.
 
-The player guides learners through the eight Stages of the Immersion Route (`app/lib/immersion.ts`, decision log 1a-16), one page each at `?stage=`. Each Stage is sent only what it shows, so a line's English is fetched from `/language/<id>/english/<segment id>` only when a learner asks for it in a Stage without it. Activities are done in their Stage, and progress and support choices are kept in the browser tab's session only. Learning events (`segment_replayed`, `support_toggled`, `activity_attempted`, `feedback_viewed`, `learning_completed`) go to `/language/<id>/events` and into the `EVENTS` Analytics Engine dataset, with the Learning Layer's IDs only.
+The player guides learners through the eight Stages of the Immersion Route (`app/lib/immersion.ts`, decision log 1a-16), one page each at `?stage=`. Each Stage is sent only what it shows, so a line's English is fetched from `/language/<id>/english/<segment id>` only when a learner asks for it in a Stage without it. Activities are done in their Stage. For a visitor, progress and support choices are kept in the browser tab's session only; for a signed-in learner they are saved to their Learner Account (below). Learning events (`segment_replayed`, `support_toggled`, `activity_attempted`, `feedback_viewed`, `learning_completed`) go to `/language/<id>/events` and into the `EVENTS` Analytics Engine dataset, with the Learning Layer's IDs only.
 
 An Excerpt's Learning Layer plays only between its in and out times. Players ask `/videos/<item id>/playback` for a new signed address when theirs runs out. Locally, videos play from `/videos/<item id>/stream`. The e2e suite puts a short real clip (`e2e/fixtures/market.mp4`) into local R2 when it starts, so its journey plays real footage.
 
 A Voices Episode can use a video in place of audio (**Recording: Video** on its form). It then plays like a Video, with its transcript, and needs the video to have finished processing and the file its own Rights Record.
+
+## Learner Accounts
+
+Learner Accounts are optional and for adults only (decision log 1a-17). On the public site, `/account/sign-in` takes an email address and an "I am 18 or older" box, and emails a sign-in link; the first link used makes the account. The account holds the email address and nothing else about the person. It is a separate Better Auth setup from staff sign-in (`createLearnerAuth` in `app/lib/auth.server.ts`), with its own cookie and base path, and only its emailed link (`/account/auth/magic-link/verify`) is reachable. An address with a staff role, now or in the past, can't hold a Learner Account: it is emailed to use another address.
+
+- **The learning page** is `/account`: carry on learning, saved videos and words, a JSON download (`/account/export`), clear history, delete the account and sign out. It is never cached or indexed.
+- **Saving progress.** The player puts every change into a queue in the browser's IndexedDB and sends it to `/account/events` in batches (`app/lib/progress-queue.client.ts`). Until the server acknowledges a change, the player says "Not yet saved". A change sent twice is applied once (`learner_event`).
+- **Deleting.** An account deleted by its owner, or for being inactive, is removed at once from every table, and a SHA-256 hash of its user ID is added to `deletion_ledger`, which refuses changes. Restoring a backup must replay that ledger before the site serves traffic (ADR-0009, #34).
+- **Inactive accounts.** The daily job emails a warning to accounts unused for 700 days, and deletes them 30 days later unless they were used in between. Any visit while signed in counts as use.
+
+If a learner says sign-in emails don't arrive, check `email_failure` for failed sends ("Your Na iSema sign-in link"), and remember the limit of three links per address every 15 minutes. Locally, read the link from `email_outbox` as for staff, and open it on `http://localhost:5173`.
 
 ## Public search
 

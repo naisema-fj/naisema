@@ -53,6 +53,25 @@ function readOutboxCopy(email: string): string | null {
   }
 }
 
+/**
+ * Turnstile's script comes from Cloudflare, which the test machine may not reach. This stands in
+ * for its test site key's widget: it adds the always-passing token to the form, as the real one
+ * would (app/lib/turnstile.ts).
+ */
+const TURNSTILE_STUB = `for (const widget of document.querySelectorAll(".cf-turnstile")) {
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "cf-turnstile-response";
+  input.value = "XXXX.DUMMY.TOKEN.XXXX";
+  widget.append(input);
+}`;
+
+export async function stubTurnstile(page: Page) {
+  await page.route("https://challenges.cloudflare.com/turnstile/v0/api.js", (route) =>
+    route.fulfill({ contentType: "text/javascript", body: TURNSTILE_STUB }),
+  );
+}
+
 export async function expectNoAxeViolations(page: Page) {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])

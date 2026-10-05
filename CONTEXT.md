@@ -149,7 +149,7 @@ _Avoid_: Influencer, channel owner
 An adult (18+) using Learn; may browse and practise without an account.
 
 **Learner Account**:
-An optional, self-declared 18+ account that holds a Learner's private saves, history and progress. No under-18 accounts exist; families use the platform through a caregiver's account or without one.
+An optional, self-declared 18+ account that holds a Learner's private saves, history and progress, and only their email address about them. No under-18 accounts exist; families use the platform through a caregiver's account or without one. An address with a staff role can't hold one.
 _Avoid_: Member profile, child account
 
 **Role Assignment**:

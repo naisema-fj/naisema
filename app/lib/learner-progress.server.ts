@@ -26,6 +26,7 @@ import {
 } from "./learner-progress";
 import { DEFAULT_PREFERENCES, type StageCaptions, type SupportPreferences } from "./learner-session";
 import { type LearningLayerSnapshot, withDefaults } from "./learning-layer-fields";
+import { logError } from "./log.server";
 import { PLAYBACK_SPEEDS } from "./player-rules";
 import { eligiblePublished, itemPath, layerPath } from "./public.server";
 import { publicLayerById } from "./public-video.server";
@@ -294,6 +295,12 @@ async function applyEvent(db: Database, userId: string, event: ProgressEvent, lo
     }
     case "save-word": {
       if (!snapshot.expressions[event.expressionId]) return false;
+      const known = await db
+        .select({ id: expression.id })
+        .from(expression)
+        .where(eq(expression.id, event.expressionId))
+        .get();
+      if (!known) return false;
       await db
         .insert(savedVocabulary)
         .values({
@@ -313,8 +320,8 @@ async function applyEvent(db: Database, userId: string, event: ProgressEvent, lo
  * Applies a batch of a learner's events in the order sent (§8). An event already applied is only
  * acknowledged again. Position, stage and choices take the latest received; answers and saves
  * merge, and an answer never un-completes anything. Events that name something the learner can't
- * act on (a Learning Layer no longer public, an Activity not in the Revision) are refused, and
- * acknowledged too, since sending them again can't help.
+ * act on (a Learning Layer no longer public, an Activity not in the Revision), or that fail to
+ * apply, are refused, and acknowledged too, since sending them again can't help.
  */
 export async function applyProgressEvents(db: Database, userId: string, events: ProgressEvent[], now = new Date()) {
   const lookup = new LayerLookup(db, now);
@@ -326,7 +333,13 @@ export async function applyProgressEvents(db: Database, userId: string, events: 
       .where(and(eq(learnerEvent.userId, userId), eq(learnerEvent.eventId, event.id)))
       .get();
     if (seen) continue;
-    if (!(await applyEvent(db, userId, event, lookup, now))) refused.push(event.id);
+    try {
+      if (!(await applyEvent(db, userId, event, lookup, now))) refused.push(event.id);
+    } catch (error) {
+      // One event that can't be applied mustn't hold up the learner's queue for good.
+      logError("Progress event not applied", { type: event.type, error });
+      refused.push(event.id);
+    }
     await db.insert(learnerEvent).values({ userId, eventId: event.id, receivedAt: now }).onConflictDoNothing();
   }
   return { refused };
