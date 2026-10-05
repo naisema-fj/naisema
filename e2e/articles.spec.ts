@@ -34,7 +34,12 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await expect(page.getByRole("textbox", { name: "Body" })).toContainText("Offer the bundle with both hands.");
   await expectNoAxeViolations(page);
 
-  await page.getByRole("textbox", { name: "Body" }).getByText("Offer the bundle with both hands.").click();
+  // Click at the end of the paragraph's last line: on a phone-width screen the sentence can wrap,
+  // and End would only reach the end of the visual line that was clicked.
+  const paragraph = page.getByRole("textbox", { name: "Body" }).getByText("Offer the bundle with both hands.");
+  const box = await paragraph.boundingBox();
+  if (!box) throw new Error("The paragraph to extend isn't on screen");
+  await paragraph.click({ position: { x: box.width - 2, y: box.height - 4 } });
   await page.keyboard.press("End");
   await page.keyboard.type(" Then sit and listen.");
   await page.getByRole("button", { name: "Save new revision" }).click();

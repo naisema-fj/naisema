@@ -50,7 +50,7 @@ test("a visitor sends an enquiry: refused answers are kept, success comes once s
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("heading", { name: "Thank you, it's been sent" })).toBeVisible();
   await expectNoAxeViolations(page);
-  expect(latestEmailText(email)).toContain("Bula! Is there a class in Lauan?");
+  expect(await latestEmailText(email)).toContain("Bula! Is there a class in Lauan?");
 });
 
 test("a contributor is sent an upload link and sends their file into quarantine", async ({ page }, testInfo) => {
@@ -78,8 +78,8 @@ test("a contributor is sent an upload link and sends their file into quarantine"
   // The local database file can lag the server by a moment, so wait for the email to show up.
   let link: string | undefined;
   await expect
-    .poll(() => {
-      link = latestEmailText(email).match(/https?:\/\/[^/\s]+(\/upload\/\S+)/)?.[1];
+    .poll(async () => {
+      link = (await latestEmailText(email)).match(/https?:\/\/[^/\s]+(\/upload\/\S+)/)?.[1];
       return link;
     })
     .toBeTruthy();
