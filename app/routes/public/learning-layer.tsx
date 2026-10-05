@@ -5,9 +5,8 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { learnerView, readStage } from "~/lib/immersion";
 import { languageName, languageTag } from "~/lib/language-variety";
-import { LEARNER_PATHS } from "~/lib/learner-progress";
 import { learnerLayerState } from "~/lib/learner-progress.server";
-import { getLearner } from "~/lib/learners.server";
+import { getLearner, requireOwnRecords } from "~/lib/learners.server";
 import { playWindow } from "~/lib/player-rules";
 import { findPublicLayer, videoPlaybackPath } from "~/lib/public.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
@@ -42,6 +41,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   if (!item || !video.video) throw new Response("Not found", { status: 404 });
   const { snapshot } = layer;
   const learner = await getLearner(env, request);
+  if (learner) requireOwnRecords(learner, "learnerRecord.read");
   const view = learnerView(snapshot, readStage(new URL(request.url).searchParams.get("stage")));
   return data({
     layerId: layer.id,
@@ -69,7 +69,6 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
           ...(await learnerLayerState(db, learner.userId, { ...layer, contentItemId: video.id })),
         }
       : null,
-    signInPath: LEARNER_PATHS.signIn,
   });
 }
 

@@ -1,6 +1,7 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import {
   activityAttempt,
+  auditEvent,
   bookmark,
   contentItem,
   expression,
@@ -89,8 +90,9 @@ class LayerLookup {
   }
 
   /**
-   * A Revision of a Learning Layer that is public now: its published one, or an earlier one a
-   * learner was on before another was published. Null for anything else.
+   * A Revision of a Learning Layer that is public now: its published one, or one published before
+   * it, which a learner may have been on, offline, when another was published. Never a draft that
+   * was never public (ADR-0007). Null for anything else.
    */
   async revision(layerId: string, revisionId: string) {
     const layer = await this.layer(layerId);
@@ -101,6 +103,14 @@ class LayerLookup {
       found = this.db
         .select({ snapshot: learningLayerRevision.snapshot })
         .from(learningLayerRevision)
+        .innerJoin(
+          auditEvent,
+          and(
+            eq(auditEvent.action, "learning_layer.published"),
+            eq(auditEvent.objectId, layerId),
+            sql`json_extract(${auditEvent.details}, '$.revisionId') = ${learningLayerRevision.id}`,
+          ),
+        )
         .where(and(eq(learningLayerRevision.id, revisionId), eq(learningLayerRevision.learningLayerId, layerId)))
         .get()
         .then((row) => (row ? withDefaults(row.snapshot as LearningLayerSnapshot) : null));
@@ -236,6 +246,8 @@ async function applyEvent(db: Database, userId: string, event: ProgressEvent, lo
           positionMs: event.positionMs,
           segmentId: event.segmentId,
           visited: addVisit(state, event.stage),
+          // Caption choices belong to the Revision they were made on.
+          ...(state && state.revisionId !== event.revisionId ? { captions: "{}" } : {}),
         }),
         now,
       );
@@ -247,12 +259,17 @@ async function applyEvent(db: Database, userId: string, event: ProgressEvent, lo
         db,
         userId,
         { ...start, stage: event.stage },
-        (state) => ({
-          captions: JSON.stringify({
-            ...readRecord(state?.captions ?? "{}"),
-            [event.stage]: { taught, english, underAlways },
-          }),
-        }),
+        // Caption choices belong to the Revision they were made on; one for an earlier Revision is
+        // kept no longer once the learner has moved on.
+        (state) =>
+          state && state.revisionId !== event.revisionId
+            ? {}
+            : {
+                captions: JSON.stringify({
+                  ...readRecord(state?.captions ?? "{}"),
+                  [event.stage]: { taught, english, underAlways },
+                }),
+              },
         now,
       );
       return true;
@@ -504,8 +521,8 @@ export async function learningPage(db: Database, userId: string, now = new Date(
 
 /**
  * Everything a Learner Account holds, for the learner's own download (DATA-01): the account,
- * saves, where they are in each Learning Layer and every answer. IDs are the site's own; the
- * words saved are as the learner saw them.
+ * saves, where they are in each Learning Layer and every answer. IDs are the site's own, with
+ * each saved video's address and each saved word's headword as the library has it now.
  */
 export async function exportLearnerData(db: Database, userId: string) {
   const [account, bookmarks, words, states, attempts] = await Promise.all([
@@ -522,7 +539,7 @@ export async function exportLearnerData(db: Database, userId: string) {
       .where(eq(learnerAccount.userId, userId))
       .get(),
     db
-      .select({ contentItemId: bookmark.contentItemId, savedAt: bookmark.savedAt, title: contentItem.slug })
+      .select({ contentItemId: bookmark.contentItemId, savedAt: bookmark.savedAt, slug: contentItem.slug })
       .from(bookmark)
       .innerJoin(contentItem, eq(contentItem.id, bookmark.contentItemId))
       .where(eq(bookmark.userId, userId)),
@@ -551,7 +568,7 @@ export async function exportLearnerData(db: Database, userId: string) {
     },
     savedVideos: bookmarks.map((saved) => ({
       contentItemId: saved.contentItemId,
-      slug: saved.title,
+      slug: saved.slug,
       savedAt: saved.savedAt.toISOString(),
     })),
     savedWords: words.map((word) => ({

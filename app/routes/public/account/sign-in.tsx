@@ -9,7 +9,8 @@ import {
 } from "~/components/public/form-fields";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { guardForm } from "~/lib/form-guard.server";
-import { fromThisSite, getLearner, LEARNER_PATHS, requestLearnerSignInLink } from "~/lib/learners.server";
+import { LEARNER_PATHS } from "~/lib/learner-progress";
+import { fromThisSite, getLearner, requestLearnerSignInLink } from "~/lib/learners.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import type { RouteHandle } from "~/lib/route-handle";
 import { emailProblem, formValues, normaliseEmail, SUBMISSION_LIMITS } from "~/lib/submission-fields";

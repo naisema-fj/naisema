@@ -16,8 +16,12 @@ import {
 
 /** Where the queue is up to, for the "Not yet saved" indicator. */
 export type QueueStatus = {
+  /** Whether the queue on this device has been read yet; until then nothing is known. */
+  ready: boolean;
   /** Changes not yet acknowledged. */
   waiting: number;
+  /** Changes the server acknowledged but couldn't apply, on this page, such as saving something no longer public. */
+  refused: string[];
   sending: boolean;
   /** The last send failed; the queue is waiting to try again. */
   retrying: boolean;
@@ -58,7 +62,14 @@ const done = <T>(request: IDBRequest<T>) =>
 class ProgressQueue {
   private db: Promise<IDBDatabase | null>;
   private memory: Entry[] = [];
-  private status: QueueStatus = { waiting: 0, sending: false, retrying: false, signedOut: false };
+  private status: QueueStatus = {
+    ready: false,
+    waiting: 0,
+    refused: [],
+    sending: false,
+    retrying: false,
+    signedOut: false,
+  };
   private listeners = new Set<(status: QueueStatus) => void>();
   private failures = 0;
   private timer: ReturnType<typeof setTimeout> | undefined;
@@ -98,7 +109,7 @@ class ProgressQueue {
   }
 
   private async refresh() {
-    this.set({ waiting: (await this.entries()).length });
+    this.set({ ready: true, waiting: (await this.entries()).length });
   }
 
   /** The events still waiting, oldest first. */
@@ -114,14 +125,15 @@ class ProgressQueue {
     };
   }
 
-  /** Queues a change, then sends what is waiting. */
-  async add(fields: EventFields) {
+  /** Queues a change, then sends what is waiting. Returns the change's ID. */
+  async add(fields: EventFields): Promise<string> {
     const entry: Entry = { user: this.user, event: { ...fields, id: crypto.randomUUID() } as ProgressEvent };
     const db = await this.db;
     if (db) await done(db.transaction(STORE, "readwrite").objectStore(STORE).add(entry));
     else this.memory.push(entry);
     await this.refresh();
     this.flush();
+    return entry.event.id;
   }
 
   /** Sends the oldest waiting events, and goes on until none are left or a send fails. */
@@ -147,8 +159,9 @@ class ProgressQueue {
         return;
       }
       if (response.ok) {
-        const { acknowledged } = (await response.json()) as { acknowledged: string[] };
+        const { acknowledged, refused } = (await response.json()) as { acknowledged: string[]; refused: string[] };
         await this.remove(new Set(acknowledged));
+        if (refused.length) this.set({ refused: [...this.status.refused, ...refused] });
         sent = true;
       } else if (response.status === 400 || response.status === 413) {
         // A batch the server can never read; keeping it would block everything after it.

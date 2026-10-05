@@ -127,11 +127,11 @@ export default {
    * Daily, as one recorded job the monitor watches: Rights Record expiry warnings, then
    * reindexing items whose rights expired in the last two days (overlapping, in case a run was
    * missed). Then the quarantine is tidied: old failures removed, abandoned uploads dropped and
-   * lost scans queued again. Then videos whose processing report never came are asked about, and
-   * masters never sent are sent. Last, Learner Accounts: old event IDs and link counts are
-   * forgotten, and inactive accounts are warned or deleted (app/lib/learner-records.server.ts).
-   * Then, as its own job so a problem reading Cloudflare's figures doesn't hide how the daily job
-   * went, the month's media usage is recorded (VAC-10). Awaited, so a failed run shows as failed.
+   * lost scans queued again. Last, videos whose processing report never came are asked about, and
+   * masters never sent are sent. Beside it, each as its own job so a problem in one doesn't hide
+   * how the others went: the month's media usage is recorded (VAC-10), and Learner Accounts' old
+   * event IDs and link counts are forgotten and inactive accounts warned or deleted
+   * (app/lib/learner-records.server.ts). Awaited, so a failed run shows as failed.
    */
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
@@ -144,11 +144,13 @@ export default {
         await reindexExpiredRights(db, new Date(now.getTime() - 2 * DAY_MS), now);
         await tidyQuarantine(env, db, now);
         await refreshStalledVideos(db, videoProvider(env), now);
+      });
+      const usage = runJob(db, "usage", now, () => recordUsage(env, db, platformMetrics(env), now));
+      const learners = runJob(db, "learner-accounts", now, async () => {
         await tidyLearnerRecords(db, now);
         await handleInactiveLearners(env, db, now);
       });
-      const usage = runJob(db, "usage", now, () => recordUsage(env, db, platformMetrics(env), now));
-      const failed = (await Promise.allSettled([daily, usage])).flatMap((result) =>
+      const failed = (await Promise.allSettled([daily, usage, learners])).flatMap((result) =>
         result.status === "rejected" ? [result.reason] : [],
       );
       if (failed.length) throw new AggregateError(failed, "The daily crons failed");

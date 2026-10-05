@@ -91,7 +91,7 @@ export type Check =
   | { action: "case.read" | "case.act"; case: { kind: CaseKind } }
   | { action: "case.decideAppeal"; case: { kind: CaseKind; decidedBy: string } }
   | {
-      action: "learnerRecord.read" | "learnerRecord.export" | "learnerRecord.delete";
+      action: "learnerRecord.read" | "learnerRecord.write" | "learnerRecord.export" | "learnerRecord.delete";
       learnerRecord: { ownerId: string };
     }
   | { action: "learnerData.process"; learnerRecord: { ownerId: string } };
@@ -190,6 +190,7 @@ export function can(actor: Actor | null, check: Check): boolean {
       return check.case.decidedBy !== actor.userId && hasRole(CASE_HANDLER[check.case.kind]);
 
     case "learnerRecord.read":
+    case "learnerRecord.write":
     case "learnerRecord.export":
     case "learnerRecord.delete":
       return check.learnerRecord.ownerId === actor.userId;

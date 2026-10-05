@@ -7,9 +7,8 @@ import { languageName, languageTag } from "~/lib/language-variety";
 import { LEARNER_PATHS } from "~/lib/learner-progress";
 import { applyProgressEvents, learningPage } from "~/lib/learner-progress.server";
 import { clearHistory, deleteLearnerAccount } from "~/lib/learner-records.server";
-import { fromThisSite, requireLearner, signOutLearner } from "~/lib/learners.server";
+import { fromThisSite, requireLearner, requireOwnRecords, signOutLearner } from "~/lib/learners.server";
 import { LAYER_LANGUAGE_VARIETY } from "~/lib/learning-layer-fields";
-import { can } from "~/lib/permissions";
 import { progressQueue } from "~/lib/progress-queue.client";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import type { RouteHandle } from "~/lib/route-handle";
@@ -30,6 +29,7 @@ export function meta() {
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const learner = await requireLearner(env, request);
+  requireOwnRecords(learner, "learnerRecord.read");
   return {
     userId: learner.userId,
     email: learner.email,
@@ -42,59 +42,85 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
   if (!fromThisSite(request)) throw new Response("Cross-site request refused", { status: 403 });
   const learner = await requireLearner(env, request);
-  const owner = { ownerId: learner.userId };
   const form = await request.formData();
   const id = String(form.get("id") ?? "");
   switch (form.get("intent")) {
     case "unsave-video":
+      requireOwnRecords(learner, "learnerRecord.write");
       await applyProgressEvents(learner.db, learner.userId, [
         { id: crypto.randomUUID(), type: "unsave-video", contentItemId: id },
       ]);
       return { done: "The video is no longer saved." };
     case "unsave-word":
+      requireOwnRecords(learner, "learnerRecord.write");
       await applyProgressEvents(learner.db, learner.userId, [
-        { id: crypto.randomUUID(), type: "unsave-word", expressionId: id, revisionId: String(form.get("revision")) },
+        {
+          id: crypto.randomUUID(),
+          type: "unsave-word",
+          expressionId: id,
+          revisionId: form.get("revision") ? String(form.get("revision")) : null,
+        },
       ]);
       return { done: "The word is no longer saved." };
     case "clear-history":
-      if (!can(learner.actor, { action: "learnerRecord.delete", learnerRecord: owner })) break;
+      requireOwnRecords(learner, "learnerRecord.delete");
       await clearHistory(learner.db, learner.userId);
       return { done: "Your history is cleared. Your saved videos and words are still here." };
     case "delete-account": {
       if (form.get("confirm") !== "yes") {
         return data({ deleteError: "Tick the box to confirm you want your account deleted." }, { status: 400 });
       }
-      if (!can(learner.actor, { action: "learnerRecord.delete", learnerRecord: owner })) break;
+      requireOwnRecords(learner, "learnerRecord.delete");
       const headers = await signOutLearner(env, request);
       await deleteLearnerAccount(learner.db, learner.userId, "learner.deleted");
       throw redirect(`${LEARNER_PATHS.signIn}?deleted`, { headers });
     }
   }
-  return data({ deleteError: "That couldn't be done." }, { status: 400 });
+  return data({ error: "That couldn't be done. Reload the page and try again." }, { status: 400 });
 }
 
-/** Signing out also forgets this device's queue, after a warning if anything in it isn't saved yet. */
-function SignOut({ userId }: { userId: string }) {
+/**
+ * A form that forgets this device's progress queue before it is sent, so changes still queued
+ * can't bring back what it removes, or stay on a shared device. It is sent as a whole page, so it
+ * works the same without JavaScript (when there is no queue to forget). `clearsIf` names a box
+ * that must be ticked for the queue to be forgotten; `warn` asks first if anything is unsaved.
+ */
+function ForgetsQueue({
+  userId,
+  intent,
+  action,
+  clearsIf,
+  warn,
+  className,
+  children,
+}: {
+  userId: string;
+  intent?: string;
+  action?: string;
+  clearsIf?: string;
+  warn?: (waiting: number) => string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   const { status } = useProgressQueue(userId);
   return (
     <Form
       method="post"
-      action={LEARNER_PATHS.signOut}
+      action={action}
       reloadDocument
+      noValidate
+      className={className}
       onSubmit={async (event) => {
         const form = event.currentTarget;
         event.preventDefault();
-        if (
-          status.waiting &&
-          !window.confirm(`${status.waiting} changes on this device aren't saved yet. Sign out and lose them?`)
-        ) {
-          return;
-        }
-        await progressQueue(userId).clear();
+        if (warn && status.waiting && !window.confirm(warn(status.waiting))) return;
+        const box = clearsIf ? form.elements.namedItem(clearsIf) : null;
+        if (!(box instanceof HTMLInputElement) || box.checked) await progressQueue(userId).clear();
         form.submit();
       }}
     >
-      <button type="submit">Sign out</button>
+      {intent && <input type="hidden" name="intent" value={intent} />}
+      {children}
     </Form>
   );
 }
@@ -105,6 +131,7 @@ export default function YourLearning({ loaderData, actionData }: Route.Component
   const { status } = useProgressQueue(hydrated ? loaderData.userId : null);
   const result = actionData && "done" in actionData ? actionData.done : null;
   const deleteError = actionData && "deleteError" in actionData ? actionData.deleteError : null;
+  const error = actionData && "error" in actionData ? actionData.error : null;
   const language = { tag: languageTag(LAYER_LANGUAGE_VARIETY), name: languageName(LAYER_LANGUAGE_VARIETY) };
 
   return (
@@ -116,6 +143,11 @@ export default function YourLearning({ loaderData, actionData }: Route.Component
           {loaderData.welcome && " Welcome: your account is ready, and everything you save from now on is kept here."}
         </p>
         {result && <p role="status">{result}</p>}
+        {error && (
+          <p role="alert" className="form-alert">
+            {error}
+          </p>
+        )}
         {hydrated && status.waiting > 0 && <SaveStatus status={status} />}
 
         <section aria-labelledby="continue-heading">
@@ -241,13 +273,11 @@ export default function YourLearning({ loaderData, actionData }: Route.Component
             </a>{" "}
             (a JSON file).
           </p>
-          <Form method="post">
+          <ForgetsQueue userId={loaderData.userId} intent="clear-history">
             <p>Clearing your history forgets where you are in each video and your answers, at once.</p>
-            <button type="submit" name="intent" value="clear-history">
-              Clear my history
-            </button>
-          </Form>
-          <Form method="post" className="danger-zone" noValidate>
+            <button type="submit">Clear my history</button>
+          </ForgetsQueue>
+          <ForgetsQueue userId={loaderData.userId} intent="delete-account" clearsIf="confirm" className="danger-zone">
             <h3>Delete your account</h3>
             <p>
               This deletes your account and everything saved in it, at once. It can't be undone. Copies in our backups
@@ -268,16 +298,20 @@ export default function YourLearning({ loaderData, actionData }: Route.Component
               />
               <label htmlFor="confirm">I understand my account and everything in it will be deleted</label>
             </div>
-            <button type="submit" name="intent" value="delete-account">
-              Delete my account
-            </button>
-          </Form>
+            <button type="submit">Delete my account</button>
+          </ForgetsQueue>
         </section>
 
         <section aria-labelledby="sign-out-heading">
           <h2 id="sign-out-heading">Signing out</h2>
           <p>Signing out forgets your account on this device. Your learning stays saved in your account.</p>
-          <SignOut userId={loaderData.userId} />
+          <ForgetsQueue
+            userId={loaderData.userId}
+            action={LEARNER_PATHS.signOut}
+            warn={(waiting) => `${waiting} changes on this device aren't saved yet. Sign out and lose them?`}
+          >
+            <button type="submit">Sign out</button>
+          </ForgetsQueue>
         </section>
       </article>
     </main>

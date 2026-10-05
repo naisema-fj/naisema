@@ -1,7 +1,6 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { exportLearnerData } from "~/lib/learner-progress.server";
-import { requireLearner } from "~/lib/learners.server";
-import { can } from "~/lib/permissions";
+import { requireLearner, requireOwnRecords } from "~/lib/learners.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import type { Route } from "./+types/export";
 
@@ -9,9 +8,7 @@ import type { Route } from "./+types/export";
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const learner = await requireLearner(env, request);
-  if (!can(learner.actor, { action: "learnerRecord.export", learnerRecord: { ownerId: learner.userId } })) {
-    throw new Response("Not allowed", { status: 403 });
-  }
+  requireOwnRecords(learner, "learnerRecord.export");
   const exported = await exportLearnerData(learner.db, learner.userId);
   return new Response(JSON.stringify(exported, null, 2), {
     headers: {

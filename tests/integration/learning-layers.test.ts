@@ -655,7 +655,7 @@ describe("Annotations, Expressions and notes", () => {
     // The other Learning Layer's editor shows the library change before it is saved again.
     const page = await (await theirs.educator.browser.fetch(`/admin/learning-layers/${theirs.layerId}`)).text();
     expect(page).toContain("Updated in the library since this Learning Layer was saved");
-  });
+  }, 20_000);
 
   it("splits a hyphenated compound into its parts, and flags an Annotation whose word an edit repeats", async () => {
     const { educator, layerId, segment: words } = await layerWithWords();

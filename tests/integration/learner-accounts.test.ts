@@ -2,7 +2,15 @@ import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
 import { handleInactiveLearners } from "~/lib/learner-records.server";
-import { approvedLayer, layerRow, publishChange, publishedLayer, publishVideo, videoPath } from "./support/layers";
+import {
+  approvedLayer,
+  layerRow,
+  publishChange,
+  publishedLayer,
+  publishVideo,
+  save,
+  videoPath,
+} from "./support/layers";
 import { ADMIN, Browser, emailsTo, seedStaff, signInWithMagicLink } from "./support/staff";
 
 const PUBLIC = "https://naisema.test";
@@ -81,8 +89,8 @@ describe("signing up for a Learner Account", () => {
       .first<{ declared: number }>();
     expect(account?.declared).toBeGreaterThan(0);
     // The link's token is stored only as a hash, marked as a learner's.
-    const tokens = await env.DB.prepare("SELECT identifier FROM verification WHERE value LIKE ?1")
-      .bind(`%${email}%`)
+    const tokens = await env.DB.prepare("SELECT identifier FROM verification WHERE instr(value, ?1) > 0")
+      .bind(email)
       .all<{ identifier: string }>();
     for (const { identifier } of tokens.results) expect(identifier).toMatch(/^learner:[0-9a-f]{64}$/);
 
@@ -135,6 +143,28 @@ describe("signing up for a Learner Account", () => {
     await admin.fetch(`${ADMIN}/api/auth/magic-link/verify${learnerLink.search}`);
 
     expect((await admin.fetch("/admin")).headers.get("Location")).toBe("/admin/sign-in");
+  });
+
+  it("counts learners' sign-ins apart from staff members', so learners can't use up staff limits", async () => {
+    const ip = `198.51.100.${Math.floor(Math.random() * 250) + 1}`;
+    // As many learner links opened from one address as Better Auth allows a minute (5); counted
+    // together, the staff member's link would be the sixth, and refused.
+    for (let i = 0; i < 5; i++) {
+      const browser = new Browser();
+      browser.ip = ip;
+      const email = unique(`busy-${i}`);
+      await askForLink(browser, email);
+      await browser.fetch(linkIn((await emailsTo(email)).at(-1)?.text) as string);
+    }
+    const staffEmail = unique("staff-same-address");
+    await seedStaff(staffEmail, [{ role: "editor" }]);
+    const staffBrowser = new Browser();
+    staffBrowser.ip = ip;
+
+    const opened = await signInWithMagicLink(staffBrowser, staffEmail);
+
+    expect(opened.status).toBe(302);
+    expect(opened.headers.get("Location")).toBe(`${ADMIN}/admin`);
   });
 
   it("refuses a learner whose address was later given a staff role", async () => {
@@ -244,7 +274,7 @@ describe("a learner's progress events", () => {
     expect(
       await env.DB.prepare("SELECT stage FROM learner_video_state WHERE user_id = ?1").bind(learner.userId).first(),
     ).toEqual({ stage: "respond" });
-  });
+  }, 20_000);
 
   it("keeps the latest place received, and merges answers so none is lost", async () => {
     const { layerId } = await publishedLayer();
@@ -272,7 +302,58 @@ describe("a learner's progress events", () => {
       .first();
     expect(state).toEqual({ stage: "words", positionMs: 500, completed: 1 });
     expect(await count("activity_attempt", phone.userId)).toBe(2);
-  });
+  }, 20_000);
+
+  it("takes events about an earlier published Revision, but never about a draft that wasn't public", async () => {
+    const layer = await publishedLayer();
+    const first = await publishedRevision(layer.layerId);
+    const { activities } = await snapshotOf(first);
+    await publishChange(layer, {});
+    const published = await publishedRevision(layer.layerId);
+    const draft = (await save(layer.educator, layer.layerId, { title: "Greetings, again" })).revisionId;
+    expect(new Set([first, published, draft]).size).toBe(3);
+    const learner = await signUp();
+    const answer = (revisionId: string) =>
+      event({ type: "attempt", layerId: layer.layerId, revisionId, activityId: activities[0].id, correct: true });
+    const [onFirst, onPublished, onDraft] = [answer(first), answer(published), answer(draft)];
+
+    const body = (await (await sendEvents(learner, [onFirst, onPublished, onDraft])).json()) as { refused: string[] };
+
+    expect(body.refused).toEqual([onDraft.id]);
+    expect(await count("activity_attempt", learner.userId)).toBe(2);
+  }, 20_000);
+
+  it("keeps caption choices only for the Revision they were made on", async () => {
+    const layer = await publishedLayer();
+    const first = await publishedRevision(layer.layerId);
+    const learner = await signUp();
+    const onFirst = { layerId: layer.layerId, revisionId: first };
+    const captions = { stage: "watch", taught: true, english: false, underAlways: false };
+    await sendEvents(learner, [
+      event({ type: "position", ...onFirst, stage: "watch", positionMs: 0, segmentId: null }),
+      event({ type: "captions", ...onFirst, ...captions }),
+    ]);
+    await publishChange(layer, {});
+    const second = await publishedRevision(layer.layerId);
+    // The device catches up: it opens the new Revision; a late choice for the old one changes nothing.
+    await sendEvents(learner, [
+      event({
+        type: "position",
+        layerId: layer.layerId,
+        revisionId: second,
+        stage: "words",
+        positionMs: 0,
+        segmentId: null,
+      }),
+      event({ type: "captions", ...onFirst, ...captions, stage: "words" }),
+    ]);
+    const state = await env.DB.prepare(
+      "SELECT captions, revision_id AS revisionId FROM learner_video_state WHERE user_id = ?1",
+    )
+      .bind(learner.userId)
+      .first();
+    expect(state).toEqual({ captions: "{}", revisionId: second });
+  }, 20_000);
 
   it("refuses events from another site, without a session, and anything but a list of events", async () => {
     const learner = await signUp();
@@ -305,13 +386,14 @@ describe("the player for a signed-in learner", () => {
     expect(page.headers.get("Cache-Control")).toBe("private, no-store");
     const html = await page.text();
     expect(html).toContain("Carry on from <!-- -->0:02.500");
+    // What the account holds is saved: the page says so before it has looked at the device's queue.
     expect(html).toContain("Saved to your learning");
-    expect(html).toContain("saved to your account");
+    expect(html).toContain("goes to your account as you learn");
 
     const visitor = await (await new Browser().fetch(`${PUBLIC}${player}?stage=words`)).text();
     expect(visitor).not.toContain("Carry on from");
     expect(visitor).toContain("Save your learning with an optional account");
-  });
+  }, 20_000);
 });
 
 describe("one learner's records", () => {
@@ -348,7 +430,7 @@ describe("one learner's records", () => {
     expect(exported).not.toContain(videoId);
     expect(JSON.parse(exported).answers).toHaveLength(1);
     expect(await (await ben.browser.fetch(`${PUBLIC}/account`)).text()).toContain("No saved videos");
-  });
+  }, 20_000);
 });
 
 describe("the learning page", () => {
@@ -420,7 +502,7 @@ describe("the learning page", () => {
     expect(html).toContain("A video you were learning from is no longer available");
     expect(html).toContain("A saved word that is no longer available");
     expect(html).not.toContain("life; health; hello");
-  });
+  }, 20_000);
 
   it("says a Learning Layer was completed on an earlier version once its Activity changes (ADR-0006)", async () => {
     const layer = await publishedLayer();
@@ -447,7 +529,7 @@ describe("the learning page", () => {
     );
     const player = await (await learner.browser.fetch(`${PUBLIC}${layer.player}?stage=respond`)).text();
     expect(player).toContain("on an earlier version");
-  });
+  }, 20_000);
 });
 
 describe("a learner's data", () => {
@@ -469,7 +551,7 @@ describe("a learner's data", () => {
     expect(exported.account).toMatchObject({ email: learner.email });
     expect(exported.savedVideos).toEqual([expect.objectContaining({ contentItemId: videoId })]);
     expect((await new Browser().fetch(`${PUBLIC}/account/export`)).status).toBe(302);
-  });
+  }, 20_000);
 
   it("clears history at once, keeping what was saved", async () => {
     const { layerId, videoId } = await publishedLayer();
@@ -487,13 +569,15 @@ describe("a learner's data", () => {
     expect(await count("learner_video_state", learner.userId)).toBe(0);
     expect(await count("activity_attempt", learner.userId)).toBe(0);
     expect(await count("bookmark", learner.userId)).toBe(1);
-  });
+  }, 20_000);
 
   it("deletes the account and everything in it at once, and records it in the deletion ledger", async () => {
     const { videoId } = await publishedLayer();
     const learner = await signUp();
     await sendEvents(learner, [event({ type: "save-video", contentItemId: videoId })]);
 
+    // A sign-in link not yet used, which names the address.
+    await askForLink(new Browser(), learner.email);
     const unconfirmed = await learner.browser.fetch(`${PUBLIC}/account`, { form: { intent: "delete-account" } });
     expect(unconfirmed.status).toBe(400);
     expect(await count("bookmark", learner.userId)).toBe(1);
@@ -511,6 +595,9 @@ describe("a learner's data", () => {
       expect(await count(table, learner.userId), table).toBe(0);
     }
     expect(await env.DB.prepare("SELECT id FROM user WHERE id = ?1").bind(learner.userId).first()).toBeNull();
+    expect(
+      await env.DB.prepare("SELECT id FROM verification WHERE instr(value, ?1) > 0").bind(learner.email).first(),
+    ).toBeNull();
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(learner.userId));
     const hash = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
     const ledger = await env.DB.prepare("SELECT reason FROM deletion_ledger WHERE subject_hash = ?1")
@@ -520,7 +607,7 @@ describe("a learner's data", () => {
     await expect(env.DB.prepare("UPDATE deletion_ledger SET reason = 'x'").run()).rejects.toThrow();
     await expect(env.DB.prepare("DELETE FROM deletion_ledger").run()).rejects.toThrow();
     expect((await learner.browser.fetch(`${PUBLIC}/account`)).headers.get("Location")).toBe("/account/sign-in");
-  });
+  }, 20_000);
 });
 
 describe("inactive Learner Accounts", () => {

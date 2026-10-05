@@ -1,4 +1,4 @@
-import { eq, lt } from "drizzle-orm";
+import { and, eq, like, lt, sql } from "drizzle-orm";
 import {
   activityAttempt,
   bookmark,
@@ -11,6 +11,7 @@ import {
   savedVocabulary,
   session as sessionTable,
   user as userTable,
+  verification,
 } from "~db/schema";
 import type { Database } from "./db.server";
 import { letterText, sendEmail } from "./email.server";
@@ -21,8 +22,9 @@ import { primaryPublicOrigin } from "./public-cache.server";
 /**
  * What happens to a Learner Account's records over its life (#33, docs/decision-log.md, learner
  * data): clearing history, deleting the account with a deletion ledger entry (ADR-0009), and the
- * daily job that warns and deletes inactive accounts. Identity and the learner gate are in
- * app/lib/learners.server.ts.
+ * daily job that warns and deletes inactive accounts. Signing in and the learner gate are in
+ * app/lib/learners.server.ts; it shares `hasStaffRole` from here, since deleting must never reach a
+ * staff account either.
  */
 
 export const sha256Hex = async (value: string) =>
@@ -37,16 +39,17 @@ export async function hasStaffRole(db: Database, userId: string) {
   );
 }
 
-/**
- * Clears a learner's history at once: where they are in each Learning Layer, their answers and the
- * record of events applied. Their saved videos and words stay.
- */
-export async function clearHistory(db: Database, userId: string) {
-  await db.batch([
+/** A learner's history: where they are in each Learning Layer, their answers, and the events applied. */
+const historyDeletes = (db: Database, userId: string) =>
+  [
     db.delete(learnerVideoState).where(eq(learnerVideoState.userId, userId)),
     db.delete(activityAttempt).where(eq(activityAttempt.userId, userId)),
     db.delete(learnerEvent).where(eq(learnerEvent.userId, userId)),
-  ]);
+  ] as const;
+
+/** Clears a learner's history at once. Their saved videos and words stay. */
+export async function clearHistory(db: Database, userId: string) {
+  await db.batch([...historyDeletes(db, userId)]);
 }
 
 /**
@@ -60,11 +63,19 @@ export async function deleteLearnerAccount(
   reason: "learner.deleted" | "learner.inactive",
 ) {
   const deletedAt = new Date();
+  const person = await db.select({ email: userTable.email }).from(userTable).where(eq(userTable.id, userId)).get();
   await db.batch([
     db.insert(deletionLedger).values({ subjectHash: await sha256Hex(userId), reason, deletedAt }),
-    db.delete(learnerVideoState).where(eq(learnerVideoState.userId, userId)),
-    db.delete(activityAttempt).where(eq(activityAttempt.userId, userId)),
-    db.delete(learnerEvent).where(eq(learnerEvent.userId, userId)),
+    ...historyDeletes(db, userId),
+    // Sign-in links not yet used, which name the address.
+    db
+      .delete(verification)
+      .where(
+        and(
+          like(verification.identifier, "learner:%"),
+          sql`json_valid(${verification.value}) AND json_extract(${verification.value}, '$.email') = ${person?.email ?? ""}`,
+        ),
+      ),
     db.delete(bookmark).where(eq(bookmark.userId, userId)),
     db.delete(savedVocabulary).where(eq(savedVocabulary.userId, userId)),
     db.delete(sessionTable).where(eq(sessionTable.userId, userId)),
@@ -83,7 +94,7 @@ export async function tidyLearnerRecords(db: Database, now: Date) {
 }
 
 /**
- * The daily job's part for inactive Learner Accounts: a warning email 30 days before 24 months
+ * The daily learner-accounts job's part for inactive Learner Accounts: a warning email 30 days before 24 months
  * without activity, then deletion 30 days later unless the account was used since
  * (app/lib/learner-progress.ts). Each account is handled on its own, so one failed email doesn't
  * stop the rest; a failure is thrown at the end, so the job shows as failed.

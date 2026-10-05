@@ -58,12 +58,14 @@ test("a learner saves their learning, carries on from another device, and offlin
   // Offline, a change waits on this device, says so, and is sent once the connection is back.
   await page.context().setOffline(true);
   await page.getByRole("button", { name: "Save this video" }).click();
-  await expect(page.getByRole("button", { name: "Saved to your learning" })).toHaveAttribute("aria-pressed", "true");
+  // Chosen, but not called saved until the account has it.
+  await expect(page.getByRole("button", { name: "Saving this video…" })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByText(/^Not yet saved: \d+ changes? waiting\./)).toBeVisible();
   await expect(page.getByText("Everything is saved to your account.")).toHaveCount(0);
   await expectNoAxeViolations(page);
   await page.context().setOffline(false);
   await expect(page.getByText("Everything is saved to your account.")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "Saved to your learning" })).toHaveAttribute("aria-pressed", "true");
 
   // A word saved from Explore the words.
   await page

@@ -1274,6 +1274,17 @@ export const learnerEvent = sqliteTable(
   ],
 );
 
+/**
+ * Better Auth's request counts for Learner Accounts, kept apart from staff sign-in's (`rate_limit`),
+ * since both count by address and path: learners signing in can never use up staff members' limit.
+ */
+export const learnerRateLimit = sqliteTable("learner_rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: integer("last_request").notNull(),
+});
+
 /** Sign-in links sent to a learner's address, by its hash, so nobody can flood an inbox. */
 export const learnerSignInLink = sqliteTable(
   "learner_sign_in_link",

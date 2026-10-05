@@ -1,7 +1,7 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { MAX_BATCH_LENGTH, readProgressBatch } from "~/lib/learner-progress";
 import { applyProgressEvents } from "~/lib/learner-progress.server";
-import { fromThisSite, getLearner } from "~/lib/learners.server";
+import { fromThisSite, getLearner, requireOwnRecords } from "~/lib/learners.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import type { Route } from "./+types/events";
 
@@ -21,6 +21,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
   const learner = await getLearner(env, request);
   if (!learner) return json(401, { error: "Not signed in" });
+  requireOwnRecords(learner, "learnerRecord.write");
   const body = await request.text();
   if (body.length > MAX_BATCH_LENGTH) return json(413, { error: "Too large" });
   let sent: unknown;

@@ -367,6 +367,18 @@ const rows: [string, Actor | null, Check, boolean][] = [
     true,
   ],
   [
+    "learner changes their own records",
+    learner("me"),
+    { action: "learnerRecord.write", learnerRecord: { ownerId: "me" } },
+    true,
+  ],
+  [
+    "learner cannot change someone else's records",
+    learner("me"),
+    { action: "learnerRecord.write", learnerRecord: { ownerId: "someone-else" } },
+    false,
+  ],
+  [
     "learner cannot read someone else's records",
     learner("me"),
     { action: "learnerRecord.read", learnerRecord: { ownerId: "someone-else" } },

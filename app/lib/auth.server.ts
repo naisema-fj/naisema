@@ -7,6 +7,7 @@ import { learnerAccount } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import { getDb } from "./db.server";
 import { sendEmail } from "./email.server";
+import { sha256Hex } from "./learner-records.server";
 
 export const AUTH_BASE_PATH = "/api/auth";
 const COOKIE_PREFIX = "naisema";
@@ -87,7 +88,7 @@ const LEARNER_LINK_MINUTES = 30;
  * Better Auth for Learner Accounts on the public site (#33, ADR-0005): sign-up and sign-in by
  * emailed link, nothing else. Its own base path and cookie keep it apart from staff sessions, and
  * its links are stored as "learner:" and a SHA-256 hash, so a staff link never opens a learner
- * session and a learner link never opens a staff one. A user it creates gets a Learner Account,
+ * session and a learner link never opens a staff one. Its request limits are counted apart too. A user it creates gets a Learner Account,
  * declared 18 or older: the sign-in form sends no link without that declaration
  * (app/lib/learners.server.ts).
  */
@@ -104,7 +105,8 @@ export function createLearnerAuth(env: Env, request: Request) {
     database: drizzleAdapter(db, { provider: "sqlite", schema }),
     emailAndPassword: { enabled: false },
     session: { expiresIn: 60 * 60 * 24 * 30, updateAge: 60 * 60 * 24 },
-    rateLimit: { enabled: true, storage: "database", window: 60, max: 30 },
+    // Counted in a table of its own, so learners signing in never use up staff members' limits.
+    rateLimit: { enabled: true, storage: "database", modelName: "learnerRateLimit", window: 60, max: 30 },
     advanced: {
       cookiePrefix: LEARNER_COOKIE_PREFIX,
       ipAddress: { ipAddressHeaders: ["cf-connecting-ip"] },
@@ -155,10 +157,7 @@ export function createLearnerAuth(env: Env, request: Request) {
 export type LearnerAuth = ReturnType<typeof createLearnerAuth>;
 
 /** How a learner sign-in link's token is stored: marked as a learner's, and hashed. */
-async function learnerTokenKey(token: string) {
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
-  return `learner:${[...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
-}
+const learnerTokenKey = async (token: string) => `learner:${await sha256Hex(token)}`;
 
 /** The session token in a Set-Cookie header Better Auth issued, if it issued one. */
 export function sessionTokenFromSetCookie(headers: Headers): string | null {

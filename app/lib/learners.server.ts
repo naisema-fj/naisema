@@ -5,7 +5,7 @@ import { type Database, getDb } from "./db.server";
 import { letterText, sendEmail } from "./email.server";
 import { LEARNER_PATHS } from "./learner-progress";
 import { hasStaffRole, sha256Hex } from "./learner-records.server";
-import type { Actor } from "./permissions";
+import { type Actor, can } from "./permissions";
 
 /**
  * Learner Accounts on the public site (#33): signing up and in by emailed link, the gate every
@@ -13,8 +13,6 @@ import type { Actor } from "./permissions";
  * (ADR-0005); an address with a staff role, current or past, can't hold a Learner Account, so a
  * learner session can never carry staff access and deleting one can never remove a staff account.
  */
-
-export { LEARNER_PATHS } from "./learner-progress";
 
 /** Sign-in links one address can be sent per window, so nobody can flood an inbox. */
 export const LEARNER_LINKS_PER_WINDOW = 3;
@@ -98,6 +96,20 @@ export async function requireLearner(env: Env, request: Request): Promise<Learne
   const learner = await getLearner(env, request);
   if (!learner) throw new Response(null, { status: 302, headers: { Location: LEARNER_PATHS.signIn } });
   return learner;
+}
+
+/**
+ * The domain authorisation check (ADR-0005) for a learner acting on their own records. Every
+ * learner read and write passes it, so the rule stays in one place even though, today, a learner
+ * only ever reaches their own records.
+ */
+export function requireOwnRecords(
+  learner: Learner,
+  action: "learnerRecord.read" | "learnerRecord.write" | "learnerRecord.export" | "learnerRecord.delete",
+) {
+  if (!can(learner.actor, { action, learnerRecord: { ownerId: learner.userId } })) {
+    throw new Response("Not allowed", { status: 403 });
+  }
 }
 
 /** Ends the learner's session here; the headers returned clear its cookie, and say nothing else. */

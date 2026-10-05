@@ -49,6 +49,14 @@ CREATE TABLE `learner_event` (
 );
 --> statement-breakpoint
 CREATE INDEX `learner_event_received_idx` ON `learner_event` (`received_at`);--> statement-breakpoint
+CREATE TABLE `learner_rate_limit` (
+	`id` text PRIMARY KEY NOT NULL,
+	`key` text NOT NULL,
+	`count` integer NOT NULL,
+	`last_request` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `learner_rate_limit_key_unique` ON `learner_rate_limit` (`key`);--> statement-breakpoint
 CREATE TABLE `learner_sign_in_link` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`email_hash` text NOT NULL,

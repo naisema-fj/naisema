@@ -15,7 +15,7 @@ import {
   stageNeighbours,
   stageText,
 } from "~/lib/immersion";
-import { type LearnerLayerState, withQueued } from "~/lib/learner-progress";
+import { LEARNER_PATHS, type LearnerLayerState, withQueued } from "~/lib/learner-progress";
 import {
   captionsFor,
   DEFAULT_PREFERENCES,
@@ -84,8 +84,6 @@ type Props = {
   contentItemId: string;
   /** A signed-in learner's account state, or null for a visitor. */
   learner: (LearnerLayerState & { userId: string }) | null;
-  /** Where a visitor signs in to save their learning. */
-  signInPath: string;
 };
 
 const SPEED_NAMES: Record<PlaybackSpeed, string> = { 1: "Normal", 0.75: "Slower (0.75×)", 0.5: "Slowest (0.5×)" };
@@ -162,8 +160,17 @@ export function LearnerPlayer(props: Props) {
         setSupport(shown.preferences);
         setSaved({ words: shown.savedWords, video: shown.videoSaved });
         setLoaded(true);
+        // The place to keep: the latest one still queued on this device, else the account's.
+        const queuedPlace = [...queued]
+          .reverse()
+          .find(
+            (event) => event.type === "position" && event.layerId === layerId && event.revisionId === props.revisionId,
+          );
         const resumeMs = learner.resumeMs ?? 0;
-        place.current = { positionMs: resumeMs, segmentId: currentSegment(segments, resumeMs)?.id ?? null };
+        place.current =
+          queuedPlace?.type === "position"
+            ? { positionMs: queuedPlace.positionMs, segmentId: queuedPlace.segmentId }
+            : { positionMs: resumeMs, segmentId: currentSegment(segments, resumeMs)?.id ?? null };
         record({ type: "position", layerId, revisionId: props.revisionId, stage, ...place.current });
       });
     return () => {
@@ -184,18 +191,28 @@ export function LearnerPlayer(props: Props) {
     record({ type: "preferences", ...next });
   };
   const onLayer = { layerId, revisionId: props.revisionId };
-  const saveVideo = (on: boolean) => {
+  // A save the server refuses (what it was about is no longer public) is undone on the page too.
+  const undoIfRefused = useRef(new Map<string, () => void>());
+  useEffect(() => {
+    for (const id of queueStatus.refused) {
+      undoIfRefused.current.get(id)?.();
+      undoIfRefused.current.delete(id);
+    }
+  }, [queueStatus.refused]);
+  const saveWords = (change: (words: string[]) => string[]) =>
+    setSaved((current) => ({ ...current, words: change(current.words) }));
+  const saveVideo = async (on: boolean) => {
     setSaved((current) => ({ ...current, video: on }));
-    record({ type: on ? "save-video" : "unsave-video", contentItemId });
+    const id = await record({ type: on ? "save-video" : "unsave-video", contentItemId });
+    if (id && on) undoIfRefused.current.set(id, () => setSaved((current) => ({ ...current, video: false })));
   };
-  const saveWord = (expressionId: string, on: boolean) => {
-    setSaved((current) => ({
-      ...current,
-      words: on ? [...current.words, expressionId] : current.words.filter((word) => word !== expressionId),
-    }));
-    record(
+  const saveWord = async (expressionId: string, on: boolean) => {
+    const without = (words: string[]) => words.filter((word) => word !== expressionId);
+    saveWords((words) => (on ? [...without(words), expressionId] : without(words)));
+    const id = await record(
       on ? { type: "save-word", ...onLayer, expressionId } : { type: "unsave-word", revisionId: null, expressionId },
     );
+    if (id && on) undoIfRefused.current.set(id, () => saveWords(without));
   };
 
   const captions = captionsFor(view.captions, session.captions[stage], support.alwaysCaptions);
@@ -457,9 +474,12 @@ export function LearnerPlayer(props: Props) {
       <h1>{props.title}</h1>
       {learner && (
         <div className="account-bar">
-          <SaveToggle saved={saved.video} onChange={saveVideo}>
-            {saved.video ? "Saved to your learning" : "Save this video"}
-          </SaveToggle>
+          <SaveToggle
+            saved={saved.video}
+            status={queueStatus}
+            onChange={saveVideo}
+            label={{ save: "Save this video", saving: "Saving this video…", saved: "Saved to your learning" }}
+          />
           <SaveStatus status={queueStatus} />
         </div>
       )}
@@ -812,11 +832,11 @@ export function LearnerPlayer(props: Props) {
                         {" "}
                         <SaveToggle
                           saved={saved.words.includes(expressionId)}
+                          status={queueStatus}
                           onChange={(on) => saveWord(expressionId, on)}
-                        >
-                          {saved.words.includes(expressionId) ? "Saved" : "Save"}
-                          <span className="visually-hidden"> {expression.headword}</span>
-                        </SaveToggle>
+                          label={{ save: "Save", saving: "Saving…", saved: "Saved" }}
+                          name={expression.headword}
+                        />
                       </>
                     )}
                   </dt>
@@ -911,8 +931,8 @@ export function LearnerPlayer(props: Props) {
               </p>
             )}
             <p className="meta">
-              Your progress is saved to your account, so you can carry on from any device.{" "}
-              <Link to="/account" reloadDocument>
+              Your progress goes to your account as you learn, so you can carry on from any device.{" "}
+              <Link to={LEARNER_PATHS.home} reloadDocument>
                 Your learning
               </Link>
             </p>
@@ -920,7 +940,7 @@ export function LearnerPlayer(props: Props) {
         ) : (
           <p className="meta">
             Your progress is kept only on this device, until you close this tab.{" "}
-            <Link to={props.signInPath} reloadDocument>
+            <Link to={LEARNER_PATHS.signIn} reloadDocument>
               Save your learning with an optional account
             </Link>{" "}
             to keep it across devices, with the videos and words you save.

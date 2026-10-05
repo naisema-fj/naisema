@@ -159,7 +159,7 @@ Learner Accounts are optional and for adults only (decision log 1a-17). On the p
 - **The learning page** is `/account`: carry on learning, saved videos and words, a JSON download (`/account/export`), clear history, delete the account and sign out. It is never cached or indexed.
 - **Saving progress.** The player puts every change into a queue in the browser's IndexedDB and sends it to `/account/events` in batches (`app/lib/progress-queue.client.ts`). Until the server acknowledges a change, the player says "Not yet saved". A change sent twice is applied once (`learner_event`).
 - **Deleting.** An account deleted by its owner, or for being inactive, is removed at once from every table, and a SHA-256 hash of its user ID is added to `deletion_ledger`, which refuses changes. Restoring a backup must replay that ledger before the site serves traffic (ADR-0009, #34).
-- **Inactive accounts.** The daily job emails a warning to accounts unused for 700 days, and deletes them 30 days later unless they were used in between. Any visit while signed in counts as use.
+- **Inactive accounts.** The daily `learner-accounts` job emails a warning to accounts unused for 700 days, and deletes them 30 days later unless they were used in between. Any visit while signed in counts as use.
 
 If a learner says sign-in emails don't arrive, check `email_failure` for failed sends ("Your Na iSema sign-in link"), and remember the limit of three links per address every 15 minutes. Locally, read the link from `email_outbox` as for staff, and open it on `http://localhost:5173`.
 
@@ -409,6 +409,7 @@ Alerts come as one email per hourly run, subject `Na iSema <env>: N problems`. A
 - **"N Video Assets failed processing"**: Stream refused a master, or it failed processing. The reason is on the Video Asset's page in the media library; most are a bad or over-long file, which the uploader fixes. If every video fails, check the Stream secrets (Video, above).
 - **"The daily job failed …" / "hasn't run since …"**: the daily cron threw, or hasn't run for 26 hours. The reason (redacted) is in the email and in the logs. Each step runs in turn, so later steps (quarantine tidy-up, video refresh) didn't run either. Fix and wait for the next run, or trigger it in the dashboard (Worker › Settings › Triggers).
 - **"The usage job failed …"**: reading media usage from Cloudflare failed (usually the token or an API change, as for the figures alert below). It runs beside the daily job, so the daily job's own steps aren't affected.
+- **"The learner-accounts job failed …"**: tidying Learner Accounts' records, or warning or deleting an inactive account, failed (an email that couldn't be sent, usually). The reason is in the email and the logs; other accounts were still handled. It runs beside the daily job.
 - **"Cloudflare's figures couldn't be read"**: `MONITORING_API_TOKEN` is unset, expired or lacks a permission, or Cloudflare's API changed. Until fixed, the error rate falls back to a plain count, and usage isn't recorded.
 - **"Media costs on course for 50% / 80% of the monthly ceiling"**: check `/admin/usage` to see which line is growing. Delivery growing faster than expected usually means a video is popular or embedded elsewhere.
 
