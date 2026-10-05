@@ -9,7 +9,7 @@ import { episodeRecording } from "~/lib/episode-fields";
 import { mediaName } from "~/lib/media.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
-import { archive, publishRevision, withdraw } from "~/lib/publication.server";
+import { changePublication } from "~/lib/publication.server";
 import {
   assignReviewer,
   decidableRequirement,
@@ -149,20 +149,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
           notes: field("notes"),
         });
       case "publish":
-        return publishRevision(db, actor, review);
       case "withdraw":
-        return withdraw(db, actor, review);
       case "archive":
-        return archive(db, actor, review);
+        return changePublication(env, db, actor, review, intent);
       default:
         return { ok: false as const, error: "That action isn't available." };
     }
   })();
 
   if (!result.ok) return data({ error: result.error }, { status: 400 });
-  // Publishing, withdrawing and archiving change what is public, and so can a review decision
-  // recorded on the published Revision; purging after every action keeps that rule in one place.
-  await publicItemChanged(env, db, article.id);
+  // A review decision recorded on the published Revision can change what is public too (its Review
+  // Labels); publishing, withdrawing and archiving bring the public site up to date themselves.
+  if (!["publish", "withdraw", "archive"].includes(intent)) await publicItemChanged(env, db, article.id);
   throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
 }
 

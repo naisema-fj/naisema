@@ -4,6 +4,7 @@ import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { type LayerReview, loadLayerReview } from "./layer-review.server";
 import { type Actor, can } from "./permissions";
+import { publicItemChanged } from "./public-change.server";
 import { type Review, type ReviewActionResult, refuse } from "./review.server";
 import { type PublicationState, requirementName } from "./review-names";
 import { videoItem } from "./video-items.server";
@@ -12,8 +13,47 @@ import { isEligible, layerRevisionEligibility, reasonTexts } from "./visibility.
 /**
  * Publishing, withdrawing and archiving Content Items and Learning Layers, and the editors' queue of
  * what is ready to publish. Whether a Revision may be published is the eligibility decision
- * (app/lib/visibility.server.ts, ADR-0007), asked again at the moment of publishing.
+ * (app/lib/visibility.server.ts, ADR-0007), asked again at the moment of publishing. Each change
+ * also brings the public site up to date itself, its search entry and the cached pages showing it,
+ * so no caller can forget to (ADR-0007's removal target, AC-03).
  */
+
+export type PublicationAction = "publish" | "withdraw" | "archive";
+
+const ITEM_ACTIONS = { publish: publishItem, withdraw: withdrawItem, archive: archiveItem };
+const LAYER_ACTIONS = { publish: publishLayer, withdraw: withdrawLayer, archive: archiveLayer };
+
+/**
+ * Publishes, withdraws or archives a Content Item's Revision, then rebuilds its search entry and
+ * purges the pages showing it.
+ */
+export async function changePublication(
+  env: Env,
+  db: Database,
+  actor: Actor,
+  review: Review,
+  action: PublicationAction,
+): Promise<ReviewActionResult> {
+  const result = await ITEM_ACTIONS[action](db, actor, review);
+  if (result.ok) await publicItemChanged(env, db, review.contentItem.id);
+  return result;
+}
+
+/**
+ * Publishes, withdraws or archives a Learning Layer's Revision. A Learning Layer shows on its
+ * Video's pages, so those are brought up to date as the Video's own change would be.
+ */
+export async function changeLayerPublication(
+  env: Env,
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  action: PublicationAction,
+): Promise<ReviewActionResult> {
+  const result = await LAYER_ACTIONS[action](db, actor, review);
+  if (result.ok) await publicItemChanged(env, db, review.layer.contentItemId);
+  return result;
+}
 
 const setState = (db: Database, contentItemId: string, values: Partial<typeof contentItem.$inferInsert>) =>
   db
@@ -26,7 +66,7 @@ const setState = (db: Database, contentItemId: string, values: Partial<typeof co
  * publishing. An earlier Revision comes back by restoring it, which carries its approvals forward.
  * A refused attempt is audited too.
  */
-export async function publishRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function publishItem(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "revision.publish" })) return { ok: false, error: "Only editors can publish." };
   const { contentItem: item } = review;
   if (item.publicationState === "archived") return { ok: false, error: "Archived items can't be published." };
@@ -71,7 +111,7 @@ export async function publishRevision(db: Database, actor: Actor, review: Review
 }
 
 /** Takes a published item down. Its published Revision is kept on record; nothing is served. */
-export async function withdraw(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function withdrawItem(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return { ok: false, error: "Only editors can withdraw." };
   if (review.contentItem.publicationState !== "published")
     return { ok: false, error: "Only published items can be withdrawn." };
@@ -88,7 +128,7 @@ export async function withdraw(db: Database, actor: Actor, review: Review): Prom
 }
 
 /** Retires an item that isn't published. Archived items can't be published again. */
-export async function archive(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function archiveItem(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return { ok: false, error: "Only editors can archive." };
   const state = review.contentItem.publicationState;
   if (state === "published") return { ok: false, error: "Withdraw the item before archiving it." };
@@ -121,11 +161,7 @@ const setLayerState = (
  * Publishes this exact Revision, if it is the latest and eligible at this moment. A refused attempt
  * is audited with its reasons (VAC-06).
  */
-export async function publishLayerRevision(
-  db: Database,
-  actor: Actor,
-  review: LayerReview,
-): Promise<ReviewActionResult> {
+async function publishLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
   if (!can(actor, { action: "revision.publish" })) return refuse("Only editors can publish.");
   if (review.layer.publicationState === "archived") return refuse("Archived Learning Layers can't be published.");
   if (review.layer.currentDraftRevisionId !== review.revisionId) {
@@ -163,7 +199,7 @@ export async function publishLayerRevision(
 }
 
 /** Takes a published Learning Layer down, leaving its Video as it is. */
-export async function withdrawLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
+async function withdrawLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can withdraw.");
   if (review.layer.publicationState !== "published") return refuse("Only published Learning Layers can be withdrawn.");
   await db.batch([
@@ -179,7 +215,7 @@ export async function withdrawLayer(db: Database, actor: Actor, review: LayerRev
 }
 
 /** Retires a Learning Layer that isn't published. It can't be published again. */
-export async function archiveLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
+async function archiveLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can archive.");
   const state = review.layer.publicationState;
   if (state === "published") return refuse("Withdraw the Learning Layer before archiving it.");

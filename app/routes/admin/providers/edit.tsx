@@ -1,6 +1,7 @@
 import { data, Form, redirect } from "react-router";
 import { listingValues, ProviderForm } from "~/components/listing-forms";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { requireProvider } from "~/lib/content.server";
 import {
   ACCESS_MODES,
   costText,
@@ -13,13 +14,7 @@ import {
   readListingFlags,
   readProviderFields,
 } from "~/lib/listing-fields";
-import {
-  endAgreement,
-  providerChanged,
-  recordAgreement,
-  requireProvider,
-  updateProvider,
-} from "~/lib/providers.server";
+import { endAgreement, providerChanged, recordAgreement, updateProvider } from "~/lib/providers.server";
 import { formatDay } from "~/lib/rights-rules";
 import type { Route } from "./+types/edit";
 

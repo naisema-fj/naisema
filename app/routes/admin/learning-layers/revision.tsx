@@ -12,7 +12,7 @@ import {
 import { requireLayerRevision } from "~/lib/layer-revision-access.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
-import { archiveLayer, publishLayerRevision, withdrawLayer } from "~/lib/publication.server";
+import { changeLayerPublication } from "~/lib/publication.server";
 import { decidableRequirement, reviewersFor } from "~/lib/review.server";
 import {
   issueReviewLink,
@@ -189,11 +189,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       case "revokeLink":
         return revokeReviewLink(db, actor, review, field("linkId"));
       case "publish":
-        return publishLayerRevision(db, actor, review);
       case "withdraw":
-        return withdrawLayer(db, actor, review);
       case "archive":
-        return archiveLayer(db, actor, review);
+        return changeLayerPublication(env, db, actor, review, intent);
       default:
         return { ok: false as const, error: "That action isn't available." };
     }

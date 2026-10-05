@@ -1,7 +1,6 @@
 import { and, asc, eq, like, or } from "drizzle-orm";
 import { contentItem, offering, partnershipAgreement, provider } from "~db/schema";
 import { auditInsert } from "./audit.server";
-import { requireEditor } from "./content.server";
 import type { Database } from "./db.server";
 import {
   ACCESS_MODES,
@@ -262,14 +261,6 @@ export async function providersHosting(db: Database, contentItemId: string) {
     .from(offering)
     .innerJoin(provider, eq(provider.id, offering.providerId))
     .where(and(eq(offering.accessMode, "licensed_native"), like(offering.access, `%${contentItemId}%`)));
-}
-
-/** The editor gate plus the Provider a staff page is about; 404 if there is none. */
-export async function requireProvider(env: Env, request: Request, id: string) {
-  const staff = await requireEditor(env, request);
-  const found = await getProvider(staff.db, id);
-  if (!found) throw new Response("Not found", { status: 404 });
-  return { ...staff, provider: found };
 }
 
 // --- What the public site shows ---
