@@ -15,11 +15,11 @@ import {
   roleAssignment,
   user,
 } from "~db/schema";
-import { type ArticleSnapshot, footageOf } from "./article-fields";
+import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { ContentType } from "./content-types";
 import type { Database } from "./db.server";
-import { type EpisodeDetails, episodeParts, episodeRecording } from "./episode-fields";
+import type { EpisodeDetails } from "./episode-fields";
 import { mediaAssetIdsIn } from "./media-in-use";
 import { type Actor, can, type ReviewType } from "./permissions";
 import { type PublicationState, REVIEW_NAMES } from "./review-names";
@@ -356,20 +356,10 @@ export async function loadReview(db: Database, revisionId: string) {
     },
     flags,
     languageVariety: facts.languageVariety ?? null,
-    resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
-    /** Its footage (a Video's, or a video Episode's), which must have finished processing to be public. */
-    videoAssetId: footageOf(content),
-    /** A Creator Profile's free sample, which must itself be public for the profile to be. */
-    creatorSampleId: content.creator?.sampleItemId ?? null,
+    /** What it is, for what its kind needs of its own (content-kinds.ts, visibility.server.ts). */
+    content,
     /** The media library files the Revision shows or offers; each needs rights of its own. */
     mediaAssetIds: mediaAssetIdsIn(content),
-    episode: snapshot.episode
-      ? {
-          recording: episodeRecording(snapshot.episode),
-          hasTranscript: snapshot.episode.transcript.trim() !== "",
-          parts: episodeParts(snapshot.episode),
-        }
-      : null,
   };
 }
 

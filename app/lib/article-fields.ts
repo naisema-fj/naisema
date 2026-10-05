@@ -1,6 +1,7 @@
 import type { ArticleBody } from "./article-body";
+import { contentKind } from "./content-kinds";
 import type { CreatorDetails, CreatorField } from "./creator-fields";
-import { type EpisodeDetails, type EpisodeField, episodeRecording } from "./episode-fields";
+import type { EpisodeDetails, EpisodeField } from "./episode-fields";
 import type { ReviewType } from "./permissions";
 import type { ResourceDetails, ResourceField } from "./resource-fields";
 import type { ContentFlag } from "./review-rules";
@@ -61,66 +62,18 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
   const sources = snapshot.sources ?? "";
   const topicIds = [...snapshot.topicIds].sort();
   // Covered only when present, so items that have none keep the fingerprints their approvals had.
-  // Related items are an editorial choice; a Resource's details are what a visitor relies on.
+  // Related items are an editorial choice.
   const related = snapshot.relatedIds?.length ? { relatedIds: snapshot.relatedIds } : {};
-  const resource = snapshot.resource ? { resource: snapshot.resource } : {};
-  const resourceAccess = snapshot.resource ? { resourceAccessibility: snapshot.resource.accessibility } : {};
-  // An Episode's recording and transcript are its words, so every review covers them; who speaks
-  // and the music and clips it uses are source and context; the date, length and distribution links
-  // are editorial facts.
-  const episode = snapshot.episode;
-  // A Video's footage is what it says and shows, so every review covers which video it is.
-  const recording = {
-    ...(episode
-      ? { audioAssetId: episode.audioAssetId, videoAssetId: episode.videoAssetId, transcript: episode.transcript }
-      : {}),
-    ...(snapshot.video ? { videoAssetId: snapshot.video.videoAssetId } : {}),
-  };
-  const speakers = episode ? { host: episode.host, guests: episode.guests } : {};
-  const sourcesUsed = episode ? { music: episode.music ?? [], archiveClips: episode.archiveClips ?? [] } : {};
-  // A Creator Profile's portrait shows a person, so safeguarding covers it with the editorial facts.
-  const creator = snapshot.creator ? { creator: snapshot.creator } : {};
-  const portrait = snapshot.creator ? { portraitAssetId: snapshot.creator.portraitAssetId } : {};
-  const episodeFacts = episode
-    ? { recordedOn: episode.recordedOn, durationSeconds: episode.durationSeconds, distribution: episode.distribution }
-    : {};
+  // What each review covers of the kind's own parts (a Resource's details, an Episode's recording…).
+  const own = contentKind(snapshot).reviewFields(snapshot);
   return {
-    language: { title, summary, body, languageVariety, ...recording },
-    cultural: {
-      title,
-      summary,
-      body,
-      credit,
-      topicIds,
-      sources,
-      ...resource,
-      ...recording,
-      ...speakers,
-      ...sourcesUsed,
-    },
-    editorial: {
-      title,
-      summary,
-      body,
-      credit,
-      topicIds,
-      sources,
-      ...related,
-      ...resource,
-      ...recording,
-      ...speakers,
-      ...sourcesUsed,
-      ...episodeFacts,
-      ...creator,
-    },
-    accessibility: { title, body, ...resourceAccess, ...recording },
-    safeguarding: { title, summary, body, ...recording, ...speakers, ...portrait },
+    language: { title, summary, body, languageVariety, ...own.language },
+    cultural: { title, summary, body, credit, topicIds, sources, ...own.cultural },
+    editorial: { title, summary, body, credit, topicIds, sources, ...related, ...own.editorial },
+    accessibility: { title, body, ...own.accessibility },
+    safeguarding: { title, summary, body, ...own.safeguarding },
   };
 }
 
 /** The footage a Revision plays, if any: a Video's, or a video Episode's recording. */
-export function footageOf(snapshot: Pick<ArticleSnapshot, "video" | "episode">): string | null {
-  if (snapshot.video) return snapshot.video.videoAssetId;
-  const recording = snapshot.episode ? episodeRecording(snapshot.episode) : null;
-  return recording?.kind === "video" ? recording.assetId : null;
-}
+export const footageOf = (snapshot: ArticleSnapshot): string | null => contentKind(snapshot).footage(snapshot);

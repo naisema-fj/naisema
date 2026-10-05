@@ -2,7 +2,9 @@ import { and, asc, eq } from "drizzle-orm";
 import { contentItem, learningLayer, revision } from "~db/schema";
 import { type ArticleSnapshot, footageOf } from "./article-fields";
 import { activeHold } from "./content-holds.server";
+import { type ContentKindName, contentKind, kindOf } from "./content-kinds";
 import type { Database } from "./db.server";
+import { episodeRecording } from "./episode-fields";
 import { type LayerReview, loadLayerReview } from "./layer-review.server";
 import { layerReadinessProblems } from "./layer-review-rules";
 import type { LearningLayerSnapshot } from "./learning-layer-fields";
@@ -98,29 +100,13 @@ export async function revisionEligibility(db: Database, review: Review, now = ne
     });
   }
   if (!review.submitted) reasons.push(UNSUBMITTED);
-  if (review.videoAssetId && !(await readyVideo(db, review.videoAssetId))) {
+  const { content } = review;
+  const footage = footageOf(content);
+  if (footage && !(await readyVideo(db, footage))) {
     reasons.push({ kind: "media", text: "Its video hasn't finished processing." });
   }
   reasons.push(...reviewReasons(review.progress));
-  if (review.resourceAssetId && !(await readyDownload(db, review.resourceAssetId))) {
-    reasons.push({
-      kind: "media",
-      text: "Its file isn't in the media library as a PDF or audio file that has passed its virus scan.",
-    });
-  }
-  const recording = review.episode?.recording;
-  if (recording?.kind === "audio" && !(await readyEpisodeAudio(db, recording.assetId))) {
-    reasons.push({
-      kind: "media",
-      text: "Its audio isn't in the media library as an MP3 or M4A file that has passed its virus scan.",
-    });
-  }
-  if (review.episode && !review.episode.hasTranscript) {
-    reasons.push({
-      kind: "readiness",
-      text: "It has no transcript yet. Every Episode is published with a reviewed transcript.",
-    });
-  }
+  reasons.push(...(await KIND_READINESS[kindOf(content)](db, content, now)));
   reasons.push(
     ...each(
       "rights",
@@ -128,18 +114,60 @@ export async function revisionEligibility(db: Database, review: Review, now = ne
         records: await rightsFactsFor(db, { type: "content_item", id: review.contentItem.id }),
         needsGuardianPermission: review.flags.includes("identifiableChildren"),
         // Only parts this Revision lists can be held up by their own records.
-        parts: review.episode?.parts ?? [],
+        parts: contentKind(content).rightsParts(content),
         now,
       }),
     ),
   );
-  // A Creator Profile's sample can't itself be a Creator Profile, so this never recurses further.
-  if (review.creatorSampleId && !(await publicItem(db, review.creatorSampleId, now))) {
-    reasons.push({ kind: "readiness", text: "Its free sample isn't published right now." });
-  }
   reasons.push(...each("rights", assetRightsProblems(await mediaRightsFacts(db, review.mediaAssetIds), now)));
   return decided(reasons);
 }
+
+/**
+ * What each kind of Content Item needs of its own before it can be public (content-kinds.ts): a
+ * Resource's file must be a scanned PDF or audio file; an Episode needs its transcript, and its
+ * audio, if that is what it plays, a scanned MP3 or M4A; a Creator Profile needs its free sample
+ * public. Footage, which a Video and a video Episode play, is checked for every kind.
+ */
+const KIND_READINESS: Record<
+  ContentKindName,
+  (db: Database, content: ArticleSnapshot, now: Date) => Promise<Reason[]>
+> = {
+  text: async () => [],
+  video: async () => [],
+  resource: async (db, { resource }) =>
+    resource?.source.kind === "file" && !(await readyDownload(db, resource.source.assetId))
+      ? [
+          {
+            kind: "media",
+            text: "Its file isn't in the media library as a PDF or audio file that has passed its virus scan.",
+          },
+        ]
+      : [],
+  episode: async (db, { episode }) => {
+    if (!episode) return [];
+    const reasons: Reason[] = [];
+    const recording = episodeRecording(episode);
+    if (recording.kind === "audio" && !(await readyEpisodeAudio(db, recording.assetId))) {
+      reasons.push({
+        kind: "media",
+        text: "Its audio isn't in the media library as an MP3 or M4A file that has passed its virus scan.",
+      });
+    }
+    if (episode.transcript.trim() === "") {
+      reasons.push({
+        kind: "readiness",
+        text: "It has no transcript yet. Every Episode is published with a reviewed transcript.",
+      });
+    }
+    return reasons;
+  },
+  // A Creator Profile's sample can't itself be a Creator Profile, so this never recurses further.
+  creator: async (db, { creator }, now) =>
+    creator && !(await publicItem(db, creator.sampleItemId, now))
+      ? [{ kind: "readiness", text: "Its free sample isn't published right now." }]
+      : [],
+};
 
 /** `revisionEligibility` for a Content Item Revision found by its ID. */
 export async function isEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {

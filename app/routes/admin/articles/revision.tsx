@@ -2,10 +2,9 @@ import { data, redirect } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { ReviewPanel } from "~/components/review-panel";
 import { RevisionTypeDetails } from "~/components/revision-type-details";
-import type { ArticleSnapshot } from "~/lib/article-fields";
 import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { episodeRecording } from "~/lib/episode-fields";
+import { mainMedia } from "~/lib/content-kinds";
 import { mediaName } from "~/lib/media.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
@@ -29,13 +28,6 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: loaderData ? `Revision ${loaderData.revision.number} · Na iSema staff` : "Na iSema staff" }];
 }
 
-/** The media library file a Resource offers or an Episode plays, if any. */
-const mediaAssetIdOf = (snapshot: ArticleSnapshot) =>
-  (snapshot.episode ? episodeRecording(snapshot.episode).assetId : null) ??
-  snapshot.creator?.portraitAssetId ??
-  snapshot.video?.videoAssetId ??
-  (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);
-
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { db, actor, article, revision, review } = await requireRevision(
     request,
@@ -58,7 +50,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     revision,
     topics: topicNames(revision.snapshot.topicIds),
     embeds: await embedsFor(db, revision.snapshot.body),
-    fileName: await mediaName(db, mediaAssetIdOf(revision.snapshot)),
+    fileName: await mediaName(db, mainMedia(revision.snapshot)),
     sampleTitle: revision.snapshot.creator
       ? ((await getArticle(db, revision.snapshot.creator.sampleItemId))?.currentRevision.snapshot.title ?? null)
       : null,
