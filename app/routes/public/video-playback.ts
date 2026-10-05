@@ -1,5 +1,6 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
 import type { Route } from "./+types/video-playback";
 
@@ -15,4 +16,4 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   return Response.json(playback, { headers: NO_STORE });
 }
 
-const NO_STORE = { "Cache-Control": "private, no-store" };
+const NO_STORE = { "Cache-Control": PRIVATE_NO_STORE };

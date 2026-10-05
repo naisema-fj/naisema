@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { contentItem, learningLayer } from "~db/schema";
+import { footageOf } from "./article-fields";
 import type { Database } from "./db.server";
-import { layerEligibility, loadLayerReview } from "./layer-review.server";
-import { eligiblePublished } from "./public.server";
+import { eligiblePublished, publicLayers } from "./public.server";
 import { readyVideo } from "./video-assets.server";
 import { ProviderError, videoProvider } from "./video-provider.server";
 
@@ -17,7 +17,7 @@ export async function publicVideoItem(db: Database, contentItemId: string, now =
   const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
   if (!item) return null;
   const published = await eligiblePublished(db, item, now);
-  const assetId = published?.snapshot.video?.videoAssetId ?? published?.snapshot.episode?.videoAssetId;
+  const assetId = published ? footageOf(published.snapshot) : null;
   const asset = assetId ? await readyVideo(db, assetId) : undefined;
   return asset ? { item, asset } : null;
 }
@@ -28,7 +28,8 @@ export async function playbackFor(
   video: NonNullable<Awaited<ReturnType<typeof publicVideoItem>>>,
 ): Promise<{ src: string; hls: boolean } | null> {
   if (!video.asset.providerId) return null;
-  if (env.VIDEO_PROVIDER === "local") return { src: `/videos/${video.item.id}/stream`, hls: false };
+  // Each local address differs, as each signed one does, so a player asking again really reloads.
+  if (env.VIDEO_PROVIDER === "local") return { src: `/videos/${video.item.id}/stream?v=${Date.now()}`, hls: false };
   try {
     const signed = await videoProvider(env).playback(
       { id: video.asset.id, providerId: video.asset.providerId },
@@ -42,15 +43,13 @@ export async function playbackFor(
 }
 
 /**
- * A Learning Layer that is public right now, by its ID: published, its published Revision eligible,
- * and its Video public too. Returns its published Revision's review and its Video, or null.
+ * A Learning Layer that is public right now, by its ID: its Video public, and the Learning Layer
+ * published with its published Revision eligible. Returns that Revision's snapshot, or null.
  */
 export async function publicLayerById(db: Database, learningLayerId: string, now = new Date()) {
   const layer = await db.select().from(learningLayer).where(eq(learningLayer.id, learningLayerId)).get();
-  if (layer?.publicationState !== "published" || !layer.currentPublishedRevisionId) return null;
-  const video = await publicVideoItem(db, layer.contentItemId, now);
-  if (!video) return null;
-  const review = await loadLayerReview(db, layer.currentPublishedRevisionId);
-  if (!review || !(await layerEligibility(db, review, now)).eligible) return null;
-  return { review, video };
+  if (!layer || !(await publicVideoItem(db, layer.contentItemId, now))) return null;
+  return (
+    (await publicLayers(db, layer.contentItemId, now)).find((candidate) => candidate.id === learningLayerId) ?? null
+  );
 }

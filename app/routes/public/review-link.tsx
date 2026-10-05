@@ -4,6 +4,7 @@ import { VideoPreview } from "~/components/video-preview";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { loadLayerReview } from "~/lib/layer-review.server";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { openReviewLink, reviewPlaybackAllowed } from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
 import { formatTimecode } from "~/lib/segment-rules";
@@ -14,7 +15,7 @@ import type { Route } from "./+types/review-link";
 // Plays the video, and is never indexed, whatever the environment.
 export const handle = { video: true, noindex: true };
 // A Review Link shows a draft to one person: never keep a copy of it anywhere.
-export const headers = () => ({ "Cache-Control": "private, no-store" });
+export const headers = () => ({ "Cache-Control": PRIVATE_NO_STORE });
 
 export function meta() {
   return [{ title: "Draft for review · Na iSema" }, { name: "robots", content: "noindex, nofollow" }];

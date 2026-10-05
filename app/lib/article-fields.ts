@@ -1,6 +1,6 @@
 import type { ArticleBody } from "./article-body";
 import type { CreatorDetails, CreatorField } from "./creator-fields";
-import type { EpisodeDetails, EpisodeField } from "./episode-fields";
+import { type EpisodeDetails, type EpisodeField, episodeRecording } from "./episode-fields";
 import type { ReviewType } from "./permissions";
 import type { ResourceDetails, ResourceField } from "./resource-fields";
 import type { ContentFlag } from "./review-rules";
@@ -116,4 +116,11 @@ export function articleReviewFields(snapshot: ArticleSnapshot): Record<ReviewTyp
     accessibility: { title, body, ...resourceAccess, ...recording },
     safeguarding: { title, summary, body, ...recording, ...speakers, ...portrait },
   };
+}
+
+/** The footage a Revision plays, if any: a Video's, or a video Episode's recording. */
+export function footageOf(snapshot: Pick<ArticleSnapshot, "video" | "episode">): string | null {
+  if (snapshot.video) return snapshot.video.videoAssetId;
+  const recording = snapshot.episode ? episodeRecording(snapshot.episode) : null;
+  return recording?.kind === "video" ? recording.assetId : null;
 }

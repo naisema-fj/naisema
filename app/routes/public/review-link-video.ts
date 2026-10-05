@@ -3,6 +3,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { loadLayerReview } from "~/lib/layer-review.server";
 import { rangedResponse, type StoredFile } from "~/lib/media-delivery.server";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { reviewLinkForPlayback, reviewPlaybackAllowed } from "~/lib/review-links.server";
 import { videoItem } from "~/lib/video-items.server";
 import { mediaAsset } from "~db/schema";
@@ -41,7 +42,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
             size: asset.size,
             type: asset.type,
           } satisfies StoredFile,
-          "private, no-store",
+          PRIVATE_NO_STORE,
         )
       : null;
   if (!response) throw new Response("Not found", { status: 404 });

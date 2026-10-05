@@ -50,9 +50,6 @@ export async function eligibilityFor(db: Database, review: Review, now = new Dat
   if (recording?.kind === "audio" && !(await readyEpisodeAudio(db, recording.assetId))) {
     reasons.push("Its audio isn't in the media library as an MP3 or M4A file that has passed its virus scan.");
   }
-  if (recording?.kind === "video" && !(await readyVideo(db, recording.assetId))) {
-    reasons.push("Its video hasn't finished processing.");
-  }
   if (review.episode && !review.episode.hasTranscript) {
     reasons.push("It has no transcript yet. Every Episode is published with a reviewed transcript.");
   }

@@ -64,9 +64,9 @@ export function ContentLetter({
       </section>
 
       {item.resource && <ResourceDetails id={item.id} resource={item.resource} />}
+      {item.video && <StoryVideo title={item.title} video={item.video} playback={playback} />}
       {item.episode && <EpisodePlayer title={item.title} episode={item.episode} />}
       {item.creator && <CreatorDetails creator={item.creator} />}
-      {item.video && <StoryVideo title={item.title} video={item.video} playback={playback} />}
 
       <div className="letter-body">
         <ArticleBodyView body={item.body} embeds={item.embeds} />
@@ -81,7 +81,9 @@ export function ContentLetter({
             {item.topics.map((topic, index) => (
               <span key={topic.slug}>
                 {index > 0 && ", "}
-                <Link to={`/topics/${topic.slug}`}>{topic.name}</Link>
+                <Link reloadDocument to={`/topics/${topic.slug}`}>
+                  {topic.name}
+                </Link>
               </span>
             ))}
           </p>
@@ -98,7 +100,9 @@ export function ContentLetter({
             <ul className="letter-list">
               {item.related.map((related) => (
                 <li key={related.path}>
-                  <Link to={related.path}>{related.title}</Link>
+                  <Link reloadDocument to={related.path}>
+                    {related.title}
+                  </Link>
                   <p>{related.summary}</p>
                   <p className="list-mark">{related.typeName}</p>
                 </li>
@@ -108,12 +112,16 @@ export function ContentLetter({
         )}
         {item.area && (
           <p>
-            <Link to={`/${item.area}`}>More from {item.areaName}</Link>
+            <Link reloadDocument to={`/${item.area}`}>
+              More from {item.areaName}
+            </Link>
           </p>
         )}
         {/* Carries the item's id, so the Case knows what it is about (SAFE-01). */}
         <p className="report-problem">
-          <Link to={`/report?item=${item.id}`}>Report a problem with this {name}</Link>
+          <Link reloadDocument to={`/report?item=${item.id}`}>
+            Report a problem with this {name}
+          </Link>
         </p>
       </footer>
       {/* Counts the view (content_opened, IDs only) even when the page came from the edge cache; no script needed. */}
@@ -141,15 +149,13 @@ function StoryVideo({
         Watch
       </h2>
       {playback ? (
-        <div
-          className={`video-frame video-${video.orientation}`}
-          style={{ aspectRatio: `${video.width} / ${video.height}` }}
-        >
+        <div className={`video-frame video-${video.orientation}`}>
           <VideoPreview
             src={playback.src}
             hls={playback.hls}
             label={title}
             className="public-video"
+            aspectRatio={`${video.width} / ${video.height}`}
             refreshPath={video.playbackPath}
           />
         </div>
@@ -158,7 +164,7 @@ function StoryVideo({
       )}
       {video.layers.length > 0 && (
         <section aria-labelledby="explore-heading" className="explore-language">
-          <h2 id="explore-heading">Explore the language</h2>
+          <h3 id="explore-heading">Explore the language</h3>
           <ul className="letter-list">
             {video.layers.map((layer) => (
               <li key={layer.id}>
@@ -277,7 +283,9 @@ function CreatorDetails({ creator }: { creator: NonNullable<PublicArticle["creat
         <div className="sample">
           <h3>A free sample of their work</h3>
           <p>
-            <Link to={creator.sample.path}>{creator.sample.title}</Link>
+            <Link reloadDocument to={creator.sample.path}>
+              {creator.sample.title}
+            </Link>
             {` · ${creator.sample.typeName}`}
           </p>
           <p>{creator.sample.summary}</p>

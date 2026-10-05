@@ -4,7 +4,7 @@ import { isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { findPublicArticle } from "~/lib/public.server";
-import { PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
+import { PRIVATE_NO_STORE, PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
 import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
 import type { RouteHandle } from "~/lib/route-handle";
 import type { Route } from "./+types/article";
@@ -39,7 +39,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const video = await publicVideoItem(db, article.id);
   return data(
     { ...article, playback: video ? await playbackFor(env, video) : null },
-    { headers: { "Cache-Control": "private, no-store" } },
+    { headers: { "Cache-Control": PRIVATE_NO_STORE } },
   );
 }
 
@@ -54,10 +54,14 @@ export default function Article({ loaderData: article }: Route.ComponentProps) {
       <nav aria-label="Breadcrumb" className="breadcrumb">
         <ol>
           <li>
-            <Link to="/">Home</Link>
+            <Link reloadDocument to="/">
+              Home
+            </Link>
           </li>
           <li>
-            <Link to={`/${article.area}`}>{article.areaName}</Link>
+            <Link reloadDocument to={`/${article.area}`}>
+              {article.areaName}
+            </Link>
           </li>
           <li aria-current="page">{article.title}</li>
         </ol>

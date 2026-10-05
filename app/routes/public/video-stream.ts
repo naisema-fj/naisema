@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { rangedResponse, type StoredFile } from "~/lib/media-delivery.server";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { publicVideoItem } from "~/lib/public-video.server";
 import { mediaAsset } from "~db/schema";
 import type { Route } from "./+types/video-stream";
@@ -28,7 +29,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
             size: asset.size,
             type: asset.type,
           } satisfies StoredFile,
-          "private, no-store",
+          PRIVATE_NO_STORE,
         )
       : null;
   if (!response) throw new Response("Not found", { status: 404 });

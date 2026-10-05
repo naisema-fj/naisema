@@ -24,6 +24,7 @@ export function VideoPreview({
   className = "video-preview",
   tracks = [],
   refreshPath,
+  aspectRatio,
   children,
 }: {
   src: string;
@@ -36,6 +37,8 @@ export function VideoPreview({
   tracks?: CaptionTrack[];
   /** Where a fresh `{ src, hls }` comes from when the signed address runs out. */
   refreshPath?: string;
+  /** The footage's own shape, as "width / height", so it is never cropped. */
+  aspectRatio?: string;
   /** Shown over the video, such as the captions of the Segment playing. */
   children?: ReactNode;
 }) {
@@ -45,8 +48,14 @@ export function VideoPreview({
   /** Where to carry on from once a new address has loaded. */
   const resume = useRef<{ time: number; playing: boolean } | null>(null);
   const lastRefresh = useRef(0);
+  /** Whether hls.js feeds the video; otherwise the browser plays the address itself (a file, or HLS in Safari). */
+  const viaHlsJs = useRef(false);
 
-  useEffect(() => setSource({ src, hls }), [src, hls]);
+  // A new address from the page; the same one keeps the player as it is.
+  useEffect(
+    () => setSource((current) => (current.src === src && current.hls === hls ? current : { src, hls })),
+    [src, hls],
+  );
 
   useEffect(() => {
     if (videoRef) videoRef.current = video.current;
@@ -68,10 +77,11 @@ export function VideoPreview({
       return false;
     }
   };
-  const fail = () => setError(UNPLAYABLE);
   // The hls.js player is built once per address; it reaches the latest `refresh` through this.
   const refreshRef = useRef(refresh);
-  refreshRef.current = refresh;
+  useEffect(() => {
+    refreshRef.current = refresh;
+  });
 
   useEffect(() => {
     const element = video.current;
@@ -89,7 +99,17 @@ export function VideoPreview({
 
   useEffect(() => {
     const element = video.current;
-    if (!element || !source.hls || element.canPlayType("application/vnd.apple.mpegurl")) return;
+    viaHlsJs.current = false;
+    if (!element) return;
+    // A file, or HLS where the browser plays it itself (Safari, iOS): the address goes on the element.
+    if (!source.hls || element.canPlayType("application/vnd.apple.mpegurl")) {
+      if (element.getAttribute("src") !== source.src) element.src = source.src;
+      // The server-rendered address may already have failed before the page's script ran.
+      else if (element.error) refreshRef.current().then((renewed) => renewed || setError(UNPLAYABLE));
+      return;
+    }
+    viaHlsJs.current = true;
+    element.removeAttribute("src");
     let cancelled = false;
     let player: { destroy(): void } | undefined;
     import("hls.js/light")
@@ -135,14 +155,16 @@ export function VideoPreview({
       {/* biome-ignore lint/a11y/useMediaCaption: captions come from a Learning Layer's reviewed Segments, as tracks when there are any. */}
       <video
         ref={video}
+        // Server-rendered with the address when it is a file, so it can play before hydration.
         src={source.hls ? undefined : source.src}
         controls
         playsInline
         preload="metadata"
         aria-label={label}
+        style={aspectRatio ? { aspectRatio } : undefined}
         onError={() => {
-          // The browser plays the file itself here, so an error is most often an expired address.
-          if (!source.hls) refresh().then((renewed) => renewed || fail());
+          // When the browser plays the address itself, an error is most often an expired address.
+          if (!viaHlsJs.current) refresh().then((renewed) => renewed || setError(UNPLAYABLE));
         }}
       >
         {tracks.map((track) => (
