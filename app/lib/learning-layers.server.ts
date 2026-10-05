@@ -9,19 +9,11 @@ import {
   user,
   videoEducator,
 } from "~db/schema";
-import { activityProblems, readActivities } from "./activities";
-import {
-  annotationProblems,
-  annotationsToCheck,
-  noteProblems,
-  readAnnotations,
-  readNewExpressions,
-  readNotes,
-} from "./annotations";
 import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
-import { expressionCopies, placeNewExpressions } from "./expressions.server";
+import { expressionLibrary } from "./expressions.server";
+import { buildLayerRevision, type LayerEditorPayload } from "./layer-revision";
 import {
   LAYER_LANGUAGE_VARIETY,
   type LayerDetailField,
@@ -32,9 +24,9 @@ import {
   withDefaults,
 } from "./learning-layer-fields";
 import { type Actor, can } from "./permissions";
-import { carryForwardInserts, LEARNING_LAYER_REVIEW } from "./review.server";
+import { LEARNING_LAYER_REVIEW } from "./review.server";
 import { fingerprintsOf } from "./review-rules";
-import { clipDuration, readSegments, segmentProblems } from "./segment-rules";
+import { appendRevisionTo } from "./revisions.server";
 import { requireStaff } from "./staff.server";
 import { videoItem } from "./video-items.server";
 
@@ -313,22 +305,16 @@ export async function openLearningLayer(db: Database, actor: Actor, learningLaye
 export type SaveLayerResult = { ok: true; number: number } | ({ ok: false } & LayerRefusal);
 
 /**
- * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: its details, Segments,
- * Annotations, notes and Activities, which must pass validation against its clip. Refused if a
- * newer Revision exists.
+ * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: the next snapshot is built
+ * from the editor's payload against the clip and the Revision before (app/lib/layer-revision.ts),
+ * with its new Expressions joining the library, and stored like any Revision, with its approvals
+ * carried forward where its fingerprints allow. Refused if a newer Revision exists.
  */
 export async function saveLearningLayer(
   db: Database,
   actor: Actor,
   layer: LearningLayer,
-  input: DetailsInput & {
-    baseRevisionId: string;
-    segments: string;
-    annotations: string;
-    notes: string;
-    newExpressions: string;
-    activities: string;
-  },
+  input: LayerEditorPayload & { baseRevisionId: string },
 ): Promise<SaveLayerResult> {
   if (
     !can(actor, { action: "learningLayer.author", learningLayer: { assignedEducatorIds: layer.assignedEducatorIds } })
@@ -336,145 +322,26 @@ export async function saveLearningLayer(
     return { ok: false, error: "Only editors and the Educators assigned to this Learning Layer can edit it." };
   }
   if (input.baseRevisionId !== layer.currentDraftRevisionId) return { ok: false, error: STALE_SAVE };
-  const details = readLayerDetails(input, layer.video.video.durationMs);
-  if (!details.ok) return { ok: false, error: "Check the Learning Layer's details.", errors: details.errors };
-  const base = layer.currentRevision.snapshot;
-  const segments = readSegments(input.segments, new Map(base.segments.map((segment) => [segment.id, segment.tokens])));
-  if (!segments.ok) return { ok: false, error: segments.error };
-  const problems = segmentProblems(
-    segments.segments,
-    clipDuration(details.details.excerpt, layer.video.video.durationMs),
+  const built = await buildLayerRevision(
+    input,
+    { snapshot: layer.currentRevision.snapshot, videoDurationMs: layer.video.video.durationMs },
+    expressionLibrary(db, actor.userId, layer.languageVariety),
   );
-  if (problems.length) {
-    return {
-      ok: false,
-      error: `${problems.length === 1 ? "One Segment needs" : `${problems.length} Segments need`} fixing before this can be saved.`,
-      problems,
-    };
-  }
-  const annotations = readAnnotations(input.annotations);
-  if (!annotations.ok) return { ok: false, error: annotations.error };
-  const notes = readNotes(input.notes);
-  if (!notes.ok) return { ok: false, error: notes.error };
-  const defined = readNewExpressions(input.newExpressions);
-  if (!defined.ok) return { ok: false, error: defined.error };
-  const activities = readActivities(input.activities);
-  if (!activities.ok) return { ok: false, error: activities.error };
-
-  // New Expressions an Annotation uses join the library (or match one there saying exactly the
-  // same); every Annotation then links to a library Expression, of which the Revision keeps a copy.
-  const used = new Set(annotations.items.map((annotation) => annotation.expressionId));
-  const library = await placeNewExpressions(
-    db,
-    actor.userId,
-    layer.languageVariety,
-    defined.items.filter((item) => used.has(item.id)),
-  );
-  if (!library.ok) return { ok: false, error: library.error };
-  // Where the server had to work out a Segment's tokens itself, it flags Annotations whose words now
-  // appear a different number of times, as the editor does.
-  const toCheck = new Set(
-    [...segments.retokenised].flatMap((segmentId) =>
-      annotationsToCheck(
-        annotations.items,
-        segmentId,
-        base.segments.find((segment) => segment.id === segmentId)?.tokens ?? [],
-        segments.segments.find((segment) => segment.id === segmentId)?.tokens ?? [],
-      ),
-    ),
-  );
-  const linked = annotations.items.map((annotation) => ({
-    ...annotation,
-    expressionId: library.ids.get(annotation.expressionId) ?? annotation.expressionId,
-    needsCheck: annotation.needsCheck || toCheck.has(annotation.id),
-  }));
-  const expressions = await expressionCopies(
-    db,
-    layer.languageVariety,
-    [...new Set(linked.map((annotation) => annotation.expressionId))],
-    library.added,
-  );
-  // Annotations, notes and Activities whose words or Segment are gone are kept, flagged; anything
-  // else wrong is refused.
-  const annotationIssues = annotationProblems(linked, segments.segments, new Set(Object.keys(expressions))).filter(
-    (problem) => !problem.revalidate,
-  );
-  const noteIssues = noteProblems(notes.items, segments.segments).filter((problem) => !problem.revalidate);
-  if (annotationIssues.length || noteIssues.length) {
-    return {
-      ok: false,
-      error: "Some Annotations or notes need fixing before this can be saved.",
-      annotationProblems: annotationIssues,
-      noteProblems: noteIssues,
-    };
-  }
-  const activityIssues = activityProblems(activities.items, segments.segments).filter((problem) => !problem.revalidate);
-  if (activityIssues.length) {
-    return {
-      ok: false,
-      error: "Some Activities need fixing before this can be saved.",
-      activityProblems: activityIssues,
-    };
-  }
-
-  const snapshot: LearningLayerSnapshot = {
-    ...details.details,
-    segments: segments.segments,
-    annotations: linked,
-    notes: notes.items,
-    expressions,
-    activities: activities.items,
-  };
-  const number = layer.currentRevision.number + 1;
-  const id = crypto.randomUUID();
-  const now = new Date();
-  const fingerprints = await fingerprintsOf(learningLayerReviewFields(snapshot, layer.languageVariety));
-  // Approvals on the base whose fingerprints this save leaves unchanged carry forward (ADR-0003).
-  const carried = await carryForwardInserts(LEARNING_LAYER_REVIEW, db, {
+  if (!built.ok) return built;
+  const { snapshot } = built;
+  return appendRevisionTo(LEARNING_LAYER_REVIEW, db, {
     parentId: layer.id,
-    sourceRevisionId: layer.currentRevision.id,
-    newRevisionId: id,
-    newNumber: number,
-    newFingerprints: fingerprints,
+    baseRevisionId: input.baseRevisionId,
+    snapshot,
+    fingerprints: await fingerprintsOf(learningLayerReviewFields(snapshot, layer.languageVariety)),
     savedBy: actor.userId,
+    alsoWrite: built.libraryWrites,
+    auditDetails: {
+      segments: snapshot.segments.length,
+      annotations: snapshot.annotations.length,
+      activities: snapshot.activities.length,
+    },
   });
-  try {
-    await db.batch([
-      // A concurrent save of the same base takes this number first; the unique index refuses this one.
-      db.insert(learningLayerRevision).values({
-        id,
-        learningLayerId: layer.id,
-        number,
-        snapshot,
-        fingerprints,
-        createdBy: actor.userId,
-        createdAt: now,
-      }),
-      ...carried,
-      ...library.inserts,
-      db
-        .update(learningLayer)
-        .set({ currentDraftRevisionId: id, updatedAt: now })
-        .where(eq(learningLayer.id, layer.id)),
-      auditInsert(db, {
-        actorId: actor.userId,
-        action: "learning_layer_revision.saved",
-        objectType: "learning_layer_revision",
-        objectId: id,
-        details: {
-          learningLayerId: layer.id,
-          number,
-          segments: snapshot.segments.length,
-          annotations: snapshot.annotations.length,
-          activities: snapshot.activities.length,
-        },
-      }),
-    ]);
-  } catch (error) {
-    if (String(error).includes("UNIQUE")) return { ok: false, error: STALE_SAVE };
-    throw error;
-  }
-  return { ok: true, number };
 }
 
 /** A summary of each Learning Layer, for the lists. */

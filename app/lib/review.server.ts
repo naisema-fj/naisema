@@ -59,6 +59,10 @@ export type ReviewSubject = {
   parent: { table: typeof contentItem; id: SQLiteColumn; createdBy: SQLiteColumn; draftId: SQLiteColumn };
   revision: typeof revision;
   revisionParent: SQLiteColumn;
+  /** The Revision's parent column, as a value to insert. */
+  revisionParentKey: "contentItemId" | "learningLayerId";
+  /** What a save made from an outdated Revision is told. */
+  staleSave: string;
   submission: typeof revisionSubmission;
   assignment: typeof reviewAssignment;
   assignmentParent: SQLiteColumn;
@@ -66,6 +70,8 @@ export type ReviewSubject = {
   assignmentParentKey: "contentItemId" | "learningLayerId";
   approval: typeof reviewApproval;
   audit: {
+    saved: string;
+    restored: string;
     revisionType: string;
     approvalType: string;
     assignmentType: string;
@@ -93,12 +99,16 @@ export const CONTENT_ITEM_REVIEW: ReviewSubject = {
   },
   revision,
   revisionParent: revision.contentItemId,
+  revisionParentKey: "contentItemId",
+  staleSave: "Someone else saved this while you were editing. Open it again to see their changes, then make yours.",
   submission: revisionSubmission,
   assignment: reviewAssignment,
   assignmentParent: reviewAssignment.contentItemId,
   assignmentParentKey: "contentItemId",
   approval: reviewApproval,
   audit: {
+    saved: "revision.saved",
+    restored: "revision.restored",
     revisionType: "revision",
     approvalType: "review_approval",
     assignmentType: "review_assignment",
@@ -121,12 +131,17 @@ export const LEARNING_LAYER_REVIEW: ReviewSubject = {
   },
   revision: same(learningLayerRevision),
   revisionParent: learningLayerRevision.learningLayerId,
+  revisionParentKey: "learningLayerId",
+  staleSave:
+    "Someone else saved this Learning Layer while you were editing. Open it again to see their changes, then make yours.",
   submission: same(learningLayerSubmission),
   assignment: same(learningLayerReviewAssignment),
   assignmentParent: learningLayerReviewAssignment.learningLayerId,
   assignmentParentKey: "learningLayerId",
   approval: same(learningLayerApproval),
   audit: {
+    saved: "learning_layer_revision.saved",
+    restored: "learning_layer_revision.restored",
     revisionType: "learning_layer_revision",
     approvalType: "learning_layer_approval",
     assignmentType: "learning_layer_review_assignment",

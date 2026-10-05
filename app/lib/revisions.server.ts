@@ -1,10 +1,11 @@
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 import { contentItem, revision, slugRedirect, user } from "~db/schema";
 import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
 import type { ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
-import { CONTENT_ITEM_REVIEW, carryForwardInserts } from "./review.server";
+import { CONTENT_ITEM_REVIEW, carryForwardInserts, type ReviewSubject } from "./review.server";
 import type { Fingerprints } from "./review-rules";
 import { firstFreeSlug, RESERVED_SLUGS, slugify } from "./slug";
 
@@ -145,8 +146,94 @@ export async function getContentItem<Snapshot>(db: Database, id: string, type?: 
 
 export type SaveResult = { ok: true; number: number } | { ok: false; error: string };
 
-const STALE_SAVE_MESSAGE =
-  "Someone else saved this while you were editing. Open it again to see their changes, then make yours.";
+/**
+ * Appends a Revision of a Content Item or Learning Layer on top of `baseRevisionId` and makes it
+ * the current draft, with the approvals its fingerprints leave unchanged carried forward (ADR-0003)
+ * and anything else the save writes, in one batch. If a newer Revision already exists the save is
+ * refused rather than silently replacing someone's work; a concurrent save of the same base takes
+ * the number first, and the unique index refuses the other.
+ */
+export async function appendRevisionTo(
+  subject: ReviewSubject,
+  db: Database,
+  save: {
+    parentId: string;
+    /** The Revision the editor started from; the save is refused if it is no longer the current draft. */
+    baseRevisionId: string;
+    snapshot: unknown;
+    fingerprints: Fingerprints;
+    savedBy: string;
+    /** For a restore, the earlier Revision saved again, whose approvals are the ones to carry. */
+    restoredFromRevisionId?: string;
+    /** Other writes the save makes, such as new Expressions joining the library. */
+    alsoWrite?: unknown[];
+    /** More for the audit record. */
+    auditDetails?: Record<string, unknown>;
+  },
+): Promise<SaveResult> {
+  const { parentId, savedBy, restoredFromRevisionId } = save;
+  const stale = { ok: false as const, error: subject.staleSave };
+  const parent = await db
+    .select({ draftId: sql<string | null>`${subject.parent.draftId}` })
+    .from(subject.parent.table)
+    .where(eq(subject.parent.id, parentId))
+    .get();
+  if (parent?.draftId !== save.baseRevisionId) return stale;
+  const base = await db
+    .select({ number: subject.revision.number })
+    .from(subject.revision)
+    .where(eq(subject.revision.id, save.baseRevisionId))
+    .get();
+  if (!base) return stale;
+
+  const now = new Date();
+  const id = crypto.randomUUID();
+  const number = base.number + 1;
+  const carried = await carryForwardInserts(subject, db, {
+    parentId,
+    sourceRevisionId: restoredFromRevisionId ?? save.baseRevisionId,
+    newRevisionId: id,
+    newNumber: number,
+    newFingerprints: save.fingerprints,
+    savedBy,
+  });
+  try {
+    await db.batch([
+      db.insert(subject.revision).values({
+        id,
+        [subject.revisionParentKey]: parentId,
+        number,
+        snapshot: save.snapshot,
+        fingerprints: save.fingerprints,
+        ...(restoredFromRevisionId ? { restoredFromRevisionId } : {}),
+        createdBy: savedBy,
+        createdAt: now,
+      } as typeof revision.$inferInsert),
+      ...((save.alsoWrite ?? []) as BatchItem<"sqlite">[]),
+      db
+        .update(subject.parent.table)
+        .set({ currentDraftRevisionId: id, updatedAt: now })
+        .where(eq(subject.parent.id, parentId)),
+      auditInsert(db, {
+        actorId: savedBy,
+        action: restoredFromRevisionId ? subject.audit.restored : subject.audit.saved,
+        objectType: subject.audit.revisionType,
+        objectId: id,
+        details: {
+          [subject.revisionParentKey]: parentId,
+          number,
+          ...(restoredFromRevisionId ? { restoredFromRevisionId } : {}),
+          ...save.auditDetails,
+        },
+      }),
+      ...carried,
+    ]);
+  } catch (error) {
+    if (String(error).includes("UNIQUE")) return stale;
+    throw error;
+  }
+  return { ok: true, number };
+}
 
 type Save = {
   contentItemId: string;
@@ -159,64 +246,16 @@ type Save = {
   restoredFromRevisionId?: string;
 };
 
-/**
- * Appends a Revision on top of `baseRevisionId` and makes it the current draft. If a newer
- * Revision already exists the save is refused rather than silently replacing someone's work.
- */
+/** Appends a Revision of a Content Item of this type (`appendRevisionTo`). */
 export async function appendRevision(db: Database, save: Save): Promise<SaveResult> {
-  const { contentItemId, savedBy, restoredFromRevisionId = null } = save;
-  const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
-  if (item?.type !== save.type) return { ok: false, error: "That doesn't exist." };
-  if (item.currentDraftRevisionId !== save.baseRevisionId) return { ok: false, error: STALE_SAVE_MESSAGE };
-  const base = await db
-    .select({ number: revision.number })
-    .from(revision)
-    .where(eq(revision.id, save.baseRevisionId))
+  const item = await db
+    .select({ type: contentItem.type })
+    .from(contentItem)
+    .where(eq(contentItem.id, save.contentItemId))
     .get();
-  if (!base) return { ok: false, error: STALE_SAVE_MESSAGE };
-
-  const now = new Date();
-  const id = crypto.randomUUID();
-  const number = base.number + 1;
-  const carried = await carryForwardInserts(CONTENT_ITEM_REVIEW, db, {
-    parentId: contentItemId,
-    sourceRevisionId: restoredFromRevisionId ?? save.baseRevisionId,
-    newRevisionId: id,
-    newNumber: number,
-    newFingerprints: save.fingerprints,
-    savedBy,
-  });
-  try {
-    await db.batch([
-      // A concurrent save of the same base takes this number first; the unique index then refuses this one.
-      db.insert(revision).values({
-        id,
-        contentItemId,
-        number,
-        snapshot: save.snapshot,
-        fingerprints: save.fingerprints,
-        restoredFromRevisionId,
-        createdBy: savedBy,
-        createdAt: now,
-      }),
-      db
-        .update(contentItem)
-        .set({ currentDraftRevisionId: id, updatedAt: now })
-        .where(eq(contentItem.id, contentItemId)),
-      auditInsert(db, {
-        actorId: savedBy,
-        action: restoredFromRevisionId ? "revision.restored" : "revision.saved",
-        objectType: "revision",
-        objectId: id,
-        details: { contentItemId, number, ...(restoredFromRevisionId ? { restoredFromRevisionId } : {}) },
-      }),
-      ...carried,
-    ]);
-  } catch (error) {
-    if (String(error).includes("UNIQUE")) return { ok: false, error: STALE_SAVE_MESSAGE };
-    throw error;
-  }
-  return { ok: true, number };
+  if (item?.type !== save.type) return { ok: false, error: "That doesn't exist." };
+  const { contentItemId, type: _, ...rest } = save;
+  return appendRevisionTo(CONTENT_ITEM_REVIEW, db, { ...rest, parentId: contentItemId });
 }
 
 /** Restoring saves an earlier Revision's snapshot again as a new Revision; history is never rewritten. */

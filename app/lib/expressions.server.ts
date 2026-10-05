@@ -4,6 +4,7 @@ import { expression, learningLayer, learningLayerEducator, learningLayerRevision
 import type { ExpressionDetails, NewExpression } from "./annotations";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import type { ExpressionLibrary } from "./layer-revision";
 import { type Actor, can } from "./permissions";
 
 /**
@@ -218,4 +219,19 @@ export async function updateExpression(db: Database, actor: Actor, row: LibraryE
     }),
   ]);
   return true;
+}
+
+/**
+ * The library of one Language Variety in D1, as a Learning Layer save reaches it
+ * (app/lib/layer-revision.ts): new Expressions are placed by `placeNewExpressions`, and their
+ * inserts are made with the Revision.
+ */
+export function expressionLibrary(db: Database, actorId: string, languageVariety: string): ExpressionLibrary {
+  return {
+    async place(items) {
+      const placed = await placeNewExpressions(db, actorId, languageVariety, items);
+      return placed.ok ? { ok: true, ids: placed.ids, added: placed.added, writes: placed.inserts } : placed;
+    },
+    copies: (ids, added) => expressionCopies(db, languageVariety, ids, added),
+  };
 }
