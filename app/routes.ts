@@ -31,6 +31,8 @@ export default [
   ]),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
+  // For the external uptime monitor (ADR-0012): never cached, reads D1.
+  route("health", "routes/public/health.ts"),
   // Media library files that passed their scan (app/lib/media-delivery.server.ts).
   route("media/images/:id/:width", "routes/media/image.ts"),
   route("media/files/:id", "routes/media/file.ts"),
@@ -85,6 +87,8 @@ export default [
     route("cases/:id/evidence/:assetId", "routes/admin/cases/evidence.ts"),
     route("consents", "routes/admin/consents.tsx"),
     route("staff", "routes/admin/staff.tsx"),
+    // Media usage and cost (VAC-10) and the monitor's current problems (app/lib/usage.server.ts).
+    route("usage", "routes/admin/usage.tsx"),
     route("topics", "routes/admin/topics.tsx"),
     route("two-factor", "routes/admin/two-factor.tsx"),
     route("two-factor/setup", "routes/admin/two-factor-setup.tsx"),

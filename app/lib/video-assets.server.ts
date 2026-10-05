@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { mediaAsset, user, videoAsset } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { logError } from "./log.server";
 import type { MediaAsset } from "./media.server";
 import { readVideoFacts, type VideoFacts } from "./mp4-facts";
 import { ProviderError, type VideoProvider } from "./video-provider.server";
@@ -281,7 +282,7 @@ export async function refreshStalledVideos(db: Database, provider: VideoProvider
       if (video.state === "processing") await checkVideo(db, video.id, provider);
       else await sendForProcessing(db, video.id, provider, null, now);
     } catch (error) {
-      console.error("Video refresh failed", video.id, error);
+      logError("Video refresh failed", { videoAssetId: video.id, error });
     }
   }
 }

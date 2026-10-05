@@ -42,6 +42,8 @@ type RevisionUnderReview = {
 export type Check =
   | { action: "staffArea.enter" }
   | { action: "account.manage" | "role.assign" | "settings.edit" }
+  /** The media usage and cost report, and what the monitor is currently alerting on (VAC-10). */
+  | { action: "usage.read" }
   /** Signed-in administrators still hold a working authenticator, so nobody resets their own. */
   | { action: "twoFactor.reset"; staffMember: { userId: string } }
   /**
@@ -105,6 +107,7 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "account.manage":
     case "role.assign":
     case "settings.edit":
+    case "usage.read":
       return hasRole("administrator");
 
     case "twoFactor.reset":

@@ -78,7 +78,7 @@ Recommendations adopted without grilling on 29 September 2026 at the founder's a
   - explicitly test the PRD's list: access-control bypass, unsafe uploads, script injection, form abuse, expired rights and review states, secret exposure
 - **Monitoring:**
   - Workers Observability for logs and errors, with personal details redacted before logging
-  - a scheduled Worker that emails the technical owner when error rate, failed email sends, failed Stream processing or failed backups cross a threshold
+  - a scheduled Worker that emails the technical owner when error rate, failed email sends, failed Stream processing or failed backups cross a threshold (thresholds and set-up: `docs/handover/runbook.md`, monitoring and alerts)
   - an external uptime monitor as a deliberate exception to the all-Cloudflare rule (ADR-0012)
 - **Performance:** server rendering with edge caching, responsive images through Cloudflare Images, and no client JavaScript on pages that don't need it. Load test with k6 at 50 concurrent visitors and 5,000 items before launch.
 - **Incident runbook:** detection, containment, evidence preservation, assessment, notification duties and recovery, rehearsed once on staging before launch (PRD §11).
@@ -117,7 +117,7 @@ Before launch, the founder rehearses AC-08 unaided: sign in, publish an eligible
 
 | Role | Can | Cannot |
 | --- | --- | --- |
-| Administrator | Manage accounts, role assignments, site settings, feature flags; reset a staff member's two-factor | Read Case contents or evidence; approve reviews by virtue of the role; reset their own two-factor |
+| Administrator | Manage accounts, role assignments, site settings, feature flags; reset a staff member's two-factor; see the media usage and cost report | Read Case contents or evidence; approve reviews by virtue of the role; reset their own two-factor |
 | Editor | Create/edit Content Items and Learning Layers, assign Educators to Videos and Learning Layers, set Content Flags, request reviews, issue Review Links, record Knowledge Holder Approvals, publish/withdraw eligible Revisions | Approve a Revision they authored or edited; publish without required approvals and rights |
 | Educator | Upload; add Learning Layers to Videos they are assigned to, and author the Learning Layers they are assigned to; submit for review | Edit unassigned drafts; publish; see learner records |
 | Reviewer | Approve or reject assigned Revisions for their Review Type and Language Variety | Approve outside their scope or their own work |

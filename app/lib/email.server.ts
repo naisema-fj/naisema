@@ -1,13 +1,27 @@
-import { emailOutbox } from "~db/schema";
+import { emailFailure, emailOutbox } from "~db/schema";
 import { getDb } from "./db.server";
 
 export type OutgoingEmail = { to: string; subject: string; text: string };
 
 /**
  * The single way the app sends email (ADR-0004). Deployed environments use the Cloudflare
- * Email Service binding; local development and tests write to the email_outbox table.
+ * Email Service binding; local development and tests write to the email_outbox table. A send that
+ * fails is recorded, by its subject only, for the hourly monitor (app/lib/monitor.server.ts), and
+ * the error is thrown on for the caller to handle.
  */
 export async function sendEmail(env: Env, email: OutgoingEmail): Promise<void> {
+  try {
+    await deliver(env, email);
+  } catch (error) {
+    await getDb(env.DB)
+      .insert(emailFailure)
+      .values({ subject: email.subject, failedAt: new Date() })
+      .catch(() => {});
+    throw error;
+  }
+}
+
+async function deliver(env: Env, email: OutgoingEmail) {
   if (env.EMAIL_OUTBOX === "true") {
     await getDb(env.DB)
       .insert(emailOutbox)

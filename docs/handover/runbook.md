@@ -326,6 +326,57 @@ Secrets never go in the repository. Runtime secrets are set with `pnpm wrangler 
 4. Revoke the old token or value in the Cloudflare dashboard.
 5. Rotate immediately, without waiting for step 3, if a secret may have leaked; then follow the incident steps below.
 
+## Monitoring and alerts
+
+Owner: the technical owner, and their backup once named (#6). What watches what:
+
+| What | How | Who hears |
+| --- | --- | --- |
+| Uptime | An external uptime monitor requests public URLs only (ADR-0012) | Technical owner, from the monitor service |
+| Error rate, failed email sends, failed Stream processing, failed or stalled scheduled jobs | The hourly monitor (`app/lib/monitor.server.ts`, cron `5 * * * *`) | `ALERT_EMAILS` |
+| Monthly media cost | The daily job records usage; `/admin/usage` shows it; an email when the month is on course for 50% and then 80% of the AUD 100 ceiling | `ALERT_EMAILS` and every administrator |
+| Logs | Workers Observability, redacted by the app before logging | Read in the Cloudflare dashboard |
+
+### Setting it up, once per environment
+
+1. **Cloudflare figures.** Create an API token (My Profile › API Tokens › Create Custom Token) with **Account › Account Analytics › Read** and **Account › Stream › Read**, limited to the Na iSema account. Then `pnpm wrangler secret put MONITORING_API_TOKEN --env <env>`. Without it the monitor can't check the error rate, `/admin/usage` stays empty, and the monitor emails "Cloudflare's figures couldn't be read" until it is set.
+2. **Who is alerted.** `pnpm wrangler secret put ALERT_EMAILS --env <env>`, one address or several separated by commas: the technical owner, plus the backup once #6 names one. While it is unset, alerts only reach the logs ("No one to alert").
+3. **Uptime monitor.** Set up an external service (for example UptimeRobot or Better Stack; record the choice in `docs/decision-log.md`) to request, every 5 minutes:
+   - `https://naisema.com/` and `https://naisema.com/health` for production;
+   - `https://staging.naisema.com/health` for staging, if wanted.
+
+   Alert the technical owner after two failures in a row. `/health` answers `ok` only after the Worker has read from D1, and is never cached; the homepage can be served from the edge cache while the Worker is failing. Never give the monitor the admin host or any credentials.
+4. **Billing alerts.** In the Cloudflare dashboard, under Notifications, add the billing and usage notifications on offer for Stream and R2, set to the usage that costs 50% and 80% of the ceiling (the prices are on `/admin/usage`). They back up the app's own projected-cost emails, which stop if the Worker stops.
+5. **Check it on staging.** The Workers request counts (`workersInvocationsAdaptive`) and Stream minutes delivered (`streamMinutesViewedAdaptiveGroups`) are read from Cloudflare's GraphQL API, whose field names couldn't be checked from the development sandbox. After step 1, wait for the next hourly run: a "Cloudflare's figures couldn't be read: …" email names the field to fix in `app/lib/cloudflare-metrics.server.ts`. The day after, `/admin/usage` should show the month's figures.
+
+### What each alert means
+
+Alerts come as one email per hourly run, subject `Na iSema <env>: N problems`. An ongoing problem is reported when it starts, reminded once a day while it lasts, and followed by a "back to normal" email when it clears. A failed send or video is reported once. Thresholds are in `app/lib/monitor-rules.ts`.
+
+- **"N of M requests failed (P%)"**: at least 10 failed requests, and at least 5% of all requests, since the last check. Look at the Worker's logs for `Request failed`, `Request handling failed` or `Render failed`, and at recent deploys. If a deploy caused it, roll back (above).
+- **"N emails couldn't be sent"**: the Email Service refused or was unreachable. Check Email Service in the dashboard (domain onboarding, sending limits). Sign-in links fail the same way, so staff may be unable to sign in. Alert emails go through the same service, so a full outage may arrive late or not at all; the uptime monitor doesn't depend on it.
+- **"N videos failed processing"**: Stream refused a master, or it failed processing. The reason is on the video's page in the media library; most are a bad or over-long file, which the uploader fixes. If every video fails, check the Stream secrets (Video, above).
+- **"The daily job failed …" / "hasn't run since …"**: the daily cron threw, or hasn't run for 26 hours. The reason (redacted) is in the email and in the logs. Each step runs in turn, so later steps (quarantine tidy-up, video refresh, usage) didn't run either. Fix and wait for the next run, or trigger it in the dashboard (Worker › Settings › Triggers).
+- **"Cloudflare's figures couldn't be read"**: `MONITORING_API_TOKEN` is unset, expired or lacks a permission, or Cloudflare's API changed. Until fixed, the error rate isn't checked and usage isn't recorded.
+- **"Media costs on course for 50% / 80% of the monthly ceiling"**: check `/admin/usage` to see which line is growing. Delivery growing faster than expected usually means a video is popular or embedded elsewhere.
+
+When the backups job (#34) arrives, it records its runs as a job (`runJob` in `app/lib/monitor.server.ts`) and adds itself to `MONITOR_THRESHOLDS.jobOverdueMs`, so a failed or missing backup is alerted like the daily job.
+
+### Logs
+
+Workers & Pages › the Worker › Logs. Each request is one `Request` line (method, path, status, time); failures are `level: "error"` lines named by what failed (`Upload scan failed`, `Case email failed`, …), carrying record IDs, never people.
+
+- Before anything is logged, `app/lib/log.server.ts` replaces email addresses, link tokens and other long random tokens, and drops query strings (search words, playback tokens). Values under keys such as `email`, `to`, `name`, `body` and `token` are withheld, and requests, forms and headers are never logged.
+- Workers' own invocation logs are off (`observability` in `wrangler.jsonc`), because they record full URLs and visitors' addresses.
+- Log with `logError` or `logInfo`, never `console.*` directly. Even redacted logs may hold record IDs, so don't paste them anywhere public.
+
+### Troubleshooting
+
+- **Is the site up?** `curl -i https://naisema.com/health` should answer `200 ok`. A `503` means the Worker is running but can't read D1: check Cloudflare's status page and the D1 dashboard.
+- **What failed?** Filter the Worker's logs by `level = error` for the time in the alert.
+- **What changed?** `pnpm wrangler deployments list --env <env>`, then roll back if a deploy lines up with the alert.
+- **Is the monitor itself running?** `pnpm wrangler d1 execute DB --remote --env <env> --command "SELECT job, started_at, ok, error FROM job_run ORDER BY started_at DESC LIMIT 10"`. `/admin/usage` lists the problems the monitor currently knows about.
+
 ## Incidents
 
 Owner: the technical owner (see `docs/decision-log.md`). Safeguarding or privacy aspects go to the safeguarding lead or privacy contact at the same time.

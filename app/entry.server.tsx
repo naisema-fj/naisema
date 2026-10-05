@@ -1,8 +1,9 @@
 import { isbot } from "isbot";
 import { renderToReadableStream } from "react-dom/server";
-import type { EntryContext, RouterContextProvider } from "react-router";
-import { ServerRouter } from "react-router";
+import type { EntryContext, HandleErrorFunction, RouterContextProvider } from "react-router";
+import { isRouteErrorResponse, ServerRouter } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { logError } from "~/lib/log.server";
 import { createNonce, NonceContext } from "~/lib/security-headers";
 import { applySecurityHeaders } from "~/lib/security-policy";
 import { videoPlaybackOrigin } from "~/lib/video-provider.server";
@@ -28,7 +29,7 @@ export default async function handleRequest(
         responseStatusCode = 500;
         // Errors during the initial shell render reject and are logged by React Router.
         if (shellRendered) {
-          console.error(error);
+          logError("Render failed", { path: new URL(request.url).pathname, error });
         }
       },
     },
@@ -54,6 +55,19 @@ export default async function handleRequest(
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });
 }
+
+/**
+ * Errors thrown by loaders, actions and the shell render, logged as React Router would by
+ * default, but redacted (app/lib/log.server.ts). Requests the visitor abandoned aren't failures.
+ */
+export const handleError: HandleErrorFunction = (error, { request }) => {
+  if (request.signal.aborted) return;
+  logError("Request handling failed", {
+    path: new URL(request.url).pathname,
+    // A 4xx React Router made from a thrown error carries that error (ErrorResponseImpl.error).
+    error: isRouteErrorResponse(error) ? ((error as { error?: unknown }).error ?? error) : error,
+  });
+};
 
 /**
  * The page's own route `handle`: `hydrate: false` (root.tsx), `turnstile: true` for a public form,

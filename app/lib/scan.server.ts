@@ -2,6 +2,7 @@ import { and, eq, inArray, isNull, lt, or } from "drizzle-orm";
 import { mediaAsset } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import { type Database, getDb } from "./db.server";
+import { logError } from "./log.server";
 import { abortMultipart, type MediaAsset, type ScanMessage } from "./media.server";
 import { DAY_MS } from "./rights-rules";
 import { checkContent, HEAD_BYTES } from "./upload-rules";
@@ -180,7 +181,7 @@ export async function handleScanBatch(
       await scanUpload(env, db, message.body.assetId, scanner, provider);
       message.ack();
     } catch (error) {
-      console.error("Upload scan failed", message.body.assetId, message.attempts, error);
+      logError("Upload scan failed", { assetId: message.body.assetId, attempts: message.attempts, error });
       if (message.attempts >= MAX_SCAN_ATTEMPTS) {
         const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, message.body.assetId)).get();
         if (asset) await settle(env, db, asset, "failed", SCAN_FAILED);

@@ -4,6 +4,7 @@ import {
   index,
   integer,
   primaryKey,
+  real,
   sqliteTable,
   text,
   uniqueIndex,
@@ -19,6 +20,7 @@ import type {
   OfferingFormat,
   OrganisationType,
 } from "../app/lib/listing-fields";
+import type { CheckId } from "../app/lib/monitor-rules";
 import type { CaseKind } from "../app/lib/permissions";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { ConsentPurpose, SubmissionFields, SubmissionStatus, SubmissionType } from "../app/lib/submission-fields";
@@ -917,3 +919,65 @@ export const learningLayerEducator = sqliteTable(
     index("learning_layer_educator_user_idx").on(table.userId),
   ],
 );
+
+// --- Monitoring (docs/handover/runbook.md, monitoring and alerts) ---
+
+/**
+ * An email that couldn't be sent (app/lib/email.server.ts), for the hourly monitor. Only its
+ * subject and when: never the address or the text.
+ */
+export const emailFailure = sqliteTable(
+  "email_failure",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    subject: text("subject").notNull(),
+    failedAt: integer("failed_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("email_failure_failed_at_idx").on(table.failedAt)],
+);
+
+/**
+ * One run of a scheduled job (workers/app.ts), so the monitor sees runs that failed and jobs that
+ * stopped running. `ok` stays empty while it runs, and for good if the Worker died part-way.
+ */
+export const jobRun = sqliteTable(
+  "job_run",
+  {
+    id: text("id").primaryKey(),
+    job: text("job").notNull(),
+    startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
+    finishedAt: integer("finished_at", { mode: "timestamp_ms" }),
+    ok: integer("ok", { mode: "boolean" }),
+    /** Why it failed, redacted (app/lib/log.server.ts). */
+    error: text("error"),
+  },
+  (table) => [index("job_run_job_idx").on(table.job, table.startedAt)],
+);
+
+/** An ongoing problem the monitor has told the technical owner about, until it clears (app/lib/monitor-rules.ts). */
+export const monitorAlert = sqliteTable("monitor_alert", {
+  check: text("check").$type<CheckId>().primaryKey(),
+  failingSince: integer("failing_since", { mode: "timestamp_ms" }).notNull(),
+  lastAlertedAt: integer("last_alerted_at", { mode: "timestamp_ms" }).notNull(),
+  summary: text("summary").notNull(),
+});
+
+/**
+ * A month's media usage and estimated cost (VAC-10; app/lib/usage-rules.ts), refreshed by the
+ * daily job from Cloudflare's figures for the whole account.
+ */
+export const usageMonth = sqliteTable("usage_month", {
+  /** The calendar month in UTC, as "2026-10". */
+  month: text("month").primaryKey(),
+  /** Minutes of video Stream holds, at the latest reading. */
+  storedMinutes: real("stored_minutes").notNull(),
+  /** Minutes of video Stream delivered so far this month. */
+  deliveredMinutes: real("delivered_minutes").notNull(),
+  /** Bytes held in R2, across every bucket, at the latest reading. */
+  r2Bytes: integer("r2_bytes").notNull(),
+  /** The month's cost in AUD, projected to its end. */
+  projectedAud: real("projected_aud").notNull(),
+  recordedAt: integer("recorded_at", { mode: "timestamp_ms" }).notNull(),
+  /** The highest budget alert sent this month (50 or 80 per cent of the ceiling), or 0. */
+  budgetAlertPercent: integer("budget_alert_percent").notNull().default(0),
+});
