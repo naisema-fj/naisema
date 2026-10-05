@@ -6,40 +6,52 @@
  * - **Ongoing** conditions (a high error rate, a failing or stalled scheduled job, unreadable
  *   Cloudflare figures) are alerted once when they start, reminded daily while they last, and
  *   reported again when they clear.
- * - **Events** (a failed email send, a video Stream couldn't process) are each reported once, in
- *   the run after they happen: every run looks only at what happened since the run before.
+ * - **Events** (a failed email send, a Video Asset that failed processing) are each reported
+ *   once, in the run after they happen: every run looks only at what happened since the run before.
  */
 
-const HOUR_MS = 3_600_000;
+export const HOUR_MS = 3_600_000;
+
+/** The scheduled jobs, by the name each records its runs under (job_run; workers/app.ts). */
+export type JobName = "daily" | "usage" | "monitor";
 
 export const MONITOR_THRESHOLDS = {
   /** Share of requests that failed since the last check, counted once there are `minErrors`. */
   errorShare: 0.05,
   minErrors: 10,
-  /** How long a scheduled job may go without running before that is a problem. */
+  /**
+   * How long each watched job may go without running before that is a problem. The monitor
+   * doesn't watch itself: the external uptime monitor is the backstop (runbook).
+   */
   jobOverdueMs: {
     daily: 26 * HOUR_MS,
-  } as Record<string, number>,
+    usage: 26 * HOUR_MS,
+  } satisfies Partial<Record<JobName, number>>,
   /** How often an ongoing problem is mentioned again while it lasts. */
   remindAfterMs: 24 * HOUR_MS,
 };
 
-/** The scheduled jobs the monitor expects to run (workers/app.ts), by the name they record. */
-export const WATCHED_JOBS = Object.keys(MONITOR_THRESHOLDS.jobOverdueMs);
+export type WatchedJob = keyof typeof MONITOR_THRESHOLDS.jobOverdueMs;
+
+/** The scheduled jobs the monitor expects to run. */
+export const WATCHED_JOBS = Object.keys(MONITOR_THRESHOLDS.jobOverdueMs) as WatchedJob[];
 
 export type JobRun = { startedAt: Date; ok: boolean; error: string | null };
 
 export type Readings = {
-  /** Requests and failed requests since the last check, from Cloudflare; null if unreadable. */
-  requests: { requests: number; errors: number } | null;
+  /** Requests to this Worker since the last check, from Cloudflare; null if unreadable. */
+  requests: number | null;
+  /** Requests the Worker answered with a 5xx or failed outright, since the last check. */
+  serverErrors: number;
   failedEmails: number;
-  failedVideos: { id: string; reason: string | null }[];
-  jobs: { job: string; lastRun: JobRun | null }[];
+  failedVideoAssets: { id: string; reason: string | null }[];
+  /** Each watched job's latest run; a job that has never run (a fresh deploy) has none. */
+  jobs: { job: WatchedJob; lastRun: JobRun | null }[];
   /** Why Cloudflare's figures couldn't be read, where they should be; null when they could be. */
   figuresProblem: string | null;
 };
 
-export type CheckId = "errors" | "email" | "video" | "figures" | `job:${string}`;
+export type CheckId = "errors" | "email" | "video" | "figures" | `job:${WatchedJob}`;
 
 export type Problem = { check: CheckId; ongoing: boolean; summary: string };
 
@@ -49,23 +61,37 @@ export type AlertState = { check: CheckId; failingSince: Date; lastAlertedAt: Da
 /** A moment as the technical owner reads it in an email: UTC, to the minute. */
 export const formatMoment = (at: Date) => `${at.toISOString().slice(0, 16).replace("T", " ")} UTC`;
 
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+export const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
+/** What the technical owner is told when an ongoing problem clears. */
+const RECOVERED: Record<Exclude<CheckId, "email" | "video">, string> = {
+  errors: "Requests are succeeding again.",
+  figures: "Cloudflare's figures can be read again.",
+  "job:daily": "The daily job is working again.",
+  "job:usage": "The usage job is working again.",
+};
+
+function errorRateProblem({ requests, serverErrors }: Readings): Problem | null {
+  if (serverErrors < MONITOR_THRESHOLDS.minErrors) return null;
+  if (requests === null) {
+    // Without Cloudflare's total, a run of failures is still worth knowing about.
+    return { check: "errors", ongoing: true, summary: `${serverErrors} requests failed since the last check.` };
+  }
+  // The two counts come from different places, so the total can lag the failures slightly.
+  const total = Math.max(requests, serverErrors);
+  if (serverErrors < total * MONITOR_THRESHOLDS.errorShare) return null;
+  const percent = Math.round((serverErrors / total) * 100);
+  return {
+    check: "errors",
+    ongoing: true,
+    summary: `${serverErrors} of ${total} requests failed (${percent}%) since the last check.`,
+  };
+}
 
 export function findProblems(readings: Readings, now: Date): Problem[] {
   const problems: Problem[] = [];
-  const { requests } = readings;
-  if (
-    requests &&
-    requests.errors >= MONITOR_THRESHOLDS.minErrors &&
-    requests.errors >= requests.requests * MONITOR_THRESHOLDS.errorShare
-  ) {
-    const percent = Math.round((requests.errors / requests.requests) * 100);
-    problems.push({
-      check: "errors",
-      ongoing: true,
-      summary: `${requests.errors} of ${requests.requests} requests failed (${percent}%) since the last check.`,
-    });
-  }
+  const errors = errorRateProblem(readings);
+  if (errors) problems.push(errors);
   if (readings.failedEmails > 0) {
     problems.push({
       check: "email",
@@ -73,27 +99,26 @@ export function findProblems(readings: Readings, now: Date): Problem[] {
       summary: `${plural(readings.failedEmails, "email", "emails")} couldn't be sent since the last check.`,
     });
   }
-  if (readings.failedVideos.length) {
-    const lines = readings.failedVideos.map((video) => `  ${video.id}: ${video.reason ?? "no reason given"}`);
+  if (readings.failedVideoAssets.length) {
+    const lines = readings.failedVideoAssets.map((asset) => `  ${asset.id}: ${asset.reason ?? "no reason given"}`);
     problems.push({
       check: "video",
       ongoing: false,
       summary: [
-        `${plural(readings.failedVideos.length, "video", "videos")} failed processing since the last check:`,
+        `${plural(readings.failedVideoAssets.length, "Video Asset", "Video Assets")} failed processing since the last check:`,
         ...lines,
       ].join("\n"),
     });
   }
   for (const { job, lastRun } of readings.jobs) {
     if (!lastRun) continue;
-    const overdueMs = MONITOR_THRESHOLDS.jobOverdueMs[job];
     if (!lastRun.ok) {
       problems.push({
         check: `job:${job}`,
         ongoing: true,
         summary: `The ${job} job failed at ${formatMoment(lastRun.startedAt)}: ${lastRun.error ?? "no reason given"}`,
       });
-    } else if (overdueMs !== undefined && now.getTime() - lastRun.startedAt.getTime() > overdueMs) {
+    } else if (now.getTime() - lastRun.startedAt.getTime() > MONITOR_THRESHOLDS.jobOverdueMs[job]) {
       problems.push({
         check: `job:${job}`,
         ongoing: true,
@@ -109,12 +134,6 @@ export function findProblems(readings: Readings, now: Date): Problem[] {
     });
   }
   return problems;
-}
-
-function recoveredText(check: CheckId) {
-  if (check === "errors") return "Requests are succeeding again.";
-  if (check === "figures") return "Cloudflare's figures can be read again.";
-  return `The ${check.slice("job:".length)} job is working again.`;
 }
 
 /**
@@ -142,6 +161,6 @@ export function alertPlan(problems: Problem[], previous: AlertState[], now: Date
   }
   const recovered = previous
     .filter((alert) => !problems.some((problem) => problem.check === alert.check))
-    .map((alert) => recoveredText(alert.check));
+    .map((alert) => RECOVERED[alert.check as keyof typeof RECOVERED]);
   return { failing, recovered, state };
 }

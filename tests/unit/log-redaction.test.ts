@@ -24,6 +24,7 @@ describe("redact", () => {
       "GET https://naisema.com/search?[query]",
     );
     expect(redact("/admin/media/v1/video/master?token=abc.def")).toBe("/admin/media/v1/video/master?[query]");
+    expect(redact("Is the config right? See the docs")).toBe("Is the config right? See the docs");
   });
 
   it("keeps record IDs and slugs, which are what troubleshooting needs", () => {

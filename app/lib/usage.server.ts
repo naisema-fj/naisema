@@ -3,10 +3,17 @@ import { usageMonth } from "~db/schema";
 import { adminUrl } from "./admin-url";
 import type { PlatformMetrics } from "./cloudflare-metrics.server";
 import type { Database } from "./db.server";
-import { sendEmail } from "./email.server";
-import { alertRecipients } from "./monitor.server";
+import { alertRecipients, sendToEach } from "./email.server";
 import { activeHolders } from "./staff-roles.server";
-import { budgetAlertDue, estimateMonth, MONTHLY_CEILING_AUD, monthOf, monthStart } from "./usage-rules";
+import {
+  budgetAlertDue,
+  estimateMonth,
+  formatAud,
+  formatGigabytes,
+  MONTHLY_CEILING_AUD,
+  monthOf,
+  monthStart,
+} from "./usage-rules";
 
 /**
  * The media cost report (VAC-10). The daily job reads the account's media usage from Cloudflare,
@@ -16,15 +23,13 @@ import { budgetAlertDue, estimateMonth, MONTHLY_CEILING_AUD, monthOf, monthStart
 
 export type UsageMonth = typeof usageMonth.$inferSelect;
 
-const aud = (amount: number) => `AUD ${amount.toFixed(2)}`;
-
 /** Records this month's usage. Does nothing where Cloudflare's figures aren't available. */
 export async function recordUsage(env: Env, db: Database, metrics: PlatformMetrics | null, now: Date) {
   if (!metrics) return;
   const usage = await metrics.mediaUsage(monthStart(now), now);
   const estimate = estimateMonth(usage, now);
   const month = monthOf(now);
-  const row = { ...usage, projectedAud: estimate.aud, recordedAt: now };
+  const row = { ...usage, recordedAt: now };
   const [saved] = await db
     .insert(usageMonth)
     .values({ month, ...row })
@@ -37,17 +42,16 @@ export async function recordUsage(env: Env, db: Database, metrics: PlatformMetri
   const recipients = [...new Set([...alertRecipients(env), ...administrators])];
   const subject = `Na iSema ${env.ENVIRONMENT}: media costs on course for ${due}% of the monthly ceiling`;
   const text = [
-    `This month is projected to cost about ${aud(estimate.aud)}, ${estimate.percentOfCeiling}% of the ${aud(MONTHLY_CEILING_AUD)} ceiling.`,
+    `This month is projected to cost about ${formatAud(estimate.aud)}, ${estimate.percentOfCeiling}% of the ${formatAud(MONTHLY_CEILING_AUD)} ceiling.`,
     "",
     `Stream: ${Math.round(usage.storedMinutes)} minutes stored, ${Math.round(usage.deliveredMinutes)} delivered so far (about ${estimate.deliveredMinutesProjected} by the month's end).`,
-    `R2: ${(usage.r2Bytes / 1e9).toFixed(1)} GB stored.`,
+    `R2: ${formatGigabytes(usage.r2Bytes)} stored.`,
     "",
     `The figures and how they are worked out: ${adminUrl(env, "/admin/usage")}`,
     "Cloudflare's billing page has the actual charges.",
   ].join("\n");
-  const results = await Promise.allSettled(recipients.map((to) => sendEmail(env, { to, subject, text })));
   // Sent to at least one person: don't send this level again this month.
-  if (results.some((result) => result.status === "fulfilled")) {
+  if ((await sendToEach(env, recipients, { subject, text })) > 0) {
     await db.update(usageMonth).set({ budgetAlertPercent: due }).where(eq(usageMonth.month, month));
   }
 }

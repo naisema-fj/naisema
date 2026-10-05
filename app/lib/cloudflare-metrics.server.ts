@@ -1,13 +1,14 @@
+import { DAY_MS } from "./rights-rules";
 import { optionalSecret } from "./secrets.server";
 
 /**
  * Cloudflare's own figures for the account (docs/handover/runbook.md, monitoring): this Worker's
- * request and error counts for the monitor, and media usage for the cost report (VAC-10). Read
+ * request count for the monitor's error rate, and media usage for the cost report (VAC-10). Read
  * with MONITORING_API_TOKEN, an API token allowed only Account Analytics: Read and Stream: Read.
  */
 export interface PlatformMetrics {
-  /** Requests to this Worker, and how many failed, from `since` up to `until`. */
-  workerRequests(since: Date, until: Date): Promise<{ requests: number; errors: number }>;
+  /** Requests to this Worker from `since` up to `until`. */
+  workerRequests(since: Date, until: Date): Promise<number>;
   /** The account's media usage: Stream minutes stored now and delivered this month, and R2 bytes. */
   mediaUsage(monthStart: Date, now: Date): Promise<MediaUsage>;
 }
@@ -20,7 +21,6 @@ export class MetricsError extends Error {}
 type Fetch = (input: string, init?: RequestInit) => Promise<Response>;
 
 const API = "https://api.cloudflare.com/client/v4";
-const DAY_MS = 86_400_000;
 
 /** Values go into the query as JSON strings, which GraphQL reads the same way. */
 const literal = (value: string) => JSON.stringify(value);
@@ -56,8 +56,8 @@ export function cloudflareMetrics(env: Env, token: string, send: Fetch = (input,
     return body;
   }
 
-  /** One GraphQL query against the account; returns `viewer.accounts[0]`. */
-  async function account0(fields: string) {
+  /** Asks GraphQL for `fields` of this account; returns the account's figures. */
+  async function accountFigures(fields: string) {
     const body = await request(`${API}/graphql`, {
       method: "POST",
       body: JSON.stringify({ query: `{ viewer { accounts(filter: { accountTag: ${account} }) { ${fields} } } }` }),
@@ -76,13 +76,10 @@ export function cloudflareMetrics(env: Env, token: string, send: Fetch = (input,
 
   return {
     async workerRequests(since, until) {
-      const found = await account0(
-        `workersInvocationsAdaptive(limit: 10000, filter: { scriptName: ${literal(env.WORKER_NAME)}, datetime_geq: ${literal(since.toISOString())}, datetime_lt: ${literal(until.toISOString())} }) { sum { requests errors } }`,
+      const found = await accountFigures(
+        `workersInvocationsAdaptive(limit: 10000, filter: { scriptName: ${literal(env.WORKER_NAME)}, datetime_geq: ${literal(since.toISOString())}, datetime_lt: ${literal(until.toISOString())} }) { sum { requests } }`,
       );
-      return {
-        requests: sum(found.workersInvocationsAdaptive, "sum", "requests"),
-        errors: sum(found.workersInvocationsAdaptive, "sum", "errors"),
-      };
+      return sum(found.workersInvocationsAdaptive, "sum", "requests");
     },
 
     async mediaUsage(monthStart, now) {
@@ -92,7 +89,7 @@ export function cloudflareMetrics(env: Env, token: string, send: Fetch = (input,
       );
       if (!Number.isFinite(storedMinutes)) throw new MetricsError("Stream's storage figures were missing.");
 
-      const found = await account0(
+      const found = await accountFigures(
         [
           `streamMinutesViewedAdaptiveGroups(limit: 10000, filter: { date_geq: ${literal(day(monthStart))}, date_leq: ${literal(day(now))} }) { sum { minutesViewed } }`,
           // R2 reports each bucket's size over time; the latest reading of each is what it holds.

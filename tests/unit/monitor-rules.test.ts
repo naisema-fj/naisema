@@ -6,9 +6,10 @@ const now = new Date("2026-10-05T10:05:00Z");
 const ago = (ms: number) => new Date(now.getTime() - ms);
 
 const healthy: Readings = {
-  requests: { requests: 2_000, errors: 3 },
+  requests: 2_000,
+  serverErrors: 3,
   failedEmails: 0,
-  failedVideos: [],
+  failedVideoAssets: [],
   jobs: [{ job: "daily", lastRun: { startedAt: ago(5 * HOUR), ok: true, error: null } }],
   figuresProblem: null,
 };
@@ -18,21 +19,30 @@ describe("findProblems", () => {
     expect(findProblems(healthy, now)).toEqual([]);
   });
 
-  it("reports an error rate of 5% or more, once there are at least 10 errors", () => {
-    expect(findProblems({ ...healthy, requests: { requests: 200, errors: 10 } }, now)).toEqual([
+  it("reports an error rate of 5% or more, once there are at least 10 failed requests", () => {
+    expect(findProblems({ ...healthy, requests: 200, serverErrors: 10 }, now)).toEqual([
       { check: "errors", ongoing: true, summary: "10 of 200 requests failed (5%) since the last check." },
     ]);
     // A handful of errors on a quiet site is not an outage.
-    expect(findProblems({ ...healthy, requests: { requests: 20, errors: 9 } }, now)).toEqual([]);
-    expect(findProblems({ ...healthy, requests: { requests: 1_000, errors: 49 } }, now)).toEqual([]);
+    expect(findProblems({ ...healthy, requests: 20, serverErrors: 9 }, now)).toEqual([]);
+    expect(findProblems({ ...healthy, requests: 1_000, serverErrors: 49 }, now)).toEqual([]);
   });
 
-  it("reports every failed email send and every video Stream couldn't process", () => {
+  it("still reports a run of failed requests when Cloudflare's total can't be read", () => {
+    expect(
+      findProblems({ ...healthy, requests: null, serverErrors: 12, figuresProblem: "The token was refused." }, now),
+    ).toEqual([
+      { check: "errors", ongoing: true, summary: "12 requests failed since the last check." },
+      { check: "figures", ongoing: true, summary: "Cloudflare's figures couldn't be read: The token was refused." },
+    ]);
+  });
+
+  it("reports every failed email send and every Video Asset that failed processing", () => {
     const problems = findProblems(
       {
         ...healthy,
         failedEmails: 2,
-        failedVideos: [{ id: "v1", reason: "The file was not recognized as a video." }],
+        failedVideoAssets: [{ id: "v1", reason: "The file was not recognized as a video." }],
       },
       now,
     );
@@ -41,7 +51,7 @@ describe("findProblems", () => {
       {
         check: "video",
         ongoing: false,
-        summary: "1 video failed processing since the last check:\n  v1: The file was not recognized as a video.",
+        summary: "1 Video Asset failed processing since the last check:\n  v1: The file was not recognized as a video.",
       },
     ]);
   });

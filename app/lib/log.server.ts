@@ -30,7 +30,7 @@ const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
 /** The routes whose next path segment is a link token (app/routes.ts). */
 const TOKEN_ROUTES = /\/(consent|upload|cases\/appeal)\/[^/?#\s]+/g;
 /** A query string: search words, and playback or link tokens. */
-const QUERY = /\?[^\s#"']*/g;
+const QUERY = /\?[^\s#"']+/g;
 /**
  * Random or signed tokens (signed-tokens.server.ts): long URL-safe runs with an upper-case letter
  * or underscore, which record IDs (UUIDs) and slugs (lower-case) never have.

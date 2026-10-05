@@ -20,6 +20,15 @@ describe("estimateMonth", () => {
     expect(estimate.percentOfCeiling).toBe(31);
   });
 
+  it("doesn't take the first day's delivery as the whole month's rate", () => {
+    // 600 minutes on the first day of a 30-day month: projected as if over three days.
+    const estimate = estimateMonth(
+      { storedMinutes: 0, deliveredMinutes: 600, r2Bytes: 0 },
+      new Date("2026-09-02T00:00:00Z"),
+    );
+    expect(estimate.deliveredMinutesProjected).toBe(6_000);
+  });
+
   it("charges nothing for R2 within the free 10 GB", () => {
     const estimate = estimateMonth(
       { storedMinutes: 0, deliveredMinutes: 0, r2Bytes: 4e9 },

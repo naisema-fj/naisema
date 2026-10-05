@@ -20,7 +20,7 @@ import type {
   OfferingFormat,
   OrganisationType,
 } from "../app/lib/listing-fields";
-import type { CheckId } from "../app/lib/monitor-rules";
+import type { CheckId, JobName } from "../app/lib/monitor-rules";
 import type { CaseKind } from "../app/lib/permissions";
 import type { PermittedUse, RightsPartKind } from "../app/lib/rights-rules";
 import type { ConsentPurpose, SubmissionFields, SubmissionStatus, SubmissionType } from "../app/lib/submission-fields";
@@ -937,6 +937,19 @@ export const emailFailure = sqliteTable(
 );
 
 /**
+ * A request the Worker answered with a 5xx or failed outright (workers/app.ts), for the monitor's
+ * error rate. Only when: Cloudflare's own error count misses the 500s React Router answers with.
+ */
+export const serverError = sqliteTable(
+  "server_error",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    failedAt: integer("failed_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("server_error_failed_at_idx").on(table.failedAt)],
+);
+
+/**
  * One run of a scheduled job (workers/app.ts), so the monitor sees runs that failed and jobs that
  * stopped running. `ok` stays empty while it runs, and for good if the Worker died part-way.
  */
@@ -944,7 +957,7 @@ export const jobRun = sqliteTable(
   "job_run",
   {
     id: text("id").primaryKey(),
-    job: text("job").notNull(),
+    job: text("job").$type<JobName>().notNull(),
     startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
     finishedAt: integer("finished_at", { mode: "timestamp_ms" }),
     ok: integer("ok", { mode: "boolean" }),
@@ -963,8 +976,8 @@ export const monitorAlert = sqliteTable("monitor_alert", {
 });
 
 /**
- * A month's media usage and estimated cost (VAC-10; app/lib/usage-rules.ts), refreshed by the
- * daily job from Cloudflare's figures for the whole account.
+ * A month's media usage (VAC-10), refreshed daily from Cloudflare's figures for the whole account.
+ * Its cost is worked out from these when shown (app/lib/usage-rules.ts).
  */
 export const usageMonth = sqliteTable("usage_month", {
   /** The calendar month in UTC, as "2026-10". */
@@ -975,8 +988,6 @@ export const usageMonth = sqliteTable("usage_month", {
   deliveredMinutes: real("delivered_minutes").notNull(),
   /** Bytes held in R2, across every bucket, at the latest reading. */
   r2Bytes: integer("r2_bytes").notNull(),
-  /** The month's cost in AUD, projected to its end. */
-  projectedAud: real("projected_aud").notNull(),
   recordedAt: integer("recorded_at", { mode: "timestamp_ms" }).notNull(),
   /** The highest budget alert sent this month (50 or 80 per cent of the ceiling), or 0. */
   budgetAlertPercent: integer("budget_alert_percent").notNull().default(0),

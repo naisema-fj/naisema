@@ -22,12 +22,17 @@ CREATE TABLE `monitor_alert` (
 	`summary` text NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE `server_error` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`failed_at` integer NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX `server_error_failed_at_idx` ON `server_error` (`failed_at`);--> statement-breakpoint
 CREATE TABLE `usage_month` (
 	`month` text PRIMARY KEY NOT NULL,
 	`stored_minutes` real NOT NULL,
 	`delivered_minutes` real NOT NULL,
 	`r2_bytes` integer NOT NULL,
-	`projected_aud` real NOT NULL,
 	`recorded_at` integer NOT NULL,
 	`budget_alert_percent` integer DEFAULT 0 NOT NULL
 );

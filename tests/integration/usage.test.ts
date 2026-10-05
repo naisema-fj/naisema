@@ -9,7 +9,7 @@ import { emailsTo } from "./support/staff";
 const owner = env.ALERT_EMAILS as string;
 
 const reading = (usage: Partial<MediaUsage>): PlatformMetrics => ({
-  workerRequests: async () => ({ requests: 0, errors: 0 }),
+  workerRequests: async () => 0,
   mediaUsage: async () => ({ storedMinutes: 0, deliveredMinutes: 0, r2Bytes: 0, ...usage }),
 });
 

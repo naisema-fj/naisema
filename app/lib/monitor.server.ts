@@ -1,12 +1,22 @@
 import { and, count, desc, eq, gte, lt } from "drizzle-orm";
-import { emailFailure, jobRun, monitorAlert, videoAsset } from "~db/schema";
+import { emailFailure, jobRun, monitorAlert, serverError, videoAsset } from "~db/schema";
 import { adminUrl } from "./admin-url";
 import { MetricsError, type PlatformMetrics, platformMetrics } from "./cloudflare-metrics.server";
-import type { Database } from "./db.server";
-import { getDb } from "./db.server";
-import { sendEmail } from "./email.server";
+import { type Database, getDb } from "./db.server";
+import { alertRecipients, sendToEach } from "./email.server";
 import { logError, redact } from "./log.server";
-import { type AlertState, alertPlan, findProblems, type JobRun, type Readings, WATCHED_JOBS } from "./monitor-rules";
+import {
+  type AlertState,
+  alertPlan,
+  findProblems,
+  HOUR_MS,
+  type JobName,
+  type JobRun,
+  plural,
+  type Readings,
+  WATCHED_JOBS,
+} from "./monitor-rules";
+import { DAY_MS } from "./rights-rules";
 
 /**
  * The hourly monitor (docs/phase-1a-defaults.md §7): reads what happened since its last run,
@@ -14,16 +24,17 @@ import { type AlertState, alertPlan, findProblems, type JobRun, type Readings, W
  * (ALERT_EMAILS). Uptime is watched from outside Cloudflare instead (ADR-0012).
  */
 
-const HOUR_MS = 3_600_000;
 /** However long ago the last run was, look back at most this far, so a long gap can't flood an email. */
 const LONGEST_WINDOW_MS = 24 * HOUR_MS;
+/** Failed requests and sends are kept this long, for looking into an alert, then removed. */
+const KEEP_FAILURES_MS = 7 * DAY_MS;
 
 /**
  * Runs a scheduled job and records the run (job_run), so the monitor sees a run that failed and a
  * job that stopped running. A failure is recorded redacted and thrown on, so the cron run shows
  * as failed too.
  */
-export async function runJob(db: Database, job: string, now: Date, work: () => Promise<void>) {
+export async function runJob(db: Database, job: JobName, now: Date, work: () => Promise<void>) {
   const id = crypto.randomUUID();
   await db.insert(jobRun).values({ id, job, startedAt: now });
   try {
@@ -37,6 +48,14 @@ export async function runJob(db: Database, job: string, now: Date, work: () => P
     throw error;
   }
   await db.update(jobRun).set({ ok: true, finishedAt: new Date() }).where(eq(jobRun.id, id));
+}
+
+/** Counts a request the Worker answered with a 5xx or failed outright. Never fails the request. */
+export async function recordServerError(env: Env) {
+  await getDb(env.DB)
+    .insert(serverError)
+    .values({ failedAt: new Date() })
+    .catch(() => {});
 }
 
 /** Where the last successful check started, so each failure is reported in exactly one run. */
@@ -59,7 +78,7 @@ async function readRequests(env: Env, metrics: PlatformMetrics | null, since: Da
       ? { requests: null, figuresProblem: null }
       : {
           requests: null,
-          figuresProblem: "MONITORING_API_TOKEN isn't set in this environment, so the error rate isn't being checked.",
+          figuresProblem: "MONITORING_API_TOKEN isn't set in this environment, so usage isn't being recorded.",
         };
   }
   try {
@@ -95,32 +114,30 @@ async function gatherReadings(
   since: Date,
   now: Date,
 ): Promise<Readings> {
+  const [{ serverErrors }] = await db
+    .select({ serverErrors: count() })
+    .from(serverError)
+    .where(and(gte(serverError.failedAt, since), lt(serverError.failedAt, now)));
   const [{ failedEmails }] = await db
     .select({ failedEmails: count() })
     .from(emailFailure)
     .where(and(gte(emailFailure.failedAt, since), lt(emailFailure.failedAt, now)));
-  const failedVideos = await db
+  const failedVideoAssets = await db
     .select({ id: videoAsset.id, reason: videoAsset.stateReason })
     .from(videoAsset)
     .where(and(eq(videoAsset.state, "failed"), gte(videoAsset.updatedAt, since), lt(videoAsset.updatedAt, now)));
   return {
     ...(await readRequests(env, metrics, since, now)),
+    serverErrors,
     failedEmails,
-    failedVideos,
+    failedVideoAssets,
     jobs: await lastRuns(db),
   };
 }
 
-/** Everyone ALERT_EMAILS names (a comma-separated list). */
-export const alertRecipients = (env: Env) =>
-  (env.ALERT_EMAILS ?? "")
-    .split(",")
-    .map((address) => address.trim())
-    .filter(Boolean);
-
 async function sendAlert(env: Env, plan: { failing: string[]; recovered: string[] }) {
   const subject = plan.failing.length
-    ? `Na iSema ${env.ENVIRONMENT}: ${plan.failing.length} ${plan.failing.length === 1 ? "problem" : "problems"}`
+    ? `Na iSema ${env.ENVIRONMENT}: ${plural(plan.failing.length, "problem", "problems")}`
     : `Na iSema ${env.ENVIRONMENT}: back to normal`;
   const text = [
     ...(plan.failing.length ? ["These need attention:", "", ...plan.failing.map((line) => `- ${line}`), ""] : []),
@@ -130,17 +147,23 @@ async function sendAlert(env: Env, plan: { failing: string[]; recovered: string[
   ].join("\n");
   const recipients = alertRecipients(env);
   if (!recipients.length) {
-    logError("No one to alert: ALERT_EMAILS isn't set", { subject, text });
+    logError("No one to alert: ALERT_EMAILS isn't set", { subject, alert: plan });
     return;
   }
-  const results = await Promise.allSettled(recipients.map((to) => sendEmail(env, { to, subject, text })));
-  const failures = results.flatMap((result) => (result.status === "rejected" ? [result.reason] : []));
   // If nobody could be told, the problems stay unreported and the next run tries again.
-  if (failures.length === recipients.length) throw new AggregateError(failures, "No alert email could be sent");
+  if ((await sendToEach(env, recipients, { subject, text })) === 0) throw new Error("No alert email could be sent");
 }
 
 async function saveState(db: Database, state: AlertState[]) {
   await db.batch([db.delete(monitorAlert), ...state.map((alert) => db.insert(monitorAlert).values(alert))]);
+}
+
+async function removeOldFailures(db: Database, now: Date) {
+  const before = new Date(now.getTime() - KEEP_FAILURES_MS);
+  await db.batch([
+    db.delete(serverError).where(lt(serverError.failedAt, before)),
+    db.delete(emailFailure).where(lt(emailFailure.failedAt, before)),
+  ]);
 }
 
 /** The ongoing problems the monitor has reported and that haven't cleared, for the usage page. */
@@ -155,5 +178,6 @@ export async function runMonitor(env: Env, now: Date, metrics: PlatformMetrics |
     const plan = alertPlan(problems, await db.select().from(monitorAlert), now);
     if (plan.failing.length || plan.recovered.length) await sendAlert(env, plan);
     await saveState(db, plan.state);
+    await removeOldFailures(db, now);
   });
 }

@@ -34,6 +34,25 @@ async function deliver(env: Env, email: OutgoingEmail) {
   await env.EMAIL.send({ from: env.EMAIL_FROM, to: email.to, subject: email.subject, text: email.text });
 }
 
+/**
+ * Sends the same email to each address, each on its own so one refusal doesn't stop the rest.
+ * Returns how many were sent; the failures are recorded by sendEmail.
+ */
+export async function sendToEach(env: Env, recipients: string[], email: Omit<OutgoingEmail, "to">) {
+  const results = await Promise.allSettled(recipients.map((to) => sendEmail(env, { ...email, to })));
+  return results.filter((result) => result.status === "fulfilled").length;
+}
+
+/**
+ * Who technical alerts go to: ALERT_EMAILS, comma-separated, set as a secret in deployed
+ * environments. The technical owner, and their backup once named (docs/decision-log.md).
+ */
+export const alertRecipients = (env: Env) =>
+  (env.ALERT_EMAILS ?? "")
+    .split(",")
+    .map((address) => address.trim())
+    .filter(Boolean);
+
 /** A letter to a member of the public: a greeting, by name when we have one, the paragraphs, a sign-off. */
 export const letterText = (name: string, paragraphs: string[]) =>
   [`Bula${name ? ` ${name}` : ""},`, ...paragraphs, "Vinaka,\nNa iSema"].join("\n\n");

@@ -19,12 +19,12 @@ const graphql = (account: Record<string, unknown>) => Response.json({ data: { vi
 const queryOf = (sent: Sent) => (JSON.parse(String(sent.init?.body)) as { query: string }).query;
 
 describe("Cloudflare's figures", () => {
-  it("reads this Worker's requests and errors for the window", async () => {
+  it("reads how many requests this Worker had in the window", async () => {
     const { sent, metrics } = cloudflare(
-      graphql({ workersInvocationsAdaptive: [{ sum: { requests: 900, errors: 4 } }, { sum: { requests: 100 } }] }),
+      graphql({ workersInvocationsAdaptive: [{ sum: { requests: 900 } }, { sum: { requests: 100 } }] }),
     );
     const counts = await metrics.workerRequests(new Date("2026-10-05T09:05:00Z"), new Date("2026-10-05T10:05:00Z"));
-    expect(counts).toEqual({ requests: 1_000, errors: 4 });
+    expect(counts).toBe(1_000);
     expect(sent[0].url).toBe("https://api.cloudflare.com/client/v4/graphql");
     expect(new Headers(sent[0].init?.headers).get("Authorization")).toBe("Bearer token-1");
     const query = queryOf(sent[0]);

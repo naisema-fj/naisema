@@ -1,11 +1,11 @@
 import { cloudflareContext } from "~/lib/cloudflare";
-import { platformMetrics } from "~/lib/cloudflare-metrics.server";
 import { currentProblems } from "~/lib/monitor.server";
 import { formatMoment } from "~/lib/monitor-rules";
 import { can } from "~/lib/permissions";
+import { optionalSecret } from "~/lib/secrets.server";
 import { requireStaff } from "~/lib/staff.server";
 import { usageReport } from "~/lib/usage.server";
-import { AUD_PER_USD, MONTHLY_CEILING_AUD, PRICES_USD } from "~/lib/usage-rules";
+import { AUD_PER_USD, formatAud, formatGigabytes, MONTHLY_CEILING_AUD, PRICES_USD } from "~/lib/usage-rules";
 import type { Route } from "./+types/usage";
 
 export const handle = { hydrate: false };
@@ -22,16 +22,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
   const problems = await currentProblems(db);
   return {
-    configured: platformMetrics(env) !== null,
+    configured: optionalSecret(env, "MONITORING_API_TOKEN") !== undefined,
     months: await usageReport(db),
     problems: problems.map((problem) => ({ ...problem, since: formatMoment(problem.failingSince) })),
   };
 }
 
 const usd = (amount: number) => `USD ${amount.toFixed(2)}`;
-const aud = (amount: number) => `AUD ${amount.toFixed(2)}`;
 const minutes = (count: number) => Math.round(count).toLocaleString("en-AU");
-const gigabytes = (bytes: number) => `${(bytes / 1e9).toFixed(1)} GB`;
 
 export default function Usage({ loaderData }: Route.ComponentProps) {
   const { configured, months, problems } = loaderData;
@@ -44,7 +42,7 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
       <h1>Usage and costs</h1>
       <p>
         Media usage for the whole Cloudflare account, read once a day, and what the month is on course to cost against
-        the {aud(MONTHLY_CEILING_AUD)} monthly ceiling. Cloudflare's billing page has the actual charges.
+        the {formatAud(MONTHLY_CEILING_AUD)} monthly ceiling. Cloudflare's billing page has the actual charges.
       </p>
       {!configured && (
         <p role="status">
@@ -59,11 +57,12 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
           <p>
             {current.month}, last read {formatMoment(current.recordedAt)}. Projected:{" "}
             <strong>
-              {aud(current.estimate.aud)} ({current.estimate.percentOfCeiling}% of the ceiling)
+              {formatAud(current.estimate.aud)} ({current.estimate.percentOfCeiling}% of the ceiling)
             </strong>
             .
           </p>
           <table>
+            <caption className="visually-hidden">This month's usage and projected cost</caption>
             <thead>
               <tr>
                 <th scope="col">What</th>
@@ -92,14 +91,14 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
               </tr>
               <tr>
                 <th scope="row">R2 storage</th>
-                <td>{gigabytes(current.r2Bytes)}</td>
+                <td>{formatGigabytes(current.r2Bytes)}</td>
                 <td>{usd(current.estimate.usd.r2)}</td>
               </tr>
               <tr>
                 <th scope="row">Total</th>
                 <td />
                 <td>
-                  {usd(current.estimate.usd.total)}, about {aud(current.estimate.aud)}
+                  {usd(current.estimate.usd.total)}, about {formatAud(current.estimate.aud)}
                 </td>
               </tr>
             </tbody>
@@ -113,6 +112,7 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
         <>
           <h2>Earlier months</h2>
           <table>
+            <caption className="visually-hidden">Usage and estimated cost in earlier months</caption>
             <thead>
               <tr>
                 <th scope="col">Month</th>
@@ -128,8 +128,8 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
                   <th scope="row">{month.month}</th>
                   <td>{minutes(month.storedMinutes)}</td>
                   <td>{minutes(month.deliveredMinutes)}</td>
-                  <td>{gigabytes(month.r2Bytes)}</td>
-                  <td>{aud(month.estimate.aud)}</td>
+                  <td>{formatGigabytes(month.r2Bytes)}</td>
+                  <td>{formatAud(month.estimate.aud)}</td>
                 </tr>
               ))}
             </tbody>

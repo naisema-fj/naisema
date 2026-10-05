@@ -15,12 +15,18 @@ import { cleanScanner } from "./support/video";
 const HOUR = 3_600_000;
 const owner = env.ALERT_EMAILS as string;
 
-/** Cloudflare's request counts, as the monitor would read them. */
-const figures = (requests: number, errors: number): PlatformMetrics => ({
-  workerRequests: async () => ({ requests, errors }),
+/** Cloudflare's request count, as the monitor would read it. */
+const figures = (requests: number): PlatformMetrics => ({
+  workerRequests: async () => requests,
   mediaUsage: async () => ({ storedMinutes: 0, deliveredMinutes: 0, r2Bytes: 0 }),
 });
-const healthy = figures(1_000, 0);
+const healthy = figures(1_000);
+
+/** Requests the Worker answered with a 5xx at `at`, as it records them (workers/app.ts). */
+async function failRequests(count: number, at: number) {
+  const insert = env.DB.prepare("INSERT INTO server_error (failed_at) VALUES (?1)").bind(at);
+  await env.DB.batch(Array.from({ length: count }, () => insert));
+}
 
 /** What the Worker's hourly cron runs (workers/app.ts). */
 const hourly = (at: number, metrics: PlatformMetrics | null = healthy, onEnv: Env = env) =>
@@ -30,7 +36,9 @@ const alerts = async () => (await emailsTo(owner)).filter((email) => email.subje
 
 beforeEach(async () => {
   await env.DB.batch(
-    ["monitor_alert", "job_run", "email_failure"].map((table) => env.DB.prepare(`DELETE FROM ${table}`)),
+    ["monitor_alert", "job_run", "email_failure", "server_error"].map((table) =>
+      env.DB.prepare(`DELETE FROM ${table}`),
+    ),
   );
   await env.DB.prepare('DELETE FROM email_outbox WHERE "to" = ?1').bind(owner).run();
 });
@@ -64,9 +72,11 @@ describe("the hourly monitor", () => {
 
   it("alerts on a high error rate once, stays quiet while it lasts, and says when it clears", async () => {
     const now = Date.now();
-    await hourly(now, figures(400, 60));
-    await hourly(now + HOUR, figures(400, 55));
-    await hourly(now + 2 * HOUR, healthy);
+    await failRequests(60, now - 1000);
+    await hourly(now, figures(400));
+    await failRequests(55, now + HOUR - 1000);
+    await hourly(now + HOUR, figures(400));
+    await hourly(now + 2 * HOUR, figures(400));
 
     const sent = await alerts();
     expect(sent.map((email) => email.subject)).toEqual([
@@ -79,7 +89,10 @@ describe("the hourly monitor", () => {
 
   it("reminds the technical owner daily while a problem lasts", async () => {
     const now = Date.now();
-    for (let hour = 0; hour <= 25; hour++) await hourly(now + hour * HOUR, figures(400, 60));
+    for (let hour = 0; hour <= 25; hour++) {
+      await failRequests(60, now + hour * HOUR - 1000);
+      await hourly(now + hour * HOUR, figures(400));
+    }
     expect((await alerts()).map((email) => email.subject)).toEqual([
       "Na iSema development: 1 problem",
       "Na iSema development: 1 problem",
@@ -87,7 +100,15 @@ describe("the hourly monitor", () => {
     expect((await alerts())[1].text).toContain("still failing since");
   });
 
-  it("reports a video Stream couldn't process, with its ID and Stream's reason", async () => {
+  it("counts failed requests even where Cloudflare's total can't be read", async () => {
+    const now = Date.now();
+    await failRequests(12, now - 1000);
+    await hourly(now, null);
+    const [alert] = await alerts();
+    expect(alert.text).toContain("12 requests failed since the last check.");
+  });
+
+  it("reports a Video Asset Stream couldn't process, with its ID and Stream's reason", async () => {
     const now = Date.now();
     await hourly(now - HOUR);
     const educator = await staff("educator", { role: "educator" });
@@ -113,7 +134,7 @@ describe("the hourly monitor", () => {
     await hourly(Date.now() + 1000);
 
     const [alert] = await alerts();
-    expect(alert.text).toContain("1 video failed processing since the last check:");
+    expect(alert.text).toContain("1 Video Asset failed processing since the last check:");
     expect(alert.text).toContain(`${id}: The file was not recognized as a video.`);
   });
 

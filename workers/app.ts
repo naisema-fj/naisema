@@ -5,7 +5,7 @@ import { platformMetrics } from "~/lib/cloudflare-metrics.server";
 import { getDb } from "~/lib/db.server";
 import { logError, logInfo } from "~/lib/log.server";
 import type { ScanMessage } from "~/lib/media.server";
-import { runJob, runMonitor } from "~/lib/monitor.server";
+import { recordServerError, runJob, runMonitor } from "~/lib/monitor.server";
 import { servePublic } from "~/lib/public-cache.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 import { DAY_MS } from "~/lib/rights-rules";
@@ -19,7 +19,8 @@ export { Scanner } from "./scanner";
 
 const requestHandler = createRequestHandler(() => import("virtual:react-router/server-build"), import.meta.env.MODE);
 
-/** The hourly monitor's cron; the other is the daily job (wrangler.jsonc triggers). */
+/** The crons, as wrangler.jsonc `triggers` lists them. */
+const DAILY_CRON = "45 19 * * *";
 const MONITOR_CRON = "5 * * * *";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -57,17 +58,20 @@ function isAdminPath(pathname: string) {
 /**
  * Each request as one redacted log line (method, path without its query or tokens, status, time),
  * standing in for Workers' own invocation logs, which are off because they record full URLs and
- * visitors' addresses (wrangler.jsonc, `observability`).
+ * visitors' addresses (wrangler.jsonc, `observability`). Server errors are also counted for the
+ * monitor's error rate.
  */
-async function logged(request: Request, handle: () => Promise<Response>) {
+async function logged(request: Request, env: Env, ctx: ExecutionContext, handle: () => Promise<Response>) {
   const started = Date.now();
   const line = { method: request.method, path: new URL(request.url).pathname };
   try {
     const response = await handle();
     logInfo("Request", { ...line, status: response.status, ms: Date.now() - started });
+    if (response.status >= 500) ctx.waitUntil(recordServerError(env));
     return response;
   } catch (error) {
     logError("Request failed", { ...line, ms: Date.now() - started, error });
+    ctx.waitUntil(recordServerError(env));
     throw error;
   }
 }
@@ -105,7 +109,7 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
 
 export default {
   fetch(request, env, ctx) {
-    return logged(request, () => route(request, env, ctx));
+    return logged(request, env, ctx, () => route(request, env, ctx));
   },
 
   /**
@@ -113,24 +117,31 @@ export default {
    * Daily, as one recorded job the monitor watches: Rights Record expiry warnings, then
    * reindexing items whose rights expired in the last two days (overlapping, in case a run was
    * missed). Then the quarantine is tidied: old failures removed, abandoned uploads dropped and
-   * lost scans queued again. Then videos whose processing report never came are asked about, and
-   * masters never sent are sent. Last, the month's media usage is recorded (VAC-10). Awaited, so
+   * lost scans queued again. Last, videos whose processing report never came are asked about, and
+   * masters never sent are sent. Then, as its own job so a problem reading Cloudflare's figures
+   * doesn't hide how the daily job went, the month's media usage is recorded (VAC-10). Awaited, so
    * a failed run shows as failed.
    */
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
+    const db = getDb(env.DB);
     if (controller.cron === MONITOR_CRON) {
       await runMonitor(env, now);
-      return;
+    } else if (controller.cron === DAILY_CRON) {
+      const daily = runJob(db, "daily", now, async () => {
+        await sendExpiryWarnings(env, now);
+        await reindexExpiredRights(db, new Date(now.getTime() - 2 * DAY_MS), now);
+        await tidyQuarantine(env, db, now);
+        await refreshStalledVideos(db, videoProvider(env), now);
+      });
+      const usage = runJob(db, "usage", now, () => recordUsage(env, db, platformMetrics(env), now));
+      const failed = (await Promise.allSettled([daily, usage])).flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : [],
+      );
+      if (failed.length) throw new AggregateError(failed, "The daily crons failed");
+    } else {
+      throw new Error(`No job for cron "${controller.cron}"`);
     }
-    const db = getDb(env.DB);
-    await runJob(db, "daily", now, async () => {
-      await sendExpiryWarnings(env, now);
-      await reindexExpiredRights(db, new Date(now.getTime() - 2 * DAY_MS), now);
-      await tidyQuarantine(env, db, now);
-      await refreshStalledVideos(db, videoProvider(env), now);
-      await recordUsage(env, db, platformMetrics(env), now);
-    });
   },
 
   /** Upload scans (ADR-0010): each finished upload is scanned by ClamAV before it leaves quarantine. */
