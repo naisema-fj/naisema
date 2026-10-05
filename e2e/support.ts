@@ -1,4 +1,7 @@
-import { execFileSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import AxeBuilder from "@axe-core/playwright";
 import { base32 } from "@better-auth/utils/base32";
 import { createOTP } from "@better-auth/utils/otp";
@@ -6,40 +9,48 @@ import { expect, type Page } from "@playwright/test";
 
 export const ADMIN = "http://admin.localhost:4173";
 
+/** Where the preview server keeps its local D1 database (miniflare's state under .wrangler). */
+const D1_DIRECTORY = ".wrangler/state/v3/d1/miniflare-D1DatabaseObject";
+
 /**
- * Reads the outbox from the local D1 file. The preview server writes to the same file, so a read can
- * meet its lock (SQLITE_BUSY); it is tried again after a short wait.
+ * The text of the latest email sent to `email`, from the local outbox.
+ *
+ * The preview server's workerd owns the live database file, and a second process opening it
+ * (as `wrangler d1 execute --local` does) makes the server's own queries fail now and then with
+ * an internal error. So the file and its write-ahead log are copied with plain file reads, which
+ * take no SQLite locks, and the copy is queried. A copy taken before the email was written is
+ * tried again.
  */
-export function latestEmailText(email: string, attempts = 4): string {
-  let output: string;
-  try {
-    output = queryOutbox(email);
-  } catch (error) {
-    if (attempts <= 1 || !String(error).includes("SQLITE_BUSY")) throw error;
-    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
-    return latestEmailText(email, attempts - 1);
+export async function latestEmailText(email: string, attempts = 10): Promise<string> {
+  for (let attempt = 1; ; attempt++) {
+    const text = readOutboxCopy(email);
+    if (text !== null) return text;
+    if (attempt >= attempts) throw new Error(`No email to ${email} in the local outbox`);
+    await new Promise((resolve) => setTimeout(resolve, 250));
   }
-  return JSON.parse(output.slice(output.indexOf("[")))[0].results[0].text;
 }
 
-function queryOutbox(email: string) {
-  return execFileSync(
-    "pnpm",
-    [
-      "--silent",
-      "wrangler",
-      "d1",
-      "execute",
-      "DB",
-      "--local",
-      "--json",
-      "--config",
-      "wrangler.jsonc",
-      "--command",
-      `SELECT text FROM email_outbox WHERE "to" = '${email}' ORDER BY id DESC LIMIT 1`,
-    ],
-    { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
-  );
+function readOutboxCopy(email: string): string | null {
+  const name = readdirSync(D1_DIRECTORY).find((file) => /^[0-9a-f]{64}\.sqlite$/.test(file));
+  if (!name) throw new Error(`No local D1 database in ${D1_DIRECTORY}`);
+  const copy = mkdtempSync(join(tmpdir(), "naisema-outbox-"));
+  try {
+    for (const suffix of ["", "-wal"]) {
+      const source = join(D1_DIRECTORY, `${name}${suffix}`);
+      if (existsSync(source)) copyFileSync(source, join(copy, `outbox.sqlite${suffix}`));
+    }
+    const db = new DatabaseSync(join(copy, "outbox.sqlite"));
+    try {
+      const row = db.prepare('SELECT text FROM email_outbox WHERE "to" = ? ORDER BY id DESC LIMIT 1').get(email) as
+        | { text: string }
+        | undefined;
+      return row?.text ?? null;
+    } finally {
+      db.close();
+    }
+  } finally {
+    rmSync(copy, { recursive: true, force: true });
+  }
 }
 
 export async function expectNoAxeViolations(page: Page) {
@@ -55,7 +66,7 @@ export async function followSignInLink(page: Page, email: string) {
   await page.getByLabel("Email address").fill(email);
   await page.getByRole("button", { name: "Email me a sign-in link" }).click();
   await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
-  const link = latestEmailText(email).match(/https?:\/\/\S+/)?.[0];
+  const link = (await latestEmailText(email)).match(/https?:\/\/\S+/)?.[0];
   expect(link).toBeTruthy();
   await page.goto(link as string);
 }
