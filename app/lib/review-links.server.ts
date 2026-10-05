@@ -1,14 +1,13 @@
 import { and, count, desc, eq, isNull, max } from "drizzle-orm";
 import { reviewLink, reviewLinkAccess, user } from "~db/schema";
 import { auditInsert } from "./audit.server";
-import { activeHold } from "./content-holds.server";
 import type { Database } from "./db.server";
 import type { LayerReview } from "./layer-review.server";
 import { reviewLinkExpiry, reviewLinkState } from "./layer-review-rules";
 import { type Actor, can } from "./permissions";
 import { type ReviewActionResult, refuse } from "./review.server";
-import { mediaRightsFacts, rightsFactsFor } from "./rights.server";
-import { isPublishable, type RightsFacts } from "./rights-rules";
+import { rightsFactsFor } from "./rights.server";
+import { isPublishable } from "./rights-rules";
 import { hashToken, randomToken } from "./signed-tokens.server";
 
 /**
@@ -132,27 +131,6 @@ export async function reviewLinkForPlayback(db: Database, token: string, startsP
   const state = reviewLinkState(link, now);
   if (startsPlay || state !== "active") await logAccess(db, link.id, state === "active" ? "played" : state, now);
   return state === "active" ? link : null;
-}
-
-/** Records that lapsed by withdrawal: a Publish grant was withdrawn and none is current. */
-const withdrawn = (records: RightsFacts[], now: Date) =>
-  records.some((record) => record.withdrawnAt && record.permittedUses.includes("publish")) &&
-  !isPublishable(records, now);
-
-/**
- * Whether a Review Link may play its Video's footage now. A Review Link often comes before every
- * right is recorded, so missing rights don't stop it; but footage whose Publish grant was withdrawn,
- * on the Video or the file, or a Video hidden pending a Case, never plays to anyone outside.
- */
-export async function reviewPlaybackAllowed(
-  db: Database,
-  video: { id: string; video: { id: string } },
-  now = new Date(),
-) {
-  if (await activeHold(db, video.id)) return false;
-  const whole = (await rightsFactsFor(db, { type: "content_item", id: video.id })).filter((record) => !record.part);
-  const [file] = await mediaRightsFacts(db, [video.video.id]);
-  return !withdrawn(whole, now) && !withdrawn(file?.records ?? [], now);
 }
 
 /**

@@ -2,10 +2,10 @@ import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
 import { publishableMedia } from "~/lib/media-delivery.server";
-import { eligiblePublished } from "~/lib/public.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 import { type Scanner, scanUpload } from "~/lib/scan.server";
 import { reindexExpiredRights } from "~/lib/search.server";
+import { publicItem } from "~/lib/visibility.server";
 import { act, articleForm, post, type Staff, staff, topic } from "./support/articles";
 import { completeUpload, sendPart, startUpload } from "./support/media";
 import { recordMediaRights, recordRights } from "./support/rights";
@@ -190,9 +190,8 @@ describe("Rights Records for media library files (#17)", () => {
     expect((await indexed())?.n).toBe(0);
     // The checks each request makes, asked at that later moment: neither the file nor the item is public.
     const db = getDb(env.DB);
-    const item = await db.query.contentItem.findFirst({ where: (row, { eq }) => eq(row.id, id) });
     expect(await publishableMedia(db, imageId, later)).toBeUndefined();
-    expect(await eligiblePublished(db, item as NonNullable<typeof item>, later)).toBeNull();
+    expect(await publicItem(db, id, later)).toBeNull();
     expect(await publishableMedia(db, imageId)).toBeDefined();
   });
 });

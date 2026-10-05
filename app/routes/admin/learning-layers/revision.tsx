@@ -4,18 +4,15 @@ import { ReviewPanel } from "~/components/review-panel";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
 import {
-  archiveLayer,
   assignLayerReviewer,
-  layerEligibility,
-  publishLayerRevision,
   recordLayerDecision,
   recordLayerKnowledgeHolderApproval,
   submitLayerRevision,
-  withdrawLayer,
 } from "~/lib/layer-review.server";
 import { requireLayerRevision } from "~/lib/layer-revision-access.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
+import { archiveLayer, publishLayerRevision, withdrawLayer } from "~/lib/publication.server";
 import { decidableRequirement, reviewersFor } from "~/lib/review.server";
 import {
   issueReviewLink,
@@ -25,6 +22,7 @@ import {
   videoHasPublishRights,
 } from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
+import { forStaff, layerRevisionEligibility } from "~/lib/visibility.server";
 import type { Route } from "./+types/revision";
 
 export const handle = { hydrate: false };
@@ -92,7 +90,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publicationState: review.layer.publicationState,
       publishedNumber: published?.number ?? null,
     },
-    eligibility: await layerEligibility(db, review),
+    eligibility: forStaff(await layerRevisionEligibility(db, review)),
     abilities: {
       isEditor,
       canSubmit,

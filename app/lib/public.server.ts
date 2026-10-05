@@ -1,9 +1,8 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { EmbeddedItem } from "~/components/article-body-view";
-import { contentItem, learningLayer, mediaAsset, revision, slugRedirect, topic } from "~db/schema";
+import { contentItem, mediaAsset, slugRedirect, topic } from "~db/schema";
 import { AREA_NAMES, isPrimaryArea, type PrimaryArea } from "./areas";
 import { type ArticleBody, embeddedItemIds } from "./article-body";
-import { type ArticleSnapshot, footageOf } from "./article-fields";
 import { CONTENT_TYPE_NAMES, type ContentType, PAGE_AREA } from "./content-types";
 import { type CreatorDetails, MEDIA_TYPES } from "./creator-fields";
 import type { Database } from "./db.server";
@@ -15,41 +14,30 @@ import {
   transcriptParagraphs,
 } from "./episode-fields";
 import { itemPath } from "./item-paths";
-import { layerEligibility, loadLayerReview } from "./layer-review.server";
-import { LAYER_LEVELS, type LearningLayerSnapshot, layerSpan } from "./learning-layer-fields";
+import { LAYER_LEVELS, layerSpan } from "./learning-layer-fields";
 import { imagePath } from "./media-delivery.server";
-import { eligibilityFor } from "./publication.server";
 import { AGE_GUIDANCE, linkHost, type ResourceDetails } from "./resource-fields";
-import { loadReview } from "./review.server";
 import { reviewLabels } from "./review-labels";
 import { formatBytes, UPLOAD_TYPE_NAMES } from "./upload-rules";
-import { readyVideo } from "./video-assets.server";
 import type { Orientation } from "./video-rules";
+import {
+  type PublicFootage,
+  type PublicItem,
+  type PublicLayer,
+  publicFootage,
+  publicItem,
+  publicLayersOn,
+} from "./visibility.server";
 
 /**
- * What the public site may show (ADR-0007). Every item goes through the eligibility decision at
- * the moment of the request, so drafts, withdrawn items and items whose reviews or rights lapsed
- * never render, and nothing needs unpublishing.
+ * What the public site shows of what is public (ADR-0007; app/lib/visibility.server.ts decides
+ * what is). Each lookup makes the decision once and hands back the footage and Learning Layers it
+ * found public, so nothing later in the request decides it again.
  */
 
 export { creatorPath, itemPath, publicPath } from "./item-paths";
 
 type ItemRow = typeof contentItem.$inferSelect;
-
-/**
- * The public decision of ADR-0007: the item is published and its published Revision is eligible
- * right now. `eligibilityFor` leaves out the publication state because publishing itself asks it;
- * public code asks this instead, never `eligibilityFor` alone.
- */
-export async function eligiblePublished(db: Database, item: ItemRow, now: Date) {
-  if (item.publicationState !== "published" || !item.currentPublishedRevisionId) return null;
-  const review = await loadReview(db, item.currentPublishedRevisionId);
-  if (!review) return null;
-  const eligibility = await eligibilityFor(db, review, now);
-  if (!eligibility.eligible) return null;
-  const row = await db.select().from(revision).where(eq(revision.id, item.currentPublishedRevisionId)).get();
-  return row ? { review, snapshot: row.snapshot as ArticleSnapshot } : null;
-}
 
 /** Withdrawn or archived after being published; an item never published stays unknown to visitors. */
 const isTakenDown = (item: ItemRow) =>
@@ -136,7 +124,14 @@ export type PublicArticle = {
 };
 
 export type PublicLookup =
-  | { kind: "found"; article: PublicArticle }
+  | {
+      kind: "found";
+      article: PublicArticle;
+      /** Its footage, when it plays any, as found public in this lookup. */
+      footage: PublicFootage | null;
+      /** The Learning Layers public on that footage. */
+      layers: PublicLayer[];
+    }
   | { kind: "moved"; to: string }
   | { kind: "withdrawn" }
   | { kind: "missing" };
@@ -172,14 +167,14 @@ export async function findPublicArticle(
     if (!redirect || !(types as readonly string[]).includes(redirect.item.type)) return { kind: "missing" };
     // An old address answers as the item's own address would.
     if (isTakenDown(redirect.item)) return { kind: "withdrawn" };
-    if (!(await eligiblePublished(db, redirect.item, now))) return { kind: "missing" };
+    if (!(await publicItem(db, redirect.item, now))) return { kind: "missing" };
     return { kind: "moved", to: itemPath(redirect.item) };
   }
 
   if (isTakenDown(item)) return { kind: "withdrawn" };
-  const published = await eligiblePublished(db, item, now);
+  const published = await publicItem(db, item, now);
   if (!published) return { kind: "missing" };
-  return { kind: "found", article: await publicView(db, item, published, now) };
+  return { kind: "found", ...(await publicView(db, published, now)) };
 }
 
 /** The published, eligible Page at /{slug}, if there is one: About, Privacy and the other site pages. */
@@ -190,17 +185,15 @@ export async function findPublicPage(db: Database, slug: string, now = new Date(
     .where(and(eq(contentItem.type, "page"), eq(contentItem.primaryArea, PAGE_AREA), eq(contentItem.slug, slug)))
     .get();
   if (!item) return null;
-  const published = await eligiblePublished(db, item, now);
-  return published ? publicView(db, item, published, now) : null;
+  const published = await publicItem(db, item, now);
+  return published ? (await publicView(db, published, now)).article : null;
 }
 
-/** Everything a public page shows of a published Revision. */
-async function publicView(
-  db: Database,
-  item: ItemRow,
-  { snapshot, review }: NonNullable<Awaited<ReturnType<typeof eligiblePublished>>>,
-  now: Date,
-): Promise<PublicArticle> {
+/** Everything a public page shows of a published Revision, with the footage and Learning Layers it found public. */
+async function publicView(db: Database, published: PublicItem, now: Date) {
+  const { item, snapshot, review } = published;
+  const footage = await publicFootage(db, published, now);
+  const layers = footage ? await publicLayersOn(db, footage, now) : [];
   const type = item.type as ContentType;
   const area = isPrimaryArea(item.primaryArea) ? item.primaryArea : null;
   const topicRows = snapshot.topicIds.length
@@ -209,7 +202,7 @@ async function publicView(
         .from(topic)
         .where(inArray(topic.id, snapshot.topicIds))
     : [];
-  return {
+  const article: PublicArticle = {
     id: item.id,
     type,
     area,
@@ -230,14 +223,12 @@ async function publicView(
     resource: snapshot.resource ? await publicResource(db, item.id, snapshot.resource) : null,
     episode: snapshot.episode ? await publicEpisode(db, item.id, snapshot.episode) : null,
     creator: snapshot.creator ? await publicCreator(db, snapshot.title, snapshot.creator, now) : null,
-    video: await (async () => {
-      const footage = footageOf(snapshot);
-      return footage ? publicVideo(db, item, footage, now) : null;
-    })(),
+    video: footage ? publicVideo(footage, layers) : null,
     related: await relatedItems(db, snapshot.relatedIds ?? [], now),
     firstPublishedAt: item.firstPublishedAt,
     lastPublishedAt: item.lastPublishedAt,
   };
+  return { article, footage, layers };
 }
 
 async function publicResource(db: Database, itemId: string, details: ResourceDetails): Promise<PublicResource> {
@@ -306,16 +297,14 @@ export const videoPlaybackPath = (itemId: string) => `/videos/${itemId}/playback
 /** A Learning Layer's player, under its Video's address. */
 export const layerPath = (item: ItemRow, layerId: string) => `${itemPath(item)}/language/${layerId}`;
 
-async function publicVideo(db: Database, item: ItemRow, videoAssetId: string, now: Date): Promise<PublicVideo | null> {
-  const asset = await readyVideo(db, videoAssetId);
-  if (!asset) return null;
+function publicVideo({ item, asset }: PublicFootage, layers: PublicLayer[]): PublicVideo {
   return {
     playbackPath: videoPlaybackPath(item.id),
     width: asset.width,
     height: asset.height,
     orientation: asset.orientation,
     durationMs: asset.durationMs,
-    layers: (await publicLayers(db, item.id, now)).map(({ id, snapshot }) => ({
+    layers: layers.map(({ id, snapshot }) => ({
       id,
       title: snapshot.title,
       level: LAYER_LEVELS[snapshot.level],
@@ -325,33 +314,8 @@ async function publicVideo(db: Database, item: ItemRow, videoAssetId: string, no
   };
 }
 
-/**
- * The Learning Layers public on a Video right now: published, and their published Revision eligible
- * (ADR-0007). The Video itself is public, since only its public page asks (#28's serving rule).
- */
-export async function publicLayers(db: Database, contentItemId: string, now = new Date()) {
-  const rows = await db
-    .select({ id: learningLayer.id, revisionId: learningLayer.currentPublishedRevisionId })
-    .from(learningLayer)
-    .where(and(eq(learningLayer.contentItemId, contentItemId), eq(learningLayer.publicationState, "published")))
-    .orderBy(asc(learningLayer.createdAt));
-  const shown = await Promise.all(
-    rows.map(async ({ id, revisionId }) => {
-      if (!revisionId) return null;
-      const review = await loadLayerReview(db, revisionId);
-      if (!review || !(await layerEligibility(db, review, now)).eligible) return null;
-      return { id, revisionId, snapshot: review.snapshot, languageVariety: review.layer.languageVariety };
-    }),
-  );
-  return shown.filter((layer) => layer !== null);
-}
-
 export type PublicLayerLookup =
-  | {
-      kind: "found";
-      video: PublicArticle;
-      layer: { id: string; revisionId: string; snapshot: LearningLayerSnapshot; languageVariety: string };
-    }
+  | { kind: "found"; video: PublicArticle; layer: PublicLayer }
   | Exclude<PublicLookup, { kind: "found" }>;
 
 /**
@@ -368,25 +332,9 @@ export async function findPublicLayer(
   const found = await findPublicArticle(db, area, slug, now, ["video"]);
   if (found.kind === "moved") return { kind: "moved", to: `${found.to}/language/${layerId}` };
   if (found.kind !== "found") return found;
-  // The Video's page has just decided which of its Learning Layers are public.
-  if (!found.article.video?.layers.some((card) => card.id === layerId)) return { kind: "missing" };
-  const row = await db
-    .select({ revisionId: learningLayer.currentPublishedRevisionId })
-    .from(learningLayer)
-    .where(eq(learningLayer.id, layerId))
-    .get();
-  const review = row?.revisionId ? await loadLayerReview(db, row.revisionId) : null;
-  if (!review) return { kind: "missing" };
-  return {
-    kind: "found",
-    video: found.article,
-    layer: {
-      id: layerId,
-      revisionId: review.revisionId,
-      snapshot: review.snapshot,
-      languageVariety: review.layer.languageVariety,
-    },
-  };
+  // The Video's lookup has just decided which of its Learning Layers are public.
+  const layer = found.layers.find((candidate) => candidate.id === layerId);
+  return layer ? { kind: "found", video: found.article, layer } : { kind: "missing" };
 }
 
 /** Where an Episode's audio streams from: through the Episode, so eligibility is decided each time. */
@@ -399,7 +347,7 @@ async function relatedItems(db: Database, ids: string[], now: Date): Promise<Rel
   const shown = await Promise.all(
     ids.map(async (id) => {
       const item = items.find((candidate) => candidate.id === id);
-      const published = item ? await eligiblePublished(db, item, now) : null;
+      const published = item ? await publicItem(db, item, now) : null;
       if (!item || !published) return null;
       return {
         title: published.snapshot.title,
@@ -419,7 +367,7 @@ async function publicEmbeds(db: Database, body: ArticleBody, now: Date) {
   const items = await db.select().from(contentItem).where(inArray(contentItem.id, ids));
   const entries = await Promise.all(
     items.map(async (item) => {
-      const published = await eligiblePublished(db, item, now);
+      const published = await publicItem(db, item, now);
       return published ? ([item.id, { title: published.snapshot.title, href: itemPath(item) }] as const) : null;
     }),
   );

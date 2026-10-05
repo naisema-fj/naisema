@@ -1,7 +1,8 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
+import { playbackFor } from "~/lib/public-video.server";
+import { publicFootage } from "~/lib/visibility.server";
 import type { Route } from "./+types/video-playback";
 
 /**
@@ -10,7 +11,7 @@ import type { Route } from "./+types/video-playback";
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const video = await publicVideoItem(getDb(env.DB), params.itemId);
+  const video = await publicFootage(getDb(env.DB), params.itemId);
   const playback = video && (await playbackFor(env, video));
   if (!playback) return Response.json({ error: "This video isn't available." }, { status: 404, headers: NO_STORE });
   return Response.json(playback, { headers: NO_STORE });

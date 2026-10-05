@@ -3,7 +3,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { rangedResponse, type StoredFile } from "~/lib/media-delivery.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { publicVideoItem } from "~/lib/public-video.server";
+import { publicFootage } from "~/lib/visibility.server";
 import { mediaAsset } from "~db/schema";
 import type { Route } from "./+types/video-stream";
 
@@ -16,7 +16,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   if (env.VIDEO_PROVIDER !== "local") throw new Response("Not found", { status: 404 });
   const db = getDb(env.DB);
-  const video = await publicVideoItem(db, params.itemId);
+  const video = await publicFootage(db, params.itemId);
   const asset = video && (await db.select().from(mediaAsset).where(eq(mediaAsset.id, video.asset.id)).get());
   const response =
     video && asset

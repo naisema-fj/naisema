@@ -22,11 +22,12 @@ import {
   providerPath,
   sponsorsText,
 } from "./listing-fields";
-import { eligiblePublished, itemPath } from "./public.server";
+import { itemPath } from "./public.server";
 import { purgePublicPages } from "./public-cache.server";
 import { linkHost } from "./resource-fields";
 import { formatDay } from "./rights-rules";
 import { firstFreeSlug, slugify } from "./slug";
+import { publicItem } from "./visibility.server";
 
 /**
  * Providers, their Offerings and Partnership Agreements (PART-01–03): plain listings editors keep,
@@ -412,7 +413,7 @@ export async function offeringView(
     action = { kind: "text", text: `Na iSema can refer you: ${access.note}` };
   } else if (access.mode === "licensed_native") {
     const item = await db.select().from(contentItem).where(eq(contentItem.id, access.contentItemId)).get();
-    const published = item ? await eligiblePublished(db, item, now) : null;
+    const published = item ? await publicItem(db, item, now) : null;
     action =
       item && published
         ? { kind: "item", label: `Open ${published.snapshot.title} on Na iSema`, path: itemPath(item) }

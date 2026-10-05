@@ -1,9 +1,8 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
-import { isLayerEligible } from "~/lib/layer-review.server";
-import { isEligible } from "~/lib/publication.server";
 import { hashToken, randomToken } from "~/lib/signed-tokens.server";
+import { isEligible, isLayerEligible, reasonTexts } from "~/lib/visibility.server";
 import { languageReviewerRole, staff } from "./support/articles";
 import { act, authoredLayer, grantRights, layerRow, readyContent, recordsOf, save } from "./support/layers";
 import { recordRights } from "./support/rights";
@@ -91,7 +90,7 @@ describe("carrying approvals forward", () => {
     expect((await approvalsOn(retranslated.revisionId)).results).toEqual([]);
     const eligibility = await isLayerEligible(getDb(env.DB), retranslated.revisionId);
     expect(eligibility.eligible).toBe(false);
-    if (!eligibility.eligible) expect(eligibility.reasons).toContain("It hasn't been submitted for review.");
+    expect(reasonTexts(eligibility)).toContain("It hasn't been submitted for review.");
   });
 });
 
@@ -111,7 +110,7 @@ describe("rights on the Video (VID-01)", () => {
       .first<{ id: string }>();
     const videoRightsReasons = async () => {
       const result = await isEligible(db, videoRevision?.id as string);
-      return result.eligible ? [] : result.reasons.filter((reason) => reason.includes("Rights Record"));
+      return result.eligible ? [] : result.reasons.filter((reason) => reason.kind === "rights").map(({ text }) => text);
     };
     const withdraw = (recordId: string) =>
       editor.browser.fetch(`/admin/articles/${videoId}/rights`, {
@@ -123,18 +122,14 @@ describe("rights on the Video (VID-01)", () => {
     expect((await withdraw(teaching?.id as string)).status).toBe(302);
     const withoutTeaching = await isLayerEligible(db, revisionId);
     expect(withoutTeaching.eligible).toBe(false);
-    if (!withoutTeaching.eligible) {
-      expect(withoutTeaching.reasons).toContain("Its Video's Rights Record granting Translate was withdrawn.");
-    }
+    expect(reasonTexts(withoutTeaching)).toContain("Its Video's Rights Record granting Translate was withdrawn.");
     expect(await videoRightsReasons()).toEqual([]);
 
     const publish = records.find((record) => record.uses.includes("publish"));
     expect((await withdraw(publish?.id as string)).status).toBe(302);
     const withoutPublish = await isLayerEligible(db, revisionId);
     expect(withoutPublish.eligible).toBe(false);
-    if (!withoutPublish.eligible) {
-      expect(withoutPublish.reasons).toContain("Its Video's Rights Record granting Publish was withdrawn.");
-    }
+    expect(reasonTexts(withoutPublish)).toContain("Its Video's Rights Record granting Publish was withdrawn.");
     expect(await videoRightsReasons()).toEqual(["Its Rights Record granting Publish was withdrawn."]);
   });
 });

@@ -1,8 +1,8 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
-import { isEligible } from "~/lib/publication.server";
 import { type Scanner, scanUpload } from "~/lib/scan.server";
+import { isEligible } from "~/lib/visibility.server";
 import {
   act,
   approve,
@@ -301,7 +301,7 @@ describe("rights in eligibility (AC-02)", () => {
 
     expect(await isEligible(db, published.id)).toEqual({
       eligible: false,
-      reasons: ["Its Rights Record granting Publish was withdrawn."],
+      reasons: [{ kind: "rights", text: "Its Rights Record granting Publish was withdrawn." }],
     });
     expect((await publication(article.id))?.state).toBe("published");
     const page = await (await editor.browser.fetch(`/admin/articles/${article.id}/revisions/1`)).text();

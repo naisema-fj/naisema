@@ -8,7 +8,6 @@ import {
   learnerAccount,
   learnerEvent,
   learnerVideoState,
-  learningLayer,
   learningLayerRevision,
   savedVocabulary,
   user as userTable,
@@ -29,8 +28,8 @@ import { DEFAULT_PREFERENCES, type StageCaptions, type SupportPreferences } from
 import { type LearningLayerSnapshot, withDefaults } from "./learning-layer-fields";
 import { logError } from "./log.server";
 import { PLAYBACK_SPEEDS } from "./player-rules";
-import { eligiblePublished, itemPath, layerPath } from "./public.server";
-import { publicLayerById } from "./public-video.server";
+import { itemPath, layerPath } from "./public.server";
+import { type PublicLayer, publicItem, publicLayer } from "./visibility.server";
 
 /**
  * A Learner Account's records (#33): applying the events the player queues
@@ -40,8 +39,6 @@ import { publicLayerById } from "./public-video.server";
  * decided by eligibility, as for any public read (ADR-0007): a saved video or word whose Learning
  * Layer is no longer public is listed as no longer available, without its content.
  */
-
-type PublicLayer = NonNullable<Awaited<ReturnType<typeof publicLayerById>>>;
 
 const parse = (json: string | null): unknown => {
   try {
@@ -83,7 +80,7 @@ class LayerLookup {
   layer(layerId: string) {
     let found = this.layers.get(layerId);
     if (!found) {
-      found = publicLayerById(this.db, layerId, this.now);
+      found = publicLayer(this.db, layerId, this.now);
       this.layers.set(layerId, found);
     }
     return found;
@@ -207,9 +204,11 @@ async function applyEvent(db: Database, userId: string, event: ProgressEvent, lo
       return true;
     }
     case "save-video": {
-      const item = await db.select().from(contentItem).where(eq(contentItem.id, event.contentItemId)).get();
-      if (!item || !(await eligiblePublished(db, item, now))) return false;
-      await db.insert(bookmark).values({ userId, contentItemId: item.id, savedAt: now }).onConflictDoNothing();
+      if (!(await publicItem(db, event.contentItemId, now))) return false;
+      await db
+        .insert(bookmark)
+        .values({ userId, contentItemId: event.contentItemId, savedAt: now })
+        .onConflictDoNothing();
       return true;
     }
     case "unsave-video":
@@ -393,11 +392,7 @@ async function layerProgress(db: Database, userId: string, layer: PublicLayer, s
   return { ...result, completion, completedEarlier };
 }
 
-export async function learnerLayerState(
-  db: Database,
-  userId: string,
-  layer: PublicLayer & { contentItemId: string },
-): Promise<LearnerLayerState> {
+export async function learnerLayerState(db: Database, userId: string, layer: PublicLayer): Promise<LearnerLayerState> {
   const [state, account, words, saved] = await Promise.all([
     db
       .select()
@@ -412,7 +407,7 @@ export async function learnerLayerState(
     db
       .select({ contentItemId: bookmark.contentItemId })
       .from(bookmark)
-      .where(and(eq(bookmark.userId, userId), eq(bookmark.contentItemId, layer.contentItemId)))
+      .where(and(eq(bookmark.userId, userId), eq(bookmark.contentItemId, layer.video.item.id)))
       .get(),
   ]);
   const { progress, earlier, completedEarlier } = await layerProgress(db, userId, layer, state);
@@ -426,17 +421,6 @@ export async function learnerLayerState(
     savedWords: [...new Set(words.map((word) => word.expressionId))],
     videoSaved: Boolean(saved),
   };
-}
-
-/** A public Learning Layer's player address, with the Video it is on. */
-async function layerAddress(db: Database, layerId: string) {
-  const row = await db
-    .select({ item: contentItem })
-    .from(learningLayer)
-    .innerJoin(contentItem, eq(contentItem.id, learningLayer.contentItemId))
-    .where(eq(learningLayer.id, layerId))
-    .get();
-  return row ? { path: layerPath(row.item, layerId), contentItemId: row.item.id } : null;
 }
 
 const sameWords = (a: ExpressionDetails, b: ExpressionDetails) =>
@@ -466,14 +450,13 @@ export async function learningPage(db: Database, userId: string, now = new Date(
   const learning = await Promise.all(
     states.map(async (state) => {
       const layer = await lookup.layer(state.learningLayerId);
-      const address = layer ? await layerAddress(db, layer.id) : null;
-      if (!layer || !address) return { layerId: state.learningLayerId, available: false as const };
+      if (!layer) return { layerId: state.learningLayerId, available: false as const };
       const { completion, completedEarlier } = await layerProgress(db, userId, layer, state);
       return {
         layerId: layer.id,
         available: true as const,
         title: layer.snapshot.title,
-        path: `${address.path}?stage=${state.stage}`,
+        path: `${layerPath(layer.video.item, layer.id)}?stage=${state.stage}`,
         stage: state.stage as StageId,
         completion,
         completedEarlier,
@@ -483,15 +466,14 @@ export async function learningPage(db: Database, userId: string, now = new Date(
 
   const videos = await Promise.all(
     bookmarks.map(async ({ contentItemId, savedAt }) => {
-      const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
-      const published = item ? await eligiblePublished(db, item, now) : null;
-      if (!item || !published) return { contentItemId, available: false as const, savedAt };
+      const published = await publicItem(db, contentItemId, now);
+      if (!published) return { contentItemId, available: false as const, savedAt };
       return {
         contentItemId,
         available: true as const,
         savedAt,
         title: published.snapshot.title,
-        path: itemPath(item),
+        path: itemPath(published.item),
       };
     }),
   );
@@ -503,15 +485,14 @@ export async function learningPage(db: Database, userId: string, now = new Date(
       const source = await lookup.revision(word.learningLayerId, word.sourceRevisionId);
       const current = layer?.snapshot.expressions[word.expressionId];
       const saved = source?.expressions[word.expressionId];
-      const address = layer ? await layerAddress(db, layer.id) : null;
-      if (!layer || !current || !address) return { ...key, available: false as const };
+      if (!layer || !current) return { ...key, available: false as const };
       return {
         ...key,
         available: true as const,
         expression: current,
         updated: Boolean(saved && !sameWords(saved, current)),
         layerTitle: layer.snapshot.title,
-        layerPath: address.path,
+        layerPath: layerPath(layer.video.item, layer.id),
       };
     }),
   );

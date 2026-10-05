@@ -10,7 +10,7 @@ import { getLearner, requireOwnRecords } from "~/lib/learners.server";
 import { playWindow } from "~/lib/player-rules";
 import { findPublicLayer, videoPlaybackPath } from "~/lib/public.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
+import { playbackFor } from "~/lib/public-video.server";
 import type { RouteHandle } from "~/lib/route-handle";
 import type { Route } from "./+types/learning-layer";
 
@@ -37,8 +37,8 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   if (found.kind === "withdrawn") throw new Response("Withdrawn", { status: 410 });
   if (found.kind === "missing") throw new Response("Not found", { status: 404 });
   const { video, layer } = found;
-  const item = await publicVideoItem(db, video.id);
-  if (!item || !video.video) throw new Response("Not found", { status: 404 });
+  // The Video was found public, with its footage ready, by the same lookup.
+  if (!video.video) throw new Response("Not found", { status: 404 });
   const { snapshot } = layer;
   const learner = await getLearner(env, request);
   if (learner) requireOwnRecords(learner, "learnerRecord.read");
@@ -50,7 +50,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     title: snapshot.title,
     videoTitle: video.title,
     storyPath: `/${params.area}/${params.slug}`,
-    playback: await playbackFor(env, item),
+    playback: await playbackFor(env, layer.video),
     refreshPath: videoPlaybackPath(video.id),
     width: video.video.width,
     height: video.video.height,
@@ -66,7 +66,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     learner: learner
       ? {
           userId: learner.userId,
-          ...(await learnerLayerState(db, learner.userId, { ...layer, contentItemId: video.id })),
+          ...(await learnerLayerState(db, learner.userId, layer)),
         }
       : null,
   });

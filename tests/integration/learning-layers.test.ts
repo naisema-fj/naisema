@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
-import { isEligible } from "~/lib/publication.server";
+import { isEligible, reasonTexts } from "~/lib/visibility.server";
 import { post, type Staff, staff, topic } from "./support/articles";
 import { readyVideoAsset } from "./support/video";
 
@@ -92,12 +92,10 @@ describe("Video Content Items", () => {
     expect(JSON.parse(revision?.snapshot ?? "{}").video).toEqual({ videoAssetId: assetId });
     const eligibility = await isEligible(getDb(env.DB), revision?.id as string);
     expect(eligibility.eligible).toBe(false);
-    if (!eligibility.eligible) {
-      // Its footage has finished processing, so only rights stand in the way.
-      expect(eligibility.reasons).not.toContain("Its video hasn't finished processing.");
-      // The footage needs a Rights Record of its own, like any media library file.
-      expect(eligibility.reasons).toContain("The file talanoa.mp4 has no current Rights Record granting Publish.");
-    }
+    // Its footage has finished processing, so only rights stand in the way.
+    expect(reasonTexts(eligibility)).not.toContain("Its video hasn't finished processing.");
+    // The footage needs a Rights Record of its own, like any media library file.
+    expect(reasonTexts(eligibility)).toContain("The file talanoa.mp4 has no current Rights Record granting Publish.");
   });
 
   it("refuse footage that hasn't finished processing", async () => {

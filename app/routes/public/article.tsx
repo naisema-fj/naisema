@@ -5,7 +5,7 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { findPublicArticle } from "~/lib/public.server";
 import { PRIVATE_NO_STORE, PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
-import { playbackFor, publicVideoItem } from "~/lib/public-video.server";
+import { playbackFor } from "~/lib/public-video.server";
 import type { RouteHandle } from "~/lib/route-handle";
 import type { Route } from "./+types/article";
 
@@ -34,11 +34,10 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (found.kind === "moved") throw redirect(found.to, 301);
   if (found.kind === "withdrawn") throw new Response("Withdrawn", { status: 410 });
   if (found.kind === "missing") throw new Response("Not found", { status: 404 });
-  const { article } = found;
-  if (!article.video) return data({ ...article, playback: null });
-  const video = await publicVideoItem(db, article.id);
+  const { article, footage } = found;
+  if (!footage) return data({ ...article, playback: null });
   return data(
-    { ...article, playback: video ? await playbackFor(env, video) : null },
+    { ...article, playback: await playbackFor(env, footage) },
     { headers: { "Cache-Control": PRIVATE_NO_STORE } },
   );
 }

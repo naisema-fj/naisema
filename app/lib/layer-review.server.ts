@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, inArray, lt, lte, notExists, type SQL, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lt, lte, notExists, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import {
   auditEvent,
@@ -14,14 +14,12 @@ import {
   user,
 } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
-import { activeHold } from "./content-holds.server";
 import type { Database } from "./db.server";
 import { discardEvidence, scannedEvidence, storeEvidence } from "./evidence.server";
 import type { EvidenceFile } from "./evidence-file";
-import { layerFlags, layerReadinessProblems } from "./layer-review-rules";
+import { layerFlags } from "./layer-review-rules";
 import { type LearningLayerSnapshot, withDefaults } from "./learning-layer-fields";
 import { type Actor, can, type ReviewType } from "./permissions";
-import type { Eligibility } from "./publication.server";
 import {
   decidableRequirement,
   onceOnly,
@@ -30,7 +28,7 @@ import {
   reviewersFor,
   toRecordedDecision,
 } from "./review.server";
-import { type PublicationState, REVIEW_NAMES, requirementName } from "./review-names";
+import { type PublicationState, REVIEW_NAMES } from "./review-names";
 import {
   approvalsToCarryForward,
   type Fingerprints,
@@ -38,17 +36,14 @@ import {
   reviewProgress,
   revisionState,
 } from "./review-rules";
-import { mediaRightsFacts, rightsFactsFor } from "./rights.server";
-import { assetRightsProblems, teachingRightsProblems } from "./rights-rules";
-import { videoItem } from "./video-items.server";
 
 /**
- * Review and publishing for Learning Layers (ADR-0001, ADR-0003, ADR-0006, ADR-0007). A Learning
- * Layer's Revisions are reviewed like a Content Item's, by the same rules, in their own rows: an
- * editor or an assigned Educator submits the current draft, assigned reviewers approve or reject
- * it for their Review Type, an editor records a Knowledge Holder's approval, and approvals whose
- * fingerprint is unchanged carry forward to the next Revision. A Learning Layer is published and
- * withdrawn on its own, apart from its Video, and only when `layerEligibility` says so.
+ * Review for Learning Layers (ADR-0001, ADR-0003, ADR-0006). A Learning Layer's Revisions are
+ * reviewed like a Content Item's, by the same rules, in their own rows: an editor or an assigned
+ * Educator submits the current draft, assigned reviewers approve or reject it for their Review
+ * Type, an editor records a Knowledge Holder's approval, and approvals whose fingerprint is
+ * unchanged carry forward to the next Revision. Publishing is app/lib/publication.server.ts, and
+ * whether a Revision may be published or is public is app/lib/visibility.server.ts.
  */
 
 /** Whoever added the Learning Layer and whoever saved it up to this Revision: their words are in it. */
@@ -435,217 +430,6 @@ export async function layerReviewQueue(db: Database, reviewerId: string) {
   }
   return queue;
 }
-
-/**
- * The eligibility decision for a Learning Layer Revision (ADR-0007), evaluated on every call: it
- * must be submitted with every required review approved and be ready for learners; its Video's
- * footage must have finished processing and have its own current Publish grant; the Video's rights
- * must grant Publish and the teaching uses (and Excerpt when it is on one); and a Video flagged as
- * culturally sensitive needs the Learning Layer flagged too, so a Knowledge Holder sees it. A
- * Learning Layer on a Video hidden pending a Case is never eligible. It doesn't need its Video
- * published: the learner player (#29) serves it only on an eligible Video's page.
- */
-export async function layerEligibility(
-  db: Database,
-  review: LayerReview,
-  now = new Date(),
-  /** Its Video, when the caller has already loaded it. */
-  loaded?: Awaited<ReturnType<typeof videoItem>>,
-): Promise<Eligibility> {
-  const reasons: string[] = [];
-  const video = loaded === undefined ? await videoItem(db, review.layer.contentItemId) : loaded;
-  if (!video) return { eligible: false, reasons: ["Its Video no longer shows a Video Asset."] };
-  if (await activeHold(db, video.id)) {
-    reasons.push("Its Video is hidden while a Case about it is reviewed. The safeguarding lead can show it again.");
-  }
-  if (!review.submitted) reasons.push("It hasn't been submitted for review.");
-  for (const { requirement, status } of review.progress) {
-    if (status === "approved") continue;
-    const name = requirementName(requirement);
-    reasons.push(status === "rejected" ? `${name} was rejected.` : `${name} is still needed.`);
-  }
-  reasons.push(...layerReadinessProblems(review.snapshot));
-  if (video.video.state === "failed") {
-    reasons.push(`Its video failed processing: ${video.video.stateReason ?? "no reason was given."}`);
-  } else if (video.video.state !== "ready") {
-    reasons.push("Its video hasn't finished processing.");
-  }
-  if (video.flags.includes("sensitiveCultural") && !review.flags.includes("sensitiveCultural")) {
-    reasons.push(
-      "Its Video is marked culturally sensitive, so the Learning Layer needs a Knowledge Holder's approval too. Tick Culturally sensitive in its editor.",
-    );
-  }
-  reasons.push(
-    ...teachingRightsProblems({
-      records: await rightsFactsFor(db, { type: "content_item", id: video.id }),
-      excerpt: review.snapshot.excerpt !== null,
-      needsGuardianPermission: video.flags.includes("identifiableChildren"),
-      now,
-    }),
-    ...assetRightsProblems(await mediaRightsFacts(db, [video.video.id]), now),
-  );
-  return reasons.length ? { eligible: false, reasons } : { eligible: true };
-}
-
-/** The eligibility decision for a Learning Layer Revision found by its ID, as the learner player will ask it. */
-export async function isLayerEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
-  const review = await loadLayerReview(db, revisionId);
-  if (!review) return { eligible: false, reasons: ["That revision doesn't exist."] };
-  return layerEligibility(db, review, now);
-}
-
-type LayerColumns = typeof learningLayer.$inferInsert;
-
-const setLayerState = (
-  db: Database,
-  learningLayerId: string,
-  values: { [Column in keyof LayerColumns]?: LayerColumns[Column] | SQL },
-) =>
-  db
-    .update(learningLayer)
-    .set({ ...values, updatedAt: new Date() })
-    .where(eq(learningLayer.id, learningLayerId));
-
-/**
- * Publishes this exact Revision, if it is the latest and eligible at this moment. A refused attempt
- * is audited with its reasons (VAC-06).
- */
-export async function publishLayerRevision(
-  db: Database,
-  actor: Actor,
-  review: LayerReview,
-): Promise<ReviewActionResult> {
-  if (!can(actor, { action: "revision.publish" })) return refuse("Only editors can publish.");
-  if (review.layer.publicationState === "archived") return refuse("Archived Learning Layers can't be published.");
-  if (!isLatest(review)) return refuse("Only the latest revision can be published.");
-  const eligibility = await layerEligibility(db, review);
-  if (!eligibility.eligible) {
-    await recordAudit(db, {
-      actorId: actor.userId,
-      action: "learning_layer.publish_refused",
-      objectType: "learning_layer_revision",
-      objectId: review.revisionId,
-      details: { reasons: eligibility.reasons },
-    });
-    return refuse(`Revision ${review.number} can't be published yet. ${eligibility.reasons.join(" ")}`);
-  }
-  await db.batch([
-    setLayerState(db, review.layer.id, {
-      publicationState: "published",
-      currentPublishedRevisionId: review.revisionId,
-      // Republishing keeps the first publication date; the last one moves on.
-      firstPublishedAt: sql`coalesce(${learningLayer.firstPublishedAt}, ${Date.now()})`,
-      lastPublishedAt: new Date(),
-    }),
-    auditInsert(db, {
-      actorId: actor.userId,
-      action: "learning_layer.published",
-      objectType: "learning_layer",
-      objectId: review.layer.id,
-      details: { revisionId: review.revisionId, number: review.number },
-    }),
-  ]);
-  return { ok: true };
-}
-
-/** Takes a published Learning Layer down, leaving its Video as it is. */
-export async function withdrawLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
-  if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can withdraw.");
-  if (review.layer.publicationState !== "published") return refuse("Only published Learning Layers can be withdrawn.");
-  await db.batch([
-    setLayerState(db, review.layer.id, { publicationState: "withdrawn" }),
-    auditInsert(db, {
-      actorId: actor.userId,
-      action: "learning_layer.withdrawn",
-      objectType: "learning_layer",
-      objectId: review.layer.id,
-    }),
-  ]);
-  return { ok: true };
-}
-
-/** Retires a Learning Layer that isn't published. It can't be published again. */
-export async function archiveLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
-  if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can archive.");
-  const state = review.layer.publicationState;
-  if (state === "published") return refuse("Withdraw the Learning Layer before archiving it.");
-  if (state === "archived") return refuse("This Learning Layer is already archived.");
-  await db.batch([
-    setLayerState(db, review.layer.id, { publicationState: "archived" }),
-    auditInsert(db, {
-      actorId: actor.userId,
-      action: "learning_layer.archived",
-      objectType: "learning_layer",
-      objectId: review.layer.id,
-    }),
-  ]);
-  return { ok: true };
-}
-
-/**
- * The editors' queues for Learning Layers (VCMS-06): current drafts submitted but still missing a
- * review (or rejected), with anything else they still need; drafts approved but held up, with why;
- * drafts ready to publish; and Learning Layers whose video failed processing. Each shows its Video.
- * Evaluated live, like eligibility, so nothing goes stale; 1a has few enough Learning Layers to
- * work it out per request.
- */
-export async function layerQueues(db: Database, now = new Date()) {
-  const layers = await db
-    .select({ id: learningLayer.id, revisionId: learningLayer.currentDraftRevisionId })
-    .from(learningLayer)
-    .where(inArray(learningLayer.publicationState, ["unpublished", "published", "withdrawn"]))
-    .orderBy(desc(learningLayer.updatedAt));
-  const missingReview: QueueEntry[] = [];
-  const heldUp: QueueEntry[] = [];
-  const readyToPublish: QueueEntry[] = [];
-  const failedProcessing: QueueEntry[] = [];
-  for (const { revisionId } of layers) {
-    const review = revisionId ? await loadLayerReview(db, revisionId) : null;
-    if (!review) continue;
-    const video = await videoItem(db, review.layer.contentItemId);
-    const waitingFor = review.progress
-      .filter((item) => item.status !== "approved")
-      .map((item) => `${requirementName(item.requirement)}${item.status === "rejected" ? " (rejected)" : ""}`);
-    const eligibility = await layerEligibility(db, review, now, video);
-    const entry: QueueEntry = {
-      learningLayerId: review.layer.id,
-      number: review.number,
-      title: review.snapshot.title,
-      videoTitle: video?.title ?? null,
-      publicationState: review.layer.publicationState,
-      waitingFor,
-      // What it needs besides its reviews: readiness, processing and rights.
-      blockers: eligibility.eligible
-        ? []
-        : eligibility.reasons.filter(
-            (reason) =>
-              reason !== "It hasn't been submitted for review." &&
-              !reason.endsWith(" is still needed.") &&
-              !reason.endsWith(" was rejected."),
-          ),
-    };
-    if (video?.video.state === "failed") failedProcessing.push({ ...entry, reason: video.video.stateReason });
-    if (!review.submitted) continue;
-    if (waitingFor.length) missingReview.push(entry);
-    else if (!eligibility.eligible) heldUp.push(entry);
-    // Ready unless this very revision is already out; a withdrawn one can be published again.
-    const live =
-      review.layer.publicationState === "published" && review.layer.currentPublishedRevisionId === review.revisionId;
-    if (eligibility.eligible && !live) readyToPublish.push(entry);
-  }
-  return { missingReview, heldUp, readyToPublish, failedProcessing };
-}
-
-export type QueueEntry = {
-  learningLayerId: string;
-  number: number;
-  title: string;
-  videoTitle: string | null;
-  publicationState: PublicationState;
-  waitingFor: string[];
-  blockers: string[];
-  reason?: string | null;
-};
 
 /**
  * The Learning Layers that depend on a Video Asset: those on every Video whose current draft shows

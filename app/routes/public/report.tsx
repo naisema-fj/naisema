@@ -1,4 +1,3 @@
-import { eq } from "drizzle-orm";
 import { data, Form, Link } from "react-router";
 import {
   ChoiceField,
@@ -15,10 +14,10 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { currentNotices } from "~/lib/consent.server";
 import { type Database, getDb } from "~/lib/db.server";
 import { guardForm } from "~/lib/form-guard.server";
-import { eligiblePublished, itemPath } from "~/lib/public.server";
+import { itemPath } from "~/lib/public.server";
 import { formValues } from "~/lib/submission-fields";
 import { newFormKey } from "~/lib/submissions.server";
-import { contentItem } from "~db/schema";
+import { publicItem } from "~/lib/visibility.server";
 import type { Route } from "./+types/report";
 
 /**
@@ -35,9 +34,8 @@ export function meta() {
 /** The public item a report is about, by the id its page's link carries. */
 async function reportedItem(db: Database, id: string | null) {
   if (!id) return null;
-  const item = await db.select().from(contentItem).where(eq(contentItem.id, id)).get();
-  const published = item ? await eligiblePublished(db, item, new Date()) : null;
-  return item && published ? { id: item.id, title: published.snapshot.title, path: itemPath(item) } : null;
+  const published = await publicItem(db, id);
+  return published ? { id: published.item.id, title: published.snapshot.title, path: itemPath(published.item) } : null;
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

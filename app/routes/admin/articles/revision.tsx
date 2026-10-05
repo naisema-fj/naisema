@@ -9,7 +9,7 @@ import { episodeRecording } from "~/lib/episode-fields";
 import { mediaName } from "~/lib/media.server";
 import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
-import { archive, eligibilityFor, publishRevision, withdraw } from "~/lib/publication.server";
+import { archive, publishRevision, withdraw } from "~/lib/publication.server";
 import {
   assignReviewer,
   decidableRequirement,
@@ -20,6 +20,7 @@ import {
 } from "~/lib/review.server";
 import { requireRevision } from "~/lib/revision-access.server";
 import { topicNamer } from "~/lib/topics.server";
+import { forStaff, revisionEligibility } from "~/lib/visibility.server";
 import type { Route } from "./+types/revision";
 
 export const handle = { hydrate: false };
@@ -75,7 +76,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publicationState: review.contentItem.publicationState,
       publishedNumber: published ? published.number : null,
     },
-    eligibility: await eligibilityFor(db, review),
+    eligibility: forStaff(await revisionEligibility(db, review)),
     abilities: {
       isEditor,
       canSubmit: isEditor && isCurrent && !review.submitted,
