@@ -156,6 +156,45 @@ export function ConsentField({
   );
 }
 
+/** One box to tick, never pre-ticked unless the person ticked it before a refused send. */
+export function CheckField({
+  name,
+  label,
+  hint,
+  values,
+  errors,
+}: {
+  name: string;
+  label: string;
+  hint?: string;
+  values: Values;
+  errors: Errors;
+}) {
+  return (
+    <div className="form-consent">
+      <div className="form-choice">
+        <input
+          type="checkbox"
+          id={name}
+          name={name}
+          value="yes"
+          defaultChecked={values[name] === "yes"}
+          required
+          aria-invalid={errors[name] ? true : undefined}
+          aria-describedby={describedBy(hint && `${name}-hint`, errors[name] && `${name}-error`)}
+        />
+        <label htmlFor={name}>{label}</label>
+      </div>
+      {hint && (
+        <p id={`${name}-hint`} className="hint">
+          {hint}
+        </p>
+      )}
+      <FieldError name={name} errors={errors} />
+    </div>
+  );
+}
+
 /** Turnstile's check that a person is sending the form. */
 export function TurnstileField({ siteKey }: { siteKey: string }) {
   return (

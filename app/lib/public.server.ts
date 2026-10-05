@@ -340,7 +340,7 @@ export async function publicLayers(db: Database, contentItemId: string, now = ne
       if (!revisionId) return null;
       const review = await loadLayerReview(db, revisionId);
       if (!review || !(await layerEligibility(db, review, now)).eligible) return null;
-      return { id, snapshot: review.snapshot, languageVariety: review.layer.languageVariety };
+      return { id, revisionId, snapshot: review.snapshot, languageVariety: review.layer.languageVariety };
     }),
   );
   return shown.filter((layer) => layer !== null);

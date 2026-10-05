@@ -1128,3 +1128,172 @@ export const expression = sqliteTable(
   },
   (table) => [index("expression_headword_idx").on(table.languageVariety, table.headwordKey)],
 );
+
+// --- Learner Accounts (#33, ADR-0005, ADR-0006, docs/phase-1a-defaults.md §8) ---
+
+/**
+ * A Learner Account: a user who signed up on the public site, declaring they are 18 or older. It
+ * holds nothing about who they are beyond their email address (MEM-01/02, DATA-01).
+ */
+export const learnerAccount = sqliteTable(
+  "learner_account",
+  {
+    userId: text("user_id")
+      .primaryKey()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** When they declared they are 18 or older, which they do before any sign-in link is sent. */
+    adultDeclaredAt: integer("adult_declared_at", { mode: "timestamp_ms" }).notNull(),
+    lastActiveAt: integer("last_active_at", { mode: "timestamp_ms" }).notNull(),
+    /** When they were warned that the inactive account will be deleted; cleared by any activity. */
+    inactivityWarnedAt: integer("inactivity_warned_at", { mode: "timestamp_ms" }),
+    /** Support preferences, the same on every Learning Layer (app/lib/learner-session.ts), as JSON. */
+    preferences: text("preferences"),
+  },
+  (table) => [index("learner_account_last_active_idx").on(table.lastActiveAt)],
+);
+
+/** A Content Item a learner saved, such as a video story. */
+export const bookmark = sqliteTable(
+  "bookmark",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    contentItemId: text("content_item_id")
+      .notNull()
+      .references(() => contentItem.id),
+    savedAt: integer("saved_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.contentItemId] })],
+);
+
+/**
+ * An Expression a learner saved from a Learning Layer Revision. The Revision's copy of the
+ * Expression is what they saw; the library's may since have changed (ADR-0006).
+ */
+export const savedVocabulary = sqliteTable(
+  "saved_vocabulary",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    expressionId: text("expression_id")
+      .notNull()
+      .references(() => expression.id),
+    sourceRevisionId: text("source_revision_id")
+      .notNull()
+      .references(() => learningLayerRevision.id),
+    learningLayerId: text("learning_layer_id")
+      .notNull()
+      .references(() => learningLayer.id),
+    savedAt: integer("saved_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.expressionId, table.sourceRevisionId] })],
+);
+
+/**
+ * Where a learner is in one Learning Layer: the Revision they were last on, the stage and position
+ * last received (the latest received wins, §8), the stages visited, their caption and real-world
+ * choices, and when they completed it and on which Revision.
+ */
+export const learnerVideoState = sqliteTable(
+  "learner_video_state",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    learningLayerId: text("learning_layer_id")
+      .notNull()
+      .references(() => learningLayer.id),
+    revisionId: text("revision_id")
+      .notNull()
+      .references(() => learningLayerRevision.id),
+    stage: text("stage").notNull(),
+    positionMs: integer("position_ms").notNull().default(0),
+    /** The Segment playing at that position; the position carries to a new Revision only if it is still there. */
+    segmentId: text("segment_id"),
+    /** The stages visited, as a JSON array. */
+    visited: text("visited").notNull().default("[]"),
+    /** Caption choices by stage, as JSON (app/lib/learner-session.ts). */
+    captions: text("captions").notNull().default("{}"),
+    /** Real-world choices by Activity ID, as JSON; private, never part of completion (VID-12). */
+    realWorld: text("real_world").notNull().default("{}"),
+    completedAt: integer("completed_at", { mode: "timestamp_ms" }),
+    completedRevisionId: text("completed_revision_id").references(() => learningLayerRevision.id),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.learningLayerId] }),
+    index("learner_video_state_updated_idx").on(table.userId, table.updatedAt),
+  ],
+);
+
+/**
+ * An Activity answered, by either route, with its feedback seen. The ID is the client's, so a
+ * retried send is one attempt. The Activity's fingerprint decides whether it still counts once
+ * another Revision is published (ADR-0006).
+ */
+export const activityAttempt = sqliteTable(
+  "activity_attempt",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    id: text("id").notNull(),
+    learningLayerId: text("learning_layer_id")
+      .notNull()
+      .references(() => learningLayer.id),
+    revisionId: text("revision_id")
+      .notNull()
+      .references(() => learningLayerRevision.id),
+    activityId: text("activity_id").notNull(),
+    activityFingerprint: text("activity_fingerprint").notNull(),
+    /** Whether the answer was right, or null where nothing is checked. */
+    correct: integer("correct", { mode: "boolean" }),
+    attemptedAt: integer("attempted_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.id] }),
+    index("activity_attempt_layer_idx").on(table.userId, table.learningLayerId),
+  ],
+);
+
+/** A progress event already applied, by its client ID, so a retried send changes nothing (§8). */
+export const learnerEvent = sqliteTable(
+  "learner_event",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    eventId: text("event_id").notNull(),
+    receivedAt: integer("received_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.eventId] }),
+    index("learner_event_received_idx").on(table.receivedAt),
+  ],
+);
+
+/** Sign-in links sent to a learner's address, by its hash, so nobody can flood an inbox. */
+export const learnerSignInLink = sqliteTable(
+  "learner_sign_in_link",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    emailHash: text("email_hash").notNull(),
+    sentAt: integer("sent_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("learner_sign_in_link_email_idx").on(table.emailHash, table.sentAt)],
+);
+
+/**
+ * The deletion ledger (ADR-0009): who was deleted, as a hash of their user ID, so a restored backup
+ * can delete them again. Only added to; a trigger refuses changes. Replaying it is #34's.
+ */
+export const deletionLedger = sqliteTable("deletion_ledger", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** SHA-256 of the user ID. */
+  subjectHash: text("subject_hash").notNull(),
+  /** Why: "learner.deleted" (they asked) or "learner.inactive". */
+  reason: text("reason").notNull(),
+  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }).notNull(),
+});

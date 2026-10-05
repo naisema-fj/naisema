@@ -5,6 +5,9 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { learnerView, readStage } from "~/lib/immersion";
 import { languageName, languageTag } from "~/lib/language-variety";
+import { LEARNER_PATHS } from "~/lib/learner-progress";
+import { learnerLayerState } from "~/lib/learner-progress.server";
+import { getLearner } from "~/lib/learners.server";
 import { playWindow } from "~/lib/player-rules";
 import { findPublicLayer, videoPlaybackPath } from "~/lib/public.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
@@ -23,7 +26,8 @@ export function headers() {
  * GET /:area/:slug/language/:layerId?stage= — a Learning Layer's immersion player, open to everyone
  * without an account, while both its Video and the Learning Layer are public (VAC-01). Each stage
  * of the immersion route is its own page, sent only what that stage shows (app/lib/immersion.ts),
- * so English a stage leaves out is never on the page.
+ * so English a stage leaves out is never on the page. A signed-in learner's progress comes from
+ * their account (#33).
  */
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   if (!isPrimaryArea(params.area)) throw new Response("Not found", { status: 404 });
@@ -37,6 +41,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const item = await publicVideoItem(db, video.id);
   if (!item || !video.video) throw new Response("Not found", { status: 404 });
   const { snapshot } = layer;
+  const learner = await getLearner(env, request);
   const view = learnerView(snapshot, readStage(new URL(request.url).searchParams.get("stage")));
   return data({
     layerId: layer.id,
@@ -57,6 +62,14 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       taught: `/language/${layer.id}/captions/fijian`,
       english: view.englishTrack ? `/language/${layer.id}/captions/english` : null,
     },
+    contentItemId: video.id,
+    learner: learner
+      ? {
+          userId: learner.userId,
+          ...(await learnerLayerState(db, learner.userId, { ...layer, contentItemId: video.id })),
+        }
+      : null,
+    signInPath: LEARNER_PATHS.signIn,
   });
 }
 

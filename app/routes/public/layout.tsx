@@ -76,6 +76,11 @@ function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link reloadDocument to="/account">
+                Your learning
+              </Link>
+            </li>
+            <li>
               <Link reloadDocument to="/report">
                 Report a problem
               </Link>

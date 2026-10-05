@@ -138,3 +138,50 @@ export async function approvedLayer(options: Parameters<typeof authoredLayer>[0]
   await grantRights(editor, videoId, assetId);
   return layer;
 }
+
+/** Publishes the Video's current draft, as an editor, from its revision page. */
+export async function publishVideo(editor: Staff, videoId: string) {
+  const { number } = (await env.DB.prepare(
+    "SELECT r.number FROM content_item c JOIN revision r ON r.id = c.current_draft_revision_id WHERE c.id = ?1",
+  )
+    .bind(videoId)
+    .first<{ number: number }>()) as { number: number };
+  for (const intent of ["submit", "publish"]) {
+    const response = await editor.browser.fetch(`/admin/articles/${videoId}/revisions/${number}`, { form: { intent } });
+    expect(response.status, await response.clone().text()).toBe(302);
+  }
+}
+
+export const videoPath = async (videoId: string) => {
+  const row = await env.DB.prepare("SELECT primary_area AS area, slug FROM content_item WHERE id = ?1")
+    .bind(videoId)
+    .first<{ area: string; slug: string }>();
+  return `/${row?.area}/${row?.slug}`;
+};
+
+/** Saves a change to an approved or published Learning Layer, has it reviewed again and publishes it. */
+export async function publishChange(layer: Awaited<ReturnType<typeof approvedLayer>>, change: Record<string, string>) {
+  const { number } = await save(layer.educator, layer.layerId, change);
+  if (change.clip === "excerpt") {
+    expect((await recordRights(layer.editor.browser, layer.videoId, { uses: ["excerpt"] })).status).toBe(302);
+  }
+  await act(layer.educator, layer.layerId, number, { intent: "submit" });
+  await act(layer.reviewer, layer.layerId, number, { intent: "decide", reviewType: "language", decision: "approved" });
+  expect((await act(layer.editor, layer.layerId, number, { intent: "publish" })).status).toBe(302);
+  return number;
+}
+
+/** A published Video with a published Learning Layer on it, and their public addresses. */
+export async function publishedLayer(change: Record<string, string> = {}) {
+  const layer = await approvedLayer();
+  let { number } = layer;
+  if (Object.keys(change).length) {
+    // An Excerpt or other change before publishing: save, submit, approve and publish it.
+    number = await publishChange(layer, change);
+  } else {
+    expect((await act(layer.editor, layer.layerId, number, { intent: "publish" })).status).toBe(302);
+  }
+  await publishVideo(layer.editor, layer.videoId);
+  const story = await videoPath(layer.videoId);
+  return { ...layer, number, story, player: `${story}/language/${layer.layerId}` };
+}
