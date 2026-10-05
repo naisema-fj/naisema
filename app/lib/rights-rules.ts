@@ -4,6 +4,8 @@
  * evidence files are accepted. Pure, so every content type and the scheduled job share them.
  */
 
+import { PERMITTED_USE_NAMES } from "./rights-names";
+
 /** Each Permitted Use is granted separately; none implies another. */
 export const PERMITTED_USES = [
   "publish",
@@ -65,7 +67,8 @@ export type RightsFacts = {
 export const isCurrent = (record: RightsFacts, now: Date) =>
   record.withdrawnAt === null && (record.expiresAt === null || record.expiresAt > now);
 
-const grantsPublish = (record: RightsFacts) => record.permittedUses.includes("publish");
+const grants = (use: PermittedUse) => (record: RightsFacts) => record.permittedUses.includes(use);
+const grantsPublish = grants("publish");
 
 export const DAY_MS = 86_400_000;
 
@@ -147,12 +150,48 @@ export function assetRightsProblems(assets: { name: string | null; records: Righ
 /** Whether records include a current one granting Publish: what a media library file needs to be shown. */
 export const isPublishable = (records: RightsFacts[], now: Date) => lapseOf(records, now) === null;
 
+/** The Permitted Uses a Learning Layer needs on its Video, besides Excerpt when it is on an Excerpt. */
+const TEACHING_USES = ["publish", "translate", "transcribe", "educationalAdaptation"] as const;
+
 /**
- * Whether records lack a current Publish grant, and how the latest one lapsed: null when one is
- * current, then "withdrawn", the expiry date, or "none" when nothing ever granted Publish.
+ * Why a Video's Rights Records don't allow a Learning Layer on it right now (VID-01): Publish and
+ * each teaching use must be granted by a current record on the Video as a whole, and Excerpt too
+ * when the Learning Layer is on an Excerpt. Each use may come from a different record, so
+ * withdrawing a record that grants only teaching uses removes the Learning Layer but leaves the
+ * Video's own Publish grant. Footage showing identifiable children needs guardian permission, as
+ * the Video does.
  */
-function lapseOf(records: RightsFacts[], now: Date): null | "withdrawn" | "none" | Date {
-  const granting = records.filter(grantsPublish);
+export function teachingRightsProblems(input: {
+  records: RightsFacts[];
+  excerpt: boolean;
+  needsGuardianPermission?: boolean;
+  now: Date;
+}): string[] {
+  const whole = input.records.filter((record) => !record.part);
+  const uses: PermittedUse[] = [...TEACHING_USES, ...(input.excerpt ? (["excerpt"] as const) : [])];
+  const guardian =
+    input.needsGuardianPermission &&
+    !whole.some((record) => grantsPublish(record) && record.guardianPermission && isCurrent(record, input.now))
+      ? ["Identifiable children in its Video need current, documented guardian permission granting Publish."]
+      : [];
+  const missing = uses.flatMap((use) => {
+    const name = PERMITTED_USE_NAMES[use];
+    const lapse = lapseOf(whole, input.now, use);
+    if (lapse === null) return [];
+    if (lapse === "withdrawn") return [`Its Video's Rights Record granting ${name} was withdrawn.`];
+    if (lapse === "none") return [`Its Video has no current Rights Record granting ${name}.`];
+    return [`Its Video's Rights Record granting ${name} expired on ${formatDay(lapse)}.`];
+  });
+  return [...missing, ...guardian];
+}
+
+/**
+ * Whether records lack a current grant of a use (Publish unless said), and how the latest one
+ * lapsed: null when one is current, then "withdrawn", the expiry date, or "none" when nothing
+ * ever granted it.
+ */
+function lapseOf(records: RightsFacts[], now: Date, use: PermittedUse = "publish"): null | "withdrawn" | "none" | Date {
+  const granting = records.filter(grants(use));
   if (granting.some((record) => isCurrent(record, now))) return null;
   const latest = granting.at(-1);
   if (latest?.withdrawnAt) return "withdrawn";

@@ -10,9 +10,9 @@ import {
   setAssignment,
   videoEducatorIds,
   videoEducators,
-  videoItem,
 } from "~/lib/learning-layers.server";
 import { can } from "~/lib/permissions";
+import { videoItem } from "~/lib/video-items.server";
 import { formatVideoLength } from "~/lib/video-rules";
 import type { Route } from "./+types/video";
 

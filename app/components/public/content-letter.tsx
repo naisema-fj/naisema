@@ -2,16 +2,25 @@ import { Link } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { DateMark, Postmarks } from "~/components/public/postmarks";
 import { TranscriptParagraphs } from "~/components/transcript-paragraphs";
+import { VideoPreview } from "~/components/video-preview";
 import type { PublicArticle } from "~/lib/public.server";
 
 const sameDay = (a: Date | string, b: Date | string) =>
   new Date(a).toISOString().slice(0, 10) === new Date(b).toISOString().slice(0, 10);
 
 /**
- * A published Article, Resource or Page as a letter: who it is from, when, what it was reviewed
- * for, a Resource's details before its download, the body, and the related items chosen for it.
+ * A published Article, Resource, Episode, Video or Page as a letter: who it is from, when, what it
+ * was reviewed for, a Resource's details before its download, a Video's footage and its Learning
+ * Layers, the body, and the related items chosen for it.
  */
-export function ContentLetter({ item }: { item: PublicArticle }) {
+export function ContentLetter({
+  item,
+  playback = null,
+}: {
+  item: PublicArticle;
+  /** A Video's signed playback address, for its page only. */
+  playback?: { src: string; hls: boolean } | null;
+}) {
   const published = item.firstPublishedAt;
   const updated = item.lastPublishedAt;
   const name = item.format.toLowerCase();
@@ -55,6 +64,7 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
       </section>
 
       {item.resource && <ResourceDetails id={item.id} resource={item.resource} />}
+      {item.video && <StoryVideo title={item.title} video={item.video} playback={playback} />}
       {item.episode && <EpisodePlayer title={item.title} episode={item.episode} />}
       {item.creator && <CreatorDetails creator={item.creator} />}
 
@@ -71,7 +81,9 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
             {item.topics.map((topic, index) => (
               <span key={topic.slug}>
                 {index > 0 && ", "}
-                <Link to={`/topics/${topic.slug}`}>{topic.name}</Link>
+                <Link reloadDocument to={`/topics/${topic.slug}`}>
+                  {topic.name}
+                </Link>
               </span>
             ))}
           </p>
@@ -88,7 +100,9 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
             <ul className="letter-list">
               {item.related.map((related) => (
                 <li key={related.path}>
-                  <Link to={related.path}>{related.title}</Link>
+                  <Link reloadDocument to={related.path}>
+                    {related.title}
+                  </Link>
                   <p>{related.summary}</p>
                   <p className="list-mark">{related.typeName}</p>
                 </li>
@@ -98,17 +112,72 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
         )}
         {item.area && (
           <p>
-            <Link to={`/${item.area}`}>More from {item.areaName}</Link>
+            <Link reloadDocument to={`/${item.area}`}>
+              More from {item.areaName}
+            </Link>
           </p>
         )}
         {/* Carries the item's id, so the Case knows what it is about (SAFE-01). */}
         <p className="report-problem">
-          <Link to={`/report?item=${item.id}`}>Report a problem with this {name}</Link>
+          <Link reloadDocument to={`/report?item=${item.id}`}>
+            Report a problem with this {name}
+          </Link>
         </p>
       </footer>
       {/* Counts the view (content_opened, IDs only) even when the page came from the edge cache; no script needed. */}
       <img src={`/e/opened/${item.id}`} alt="" width={1} height={1} className="beacon" />
     </article>
+  );
+}
+
+/**
+ * A Video's footage, in its own shape (never cropped), and the Learning Layers that explore its
+ * language. Nothing plays until the visitor presses play; a lost address is renewed while they watch.
+ */
+function StoryVideo({
+  title,
+  video,
+  playback,
+}: {
+  title: string;
+  video: NonNullable<PublicArticle["video"]>;
+  playback: { src: string; hls: boolean } | null;
+}) {
+  return (
+    <section className="story-video" aria-labelledby="watch-heading">
+      <h2 id="watch-heading" className="visually-hidden">
+        Watch
+      </h2>
+      {playback ? (
+        <div className={`video-frame video-${video.orientation}`}>
+          <VideoPreview
+            src={playback.src}
+            hls={playback.hls}
+            label={title}
+            className="public-video"
+            aspectRatio={`${video.width} / ${video.height}`}
+            refreshPath={video.playbackPath}
+          />
+        </div>
+      ) : (
+        <p>The video can't be played right now. Please try again later.</p>
+      )}
+      {video.layers.length > 0 && (
+        <section aria-labelledby="explore-heading" className="explore-language">
+          <h3 id="explore-heading">Explore the language</h3>
+          <ul className="letter-list">
+            {video.layers.map((layer) => (
+              <li key={layer.id}>
+                <Link to={layer.path} reloadDocument>
+                  {layer.title}
+                </Link>
+                <p className="list-mark">{`${layer.level} · ${layer.span}`}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </section>
   );
 }
 
@@ -119,12 +188,15 @@ export function ContentLetter({ item }: { item: PublicArticle }) {
 function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable<PublicArticle["episode"]> }) {
   return (
     <section className="episode" aria-labelledby="listen-heading">
-      <h2 id="listen-heading">Listen</h2>
-      {/* biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the full transcript on this page (WCAG 1.2.1). */}
-      <audio controls preload="none" className="episode-player" aria-label={`Audio of ${title}`}>
-        <source src={episode.audioPath} type={episode.audioType} />
-        <a href={episode.audioPath}>Open the audio</a>
-      </audio>
+      {/* A video Episode plays above, as a Video does; an audio one plays here. */}
+      <h2 id="listen-heading">{episode.audioPath ? "Listen" : "Who's speaking"}</h2>
+      {episode.audioPath && (
+        // biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the full transcript on this page (WCAG 1.2.1).
+        <audio controls preload="none" className="episode-player" aria-label={`Audio of ${title}`}>
+          <source src={episode.audioPath} type={episode.audioType} />
+          <a href={episode.audioPath}>Open the audio</a>
+        </audio>
+      )}
       <p>
         <a href="#transcript">Read the transcript</a>
       </p>
@@ -211,7 +283,9 @@ function CreatorDetails({ creator }: { creator: NonNullable<PublicArticle["creat
         <div className="sample">
           <h3>A free sample of their work</h3>
           <p>
-            <Link to={creator.sample.path}>{creator.sample.title}</Link>
+            <Link reloadDocument to={creator.sample.path}>
+              {creator.sample.title}
+            </Link>
             {` · ${creator.sample.typeName}`}
           </p>
           <p>{creator.sample.summary}</p>

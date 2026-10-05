@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   clockDuration,
   episodeParts,
+  episodeRecording,
   formatDuration,
   isoDuration,
   parseDuration,
@@ -45,6 +46,20 @@ describe("readEpisodeFields", () => {
         distribution: [],
       },
     });
+  });
+
+  it("reads a video Episode, whose recording is a Video Asset in place of audio", () => {
+    const result = readEpisodeFields(
+      form({ ...common, episodeRecording: "video", episodeVideoAssetId: "video-1", episodeAudioAssetId: "audio-1" }),
+      today,
+    );
+    expect(result).toMatchObject({ ok: true, details: { audioAssetId: "", videoAssetId: "video-1" } });
+    if (result.ok) expect(episodeRecording(result.details)).toEqual({ kind: "video", assetId: "video-1" });
+    expect(readEpisodeFields(form({ ...common, episodeRecording: "video" }), today)).toMatchObject({
+      ok: false,
+      errors: { episodeVideoAssetId: "Choose the video from the media library." },
+    });
+    expect(episodeRecording({ audioAssetId: "audio-1" })).toEqual({ kind: "audio", assetId: "audio-1" });
   });
 
   it("can be saved without a transcript, which publishing then needs", () => {

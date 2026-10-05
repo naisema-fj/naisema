@@ -7,23 +7,36 @@ import {
   revision,
   roleAssignment,
   user,
-  videoAsset,
   videoEducator,
 } from "~db/schema";
+import { activityProblems, readActivities } from "./activities";
+import {
+  annotationProblems,
+  annotationsToCheck,
+  noteProblems,
+  readAnnotations,
+  readNewExpressions,
+  readNotes,
+} from "./annotations";
 import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { expressionCopies, placeNewExpressions } from "./expressions.server";
+import { carryForwardLayerInserts } from "./layer-review.server";
 import {
   LAYER_LANGUAGE_VARIETY,
   type LayerDetailField,
+  type LayerRefusal,
   type LearningLayerSnapshot,
   learningLayerReviewFields,
   readLayerDetails,
+  withDefaults,
 } from "./learning-layer-fields";
 import { type Actor, can } from "./permissions";
 import { fingerprintsOf } from "./review-rules";
-import { clipDuration, readSegments, type SegmentProblem, segmentProblems } from "./segment-rules";
+import { clipDuration, readSegments, segmentProblems } from "./segment-rules";
 import { requireStaff } from "./staff.server";
+import { videoItem } from "./video-items.server";
 
 /**
  * Learning Layers (ADR-0001, ADR-0006). Editors assign Educators to a Video; an assigned Educator
@@ -37,23 +50,6 @@ export type LayerRevision = typeof learningLayerRevision.$inferSelect & { snapsh
 
 const STALE_SAVE =
   "Someone else saved this Learning Layer while you were editing. Open it again to see their changes, then make yours.";
-
-/** A Video Content Item with its current draft's title and the Video Asset it shows. */
-export async function videoItem(db: Database, contentItemId: string) {
-  const row = await db
-    .select({ item: contentItem, snapshot: revision.snapshot })
-    .from(contentItem)
-    .innerJoin(revision, eq(revision.id, contentItem.currentDraftRevisionId))
-    .where(and(eq(contentItem.id, contentItemId), eq(contentItem.type, "video")))
-    .get();
-  if (!row) return null;
-  const snapshot = row.snapshot as ArticleSnapshot;
-  const asset = snapshot.video
-    ? await db.select().from(videoAsset).where(eq(videoAsset.id, snapshot.video.videoAssetId)).get()
-    : undefined;
-  if (!asset) return null;
-  return { id: row.item.id, title: snapshot.title, video: asset };
-}
 
 const idsOf = (rows: { userId: string }[]) => rows.map((row) => row.userId);
 
@@ -182,7 +178,14 @@ export async function setAssignment(
   return { ok: true };
 }
 
-type DetailsInput = { title: string; level: string; clip: string; sourceStart: string; sourceEnd: string };
+type DetailsInput = {
+  title: string;
+  level: string;
+  clip: string;
+  sourceStart: string;
+  sourceEnd: string;
+  sensitiveCultural?: string;
+};
 
 export type CreateResult =
   | { ok: true; id: string }
@@ -213,9 +216,20 @@ export async function createLearningLayer(
       error: "Only editors and the Educators assigned to this Video can add Learning Layers.",
     };
   }
-  const read = readLayerDetails(input, video.video.durationMs);
+  // A Learning Layer on a Video marked culturally sensitive starts flagged for a Knowledge Holder's approval.
+  const read = readLayerDetails(
+    { ...input, sensitiveCultural: video.flags.includes("sensitiveCultural") ? "on" : input.sensitiveCultural },
+    video.video.durationMs,
+  );
   if (!read.ok) return { ok: false, status: 400, errors: read.errors };
-  const snapshot: LearningLayerSnapshot = { ...read.details, segments: [] };
+  const snapshot: LearningLayerSnapshot = {
+    ...read.details,
+    segments: [],
+    annotations: [],
+    notes: [],
+    expressions: {},
+    activities: [],
+  };
   const id = crypto.randomUUID();
   const revisionId = crypto.randomUUID();
   const now = new Date();
@@ -271,7 +285,10 @@ export async function getLearningLayer(db: Database, learningLayerId: string) {
   const assignedEducatorIds = await layerEducatorIds(db, row.layer.id);
   return {
     ...row.layer,
-    currentRevision: row.revision as LayerRevision,
+    currentRevision: {
+      ...row.revision,
+      snapshot: withDefaults(row.revision.snapshot as LearningLayerSnapshot),
+    } as LayerRevision,
     video,
     assignedEducatorIds,
     assignedEducators: await namesOf(db, assignedEducatorIds),
@@ -293,24 +310,25 @@ export async function openLearningLayer(db: Database, actor: Actor, learningLaye
   return { ok: true as const, layer };
 }
 
-export type SaveLayerResult =
-  | { ok: true; number: number }
-  | {
-      ok: false;
-      error: string;
-      errors?: Partial<Record<LayerDetailField, string>>;
-      problems?: SegmentProblem[];
-    };
+export type SaveLayerResult = { ok: true; number: number } | ({ ok: false } & LayerRefusal);
 
 /**
- * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: its details and Segments,
- * which must pass validation against its clip. Refused if a newer Revision exists.
+ * Saves a Learning Layer as a new Revision on top of `baseRevisionId`: its details, Segments,
+ * Annotations, notes and Activities, which must pass validation against its clip. Refused if a
+ * newer Revision exists.
  */
 export async function saveLearningLayer(
   db: Database,
   actor: Actor,
   layer: LearningLayer,
-  input: DetailsInput & { baseRevisionId: string; segments: string },
+  input: DetailsInput & {
+    baseRevisionId: string;
+    segments: string;
+    annotations: string;
+    notes: string;
+    newExpressions: string;
+    activities: string;
+  },
 ): Promise<SaveLayerResult> {
   if (
     !can(actor, { action: "learningLayer.author", learningLayer: { assignedEducatorIds: layer.assignedEducatorIds } })
@@ -320,7 +338,8 @@ export async function saveLearningLayer(
   if (input.baseRevisionId !== layer.currentDraftRevisionId) return { ok: false, error: STALE_SAVE };
   const details = readLayerDetails(input, layer.video.video.durationMs);
   if (!details.ok) return { ok: false, error: "Check the Learning Layer's details.", errors: details.errors };
-  const segments = readSegments(input.segments);
+  const base = layer.currentRevision.snapshot;
+  const segments = readSegments(input.segments, new Map(base.segments.map((segment) => [segment.id, segment.tokens])));
   if (!segments.ok) return { ok: false, error: segments.error };
   const problems = segmentProblems(
     segments.segments,
@@ -333,10 +352,92 @@ export async function saveLearningLayer(
       problems,
     };
   }
-  const snapshot: LearningLayerSnapshot = { ...details.details, segments: segments.segments };
+  const annotations = readAnnotations(input.annotations);
+  if (!annotations.ok) return { ok: false, error: annotations.error };
+  const notes = readNotes(input.notes);
+  if (!notes.ok) return { ok: false, error: notes.error };
+  const defined = readNewExpressions(input.newExpressions);
+  if (!defined.ok) return { ok: false, error: defined.error };
+  const activities = readActivities(input.activities);
+  if (!activities.ok) return { ok: false, error: activities.error };
+
+  // New Expressions an Annotation uses join the library (or match one there saying exactly the
+  // same); every Annotation then links to a library Expression, of which the Revision keeps a copy.
+  const used = new Set(annotations.items.map((annotation) => annotation.expressionId));
+  const library = await placeNewExpressions(
+    db,
+    actor.userId,
+    layer.languageVariety,
+    defined.items.filter((item) => used.has(item.id)),
+  );
+  if (!library.ok) return { ok: false, error: library.error };
+  // Where the server had to work out a Segment's tokens itself, it flags Annotations whose words now
+  // appear a different number of times, as the editor does.
+  const toCheck = new Set(
+    [...segments.retokenised].flatMap((segmentId) =>
+      annotationsToCheck(
+        annotations.items,
+        segmentId,
+        base.segments.find((segment) => segment.id === segmentId)?.tokens ?? [],
+        segments.segments.find((segment) => segment.id === segmentId)?.tokens ?? [],
+      ),
+    ),
+  );
+  const linked = annotations.items.map((annotation) => ({
+    ...annotation,
+    expressionId: library.ids.get(annotation.expressionId) ?? annotation.expressionId,
+    needsCheck: annotation.needsCheck || toCheck.has(annotation.id),
+  }));
+  const expressions = await expressionCopies(
+    db,
+    layer.languageVariety,
+    [...new Set(linked.map((annotation) => annotation.expressionId))],
+    library.added,
+  );
+  // Annotations, notes and Activities whose words or Segment are gone are kept, flagged; anything
+  // else wrong is refused.
+  const annotationIssues = annotationProblems(linked, segments.segments, new Set(Object.keys(expressions))).filter(
+    (problem) => !problem.revalidate,
+  );
+  const noteIssues = noteProblems(notes.items, segments.segments).filter((problem) => !problem.revalidate);
+  if (annotationIssues.length || noteIssues.length) {
+    return {
+      ok: false,
+      error: "Some Annotations or notes need fixing before this can be saved.",
+      annotationProblems: annotationIssues,
+      noteProblems: noteIssues,
+    };
+  }
+  const activityIssues = activityProblems(activities.items, segments.segments).filter((problem) => !problem.revalidate);
+  if (activityIssues.length) {
+    return {
+      ok: false,
+      error: "Some Activities need fixing before this can be saved.",
+      activityProblems: activityIssues,
+    };
+  }
+
+  const snapshot: LearningLayerSnapshot = {
+    ...details.details,
+    segments: segments.segments,
+    annotations: linked,
+    notes: notes.items,
+    expressions,
+    activities: activities.items,
+  };
   const number = layer.currentRevision.number + 1;
   const id = crypto.randomUUID();
   const now = new Date();
+  const fingerprints = await fingerprintsOf(learningLayerReviewFields(snapshot, layer.languageVariety));
+  // Approvals on the base whose fingerprints this save leaves unchanged carry forward (ADR-0003).
+  const carried = await carryForwardLayerInserts(db, {
+    learningLayerId: layer.id,
+    sourceRevisionId: layer.currentRevision.id,
+    newRevisionId: id,
+    newNumber: number,
+    newFingerprints: fingerprints,
+    savedBy: actor.userId,
+  });
   try {
     await db.batch([
       // A concurrent save of the same base takes this number first; the unique index refuses this one.
@@ -345,10 +446,12 @@ export async function saveLearningLayer(
         learningLayerId: layer.id,
         number,
         snapshot,
-        fingerprints: await fingerprintsOf(learningLayerReviewFields(snapshot, layer.languageVariety)),
+        fingerprints,
         createdBy: actor.userId,
         createdAt: now,
       }),
+      ...carried,
+      ...library.inserts,
       db
         .update(learningLayer)
         .set({ currentDraftRevisionId: id, updatedAt: now })
@@ -358,7 +461,13 @@ export async function saveLearningLayer(
         action: "learning_layer_revision.saved",
         objectType: "learning_layer_revision",
         objectId: id,
-        details: { learningLayerId: layer.id, number, segments: snapshot.segments.length },
+        details: {
+          learningLayerId: layer.id,
+          number,
+          segments: snapshot.segments.length,
+          annotations: snapshot.annotations.length,
+          activities: snapshot.activities.length,
+        },
       }),
     ]);
   } catch (error) {

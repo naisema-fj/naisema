@@ -139,6 +139,11 @@ test("pages reflow at 320 px and at 200% zoom without sideways scrolling", async
       EPISODE,
       PROVIDER,
       CREATOR,
+      // A Video's page and its Learning Layer's player.
+      "/learn/e2e-market-talanoa",
+      "/learn/e2e-market-talanoa/language/e2e-layer-public",
+      "/learn/e2e-market-talanoa/language/e2e-layer-public?stage=support",
+      "/learn/e2e-market-talanoa/language/e2e-layer-public?stage=respond",
     ]) {
       await page.goto(path);
       await expectNoHorizontalScroll(page);

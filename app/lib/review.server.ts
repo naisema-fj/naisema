@@ -10,11 +10,11 @@ import {
   roleAssignment,
   user,
 } from "~db/schema";
-import type { ArticleSnapshot } from "./article-fields";
+import { type ArticleSnapshot, footageOf } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { ContentType } from "./content-types";
 import type { Database } from "./db.server";
-import { type EpisodeDetails, episodeParts } from "./episode-fields";
+import { type EpisodeDetails, episodeParts, episodeRecording } from "./episode-fields";
 import { mediaAssetIdsIn } from "./media-in-use";
 import { type Actor, can, type ReviewType } from "./permissions";
 import { type PublicationState, REVIEW_NAMES } from "./review-names";
@@ -39,9 +39,13 @@ export type Reviewable = {
   episode?: EpisodeDetails;
 };
 
-type ApprovalRow = typeof reviewApproval.$inferSelect;
-
-function toRecordedDecision(row: ApprovalRow): RecordedDecision {
+/** A stored Review Approval, a Content Item's or a Learning Layer's, as the review rules see it. */
+export function toRecordedDecision(
+  row: Pick<
+    typeof reviewApproval.$inferSelect,
+    "id" | "reviewType" | "languageVariety" | "decision" | "knowledgeHolderName" | "reviewerId" | "decidedAt"
+  >,
+): RecordedDecision {
   return {
     id: row.id,
     reviewType: row.reviewType as ReviewType,
@@ -235,13 +239,15 @@ export async function loadReview(db: Database, revisionId: string) {
     flags,
     languageVariety,
     resourceAssetId: snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null,
+    /** Its footage (a Video's, or a video Episode's), which must have finished processing to be public. */
+    videoAssetId: footageOf(content),
     /** A Creator Profile's free sample, which must itself be public for the profile to be. */
     creatorSampleId: content.creator?.sampleItemId ?? null,
     /** The media library files the Revision shows or offers; each needs rights of its own. */
     mediaAssetIds: mediaAssetIdsIn(content),
     episode: snapshot.episode
       ? {
-          audioAssetId: snapshot.episode.audioAssetId,
+          recording: episodeRecording(snapshot.episode),
           hasTranscript: snapshot.episode.transcript.trim() !== "",
           parts: episodeParts(snapshot.episode),
         }
@@ -300,14 +306,13 @@ export type Review = NonNullable<Awaited<ReturnType<typeof loadReview>>>;
 
 export type ReviewActionResult = { ok: true } | { ok: false; error: string };
 
-const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
+export const refuse = (error: string): ReviewActionResult => ({ ok: false, error });
 
 /** Only the current draft can be submitted or reviewed; older Revisions are superseded. */
 const isCurrent = (review: Review) => review.contentItem.currentDraftRevisionId === review.revisionId;
 
-/** An editor sends the current draft for review. */
 /** Runs a write, turning a unique-index clash (a second click racing the first) into a refusal. */
-async function onceOnly(write: () => Promise<unknown>, message: string): Promise<ReviewActionResult> {
+export async function onceOnly(write: () => Promise<unknown>, message: string): Promise<ReviewActionResult> {
   try {
     await write();
     return { ok: true };
@@ -317,6 +322,7 @@ async function onceOnly(write: () => Promise<unknown>, message: string): Promise
   }
 }
 
+/** An editor sends the current draft for review. */
 export async function submitRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.edit" })) return refuse("Only editors can submit for review.");
   if (!isCurrent(review)) return refuse("Only the latest revision can be submitted.");
@@ -400,9 +406,14 @@ export async function assignReviewer(
 /**
  * The requirement a reviewer would be deciding for this Review Type, if they may decide it: the
  * Revision must need that review (Knowledge Holder Approvals are recorded by editors instead), and
- * can() must allow this reviewer, which rules out anyone who authored or edited the Revision.
+ * can() must allow this reviewer, which rules out anyone who authored or edited the Revision. The
+ * same for a Content Item's Revision and a Learning Layer's.
  */
-export function decidableRequirement(actor: Actor, review: Review, reviewType: ReviewType): ReviewRequirement | null {
+export function decidableRequirement(
+  actor: Actor,
+  review: Pick<Review, "requirements" | "authorIds" | "assignments">,
+  reviewType: ReviewType,
+): ReviewRequirement | null {
   const requirement = review.requirements.find(
     (candidate) => candidate.reviewType === reviewType && !candidate.knowledgeHolder,
   );
