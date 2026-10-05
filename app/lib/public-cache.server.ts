@@ -1,4 +1,5 @@
 import { itemPath } from "./item-paths";
+import { logError } from "./log.server";
 
 /**
  * Edge caching for public pages (ADR-0007): public HTML is cached for at most five minutes, and
@@ -77,7 +78,7 @@ export async function purgePublicPages(env: Env, paths: string[]) {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ files: urls }),
     });
-    if (!response.ok) console.error("Zone cache purge failed", response.status);
+    if (!response.ok) logError("Zone cache purge failed", { status: response.status });
   }
 }
 

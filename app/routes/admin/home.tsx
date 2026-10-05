@@ -17,6 +17,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   return {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
+    canReadUsage: can(actor, { action: "usage.read" }),
     canEditContent: can(actor, { action: "content.edit" }),
     canUpload: can(actor, { action: "media.upload" }),
     worksOnLearningLayers:
@@ -107,6 +108,11 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
       {loaderData.canManageStaff && (
         <p>
           <a href="/admin/staff">Manage staff and roles</a>
+        </p>
+      )}
+      {loaderData.canReadUsage && (
+        <p>
+          <a href="/admin/usage">Usage and costs</a>
         </p>
       )}
       <Form method="post" action="/admin/sign-out">

@@ -44,6 +44,8 @@ const rows: [string, Actor | null, Check, boolean][] = [
   ["administrator manages accounts", administrator, { action: "account.manage" }, true],
   ["administrator assigns roles", administrator, { action: "role.assign" }, true],
   ["administrator edits site settings and feature flags", administrator, { action: "settings.edit" }, true],
+  ["administrator sees the usage and cost report", administrator, { action: "usage.read" }, true],
+  ["an editor does not see the usage and cost report", editor, { action: "usage.read" }, false],
   [
     "administrator resets another staff member's two-factor",
     administrator,

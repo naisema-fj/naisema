@@ -9,10 +9,13 @@
   "main": "./workers/app.ts",
   "compatibility_date": "2026-08-22",
   "compatibility_flags": ["nodejs_compat"],
-  "observability": { "enabled": true },
-  // Daily at 19:45 UTC (07:45 in Fiji): Rights Record expiry warnings (app/lib/rights-expiry.server.ts),
-  // then reindexing items whose rights expired (app/lib/search.server.ts).
-  "triggers": { "crons": ["45 19 * * *"] },
+  // Workers Observability (docs/handover/runbook.md, monitoring). Workers' own per-request
+  // invocation logs are off: they record full URLs (link tokens, search words) and visitors'
+  // addresses. The app logs each request itself, redacted (app/lib/log.server.ts).
+  "observability": { "enabled": true, "redact_query_string": true, "logs": { "invocation_logs": false } },
+  // Daily at 19:45 UTC (07:45 in Fiji): the daily job (workers/app.ts), from Rights Record expiry
+  // warnings to the media usage report. Hourly at five past: the monitor (app/lib/monitor.server.ts).
+  "triggers": { "crons": ["45 19 * * *", "5 * * * *"] },
   "upload_source_maps": true,
   // Local development and tests: the staff admin site answers on admin.localhost, and email is
   // written to the email_outbox table instead of being sent.
@@ -26,6 +29,11 @@
     // Newsletter sign-ups are written to the newsletter_outbox table instead of the newsletter tool.
     "NEWSLETTER_OUTBOX": "true",
     "ADMIN_HOSTNAME": "admin.localhost",
+    // Who the hourly monitor emails (app/lib/monitor.server.ts): the technical owner, and their
+    // backup once named. Deployed environments set it as a secret, comma-separated.
+    "ALERT_EMAILS": "technical-owner@naisema.test",
+    // This Worker's name, for reading its request and error counts from Cloudflare.
+    "WORKER_NAME": "naisema-dev",
     // Where the public site answers, so a withdrawal can purge its cached pages (app/lib/public-cache.server.ts).
     "PUBLIC_ORIGINS": "http://localhost:5173,http://localhost:4173",
     "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
@@ -95,6 +103,7 @@
       "workers_dev": true,
       "vars": {
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
+        "WORKER_NAME": "naisema-staging",
         "PUBLIC_ORIGINS": "https://staging.naisema.com",
         "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>",
         // Staging never adds anyone to the real newsletter list.
@@ -152,6 +161,7 @@
       "vars": {
         "ALLOW_INDEXING": "true",
         "ADMIN_HOSTNAME": "admin.naisema.com",
+        "WORKER_NAME": "naisema-production",
         "PUBLIC_ORIGINS": "https://naisema.com",
         "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
         "ENVIRONMENT": "production",

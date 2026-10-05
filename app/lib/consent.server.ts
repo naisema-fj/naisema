@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { consentRecord, notice } from "~db/schema";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
+import { logError } from "./log.server";
 import { noticeTag, subscribe, unsubscribe } from "./newsletter.server";
 import { can } from "./permissions";
 import { signToken, verifyToken } from "./signed-tokens.server";
@@ -185,7 +186,7 @@ export async function subscribeOrForget(env: Env, db: Database, email: string, r
     await subscribe(env, email, [noticeTag(version)]);
     return true;
   } catch (error) {
-    console.error("Newsletter sign-up failed", recordId, error);
+    logError("Newsletter sign-up failed", { consentRecordId: recordId, error });
     await db.delete(consentRecord).where(eq(consentRecord.id, recordId));
     return false;
   }
@@ -221,7 +222,7 @@ export async function joinNewsletter(
     return subscribe(env, address, [noticeTag(shownNotice.version)])
       .then(() => "joined" as const)
       .catch((error) => {
-        console.error("Newsletter sign-up failed", already.id, error);
+        logError("Newsletter sign-up failed", { consentRecordId: already.id, error });
         return "unavailable" as const;
       });
   }

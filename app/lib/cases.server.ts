@@ -33,6 +33,7 @@ import type { Database } from "./db.server";
 import { letterText, sendEmail } from "./email.server";
 import type { EvidenceFile } from "./evidence-file";
 import { itemPath } from "./item-paths";
+import { logError } from "./log.server";
 import { quarantineFile } from "./media.server";
 import { mediaPaths } from "./media-delivery.server";
 import { type Actor, CASE_HANDLER, can } from "./permissions";
@@ -103,7 +104,7 @@ async function notifyHandlers(
       to: handler.email,
       subject,
       text: `${subject}. Open it in the staff area (its contents aren't sent by email):\n\n${link}`,
-    }).catch((error) => console.error("Case notification failed", handler.id, error));
+    }).catch((error) => logError("Case notification failed", { staffId: handler.id, error }));
   }
 }
 
@@ -119,7 +120,7 @@ async function tellReporter(
     to: found.reporterEmail,
     subject: `${subject} (${caseReference(found.id)})`,
     text: letterText(found.reporterName, paragraphs),
-  }).catch((error) => console.error("Case email failed", found.id, error));
+  }).catch((error) => logError("Case email failed", { caseId: found.id, error }));
 }
 
 export type ReceiveResult = { ok: true; id: string; reference: string } | { ok: false; error: string };

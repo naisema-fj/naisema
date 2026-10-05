@@ -1,19 +1,27 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { AUTH_BASE_PATH, createAuth } from "~/lib/auth.server";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { platformMetrics } from "~/lib/cloudflare-metrics.server";
 import { getDb } from "~/lib/db.server";
+import { logError, logInfo } from "~/lib/log.server";
 import type { ScanMessage } from "~/lib/media.server";
+import { recordServerError, runJob, runMonitor } from "~/lib/monitor.server";
 import { servePublic } from "~/lib/public-cache.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 import { DAY_MS } from "~/lib/rights-rules";
 import { containerScanner, handleScanBatch, tidyQuarantine } from "~/lib/scan.server";
 import { reindexExpiredRights } from "~/lib/search.server";
+import { recordUsage } from "~/lib/usage.server";
 import { refreshStalledVideos } from "~/lib/video-assets.server";
 import { videoProvider } from "~/lib/video-provider.server";
 
 export { Scanner } from "./scanner";
 
 const requestHandler = createRequestHandler(() => import("virtual:react-router/server-build"), import.meta.env.MODE);
+
+/** The crons, as wrangler.jsonc `triggers` lists them. */
+const DAILY_CRON = "45 19 * * *";
+const MONITOR_CRON = "5 * * * *";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
@@ -47,50 +55,93 @@ function isAdminPath(pathname: string) {
   );
 }
 
+/**
+ * Each request as one redacted log line (method, path without its query or tokens, status, time),
+ * standing in for Workers' own invocation logs, which are off because they record full URLs and
+ * visitors' addresses (wrangler.jsonc, `observability`). Server errors are also counted for the
+ * monitor's error rate.
+ */
+async function logged(request: Request, env: Env, ctx: ExecutionContext, handle: () => Promise<Response>) {
+  const started = Date.now();
+  const line = { method: request.method, path: new URL(request.url).pathname };
+  try {
+    const response = await handle();
+    logInfo("Request", { ...line, status: response.status, ms: Date.now() - started });
+    if (response.status >= 500) ctx.waitUntil(recordServerError(env));
+    return response;
+  } catch (error) {
+    logError("Request failed", { ...line, ms: Date.now() - started, error });
+    ctx.waitUntil(recordServerError(env));
+    throw error;
+  }
+}
+
+/** Sends a request to the staff site, Better Auth's one public endpoint, or the public site. */
+async function route(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  const url = new URL(request.url);
+  const onAdminHost = url.hostname === env.ADMIN_HOSTNAME;
+  const path = routingPath(url.pathname);
+  if (path === null) return new Response("Bad request", { status: 400 });
+
+  if (isAdminPath(path) && !onAdminHost) {
+    return new Response("Not found", { status: 404 });
+  }
+  if (onAdminHost) {
+    if (!SAFE_METHODS.has(request.method) && request.headers.get("Origin") !== url.origin) {
+      return new Response("Cross-site request refused", { status: 403 });
+    }
+    if (url.pathname.startsWith(`${AUTH_BASE_PATH}/`)) {
+      if (!PUBLIC_AUTH_ENDPOINTS.has(`${request.method} ${url.pathname}`)) {
+        return new Response("Not found", { status: 404 });
+      }
+      return createAuth(env, request).handler(request);
+    }
+    if (!isAdminPath(path) && !path.startsWith("/__manifest")) {
+      return Response.redirect(new URL("/admin", url), 302);
+    }
+  }
+
+  const context = new RouterContextProvider();
+  context.set(cloudflareContext, { env, ctx });
+  if (onAdminHost) return requestHandler(request, context);
+  return servePublic(request, env, ctx, () => requestHandler(request, context));
+}
+
 export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const onAdminHost = url.hostname === env.ADMIN_HOSTNAME;
-    const path = routingPath(url.pathname);
-    if (path === null) return new Response("Bad request", { status: 400 });
-
-    if (isAdminPath(path) && !onAdminHost) {
-      return new Response("Not found", { status: 404 });
-    }
-    if (onAdminHost) {
-      if (!SAFE_METHODS.has(request.method) && request.headers.get("Origin") !== url.origin) {
-        return new Response("Cross-site request refused", { status: 403 });
-      }
-      if (url.pathname.startsWith(`${AUTH_BASE_PATH}/`)) {
-        if (!PUBLIC_AUTH_ENDPOINTS.has(`${request.method} ${url.pathname}`)) {
-          return new Response("Not found", { status: 404 });
-        }
-        return createAuth(env, request).handler(request);
-      }
-      if (!isAdminPath(path) && !path.startsWith("/__manifest")) {
-        return Response.redirect(new URL("/admin", url), 302);
-      }
-    }
-
-    const context = new RouterContextProvider();
-    context.set(cloudflareContext, { env, ctx });
-    if (onAdminHost) return requestHandler(request, context);
-    return servePublic(request, env, ctx, () => requestHandler(request, context));
+  fetch(request, env, ctx) {
+    return logged(request, env, ctx, () => route(request, env, ctx));
   },
 
   /**
-   * The daily cron (wrangler.jsonc triggers): Rights Record expiry warnings, then reindexing items
-   * whose rights expired in the last two days (overlapping, in case a run was missed). Awaited, so
-   * a failed run shows as failed. Then the quarantine is tidied: old failures removed, abandoned
-   * uploads dropped and lost scans queued again. Last, videos whose processing report never came
-   * are asked about, and masters never sent are sent.
+   * The crons (wrangler.jsonc triggers). Hourly: the monitor (app/lib/monitor.server.ts).
+   * Daily, as one recorded job the monitor watches: Rights Record expiry warnings, then
+   * reindexing items whose rights expired in the last two days (overlapping, in case a run was
+   * missed). Then the quarantine is tidied: old failures removed, abandoned uploads dropped and
+   * lost scans queued again. Last, videos whose processing report never came are asked about, and
+   * masters never sent are sent. Then, as its own job so a problem reading Cloudflare's figures
+   * doesn't hide how the daily job went, the month's media usage is recorded (VAC-10). Awaited, so
+   * a failed run shows as failed.
    */
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
-    await sendExpiryWarnings(env, now);
-    await reindexExpiredRights(getDb(env.DB), new Date(now.getTime() - 2 * DAY_MS), now);
-    await tidyQuarantine(env, getDb(env.DB), now);
-    await refreshStalledVideos(getDb(env.DB), videoProvider(env), now);
+    const db = getDb(env.DB);
+    if (controller.cron === MONITOR_CRON) {
+      await runMonitor(env, now);
+    } else if (controller.cron === DAILY_CRON) {
+      const daily = runJob(db, "daily", now, async () => {
+        await sendExpiryWarnings(env, now);
+        await reindexExpiredRights(db, new Date(now.getTime() - 2 * DAY_MS), now);
+        await tidyQuarantine(env, db, now);
+        await refreshStalledVideos(db, videoProvider(env), now);
+      });
+      const usage = runJob(db, "usage", now, () => recordUsage(env, db, platformMetrics(env), now));
+      const failed = (await Promise.allSettled([daily, usage])).flatMap((result) =>
+        result.status === "rejected" ? [result.reason] : [],
+      );
+      if (failed.length) throw new AggregateError(failed, "The daily crons failed");
+    } else {
+      throw new Error(`No job for cron "${controller.cron}"`);
+    }
   },
 
   /** Upload scans (ADR-0010): each finished upload is scanned by ClamAV before it leaves quarantine. */

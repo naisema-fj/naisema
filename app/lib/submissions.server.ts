@@ -5,6 +5,7 @@ import { fijiToday } from "./calendar";
 import { consentInserts, shownNotices, subscribeOrForget, withdrawalLink } from "./consent.server";
 import type { Database } from "./db.server";
 import { letterText, sendEmail } from "./email.server";
+import { logError } from "./log.server";
 import { can } from "./permissions";
 import { DAY_MS } from "./rights-rules";
 import { hashToken, randomToken } from "./signed-tokens.server";
@@ -142,7 +143,7 @@ export async function receiveSubmission(
   const confirmed = await sendConfirmation(env, input, consents, origin)
     .then(() => true)
     .catch((error) => {
-      console.error("Submission confirmation failed", id, error);
+      logError("Submission confirmation failed", { submissionId: id, error });
       return false;
     });
   if (confirmed) await db.update(submission).set({ confirmedAt: new Date() }).where(eq(submission.id, id));
