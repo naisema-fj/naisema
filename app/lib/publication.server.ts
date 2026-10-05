@@ -8,7 +8,7 @@ import { publicItemChanged } from "./public-change.server";
 import { type Review, type ReviewActionResult, refuse } from "./review.server";
 import { type PublicationState, requirementName } from "./review-names";
 import { videoItem } from "./video-items.server";
-import { isEligible, layerRevisionEligibility, reasonTexts } from "./visibility.server";
+import { isEligible, isLayerEligible, layerRevisionEligibility, reasonTexts } from "./visibility.server";
 
 /**
  * Publishing, withdrawing and archiving Content Items and Learning Layers, and the editors' queue of
@@ -167,8 +167,8 @@ async function publishLayer(db: Database, actor: Actor, review: LayerReview): Pr
   if (review.layer.currentDraftRevisionId !== review.revisionId) {
     return refuse("Only the latest revision can be published.");
   }
-  // Asked again now, as for a Content Item: the review was loaded earlier in the request.
-  const eligibility = await layerRevisionEligibility(db, review);
+  // Asked afresh, as for a Content Item: a decision may have landed since the review was loaded.
+  const eligibility = await isLayerEligible(db, review.revisionId);
   if (!eligibility.eligible) {
     await recordAudit(db, {
       actorId: actor.userId,

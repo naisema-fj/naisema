@@ -22,7 +22,6 @@ import type { ArticleSnapshot } from "./article-fields";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
 import { expressionCopies, placeNewExpressions } from "./expressions.server";
-import { carryForwardLayerInserts } from "./layer-review.server";
 import {
   LAYER_LANGUAGE_VARIETY,
   type LayerDetailField,
@@ -33,6 +32,7 @@ import {
   withDefaults,
 } from "./learning-layer-fields";
 import { type Actor, can } from "./permissions";
+import { carryForwardInserts, LEARNING_LAYER_REVIEW } from "./review.server";
 import { fingerprintsOf } from "./review-rules";
 import { clipDuration, readSegments, segmentProblems } from "./segment-rules";
 import { requireStaff } from "./staff.server";
@@ -430,8 +430,8 @@ export async function saveLearningLayer(
   const now = new Date();
   const fingerprints = await fingerprintsOf(learningLayerReviewFields(snapshot, layer.languageVariety));
   // Approvals on the base whose fingerprints this save leaves unchanged carry forward (ADR-0003).
-  const carried = await carryForwardLayerInserts(db, {
-    learningLayerId: layer.id,
+  const carried = await carryForwardInserts(LEARNING_LAYER_REVIEW, db, {
+    parentId: layer.id,
     sourceRevisionId: layer.currentRevision.id,
     newRevisionId: id,
     newNumber: number,

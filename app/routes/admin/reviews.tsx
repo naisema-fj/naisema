@@ -1,7 +1,7 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { layerReviewQueue } from "~/lib/layer-review.server";
 import { can, type ReviewType } from "~/lib/permissions";
-import { reviewQueue } from "~/lib/review.server";
+import { contentReviewQueue } from "~/lib/review.server";
 import { REVIEW_NAMES } from "~/lib/review-names";
 import { requireStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/reviews";
@@ -17,19 +17,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (!can(actor, { action: "reviewQueue.view" })) {
     throw new Response("Only reviewers have a review queue.", { status: 403 });
   }
-  const [items, layers] = await Promise.all([reviewQueue(db, actor.userId), layerReviewQueue(db, actor.userId)]);
+  const [items, layers] = await Promise.all([contentReviewQueue(db, actor.userId), layerReviewQueue(db, actor.userId)]);
   return {
     queue: [
       ...items.map((entry) => ({
         ...entry,
-        key: `item-${entry.contentItemId}`,
-        href: `/admin/articles/${entry.contentItemId}/revisions/${entry.number}`,
+        key: `item-${entry.id}`,
+        href: `/admin/articles/${entry.id}/revisions/${entry.number}`,
       })),
       ...layers.map((entry) => ({
         ...entry,
-        key: `layer-${entry.learningLayerId}`,
+        key: `layer-${entry.id}`,
         title: `${entry.title} (Learning Layer)`,
-        href: `/admin/learning-layers/${entry.learningLayerId}/revisions/${entry.number}`,
+        href: `/admin/learning-layers/${entry.id}/revisions/${entry.number}`,
       })),
     ],
   };

@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { learningLayerEducator, learningLayerRevision } from "~db/schema";
+import { learningLayerRevision } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import { loadLayerReview } from "./layer-review.server";
 import { can } from "./permissions";
@@ -24,12 +24,7 @@ export async function requireLayerRevision(request: Request, env: Env, params: {
     .get();
   const review = row && (await loadLayerReview(staff.db, row.id));
   if (!review) throw new Response("Not found", { status: 404 });
-  const educatorIds = (
-    await staff.db
-      .select({ userId: learningLayerEducator.userId })
-      .from(learningLayerEducator)
-      .where(eq(learningLayerEducator.learningLayerId, review.layer.id))
-  ).map((educator) => educator.userId);
+  const { educatorIds } = review;
   const reviewerIds = review.assignments.map((assignment) => assignment.reviewerId);
   const allowed =
     can(staff.actor, { action: "learningLayer.author", learningLayer: { assignedEducatorIds: educatorIds } }) ||

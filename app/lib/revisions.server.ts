@@ -4,7 +4,7 @@ import type { PrimaryArea } from "./areas";
 import { auditInsert } from "./audit.server";
 import type { ContentType, PAGE_AREA } from "./content-types";
 import type { Database } from "./db.server";
-import { carryForwardInserts } from "./review.server";
+import { CONTENT_ITEM_REVIEW, carryForwardInserts } from "./review.server";
 import type { Fingerprints } from "./review-rules";
 import { firstFreeSlug, RESERVED_SLUGS, slugify } from "./slug";
 
@@ -178,8 +178,8 @@ export async function appendRevision(db: Database, save: Save): Promise<SaveResu
   const now = new Date();
   const id = crypto.randomUUID();
   const number = base.number + 1;
-  const carried = await carryForwardInserts(db, {
-    contentItemId,
+  const carried = await carryForwardInserts(CONTENT_ITEM_REVIEW, db, {
+    parentId: contentItemId,
     sourceRevisionId: restoredFromRevisionId ?? save.baseRevisionId,
     newRevisionId: id,
     newNumber: number,
