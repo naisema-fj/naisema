@@ -310,7 +310,7 @@ Educators see only the Learning Layers they are assigned to, under **Learning La
 
 ### Reviewing and publishing a Learning Layer
 
-The code is in `app/lib/layer-review.server.ts`, `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
+The code is in `app/lib/review.server.ts` (review, shared with Content Items), `layer-review.server.ts` (what is Learning Layers' own), `publication.server.ts`, `visibility.server.ts` (eligibility and what is public), `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
 
 1. **Flag:** tick **Culturally sensitive** in the editor when a Knowledge Holder must approve it. A Learning Layer on a Video flagged culturally sensitive starts ticked and can't be published unticked. Language review in Standard Fijian is always required.
 2. **Submit:** an editor or an assigned Educator submits the current revision. Editors then assign a language reviewer.
