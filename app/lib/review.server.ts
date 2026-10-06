@@ -644,7 +644,15 @@ export async function recordDecision(
       action: decision.decision === "approved" ? subject.audit.approved : subject.audit.rejected,
       objectType: subject.audit.approvalType,
       objectId: id,
-      details: { revisionId: review.revisionId, reviewType, languageVariety: requirement.languageVariety },
+      details: {
+        revisionId: review.revisionId,
+        reviewType,
+        languageVariety: requirement.languageVariety,
+        // A rejection's notes say why (CMS-05).
+        ...(decision.decision === "rejected" && decision.notes.trim()
+          ? { reason: decision.notes.trim().slice(0, 500) }
+          : {}),
+      },
     }),
   ]);
   return { ok: true };

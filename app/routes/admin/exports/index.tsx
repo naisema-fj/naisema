@@ -3,7 +3,7 @@ import { EXPORT_NAMES } from "~/lib/exports.server";
 import { layersFor } from "~/lib/learning-layers.server";
 import { can, EXPORT_KINDS } from "~/lib/permissions";
 import { requireStaff } from "~/lib/staff.server";
-import type { Route } from "./+types/exports";
+import type { Route } from "./+types/index";
 
 export const handle = { hydrate: false };
 

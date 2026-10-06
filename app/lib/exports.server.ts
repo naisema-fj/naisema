@@ -55,65 +55,99 @@ export type ExportResult =
 
 /** Runs one export for a staff member: decided, built and audited in that order. */
 export async function runExport(db: Database, actor: Actor, request: ExportRequest): Promise<ExportResult> {
-  const { kind } = request;
-  if (!can(actor, { action: "export.run", kind })) {
+  if (!can(actor, { action: "export.run", kind: request.kind })) {
     return { ok: false, status: 403, error: "Your roles don't include this export." };
   }
-  const purpose = request.purpose?.trim() ?? "";
-  if (kind === "contacts" && purpose.length < 10) {
-    return { ok: false, status: 400, error: "Say what the contacts are for, in a sentence, before exporting them." };
-  }
-  const built = await BUILDERS[kind](db, request);
-  if (!built) return { ok: false, status: 404, error: "There is nothing to export by that name." };
+  const built = await BUILDERS[request.kind](db, request);
+  if (!built.ok) return built;
   const exportedAt = new Date();
-  const objectId = kind === "learningLayer" ? (request.learningLayerId ?? null) : kind;
   await auditInsert(db, {
     actorId: actor.userId,
     action: "export.downloaded",
-    objectType: kind === "learningLayer" ? "learning_layer" : "export",
-    objectId,
-    details: { kind, ...built.counts, ...(kind === "contacts" ? { reason: purpose } : {}) },
+    objectType: built.object.type,
+    objectId: built.object.id,
+    details: { kind: request.kind, ...built.counts, ...(built.reason ? { reason: built.reason } : {}) },
   });
   return {
     ok: true,
     filename: `naisema-${built.name}-${exportedAt.toISOString().slice(0, 10)}.json`,
     document: {
-      ...(kind === "learningLayer"
-        ? { format: BUNDLE_FORMAT, version: BUNDLE_VERSION }
-        : { format: `naisema.${kind}`, version: EXPORT_VERSION }),
+      format: built.format,
+      version: built.version,
       exportedAt: exportedAt.toISOString(),
       exportedBy: actor.userId,
-      ...(kind === "contacts" ? { purpose } : {}),
       ...built.data,
     },
   };
 }
 
-type Built = { name: string; data: Record<string, unknown>; counts: Record<string, number> } | null;
+/** One export, built: what it is, what the audit records it as, and what it holds. */
+type Built = {
+  ok: true;
+  /** For the file's name. */
+  name: string;
+  format: string;
+  version: number;
+  object: { type: string; id: string };
+  data: Record<string, unknown>;
+  counts: Record<string, number>;
+  /** Why it was run, when its kind asks (contacts). */
+  reason?: string;
+};
 
-const BUILDERS: Record<ExportKind, (db: Database, request: ExportRequest) => Promise<Built>> = {
-  content: contentExport,
-  rights: rightsExport,
-  approvals: approvalsExport,
+type Builder = (db: Database, request: ExportRequest) => Promise<Built | Extract<ExportResult, { ok: false }>>;
+
+/** An export of everything of one kind, in its own `naisema.<kind>` format. */
+const whole = (
+  kind: ExportKind,
+  contents: Pick<Built, "data" | "counts">,
+  extra: Partial<Pick<Built, "reason">> = {},
+): Built => ({
+  ok: true,
+  name: kind,
+  format: `naisema.${kind}`,
+  version: EXPORT_VERSION,
+  object: { type: "export", id: kind },
+  ...contents,
+  ...extra,
+});
+
+const BUILDERS: Record<ExportKind, Builder> = {
+  content: async (db) => whole("content", await contentExport(db)),
+  rights: async (db) => whole("rights", await rightsExport(db)),
+  approvals: async (db) => whole("approvals", await approvalsExport(db)),
+  audit: async (db) => whole("audit", await auditExport(db)),
+  contacts: async (db, request) => {
+    const purpose = request.purpose?.trim() ?? "";
+    if (purpose.length < 10) {
+      return { ok: false, status: 400, error: "Say what the contacts are for, in a sentence, before exporting them." };
+    }
+    const contents = await contactsExport(db);
+    return whole("contacts", { ...contents, data: { purpose, ...contents.data } }, { reason: purpose });
+  },
   learningLayer: async (db, { learningLayerId }) => {
     const bundle = learningLayerId ? await learningLayerBundle(db, learningLayerId) : null;
-    if (!bundle) return null;
+    if (!learningLayerId || !bundle) return { ok: false, status: 404, error: "There is no such Learning Layer." };
     return {
+      ok: true,
       name: `learning-layer-${learningLayerId}`,
+      format: BUNDLE_FORMAT,
+      version: BUNDLE_VERSION,
+      object: { type: "learning_layer", id: learningLayerId },
       data: bundle,
       counts: { revisions: Object.keys(bundle.captions).length },
     };
   },
-  audit: auditExport,
-  contacts: contactsExport,
 };
+
+type Contents = Pick<Built, "data" | "counts">;
 
 /**
  * Every Content Item with every Revision in save order, each Revision's snapshot as stored (its
  * body as Tiptap JSON) and that body rendered as HTML, plus Topics and old addresses. Embedded items
  * link to their public address and show their latest title.
  */
-async function contentExport(db: Database): Promise<Built> {
+async function contentExport(db: Database): Promise<Contents> {
   const items = await db.select().from(contentItem).orderBy(asc(contentItem.createdAt)).all();
   const revisions = await db
     .select({ revision, submittedBy: revisionSubmission.submittedBy, submittedAt: revisionSubmission.submittedAt })
@@ -127,7 +161,6 @@ async function contentExport(db: Database): Promise<Built> {
   );
   const redirects = await db.select().from(slugRedirect).all();
   return {
-    name: "content",
     counts: { items: items.length, revisions: revisions.length },
     data: {
       topics: await db.select().from(topic).orderBy(asc(topic.name)).all(),
@@ -152,11 +185,10 @@ async function contentExport(db: Database): Promise<Built> {
 const titleOf = (snapshot: unknown) => (snapshot as Partial<ArticleSnapshot>).title ?? "";
 
 /** Every Rights Record, current or withdrawn, with its Contributors. Evidence files stay private: only their names. */
-async function rightsExport(db: Database): Promise<Built> {
+async function rightsExport(db: Database): Promise<Contents> {
   const records = await db.select().from(rightsRecord).orderBy(asc(rightsRecord.createdAt)).all();
   const links = await db.select().from(rightsRecordContributor).all();
   return {
-    name: "rights",
     counts: { records: records.length },
     data: {
       contributors: await db.select().from(contributor).orderBy(asc(contributor.name)).all(),
@@ -173,13 +205,12 @@ async function rightsExport(db: Database): Promise<Built> {
  * which Revision, who was asked to review, every decision, and the Review Links Knowledge Holders
  * saw (never their tokens) with each opening.
  */
-async function approvalsExport(db: Database): Promise<Built> {
+async function approvalsExport(db: Database): Promise<Contents> {
   const [contentApprovals, layerApprovals] = await Promise.all([
     db.select().from(reviewApproval).orderBy(asc(reviewApproval.decidedAt)).all(),
     db.select().from(learningLayerApproval).orderBy(asc(learningLayerApproval.decidedAt)).all(),
   ]);
   return {
-    name: "approvals",
     counts: { approvals: contentApprovals.length + layerApprovals.length },
     data: {
       contentItems: {
@@ -199,7 +230,7 @@ async function approvalsExport(db: Database): Promise<Built> {
 }
 
 /** Review Links as exported: everything but the hash of their token. */
-export const reviewLinksWithoutTokens = (db: Database) =>
+const reviewLinksWithoutTokens = (db: Database) =>
   db
     .select({
       id: reviewLink.id,
@@ -216,9 +247,9 @@ export const reviewLinksWithoutTokens = (db: Database) =>
     .all();
 
 /** The whole audit log, oldest first. */
-async function auditExport(db: Database): Promise<Built> {
+async function auditExport(db: Database): Promise<Contents> {
   const events = await db.select().from(auditEvent).orderBy(asc(auditEvent.createdAt), asc(auditEvent.id)).all();
-  return { name: "audit", counts: { events: events.length }, data: { events } };
+  return { counts: { events: events.length }, data: { events } };
 }
 
 /**
@@ -226,7 +257,7 @@ async function auditExport(db: Database): Promise<Built> {
  * words. People who came through a report or data request are left out: their Cases are the case
  * team's (CASE_HANDLER), handled in the Case queue.
  */
-async function contactsExport(db: Database): Promise<Built> {
+async function contactsExport(db: Database): Promise<Contents> {
   const caseForms = [...new Set((Object.keys(CASE_HANDLER) as CaseKind[]).map(caseSourceForm))];
   const submissions = await db.select().from(submission).orderBy(asc(submission.receivedAt)).all();
   const consents = await db
@@ -236,7 +267,6 @@ async function contactsExport(db: Database): Promise<Built> {
     .orderBy(asc(consentRecord.givenAt))
     .all();
   return {
-    name: "contacts",
     counts: { submissions: submissions.length, consents: consents.length },
     data: {
       notices: await db.select().from(notice).orderBy(asc(notice.purpose), asc(notice.version)).all(),

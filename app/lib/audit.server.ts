@@ -85,8 +85,14 @@ export async function auditLog(db: Database, filter: AuditFilter) {
   };
 }
 
-/** Why, where the event says: a reason given by the person or the code that acted. */
-export const reasonOf = (details: unknown): string | null =>
-  details && typeof details === "object" && "reason" in details && typeof details.reason === "string"
-    ? details.reason
-    : null;
+/**
+ * Why, where the event says: a reason given by the person who acted, or the reasons the code gave
+ * for refusing (`publish.refused`).
+ */
+export function reasonOf(details: unknown): string | null {
+  if (!details || typeof details !== "object") return null;
+  const { reason, reasons } = details as { reason?: unknown; reasons?: unknown };
+  if (typeof reason === "string") return reason;
+  if (Array.isArray(reasons) && reasons.every((item) => typeof item === "string")) return reasons.join(" ");
+  return null;
+}

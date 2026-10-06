@@ -118,12 +118,12 @@ Before launch, the founder rehearses AC-08 unaided: sign in, publish an eligible
 
 | Role | Can | Cannot |
 | --- | --- | --- |
-| Administrator | Manage accounts, role assignments, site settings, feature flags; reset a staff member's two-factor; see the media usage and cost report | Read Case contents or evidence; approve reviews by virtue of the role; reset their own two-factor |
-| Editor | Create/edit Content Items, Learning Layers and Expressions, assign Educators to Videos and Learning Layers, set Content Flags, request reviews, issue Review Links, record Knowledge Holder Approvals, publish/withdraw eligible Revisions | Approve a Revision they authored or edited; publish without required approvals and rights |
+| Administrator | Manage accounts, role assignments, site settings, feature flags; reset a staff member's two-factor; see the media usage and cost report; read and export the audit log | Read Case contents or evidence; approve reviews by virtue of the role; reset their own two-factor |
+| Editor | Create/edit Content Items, Learning Layers and Expressions, assign Educators to Videos and Learning Layers, set Content Flags, request reviews, issue Review Links, record Knowledge Holder Approvals, publish/withdraw eligible Revisions; export content, Rights Records, approvals and Learning Layers | Approve a Revision they authored or edited; publish without required approvals and rights |
 | Educator | Upload; add Learning Layers to Videos they are assigned to, and author the Learning Layers they are assigned to; add Expressions, and change the ones they added while no Learning Layer they aren't assigned to uses them (a change reaches a Learning Layer, and its review, only when that layer is next saved); submit for review | Edit unassigned drafts; publish; see learner records |
 | Reviewer | Approve or reject assigned Revisions for their Review Type and Language Variety | Approve outside their scope or their own work |
 | Safeguarding lead | Triage and action report Cases, view restricted evidence, hide content pending review | Handle their own appeal decisions (goes to the backup) |
-| Privacy contact | Handle data-request Cases, run exports and deletions | Read safeguarding Cases |
+| Privacy contact | Handle data-request Cases, run exports and deletions, export contacts for a stated purpose | Read safeguarding Cases |
 | Learner | Read and export their own saves, history and progress; delete their account | Read anyone else's data |
 
 One person may hold several roles (Natasha holds most). Every elevated action is audited. The no-self-approval rule applies across all roles.

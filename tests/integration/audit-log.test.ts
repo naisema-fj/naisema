@@ -2,7 +2,7 @@ import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { recordAudit } from "~/lib/audit.server";
 import { getDb } from "~/lib/db.server";
-import { staff } from "./support/articles";
+import { act, staff, submittedArticle } from "./support/articles";
 
 /** The audit log (CMS-05): append-only, and read by administrators only. */
 
@@ -60,6 +60,23 @@ describe("the audit log", () => {
     expect(html).toContain(other.email);
     expect(html).not.toContain(administrator.email);
     expect(html).not.toContain("topic.created");
+  });
+
+  it("records why an editor withdrew an item, when they say", async () => {
+    const administrator = await staff("admin", { role: "administrator" });
+    const { editor, article } = await submittedArticle([]);
+    expect((await act(editor, article.id, 1, { intent: "publish" })).status).toBe(302);
+    const withdrawn = await act(editor, article.id, 1, {
+      intent: "withdraw",
+      reason: "The family asked for the photograph to come down",
+    });
+    expect(withdrawn.status).toBe(302);
+
+    const html = await text(
+      await administrator.browser.fetch(`/admin/audit?object=${article.id}&action=content_item.`),
+    );
+    expect(html).toContain("content_item.withdrawn");
+    expect(html).toContain("The family asked for the photograph to come down");
   });
 
   it("is closed to everyone but administrators", async () => {

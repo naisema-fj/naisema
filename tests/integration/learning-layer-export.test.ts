@@ -3,7 +3,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
 import { importLearningLayerBundle } from "~/lib/learning-layer-bundle.server";
 import { publicLayer } from "~/lib/visibility.server";
-import { approvedLayer, layerRow, publishChange, publishVideo } from "./support/layers";
+import { toWebVtt } from "~/lib/webvtt";
+import { approvedLayer, layerRow, publishChange, publishVideo, save } from "./support/layers";
 import { auditActionsAbout } from "./support/staff";
 
 /**
@@ -62,7 +63,7 @@ async function annotatedLayer() {
   return layer;
 }
 
-const exportLayer = async (layer: Awaited<ReturnType<typeof annotatedLayer>>) => {
+const exportLayer = async (layer: Pick<Awaited<ReturnType<typeof annotatedLayer>>, "editor" | "layerId">) => {
   const response = await layer.editor.browser.fetch("/admin/exports/download", {
     form: { kind: "learningLayer", learningLayerId: layer.layerId },
   });
@@ -107,8 +108,45 @@ describe("a Learning Layer export", () => {
     const there = await publicLayer(getDb(env.IMPORT_DB), layer.layerId);
     expect(here).not.toBeNull();
     expect(there).toEqual(here);
-    const captions = await SELF.fetch(`${PUBLIC}/language/${layer.layerId}/captions/fijian`);
-    expect(bundle.captions[here?.revisionId as string].fijian).toBe(await captions.text());
+    // The captions the player asks for here, and the ones the imported Segments make there.
+    const captions = await (await SELF.fetch(`${PUBLIC}/language/${layer.layerId}/captions/fijian`)).text();
+    expect(toWebVtt(there?.snapshot.segments ?? [], "fijian")).toBe(captions);
+    expect(bundle.captions[here?.revisionId as string].fijian).toBe(captions);
+    expect(
+      await env.IMPORT_DB.prepare("SELECT action FROM audit_event WHERE object_id = ?1")
+        .bind(layer.layerId)
+        .first<{ action: string }>(),
+    ).toEqual({ action: "learning_layer.imported" });
+  });
+
+  it("leaves the Video already there as it is when a second Learning Layer on it is imported", async () => {
+    const layer = await annotatedLayer();
+    expect(await importLearningLayerBundle(env.IMPORT_DB, await exportLayer(layer))).toEqual({ ok: true });
+    // Since then, the Video was taken down in the database imported into.
+    await env.IMPORT_DB.prepare(
+      "UPDATE content_item SET publication_state = 'withdrawn', current_published_revision_id = NULL WHERE id = ?1",
+    )
+      .bind(layer.videoId)
+      .run();
+    const created = await layer.educator.browser.fetch(`/admin/videos/${layer.videoId}/learning-layers`, {
+      form: { intent: "create", title: "Numbers", level: "beginner", clip: "whole" },
+    });
+    const secondId = created.headers.get("Location")?.split("/").at(-1) as string;
+    await save(layer.educator, secondId);
+
+    expect(
+      await importLearningLayerBundle(env.IMPORT_DB, await exportLayer({ editor: layer.editor, layerId: secondId })),
+    ).toEqual({ ok: true });
+    expect(
+      await env.IMPORT_DB.prepare(
+        "SELECT publication_state AS state, current_published_revision_id AS published FROM content_item WHERE id = ?1",
+      )
+        .bind(layer.videoId)
+        .first(),
+    ).toEqual({ state: "withdrawn", published: null });
+    expect(await env.IMPORT_DB.prepare("SELECT id FROM learning_layer WHERE id = ?1").bind(secondId).first()).toEqual({
+      id: secondId,
+    });
   });
 
   it("refuses to import over a Learning Layer already there, writing nothing", async () => {
@@ -130,5 +168,7 @@ describe("a Learning Layer export", () => {
     });
     const role = { format: "naisema.learning-layer", version: 1, tables: [{ table: "role_assignment", rows: [] }] };
     expect(await importLearningLayerBundle(env.IMPORT_DB, role)).toMatchObject({ ok: false });
+    const broken = { format: "naisema.learning-layer", version: 1, tables: [{ table: "user", rows: [null] }] };
+    expect(await importLearningLayerBundle(env.IMPORT_DB, broken)).toMatchObject({ ok: false });
   });
 });

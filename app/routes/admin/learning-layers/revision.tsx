@@ -169,7 +169,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       case "publish":
       case "withdraw":
       case "archive":
-        return changeLayerPublication(env, db, actor, review, intent);
+        return changeLayerPublication(env, db, actor, review, intent, field("reason"));
       default:
         return { ok: false as const, error: "That action isn't available." };
     }

@@ -1,8 +1,9 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { runExport } from "~/lib/exports.server";
 import { EXPORT_KINDS, type ExportKind } from "~/lib/permissions";
+import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
 import { requireStaff } from "~/lib/staff.server";
-import type { Route } from "./+types/export-download";
+import type { Route } from "./+types/download";
 
 const isExportKind = (value: string): value is ExportKind => (EXPORT_KINDS as readonly string[]).includes(value);
 
@@ -23,14 +24,14 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!result.ok) {
     return new Response(result.error, {
       status: result.status,
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "private, no-store" },
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": PRIVATE_NO_STORE },
     });
   }
   return new Response(JSON.stringify(result.document, null, 2), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="${result.filename}"`,
-      "Cache-Control": "private, no-store",
+      "Cache-Control": PRIVATE_NO_STORE,
       "X-Content-Type-Options": "nosniff",
     },
   });

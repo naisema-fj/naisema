@@ -1,0 +1,33 @@
+{
+  "$comment": "What a Learning Layer export is and how it imports (docs/handover/exports.md). Read by app/lib/learning-layer-bundle.server.ts and scripts/import-learning-layer.mjs, so both import alike.",
+  "format": "naisema.learning-layer",
+  "version": 1,
+  "tables": [
+    "user",
+    "media_asset",
+    "video_asset",
+    "contributor",
+    "content_item",
+    "revision",
+    "revision_submission",
+    "review_assignment",
+    "review_approval",
+    "rights_record",
+    "rights_record_contributor",
+    "video_educator",
+    "expression",
+    "learning_layer",
+    "learning_layer_revision",
+    "learning_layer_educator",
+    "learning_layer_submission",
+    "learning_layer_review_assignment",
+    "review_link",
+    "review_link_access",
+    "learning_layer_approval"
+  ],
+  "firstOwnTable": "learning_layer",
+  "revisionPointers": {
+    "content_item": ["current_draft_revision_id", "current_published_revision_id"],
+    "learning_layer": ["current_draft_revision_id", "current_published_revision_id"]
+  }
+}

@@ -33,8 +33,10 @@ export async function changePublication(
   actor: Actor,
   review: Review,
   action: PublicationAction,
+  /** Why, in the editor's words, for a withdrawal or archiving; kept in the audit log. */
+  reason = "",
 ): Promise<ReviewActionResult> {
-  const result = await ITEM_ACTIONS[action](db, actor, review);
+  const result = await ITEM_ACTIONS[action](db, actor, review, reason);
   if (result.ok) await publicItemChanged(env, db, review.contentItem.id);
   return result;
 }
@@ -49,11 +51,19 @@ export async function changeLayerPublication(
   actor: Actor,
   review: LayerReview,
   action: PublicationAction,
+  /** Why, in the editor's words, for a withdrawal or archiving; kept in the audit log. */
+  reason = "",
 ): Promise<ReviewActionResult> {
-  const result = await LAYER_ACTIONS[action](db, actor, review);
+  const result = await LAYER_ACTIONS[action](db, actor, review, reason);
   if (result.ok) await publicItemChanged(env, db, review.layer.contentItemId);
   return result;
 }
+
+/** A reason, trimmed and bounded, as audit details; nothing when none was given. */
+const reasonDetails = (reason: string) => {
+  const trimmed = reason.trim().slice(0, 500);
+  return trimmed ? { details: { reason: trimmed } } : {};
+};
 
 const setState = (db: Database, contentItemId: string, values: Partial<typeof contentItem.$inferInsert>) =>
   db
@@ -111,7 +121,7 @@ async function publishItem(db: Database, actor: Actor, review: Review): Promise<
 }
 
 /** Takes a published item down. Its published Revision is kept on record; nothing is served. */
-async function withdrawItem(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function withdrawItem(db: Database, actor: Actor, review: Review, reason: string): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return { ok: false, error: "Only editors can withdraw." };
   if (review.contentItem.publicationState !== "published")
     return { ok: false, error: "Only published items can be withdrawn." };
@@ -122,13 +132,14 @@ async function withdrawItem(db: Database, actor: Actor, review: Review): Promise
       action: "content_item.withdrawn",
       objectType: "content_item",
       objectId: review.contentItem.id,
+      ...reasonDetails(reason),
     }),
   ]);
   return { ok: true };
 }
 
 /** Retires an item that isn't published. Archived items can't be published again. */
-async function archiveItem(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function archiveItem(db: Database, actor: Actor, review: Review, reason: string): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return { ok: false, error: "Only editors can archive." };
   const state = review.contentItem.publicationState;
   if (state === "published") return { ok: false, error: "Withdraw the item before archiving it." };
@@ -140,6 +151,7 @@ async function archiveItem(db: Database, actor: Actor, review: Review): Promise<
       action: "content_item.archived",
       objectType: "content_item",
       objectId: review.contentItem.id,
+      ...reasonDetails(reason),
     }),
   ]);
   return { ok: true };
@@ -199,7 +211,12 @@ async function publishLayer(db: Database, actor: Actor, review: LayerReview): Pr
 }
 
 /** Takes a published Learning Layer down, leaving its Video as it is. */
-async function withdrawLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
+async function withdrawLayer(
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  reason: string,
+): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can withdraw.");
   if (review.layer.publicationState !== "published") return refuse("Only published Learning Layers can be withdrawn.");
   await db.batch([
@@ -209,13 +226,19 @@ async function withdrawLayer(db: Database, actor: Actor, review: LayerReview): P
       action: "learning_layer.withdrawn",
       objectType: "learning_layer",
       objectId: review.layer.id,
+      ...reasonDetails(reason),
     }),
   ]);
   return { ok: true };
 }
 
 /** Retires a Learning Layer that isn't published. It can't be published again. */
-async function archiveLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
+async function archiveLayer(
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  reason: string,
+): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can archive.");
   const state = review.layer.publicationState;
   if (state === "published") return refuse("Withdraw the Learning Layer before archiving it.");
@@ -227,6 +250,7 @@ async function archiveLayer(db: Database, actor: Actor, review: LayerReview): Pr
       action: "learning_layer.archived",
       objectType: "learning_layer",
       objectId: review.layer.id,
+      ...reasonDetails(reason),
     }),
   ]);
   return { ok: true };

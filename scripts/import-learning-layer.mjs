@@ -9,43 +9,17 @@
 // its files and the Expression library that are already there are kept; a Learning Layer already
 // there refuses the import.
 //
-// This mirrors bundleStatements in app/lib/learning-layer-bundle.server.ts, which tests import into
-// an empty database: keep the tables and their order the same in both. Wrangler can't bind
+// The tables, their order and the revision pointers come from app/lib/learning-layer-bundle.json,
+// as for importLearningLayerBundle in app/lib/learning-layer-bundle.server.ts, which tests import
+// into an empty database: this makes the same statements in the same order. Wrangler can't bind
 // parameters, so values become SQL literals here, and table and column names are checked first.
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { parseArgs } from "node:util";
+import BUNDLE from "../app/lib/learning-layer-bundle.json" with { type: "json" };
 import { executeSql, fail, requireTarget } from "./lib/staff-cli.mjs";
 
-const FORMAT = "naisema.learning-layer";
-const VERSION = 1;
-const TABLES = [
-  "user",
-  "media_asset",
-  "video_asset",
-  "contributor",
-  "content_item",
-  "revision",
-  "revision_submission",
-  "review_assignment",
-  "review_approval",
-  "rights_record",
-  "rights_record_contributor",
-  "video_educator",
-  "expression",
-  "learning_layer",
-  "learning_layer_revision",
-  "learning_layer_educator",
-  "learning_layer_submission",
-  "learning_layer_review_assignment",
-  "review_link",
-  "review_link_access",
-  "learning_layer_approval",
-];
-const SHARED = new Set(TABLES.slice(0, TABLES.indexOf("learning_layer")));
-const POINTERS = {
-  content_item: ["current_draft_revision_id", "current_published_revision_id"],
-  learning_layer: ["current_draft_revision_id", "current_published_revision_id"],
-};
+const SHARED = new Set(BUNDLE.tables.slice(0, BUNDLE.tables.indexOf(BUNDLE.firstOwnTable)));
 const IDENTIFIER = /^[a-z][a-z0-9_]{0,62}$/;
 
 const { values } = parseArgs({
@@ -60,9 +34,10 @@ try {
 } catch (error) {
   fail(`Couldn't read ${values.file}: ${error.message}`);
 }
-if (bundle?.format !== FORMAT) fail("This isn't a NAISEMA Learning Layer export.");
-if (bundle.version !== VERSION)
-  fail(`This export is version ${bundle.version}; this script imports version ${VERSION}.`);
+if (bundle?.format !== BUNDLE.format) fail("This isn't a NAISEMA Learning Layer export.");
+if (bundle.version !== BUNDLE.version) {
+  fail(`This export is version ${bundle.version}; this script imports version ${BUNDLE.version}.`);
+}
 if (!Array.isArray(bundle.tables)) fail("The export has no tables.");
 
 /** A value as an SQL literal: text quoted, nested JSON back to text, booleans as 0 or 1. */
@@ -79,13 +54,19 @@ function literal(value) {
 
 const inserts = [];
 const pointerUpdates = [];
-for (const { table, rows } of bundle.tables) {
-  if (!TABLES.includes(table)) fail(`The export writes ${table}, which an import never does.`);
-  const pointers = POINTERS[table] ?? [];
+for (const entry of bundle.tables) {
+  const { table, rows } = entry ?? {};
+  if (!BUNDLE.tables.includes(table)) fail(`The export writes ${table}, which an import never does.`);
+  const readable = (row) =>
+    typeof row === "object" &&
+    row !== null &&
+    !Array.isArray(row) &&
+    Object.keys(row).every((column) => IDENTIFIER.test(column));
+  if (!Array.isArray(rows) || !rows.every(readable)) fail(`Its ${table} rows aren't readable.`);
+  const pointers = BUNDLE.revisionPointers[table] ?? [];
+  const verb = SHARED.has(table) ? "INSERT OR IGNORE" : "INSERT";
   for (const row of rows) {
     const columns = Object.keys(row);
-    if (!columns.every((column) => IDENTIFIER.test(column))) fail(`A ${table} row has a column that isn't a name.`);
-    const verb = SHARED.has(table) ? "INSERT OR IGNORE" : "INSERT";
     inserts.push(
       `${verb} INTO "${table}" (${columns.map((column) => `"${column}"`).join(", ")}) VALUES (${columns
         .map((column) => (pointers.includes(column) ? "NULL" : literal(row[column])))
@@ -93,20 +74,25 @@ for (const { table, rows } of bundle.tables) {
     );
     const set = pointers.filter((column) => row[column] !== null && row[column] !== undefined);
     if (set.length) {
+      // Only a row just added has an empty draft pointer: a Video already there keeps its own.
       pointerUpdates.push(
-        `UPDATE "${table}" SET ${set.map((column) => `"${column}" = ${literal(row[column])}`).join(", ")} WHERE id = ${literal(row.id)};`,
+        `UPDATE "${table}" SET ${set.map((column) => `"${column}" = ${literal(row[column])}`).join(", ")} WHERE id = ${literal(row.id)} AND current_draft_revision_id IS NULL;`,
       );
     }
   }
 }
 const withdrawals = bundle.heldAtExport
   ? [
-      `UPDATE "content_item" SET publication_state = 'withdrawn' WHERE id = ${literal(bundle.videoId)} AND publication_state = 'published';`,
-      `UPDATE "learning_layer" SET publication_state = 'withdrawn' WHERE id = ${literal(bundle.learningLayerId)} AND publication_state = 'published';`,
-    ]
+      ["content_item", bundle.videoId],
+      ["learning_layer", bundle.learningLayerId],
+    ].map(
+      ([table, id]) =>
+        `UPDATE "${table}" SET publication_state = 'withdrawn' WHERE id = ${literal(id)} AND current_draft_revision_id IS NULL AND publication_state = 'published';`,
+    )
   : [];
+const audit = `INSERT INTO audit_event (id, actor_id, action, object_type, object_id, details, created_at) VALUES (${literal(randomUUID())}, NULL, 'learning_layer.imported', 'learning_layer', ${literal(bundle.learningLayerId)}, ${literal({ videoId: bundle.videoId, via: "script", heldAtExport: Boolean(bundle.heldAtExport) })}, ${Date.now()});`;
 
-executeSql(target, [...inserts, ...pointerUpdates, ...withdrawals].join("\n"));
+executeSql(target, [...inserts, ...withdrawals, ...pointerUpdates, audit].join("\n"));
 console.log(`Imported Learning Layer ${bundle.learningLayerId} on Video ${bundle.videoId}.`);
 if (bundle.heldAtExport)
   console.log("Its Video was hidden pending a Case when exported, so both were imported withdrawn.");

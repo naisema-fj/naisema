@@ -283,6 +283,7 @@ export function ReviewPanel({
       {abilities.canWithdraw && review.publicationState === "published" && (
         <Form method="post" className="inline-form">
           <input type="hidden" name="intent" value="withdraw" />
+          <ReasonField id="withdraw-reason" />
           <button type="submit">Withdraw the {subject}</button>
         </Form>
       )}
@@ -290,6 +291,7 @@ export function ReviewPanel({
         (review.publicationState === "unpublished" || review.publicationState === "withdrawn") && (
           <Form method="post" className="inline-form">
             <input type="hidden" name="intent" value="archive" />
+            <ReasonField id="archive-reason" />
             <button type="submit">Archive the {subject}</button>
           </Form>
         )}
@@ -315,5 +317,15 @@ export function ReviewPanel({
         </>
       )}
     </section>
+  );
+}
+
+/** Why the editor is taking an item down or retiring it, for the audit log; optional. */
+function ReasonField({ id }: { id: string }) {
+  return (
+    <>
+      <label htmlFor={id}>Why (optional, kept in the audit log)</label>
+      <input id={id} name="reason" maxLength={500} />
+    </>
   );
 }

@@ -153,10 +153,10 @@ Import into an empty environment, such as staging after a reset:
 
 What the import keeps and refuses:
 
-- Rows already in the database for the Video, its files and the Expression library are kept as they are. A second Learning Layer on the same Video imports beside the first.
+- Rows already in the database for the Video, its files and the Expression library are kept as they are, including which Revision the Video shows and whether it is published. A second Learning Layer on the same Video imports beside the first.
 - A Learning Layer that is already there refuses the import.
-- The script writes only the tables listed above.
+- The script writes only the tables listed above, and refuses a file whose rows aren't plain objects with column names.
 
 `wrangler d1 execute` can't undo a file that fails part-way, so import only into a database you can reset, or note the time first for Time Travel.
 
-Inside a Worker or a test, `importLearningLayerBundle(env.DB, bundle)` imports the same file in one transaction. `scripts/import-learning-layer.mjs` mirrors its statements: change both together.
+Every import is audited as `learning_layer.imported` in the database it went into. Inside a Worker or a test, `importLearningLayerBundle(env.DB, bundle)` imports the same file in one transaction. `scripts/import-learning-layer.mjs` makes the same statements, and both read the tables, their order and the revision pointers from `app/lib/learning-layer-bundle.json`.
