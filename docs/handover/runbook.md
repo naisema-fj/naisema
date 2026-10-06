@@ -242,7 +242,12 @@ A report, rights concern or data request becomes a restricted Case (`app/lib/cas
   - Only someone else can decide the appeal, which closes the Case. The person is told whether the decision stands.
   - With one safeguarding lead, appeals wait for the backup (launch blocker #5).
 - **Restricted evidence:** the case team can add a PDF or image of at most 10 MB. It is quarantined and scanned like any upload, kept in `EVIDENCE`, and downloaded as a sandboxed attachment, by the case team only.
-- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Self-service export and the deletion ledger come with #32 and #34.
+- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Learners with an account download and delete their own data on the learning page (#33). The contacts export (Exports, below) gives the privacy contact every Submission and Consent Record at once, for a stated purpose. Replaying the deletion ledger after a restore comes with #34.
+
+## The audit log and exports
+
+- **Audit log:** every elevated action is recorded in `audit_event` (`app/lib/audit.server.ts`), with who, what, which object, when and, where there is one, why (`details.reason`). This covers publishing, reviews, roles and staff accounts, rights, Learner Account deletions (by the deletion ledger's hash) and moderation. It is append-only: triggers refuse updates and deletions (migration 0020), so pruning old events needs a migration of its own. Administrators read it at `/admin/audit`, filtered by object ID, person (email or user ID) and the start of an action name (for example `role.` or `content_item.`).
+- **Exports:** run from `/admin/exports`. Editors export content, Rights Records, approvals and single Learning Layers. Administrators export the audit log. The privacy contact exports contacts, after saying what they are for. Each export is audited as `export.downloaded`. Formats, and how to import a Learning Layer into another environment (`pnpm learning-layer:import`), are in `docs/handover/exports.md`.
 
 ## Upload safety
 
