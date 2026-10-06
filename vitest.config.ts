@@ -14,6 +14,8 @@ export default defineConfig({
       // Tests must never reach real Cloudflare resources, whatever the config says.
       remoteBindings: false,
       miniflare: {
+        // A second, empty database: an exported Learning Layer is imported into it (tests/integration/learning-layer-export.test.ts).
+        d1Databases: ["IMPORT_DB"],
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
           BETTER_AUTH_SECRET: "test-only-secret-at-least-32-characters-long",

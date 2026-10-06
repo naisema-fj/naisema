@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "staff:grant": "node scripts/grant-staff-role.mjs",
     "staff:reset-two-factor": "node scripts/reset-staff-two-factor.mjs",
+    "learning-layer:import": "node scripts/import-learning-layer.mjs",
     "search:load-test": "node scripts/search-load-test.mjs"
   },
   "dependencies": {

@@ -111,6 +111,8 @@ export default [
     route("usage", "routes/admin/usage.tsx"),
     // The audit log and bulk exports (CMS-05, VCMS-06; app/lib/exports.server.ts).
     route("audit", "routes/admin/audit.tsx"),
+    route("exports", "routes/admin/exports.tsx"),
+    route("exports/download", "routes/admin/export-download.ts"),
     route("topics", "routes/admin/topics.tsx"),
     route("two-factor", "routes/admin/two-factor.tsx"),
     route("two-factor/setup", "routes/admin/two-factor-setup.tsx"),
