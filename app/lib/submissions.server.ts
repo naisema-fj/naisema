@@ -167,7 +167,7 @@ async function sendConfirmation(
     to: input.email,
     subject: `We've received your ${type.name.toLowerCase()}`,
     text: letterText(input.name, [
-      `Thank you. Na iSema has received your ${type.name.toLowerCase()}, and someone on our team will read it. This is what you sent:`,
+      `Thank you. NAISEMA has received your ${type.name.toLowerCase()}, and someone on our team will read it. This is what you sent:`,
       answers.join("\n\n"),
       "You agreed to:",
       withdrawals.join("\n"),
@@ -291,9 +291,9 @@ export async function sendUploadLink(
   try {
     await sendEmail(env, {
       to: found.email,
-      subject: "Your link to upload to Na iSema",
+      subject: "Your link to upload to NAISEMA",
       text: letterText(found.name, [
-        "Thank you for offering to share your work with Na iSema. We'd like to see it. Upload your files with this private link:",
+        "Thank you for offering to share your work with NAISEMA. We'd like to see it. Upload your files with this private link:",
         `${origin}/upload/${token}`,
         `The link works until you tell us you've finished, or for ${UPLOAD_LINK_DAYS} days. Each file is checked for viruses before anyone opens it. Only send material you made, or have permission to share.`,
       ]),

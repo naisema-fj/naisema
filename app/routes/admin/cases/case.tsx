@@ -37,7 +37,7 @@ import type { Route } from "./+types/case";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `Case ${loaderData?.reference ?? ""} · Na iSema staff` }];
+  return [{ title: `Case ${loaderData?.reference ?? ""} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -207,7 +207,7 @@ export default function CasePage({ loaderData, actionData }: Route.ComponentProp
 
       {requesterData && (
         <section aria-labelledby="requester-data-heading">
-          <h2 id="requester-data-heading">What Na iSema holds for this address</h2>
+          <h2 id="requester-data-heading">What NAISEMA holds for this address</h2>
           <p>
             {requesterData.submissions.length} Submission{requesterData.submissions.length === 1 ? "" : "s"}
             {requesterData.submissions.length > 0 &&

@@ -1,9 +1,9 @@
-# Na iSema
+# NAISEMA
 
 A digital connection and learning platform for Fijians abroad, open to all. It connects people with cultural stories, media, existing learning providers, creators and optional video-based language learning.
 
-The product name is written **Na iSema**. Lower-case `naisema` appears only in technical identifiers (domains, repository, Worker, database and bucket names), which cannot contain spaces.
-_Avoid_: NAISEMA, Naisema, NaiSema
+The product name is written **NAISEMA**. Lower-case `naisema` appears only in technical identifiers (domains, repository, Worker, database and bucket names), which must be lower case.
+_Avoid_: Na iSema, Naisema, NaiSema
 
 ## Content and learning
 
@@ -15,11 +15,11 @@ _Avoid_: Cultural item, post, page (for content other than a Page)
 A Content Item a visitor downloads (a scanned PDF or audio file) or follows (an external link with a last-checked date), shown with its language, age guidance, accessibility and usage terms first.
 
 **Episode**:
-A Na iSema Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes, using a ready Video Asset, come with the learner player.
+A NAISEMA Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes, using a ready Video Asset, come with the learner player.
 _Avoid_: Podcast (until distribution to podcast apps is approved), show
 
 **Usage Terms**:
-What a Resource tells visitors they may do with it, in plain words (for example "free to print for teaching"). Not a Permitted Use, which is what a Rights Record grants Na iSema.
+What a Resource tells visitors they may do with it, in plain words (for example "free to print for teaching"). Not a Permitted Use, which is what a Rights Record grants NAISEMA.
 
 **Video**:
 A Content Item showing one Video Asset, which Learning Layers are built on.
@@ -71,7 +71,7 @@ One step of the Immersion Route, deciding what the player shows (which captions,
 _Avoid_: Level, step (in the record; learners read "step")
 
 **Video Asset**:
-A video source master kept as Na iSema's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
+A video source master kept as NAISEMA's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
 _Avoid_: Stream video (for the master), clip
 
 **Excerpt**:
@@ -138,7 +138,7 @@ A cultural Review Approval given by a Knowledge Holder and recorded by an editor
 ## People and roles
 
 **Contributor**:
-Anyone whose story, recording or knowledge appears in Na iSema content; a rights and credit relationship, not necessarily an account.
+Anyone whose story, recording or knowledge appears in NAISEMA content; a rights and credit relationship, not necessarily an account.
 _Avoid_: Author (for non-staff), participant
 
 **Creator**:
@@ -198,11 +198,11 @@ _Avoid_: Tag, category
 The other Content Items, of any type, an editor links from an item's Revision; shown only while each is public.
 
 **Provider**:
-Any organisation or person whose learning Offering is listed on Na iSema. Listing implies no endorsement or partnership.
+Any organisation or person whose learning Offering is listed on NAISEMA. Listing implies no endorsement or partnership.
 _Avoid_: Partner (unless an agreement exists)
 
 **Partner**:
-A Provider with a recorded Partnership Agreement in force. Only then is "Partner" shown, and only a Partner's Offering can be shown or hosted on Na iSema.
+A Provider with a recorded Partnership Agreement in force. Only then is "Partner" shown, and only a Partner's Offering can be shown or hosted on NAISEMA.
 
 **Offering**:
 A listed programme, course, resource or class belonging to a Provider, with one explicit access mode.

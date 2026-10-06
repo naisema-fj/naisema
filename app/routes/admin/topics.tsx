@@ -10,7 +10,7 @@ import type { Route } from "./+types/topics";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Topics · Na iSema staff" }];
+  return [{ title: "Topics · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

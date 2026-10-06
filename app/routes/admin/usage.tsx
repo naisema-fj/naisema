@@ -11,7 +11,7 @@ import type { Route } from "./+types/usage";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Usage and costs · Na iSema staff" }];
+  return [{ title: "Usage and costs · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

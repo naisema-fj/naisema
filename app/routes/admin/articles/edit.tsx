@@ -16,7 +16,7 @@ import { videoChoices } from "~/lib/video-assets.server";
 import type { Route } from "./+types/edit";
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.article.currentRevision.snapshot.title ?? "Article"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.article.currentRevision.snapshot.title ?? "Article"} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

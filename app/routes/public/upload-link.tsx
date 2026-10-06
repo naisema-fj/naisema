@@ -14,7 +14,7 @@ import type { Route } from "./+types/upload-link";
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Upload your files · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Upload your files · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 const STATUS_TEXT: Record<MediaStatus, string> = {

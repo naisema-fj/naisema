@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-01T01:58:28+00:00",
-  "title": "Design System: Na iSema",
+  "title": "Design System: NAISEMA",
   "extensions": {
     "colorMeta": {
       "sand": {
@@ -200,7 +200,7 @@
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "Na iSema in the header only."
+        "purpose": "NAISEMA in the header only."
       },
       "body": {
         "displayName": "Body",
@@ -329,7 +329,7 @@
       "kind": "nav",
       "refersTo": "nav-link",
       "description": "Sheet bar under the airmail band; wordmark left, areas inline, current area underlined in masi.",
-      "html": "<header class=\"ds-header\"><div class=\"ds-airmail\"></div><div class=\"ds-header-in\"><a class=\"ds-wordmark\" href=\"#\">Na iSema</a><ul class=\"ds-nav\"><li><a href=\"#\">Learn</a></li><li><a href=\"#\">Voices</a></li><li><a href=\"#\" aria-current=\"page\">E-zine</a></li></ul></div></header>",
+      "html": "<header class=\"ds-header\"><div class=\"ds-airmail\"></div><div class=\"ds-header-in\"><a class=\"ds-wordmark\" href=\"#\">NAISEMA</a><ul class=\"ds-nav\"><li><a href=\"#\">Learn</a></li><li><a href=\"#\">Voices</a></li><li><a href=\"#\" aria-current=\"page\">E-zine</a></li></ul></div></header>",
       "css": ".ds-header { background: #fbf9f4; border-bottom: 1px solid rgb(10 61 71 / 0.22); } .ds-airmail { height: 8px; background: repeating-linear-gradient(-45deg, #0b5563 0 10px, #fbf9f4 10px 14px, #6b3a22 14px 24px, #fbf9f4 24px 28px); } .ds-header-in { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 0.85rem 1.5rem; } .ds-wordmark { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 650; font-size: 1.6rem; letter-spacing: -0.01em; color: #0a3d47; text-decoration: none; } .ds-nav { list-style: none; margin: 0; padding: 0; display: flex; gap: 0.25rem 1.5rem; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 500; font-size: 1rem; } .ds-nav a { color: #1e1c19; text-decoration: none; padding: 0.35rem 0; border-bottom: 2px solid transparent; display: inline-block; } .ds-nav a:hover { color: #0b5563; border-bottom-color: #b9d6d8; } .ds-nav a[aria-current=page] { color: #0a3d47; border-bottom-color: #6b3a22; } .ds-nav a:focus-visible, .ds-wordmark:focus-visible { outline: 3px solid #6b3a22; outline-offset: 3px; border-radius: 2px; }"
     },
     {
@@ -345,7 +345,7 @@
       "kind": "card",
       "refersTo": "letter-sheet",
       "description": "The page's one sheet: square, airmail band at its head, soft long shadow, title, lede and From line.",
-      "html": "<div class=\"ds-sand\"><article class=\"ds-letter\"><h1>A letter from home</h1><p class=\"ds-lede\">How the village greets a visitor who has been away a long time.</p><p class=\"ds-from\"><span class=\"ds-label\">From</span> Na iSema</p></article></div>",
+      "html": "<div class=\"ds-sand\"><article class=\"ds-letter\"><h1>A letter from home</h1><p class=\"ds-lede\">How the village greets a visitor who has been away a long time.</p><p class=\"ds-from\"><span class=\"ds-label\">From</span> NAISEMA</p></article></div>",
       "css": ".ds-sand { background: #eee7d9; padding: 2rem; } .ds-letter { position: relative; max-width: 46rem; margin: 0 auto; background: #fbf9f4; padding: 2.5rem 2.5rem; box-shadow: 0 1px 2px rgb(30 28 25 / 0.06), 0 22px 48px -30px rgb(6 46 54 / 0.35); font-family: 'Literata Variable', Georgia, 'Times New Roman', serif; font-size: 1.0625rem; line-height: 1.65; color: #1e1c19; } .ds-letter::before { content: ''; position: absolute; inset: 0 0 auto; height: 6px; background: repeating-linear-gradient(-45deg, #0b5563 0 10px, #fbf9f4 10px 14px, #6b3a22 14px 24px, #fbf9f4 24px 28px); } .ds-letter h1 { margin: 0; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(2.3rem, 1.6rem + 3.2vw, 3.9rem); line-height: 1.1; letter-spacing: -0.015em; color: #0a3d47; } .ds-lede { margin: 1rem 0 0; font-size: 1.25rem; line-height: 1.5; color: #4a4640; } .ds-from { margin: 1rem 0 0; } .ds-label { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: #6b3a22; margin-right: 0.4rem; }"
     },
     {

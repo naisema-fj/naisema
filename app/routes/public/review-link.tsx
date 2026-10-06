@@ -18,7 +18,7 @@ export const handle = { video: true, noindex: true };
 export const headers = () => ({ "Cache-Control": PRIVATE_NO_STORE });
 
 export function meta() {
-  return [{ title: "Draft for review · Na iSema" }, { name: "robots", content: "noindex, nofollow" }];
+  return [{ title: "Draft for review · NAISEMA" }, { name: "robots", content: "noindex, nofollow" }];
 }
 
 const CLOSED = {

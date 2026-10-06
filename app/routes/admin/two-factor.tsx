@@ -7,7 +7,7 @@ import type { Route } from "./+types/two-factor";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Enter your code · Na iSema staff" }];
+  return [{ title: "Enter your code · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

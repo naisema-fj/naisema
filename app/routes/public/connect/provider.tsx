@@ -35,12 +35,12 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema" }];
+  if (!loaderData) return [{ title: "NAISEMA" }];
   return [
-    { title: `${loaderData.provider.name} · Providers · Na iSema` },
+    { title: `${loaderData.provider.name} · Providers · NAISEMA` },
     {
       name: "description",
-      content: loaderData.provider.description || `${loaderData.provider.name}, listed on Na iSema.`,
+      content: loaderData.provider.description || `${loaderData.provider.name}, listed on NAISEMA.`,
     },
   ];
 }
@@ -69,12 +69,12 @@ export default function Provider({ loaderData }: Route.ComponentProps) {
           {provider.description && <p className="lede">{provider.description}</p>}
           <p>
             {provider.partner
-              ? "A Na iSema Partner, under a recorded Partnership Agreement."
-              : "Listed on Na iSema. Being listed doesn't mean a partnership or that Na iSema endorses them."}
+              ? "A NAISEMA Partner, under a recorded Partnership Agreement."
+              : "Listed on NAISEMA. Being listed doesn't mean a partnership or that NAISEMA endorses them."}
           </p>
           {provider.sponsors && <p className="disclosure">{provider.sponsors}</p>}
           {provider.featureRationale && (
-            <p className="disclosure">{`Featured by Na iSema editors: ${provider.featureRationale}`}</p>
+            <p className="disclosure">{`Featured by NAISEMA editors: ${provider.featureRationale}`}</p>
           )}
         </header>
         <section className="resource-details" aria-labelledby="about-heading">

@@ -42,11 +42,11 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema" }];
+  if (!loaderData) return [{ title: "NAISEMA" }];
   const name = loaderData.subtopic ? `${loaderData.subtopic.name} in ${loaderData.topic.name}` : loaderData.topic.name;
   return [
-    { title: `${name} · Na iSema` },
-    { name: "description", content: loaderData.topic.description || `Everything on Na iSema about ${name}.` },
+    { title: `${name} · NAISEMA` },
+    { name: "description", content: loaderData.topic.description || `Everything on NAISEMA about ${name}.` },
   ];
 }
 

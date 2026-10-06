@@ -16,7 +16,7 @@ export const handle = { video: true };
 export const headers = () => ({ "Cache-Control": "private, no-store" });
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.name ?? "Video"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.name ?? "Video"} · NAISEMA staff` }];
 }
 
 async function requireVideo(env: Env, request: Request, id: string) {
@@ -156,7 +156,7 @@ export default function VideoAssetPage({ loaderData, actionData }: Route.Compone
         <dd>{video.environment}</dd>
       </dl>
       <p className="hint">
-        The master is kept as Na iSema's original in private storage. Stream holds only a copy for playing it.
+        The master is kept as NAISEMA's original in private storage. Stream holds only a copy for playing it.
       </p>
     </main>
   );

@@ -46,7 +46,7 @@ const episodeFields = (audioId: string, fields: Record<string, string | string[]
   languageVariety: "",
   title: "Talanoa with Ratu Joni",
   summary: "Growing up in Levuka and leaving for Auckland.",
-  credit: "Produced by Na iSema Voices",
+  credit: "Produced by NAISEMA Voices",
   episodeAudioAssetId: audioId,
   episodeHost: "Mere Vula",
   episodeGuests: "Ratu Joni",

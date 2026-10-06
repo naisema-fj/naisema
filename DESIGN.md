@@ -1,5 +1,5 @@
 ---
-name: Na iSema
+name: NAISEMA
 description: Letters home. Fijian language and culture for Fijians abroad, signed, dated and honestly marked with what was reviewed.
 colors:
   sand: "#eee7d9"
@@ -129,7 +129,7 @@ components:
     textColor: "{colors.sheet}"
 ---
 
-# Design System: Na iSema
+# Design System: NAISEMA
 
 ## Overview
 

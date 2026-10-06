@@ -33,8 +33,8 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [
     {
       title: loaderData
-        ? `${loaderData.snapshot.title}, revision ${loaderData.number} · Na iSema staff`
-        : "Na iSema staff",
+        ? `${loaderData.snapshot.title}, revision ${loaderData.number} · NAISEMA staff`
+        : "NAISEMA staff",
     },
   ];
 }

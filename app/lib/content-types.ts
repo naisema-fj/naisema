@@ -24,7 +24,7 @@ export const isContentType = (value: string): value is ContentType =>
 /** Pages sit outside the six areas, at /{slug}: About, Privacy and the other footer pages. */
 export const PAGE_AREA = "site";
 
-/** Episodes are Na iSema Voices: they always sit in the Voices area, whose page lists them. */
+/** Episodes are NAISEMA Voices: they always sit in the Voices area, whose page lists them. */
 export const EPISODE_AREA = "voices";
 
 /** Creator Profiles sit in Connect, at /connect/creators/{slug}, beside Providers and Offerings. */

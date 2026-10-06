@@ -1,7 +1,7 @@
 /**
  * What a Creator Profile adds to a Content Item (CRE-01; CONTEXT.md, Creator): where the Creator
  * is, at a level that can't find their door; the languages and kinds of media they work in; a
- * consented portrait from the media library; and one free sample of their work, a Na iSema item.
+ * consented portrait from the media library; and one free sample of their work, a NAISEMA item.
  * Their chosen public name is the item's title and their biography its body.
  */
 
@@ -24,7 +24,7 @@ export type CreatorDetails = {
   mediaTypes: MediaType[];
   /** A media library image; it needs its own Rights Record, the consent of the person shown. */
   portraitAssetId: string;
-  /** One published Na iSema item, free to everyone, showing their work. */
+  /** One published NAISEMA item, free to everyone, showing their work. */
   sampleItemId: string;
 };
 

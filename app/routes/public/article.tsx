@@ -44,8 +44,8 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema" }];
-  return [{ title: `${loaderData.title} · Na iSema` }, { name: "description", content: loaderData.summary }];
+  if (!loaderData) return [{ title: "NAISEMA" }];
+  return [{ title: `${loaderData.title} · NAISEMA` }, { name: "description", content: loaderData.summary }];
 }
 
 export default function Article({ loaderData: article }: Route.ComponentProps) {

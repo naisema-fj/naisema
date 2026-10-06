@@ -32,7 +32,7 @@ async function failRequests(count: number, at: number) {
 const hourly = (at: number, metrics: PlatformMetrics | null = healthy, onEnv: Env = env) =>
   runMonitor(onEnv, new Date(at), metrics);
 
-const alerts = async () => (await emailsTo(owner)).filter((email) => email.subject.startsWith("Na iSema"));
+const alerts = async () => (await emailsTo(owner)).filter((email) => email.subject.startsWith("NAISEMA"));
 
 beforeEach(async () => {
   await env.DB.batch(
@@ -56,7 +56,7 @@ describe("the hourly monitor", () => {
     await hourly(now);
     const broken = { ...env, EMAIL_OUTBOX: "false" } as unknown as Env;
     await expect(
-      sendEmail(broken, { to: "sera@example.com", subject: "Sign in to Na iSema", text: "secret link" }),
+      sendEmail(broken, { to: "sera@example.com", subject: "Sign in to NAISEMA", text: "secret link" }),
     ).rejects.toThrow();
 
     await hourly(now + HOUR);
@@ -64,7 +64,7 @@ describe("the hourly monitor", () => {
 
     const sent = await alerts();
     expect(sent).toHaveLength(1);
-    expect(sent[0].subject).toBe("Na iSema development: 1 problem");
+    expect(sent[0].subject).toBe("NAISEMA development: 1 problem");
     expect(sent[0].text).toContain("1 email couldn't be sent since the last check.");
     expect(sent[0].text).not.toContain("sera@example.com");
     expect(sent[0].text).not.toContain("secret link");
@@ -80,8 +80,8 @@ describe("the hourly monitor", () => {
 
     const sent = await alerts();
     expect(sent.map((email) => email.subject)).toEqual([
-      "Na iSema development: 1 problem",
-      "Na iSema development: back to normal",
+      "NAISEMA development: 1 problem",
+      "NAISEMA development: back to normal",
     ]);
     expect(sent[0].text).toContain("60 of 400 requests failed (15%) since the last check.");
     expect(sent[1].text).toContain("Requests are succeeding again.");
@@ -94,8 +94,8 @@ describe("the hourly monitor", () => {
       await hourly(now + hour * HOUR, figures(400));
     }
     expect((await alerts()).map((email) => email.subject)).toEqual([
-      "Na iSema development: 1 problem",
-      "Na iSema development: 1 problem",
+      "NAISEMA development: 1 problem",
+      "NAISEMA development: 1 problem",
     ]);
     expect((await alerts())[1].text).toContain("still failing since");
   });
@@ -162,7 +162,7 @@ describe("the hourly monitor", () => {
     await hourly(now);
     await hourly(now + HOUR, null, { ...env, ENVIRONMENT: "staging" } as unknown as Env);
     const alert = (await alerts()).at(-1) as { subject: string; text: string };
-    expect(alert.subject).toBe("Na iSema staging: 1 problem");
+    expect(alert.subject).toBe("NAISEMA staging: 1 problem");
     expect(alert.text).toContain("Cloudflare's figures couldn't be read: MONITORING_API_TOKEN isn't set");
   });
 });

@@ -1,10 +1,10 @@
 # Runbook
 
-How to run, provision, deploy and roll back Na iSema. Kept current with every change that affects operations (OWN-03).
+How to run, provision, deploy and roll back NAISEMA. Kept current with every change that affects operations (OWN-03).
 
 ## Stack at a glance
 
-One Cloudflare Worker serves everything: React Router 8 in framework mode with server rendering, Drizzle ORM over D1, and R2 buckets for media and private evidence (ADR-0004, ADR-0005). Local development, staging and production are named environments in `wrangler.jsonc`, all in the one Na iSema Cloudflare account.
+One Cloudflare Worker serves everything: React Router 8 in framework mode with server rendering, Drizzle ORM over D1, and R2 buckets for media and private evidence (ADR-0004, ADR-0005). Local development, staging and production are named environments in `wrangler.jsonc`, all in the one NAISEMA Cloudflare account.
 
 ## Run locally
 
@@ -54,7 +54,7 @@ Revisions and Review Approvals are immutable (ADR-0006): the `revision_immutable
 
 ## One-time Cloudflare provisioning
 
-Done once per environment by someone with admin access to the Na iSema Cloudflare account. Replace `staging` with `production` for production.
+Done once per environment by someone with admin access to the NAISEMA Cloudflare account. Replace `staging` with `production` for production.
 
 ```sh
 pnpm wrangler login
@@ -69,7 +69,7 @@ pnpm wrangler queues create naisema-staging-upload-scans
 - When `d1 create` or `r2 bucket create` asks whether to add the resource to your Wrangler configuration, answer **No**. Wrangler would add it to the top level as a *remote* binding, which makes local development and tests talk to real staging or production data.
 - Instead, copy the D1 `database_id` printed by `d1 create` into the matching `env.<name>.d1_databases` entry in `wrangler.jsonc` and commit it. Database IDs and the account ID are not secrets. (Staging and production were provisioned on 29 September 2026; their IDs are already in `wrangler.jsonc`.)
 - Leave D1 read replication off (the default) per ADR-0004.
-- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Queues: Edit, Containers: Edit, Cloudflare Images: Edit, Account Settings: Read, limited to the Na iSema account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
+- Create one Cloudflare API token per deployed environment with only the permissions deploys need: Workers Scripts: Edit, D1: Edit, Workers R2 Storage: Edit, Queues: Edit, Containers: Edit, Cloudflare Images: Edit, Account Settings: Read, limited to the NAISEMA account. Cloudflare tokens cannot be restricted to a single Worker, database or bucket, so the staging token could technically touch production resources. Environments are kept apart by storing each token only in its own GitHub environment, with production behind required reviewers.
 - **Development** runs entirely in Miniflare on each developer's machine; there is no remote development Worker, database or bucket, and none is needed until a shared preview environment is wanted.
 
 ### Connect GitHub
@@ -180,8 +180,8 @@ Articles, Resources and Pages are one content model (`app/lib/content-types.ts`)
 Connect lists who teaches and creates (`app/lib/listing-fields.ts`, `providers.server.ts`, `creator-fields.ts`). Editors keep Providers and their Offerings at `/admin/providers`, and write Creator Profiles from Content ("Add a Creator Profile").
 
 - **Providers and Offerings** are plain listings, not reviewed Content Items. Each change is audited and purges `/connect`, `/connect/providers` and the Provider's page. Anything not known is left empty, and the site says "Not known"; nothing is guessed. A Provider's address comes from its name and stays fixed. A listing implies no partnership or endorsement, and the pages say so.
-- **Partners:** "Partner" is shown only while a recorded Partnership Agreement is in force. It needs a start date, and optionally a last day, both counted in Fiji's days; an editor can end it early, and it stays on record. An Offering shown or hosted on Na iSema ("authorised embed", "licensed native") can be saved only for a Partner, and disappears from the public site when the partnership ends. In 1a an authorised embed is shown as a labelled link, not embedded in the page.
-- **Offerings** have exactly one access mode: a link to the Provider's website, an enquiry (the Provider's contact route), a Na iSema referral, an authorised embed, or an item on Na iSema under licence. Every link says which website it goes to before it is followed. `/connect/offerings` filters by language, format, cost and access mode, and `/connect/providers` by kind of organisation; both are never cached, because the edge cache ignores query strings, and filtered views are `noindex`. Changing a Provider purges `/connect`, its page and the sitemap; withdrawing an item an Offering is hosted on purges its Provider's page.
+- **Partners:** "Partner" is shown only while a recorded Partnership Agreement is in force. It needs a start date, and optionally a last day, both counted in Fiji's days; an editor can end it early, and it stays on record. An Offering shown or hosted on NAISEMA ("authorised embed", "licensed native") can be saved only for a Partner, and disappears from the public site when the partnership ends. In 1a an authorised embed is shown as a labelled link, not embedded in the page.
+- **Offerings** have exactly one access mode: a link to the Provider's website, an enquiry (the Provider's contact route), a NAISEMA referral, an authorised embed, or an item on NAISEMA under licence. Every link says which website it goes to before it is followed. `/connect/offerings` filters by language, format, cost and access mode, and `/connect/providers` by kind of organisation; both are never cached, because the edge cache ignores query strings, and filtered views are `noindex`. Changing a Provider purges `/connect`, its page and the sitemap; withdrawing an item an Offering is hosted on purges its Provider's page.
 - **Sponsorship and features:** a sponsor is disclosed wherever the listing is shown, an Offering's together with its Provider's. Featuring a Provider or Offering needs a reason, which is shown with it on `/connect`.
 - **Creator Profiles** are Content Items in Connect, at `/connect/creators/<slug>`, with the usual Revisions, reviews and rights. The title is the creator's chosen public name and the body their biography. The item's own Rights Record is their consent to the profile; the portrait is a media library image that needs its own record. Their location is a town, island or country (numbers are refused). Their one free sample is an Article, Resource or Episode, and the profile is public only while the sample is. `/connect/creators` filters by kind of work and is never cached.
 - **Reserved addresses:** no Content Item in Connect can take the slug `providers`, `offerings` or `creators`.
@@ -255,7 +255,7 @@ Video masters follow ADR-0008; the code is in `app/lib/video-assets.server.ts`, 
 
 1. **Upload:** an MP4 or MOV master of up to 2 GB goes through upload safety like any file. The browser reads its length first and refuses one over 15 minutes before sending it, where it can read the length.
 2. **Length check:** once ClamAV has passed a master, the scan step reads its length and picture size from its movie header (`moov`, or for a fragmented file `mvex`/`mehd`). It uses ranged reads, so a 2 GB file is never held in memory, and no unscanned bytes are ever parsed (ADR-0010). A master over 15 minutes (judged to the second), or one whose length can't be read, is refused and stays in quarantine with the reason. This check is what enforces the limit; the browser's is a courtesy. Stream's own measurement is checked again when it reports the video ready, so a master whose header understates its length fails there.
-3. **Masters:** a clean master is copied to the private `naisema-<env>-video-masters` bucket under `masters/<id>` and recorded as a Video Asset. That copy is Na iSema's original. Nothing serves it publicly, and Stream holds only a copy for playing it.
+3. **Masters:** a clean master is copied to the private `naisema-<env>-video-masters` bucket under `masters/<id>` and recorded as a Video Asset. That copy is NAISEMA's original. Nothing serves it publicly, and Stream holds only a copy for playing it.
 4. **Processing:** the Worker asks Stream to copy the master from a pre-signed R2 address that lasts one hour (`POST /accounts/<id>/stream/copy`, with `requireSignedURLs: true`). Stream's signed webhook then reports the video ready or failed. Reports only ever move a Video Asset forwards (uploaded → processing → ready or failed), in code and by a database trigger, so a repeated or late report changes nothing. A refusal fails the video with Stream's reason; no address or credential is ever shown. If Stream can't be reached, the scan message is retried with a growing delay, and after five tries the video is marked failed. Staff can then press **Try processing again** on the video's page.
 5. **Catching up:** the daily job asks Stream about any video that has been processing for over an hour, which covers lost webhooks, and sends any master that was never sent. A video's page also has **Check with Stream now**.
 6. **Preview:** a ready video's page (`/admin/media/<id>/video`, for editors and Educators) plays it through a signed token that lasts ten minutes. The token is signed by the Worker with a Stream signing key, and the player is hls.js's light build. Only that page, and the media library (for reading a file's length), allow media from `blob:` and from the Stream customer subdomain.
@@ -315,7 +315,7 @@ Domains are declared in `wrangler.jsonc` so the repository is the source of trut
 
 Prerequisites, done once:
 
-1. `naisema.com` is an **Active** zone in the Na iSema Cloudflare account (Add a domain, Free plan, then point the registrar's nameservers at Cloudflare). Check imported MX/TXT records before switching nameservers if email uses the domain.
+1. `naisema.com` is an **Active** zone in the NAISEMA Cloudflare account (Add a domain, Free plan, then point the registrar's nameservers at Cloudflare). Check imported MX/TXT records before switching nameservers if email uses the domain.
 2. No existing DNS record for the hostname; Cloudflare creates the record and certificate on deploy.
 3. The environment's CI token has **Zone › Workers Routes › Edit** (and **Zone › DNS › Edit** if the deploy reports it cannot create the record), limited to the `naisema.com` zone.
 
@@ -374,7 +374,7 @@ Owner: the technical owner, and their backup once named (#6). What watches what:
 
 ### Setting it up, once per environment
 
-1. **Cloudflare figures.** Create an API token (My Profile › API Tokens › Create Custom Token) with **Account › Account Analytics › Read** and **Account › Stream › Read**, limited to the Na iSema account. Then `pnpm wrangler secret put MONITORING_API_TOKEN --env <env>`. Without it the error rate is checked as a count only (10 failed requests an hour), `/admin/usage` stays empty, and the monitor emails "Cloudflare's figures couldn't be read" until it is set.
+1. **Cloudflare figures.** Create an API token (My Profile › API Tokens › Create Custom Token) with **Account › Account Analytics › Read** and **Account › Stream › Read**, limited to the NAISEMA account. Then `pnpm wrangler secret put MONITORING_API_TOKEN --env <env>`. Without it the error rate is checked as a count only (10 failed requests an hour), `/admin/usage` stays empty, and the monitor emails "Cloudflare's figures couldn't be read" until it is set.
 2. **Who is alerted.** `pnpm wrangler secret put ALERT_EMAILS --env <env>`, one address or several separated by commas: the technical owner, plus the backup once #6 names one. While it is unset, alerts only reach the logs ("No one to alert", with what the email would have said).
 3. **Uptime monitor.** Set up an external service (for example UptimeRobot or Better Stack; record the choice in `docs/decision-log.md`) to request, every 5 minutes:
    - `https://naisema.com/` and `https://naisema.com/health` for production;
@@ -391,7 +391,7 @@ Owner: the technical owner, and their backup once named (#6). What watches what:
 
 ### What each alert means
 
-Alerts come as one email per hourly run, subject `Na iSema <env>: N problems`. An ongoing problem is reported when it starts, reminded once a day while it lasts, and followed by a "back to normal" email when it clears. A failed send or video is reported once. Thresholds are in `app/lib/monitor-rules.ts`.
+Alerts come as one email per hourly run, subject `NAISEMA <env>: N problems`. An ongoing problem is reported when it starts, reminded once a day while it lasts, and followed by a "back to normal" email when it clears. A failed send or video is reported once. Thresholds are in `app/lib/monitor-rules.ts`.
 
 - **"N of M requests failed (P%)"** (or **"N requests failed"** when Cloudflare's total can't be read): at least 10 requests, and at least 5% of all requests, answered with a 5xx or failed outright since the last check. The Worker counts these itself (`server_error`); Cloudflare supplies the total. Look at the Worker's logs for `Request failed`, `Request handling failed` or `Render failed`, and at recent deploys. If a deploy caused it, roll back (above).
 - **"N emails couldn't be sent"**: the Email Service refused or was unreachable. Check Email Service in the dashboard (domain onboarding, sending limits). Sign-in links fail the same way, so staff may be unable to sign in. Alert emails go through the same service, so a full outage may arrive late or not at all; the uptime monitor doesn't depend on it.

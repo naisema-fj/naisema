@@ -28,7 +28,7 @@ export function OfferingCard({
       {offering.summary && <p>{offering.summary}</p>}
       {offering.sponsors && <p className="disclosure">{offering.sponsors}</p>}
       {offering.featureRationale && (
-        <p className="disclosure">{`Featured by Na iSema editors: ${offering.featureRationale}`}</p>
+        <p className="disclosure">{`Featured by NAISEMA editors: ${offering.featureRationale}`}</p>
       )}
       <dl className="facts">
         {offering.facts.map(([term, value]) => (

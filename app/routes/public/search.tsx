@@ -35,7 +35,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export function meta() {
-  return [{ title: "Search · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Search · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 export default function Search({ loaderData }: Route.ComponentProps) {

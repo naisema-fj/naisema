@@ -15,7 +15,7 @@ export const handle = { hydrate: false, turnstile: true };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Unsubscribe from the newsletter · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Unsubscribe from the newsletter · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 export function loader({ context }: Route.LoaderArgs) {
@@ -44,10 +44,10 @@ export default function Unsubscribe({ loaderData, actionData }: Route.ComponentP
         <article className="letter letter-narrow">
           <h1>You're unsubscribed</h1>
           <p role="status">
-            {actionData.email} won't be sent the Na iSema newsletter. You can sign up again at any time.
+            {actionData.email} won't be sent the NAISEMA newsletter. You can sign up again at any time.
           </p>
           <p>
-            <Link to="/">Back to Na iSema</Link>
+            <Link to="/">Back to NAISEMA</Link>
           </p>
         </article>
       </main>

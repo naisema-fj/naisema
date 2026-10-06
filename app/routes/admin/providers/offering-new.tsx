@@ -9,7 +9,7 @@ import type { Route } from "./+types/offering-new";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `New offering from ${loaderData?.provider.name ?? "a provider"} · Na iSema staff` }];
+  return [{ title: `New offering from ${loaderData?.provider.name ?? "a provider"} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

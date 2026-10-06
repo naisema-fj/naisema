@@ -18,12 +18,12 @@ import { formValues } from "~/lib/submission-fields";
 import { newFormKey } from "~/lib/submissions.server";
 import type { Route } from "./+types/data-request";
 
-/** The privacy route (DATA-03): asking to see, correct or delete what Na iSema holds. It opens a Case. */
+/** The privacy route (DATA-03): asking to see, correct or delete what NAISEMA holds. It opens a Case. */
 export const handle = { hydrate: false, turnstile: true };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Your information · Na iSema" }];
+  return [{ title: "Your information · NAISEMA" }];
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -62,7 +62,7 @@ export default function DataRequest({ loaderData, actionData }: Route.ComponentP
             email you. They may ask you to confirm it's you before sending or deleting anything.
           </p>
           <p>
-            <Link to="/">Back to Na iSema</Link>
+            <Link to="/">Back to NAISEMA</Link>
           </p>
         </article>
       </main>
@@ -75,7 +75,7 @@ export default function DataRequest({ loaderData, actionData }: Route.ComponentP
       <article className="letter letter-narrow">
         <h1>Your information</h1>
         <p className="standfirst">
-          Ask for a copy of what Na iSema holds about you, or for it to be corrected or deleted. Our privacy contact
+          Ask for a copy of what NAISEMA holds about you, or for it to be corrected or deleted. Our privacy contact
           handles every request. <Link to="/privacy">How we handle your information</Link>
         </p>
         <Form method="post" className="public-form" noValidate>
@@ -93,7 +93,7 @@ export default function DataRequest({ loaderData, actionData }: Route.ComponentP
             name="email"
             label="Your email address"
             type="email"
-            hint="The address you used with Na iSema, so we can find what we hold."
+            hint="The address you used with NAISEMA, so we can find what we hold."
             values={values}
             errors={errors}
             autoComplete="email"

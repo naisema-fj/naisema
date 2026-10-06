@@ -3,20 +3,20 @@
  * 1a-18 (#24); until then each says plainly that it is being written (PUB-01).
  */
 export const INFO_PAGES = [
-  { path: "about", title: "About", purpose: "who runs Na iSema, why it exists and how it is funded" },
+  { path: "about", title: "About", purpose: "who runs NAISEMA, why it exists and how it is funded" },
   {
     path: "inclusion",
     title: "Inclusion",
-    purpose: "how Na iSema works to be usable by everyone, and how to tell us when it isn't",
+    purpose: "how NAISEMA works to be usable by everyone, and how to tell us when it isn't",
   },
   {
     path: "accessibility",
     title: "Accessibility",
-    purpose: "the known accessibility problems on Na iSema and how to tell us about one (§6)",
+    purpose: "the known accessibility problems on NAISEMA and how to tell us about one (§6)",
   },
-  { path: "partners", title: "Partners", purpose: "organisations Na iSema has a Partnership Agreement with" },
-  { path: "contact", title: "Contact", purpose: "how to reach the Na iSema team" },
-  { path: "privacy", title: "Privacy", purpose: "what Na iSema collects, why, and how to see or delete it" },
+  { path: "partners", title: "Partners", purpose: "organisations NAISEMA has a Partnership Agreement with" },
+  { path: "contact", title: "Contact", purpose: "how to reach the NAISEMA team" },
+  { path: "privacy", title: "Privacy", purpose: "what NAISEMA collects, why, and how to see or delete it" },
   {
     path: "community-standards",
     title: "Community standards",

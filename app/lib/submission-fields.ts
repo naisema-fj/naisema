@@ -17,7 +17,7 @@ export const SUBMISSION_TYPES = {
     path: "contribute",
     title: "Offer a story, recording or piece of work",
     intro:
-      "Tell us what you'd like to share. Don't send any files yet: if it's right for Na iSema, an editor will email you a private link to upload it.",
+      "Tell us what you'd like to share. Don't send any files yet: if it's right for NAISEMA, an editor will email you a private link to upload it.",
   },
   educator_interest: {
     name: "Educator interest",
@@ -30,7 +30,7 @@ export const SUBMISSION_TYPES = {
     name: "Consultation interest",
     path: "consultation",
     title: "Take part in a consultation",
-    intro: "Na iSema asks Fijians at home and abroad what it should do next. Tell us you'd like to be asked, and how.",
+    intro: "NAISEMA asks Fijians at home and abroad what it should do next. Tell us you'd like to be asked, and how.",
   },
 } as const;
 export type SubmissionType = keyof typeof SUBMISSION_TYPES;
@@ -79,16 +79,16 @@ export type ConsultationWay = keyof typeof CONSULTATION_WAYS;
  */
 export const CONSENT_PURPOSES = {
   reply: "Storing what you send and using it to reply to you",
-  consultation: "Being contacted about Na iSema consultations",
-  newsletter: "Receiving the Na iSema newsletter",
+  consultation: "Being contacted about NAISEMA consultations",
+  newsletter: "Receiving the NAISEMA newsletter",
 } as const;
 export type ConsentPurpose = keyof typeof CONSENT_PURPOSES;
 
 /** What a person ticks to agree, in their own voice. */
 export const CONSENT_PROMPTS: Record<ConsentPurpose, string> = {
-  reply: "Na iSema may keep what I send and use it to reply to me",
-  consultation: "Na iSema may contact me about its consultations",
-  newsletter: "Send me the Na iSema newsletter",
+  reply: "NAISEMA may keep what I send and use it to reply to me",
+  consultation: "NAISEMA may contact me about its consultations",
+  newsletter: "Send me the NAISEMA newsletter",
 };
 
 export const isConsentPurpose = (value: string): value is ConsentPurpose => Object.hasOwn(CONSENT_PURPOSES, value);

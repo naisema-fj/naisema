@@ -31,7 +31,7 @@ import { firstFreeSlug, slugify } from "./slug";
 /**
  * Providers, their Offerings and Partnership Agreements (PART-01–03): plain listings editors keep,
  * audited, not reviewed. Public pages show only what is listed; "Partner" only while an agreement
- * is in force; an Offering shown or hosted on Na iSema only while its Provider is a Partner.
+ * is in force; an Offering shown or hosted on NAISEMA only while its Provider is a Partner.
  */
 
 export type ProviderRow = typeof provider.$inferSelect;
@@ -119,13 +119,13 @@ export async function updateProvider(
 }
 
 /**
- * Checks what an Offering's access mode depends on: an Offering shown or hosted on Na iSema needs
- * its Provider to be a Partner, and one hosted on Na iSema needs the item it is on to exist.
+ * Checks what an Offering's access mode depends on: an Offering shown or hosted on NAISEMA needs
+ * its Provider to be a Partner, and one hosted on NAISEMA needs the item it is on to exist.
  */
 async function accessProblems(db: Database, providerId: string, details: OfferingDetails, now: Date) {
   const errors: Record<string, string> = {};
   if (PARTNER_ONLY_MODES.includes(details.access.mode) && !isPartner(await agreementsOf(db, providerId), now)) {
-    errors.accessMode = "Only a Partner's Offering can be shown or hosted on Na iSema. Record the agreement first.";
+    errors.accessMode = "Only a Partner's Offering can be shown or hosted on NAISEMA. Record the agreement first.";
   }
   if (details.access.mode === "licensed_native") {
     const item = await db
@@ -252,7 +252,7 @@ export function providerChanged(env: Env, slug: string) {
 }
 
 /**
- * The Providers whose Offerings are hosted on a Na iSema item, so their pages can be refreshed
+ * The Providers whose Offerings are hosted on a NAISEMA item, so their pages can be refreshed
  * when that item changes: they say whether it can be opened.
  */
 export async function providersHosting(db: Database, contentItemId: string) {
@@ -281,7 +281,7 @@ async function agreementsByProvider(db: Database) {
   return byProvider;
 }
 
-/** Whether a listed Offering can be shown: one shown or hosted on Na iSema needs a Partner. */
+/** Whether a listed Offering can be shown: one shown or hosted on NAISEMA needs a Partner. */
 const shownWith = (row: OfferingRow, partner: boolean) =>
   row.listed && (partner || !PARTNER_ONLY_MODES.includes(row.accessMode));
 
@@ -409,14 +409,14 @@ export async function offeringView(
         : `Ask ${owner.name}. Their contact details aren't known yet.`,
     };
   } else if (access.mode === "referral") {
-    action = { kind: "text", text: `Na iSema can refer you: ${access.note}` };
+    action = { kind: "text", text: `NAISEMA can refer you: ${access.note}` };
   } else if (access.mode === "licensed_native") {
     const item = await db.select().from(contentItem).where(eq(contentItem.id, access.contentItemId)).get();
     const published = item ? await eligiblePublished(db, item, now) : null;
     action =
       item && published
-        ? { kind: "item", label: `Open ${published.snapshot.title} on Na iSema`, path: itemPath(item) }
-        : { kind: "text", text: "It isn't available on Na iSema right now." };
+        ? { kind: "item", label: `Open ${published.snapshot.title} on NAISEMA`, path: itemPath(item) }
+        : { kind: "text", text: "It isn't available on NAISEMA right now." };
   } else {
     action = { kind: "text", text: "Not known" };
   }
