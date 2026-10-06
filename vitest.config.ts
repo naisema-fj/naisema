@@ -28,6 +28,10 @@ export default defineConfig({
   ],
   test: {
     include: ["tests/integration/**/*.test.ts", "tests/unit/**/*.test.ts"],
+    // The longest journeys (a Case through triage and appeal, a Revision through every review gate)
+    // make dozens of requests to the built Worker: about 2 s locally, but over the 5 s default on a
+    // slow CI runner. A test that hangs still fails, at 20 s.
+    testTimeout: 20_000,
     setupFiles: ["./tests/integration/apply-migrations.ts"],
   },
 });

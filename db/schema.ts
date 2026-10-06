@@ -927,78 +927,6 @@ export const learningLayerEducator = sqliteTable(
   ],
 );
 
-// --- Monitoring (docs/handover/runbook.md, monitoring and alerts) ---
-
-/**
- * An email that couldn't be sent (app/lib/email.server.ts), for the hourly monitor. Only its
- * subject and when: never the address or the text.
- */
-export const emailFailure = sqliteTable(
-  "email_failure",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    subject: text("subject").notNull(),
-    failedAt: integer("failed_at", { mode: "timestamp_ms" }).notNull(),
-  },
-  (table) => [index("email_failure_failed_at_idx").on(table.failedAt)],
-);
-
-/**
- * A request the Worker answered with a 5xx or failed outright (workers/app.ts), for the monitor's
- * error rate. Only when: Cloudflare's own error count misses the 500s React Router answers with.
- */
-export const serverError = sqliteTable(
-  "server_error",
-  {
-    id: integer("id").primaryKey({ autoIncrement: true }),
-    failedAt: integer("failed_at", { mode: "timestamp_ms" }).notNull(),
-  },
-  (table) => [index("server_error_failed_at_idx").on(table.failedAt)],
-);
-
-/**
- * One run of a scheduled job (workers/app.ts), so the monitor sees runs that failed and jobs that
- * stopped running. `ok` stays empty while it runs, and for good if the Worker died part-way.
- */
-export const jobRun = sqliteTable(
-  "job_run",
-  {
-    id: text("id").primaryKey(),
-    job: text("job").$type<JobName>().notNull(),
-    startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
-    finishedAt: integer("finished_at", { mode: "timestamp_ms" }),
-    ok: integer("ok", { mode: "boolean" }),
-    /** Why it failed, redacted (app/lib/log.server.ts). */
-    error: text("error"),
-  },
-  (table) => [index("job_run_job_idx").on(table.job, table.startedAt)],
-);
-
-/** An ongoing problem the monitor has told the technical owner about, until it clears (app/lib/monitor-rules.ts). */
-export const monitorAlert = sqliteTable("monitor_alert", {
-  check: text("check").$type<CheckId>().primaryKey(),
-  failingSince: integer("failing_since", { mode: "timestamp_ms" }).notNull(),
-  lastAlertedAt: integer("last_alerted_at", { mode: "timestamp_ms" }).notNull(),
-  summary: text("summary").notNull(),
-});
-
-/**
- * A month's media usage (VAC-10), refreshed daily from Cloudflare's figures for the whole account.
- * Its cost is worked out from these when shown (app/lib/usage-rules.ts).
- */
-export const usageMonth = sqliteTable("usage_month", {
-  /** The calendar month in UTC, as "2026-10". */
-  month: text("month").primaryKey(),
-  /** Minutes of video Stream holds, at the latest reading. */
-  storedMinutes: real("stored_minutes").notNull(),
-  /** Minutes of video Stream delivered so far this month. */
-  deliveredMinutes: real("delivered_minutes").notNull(),
-  /** Bytes held in R2, across every bucket, at the latest reading. */
-  r2Bytes: integer("r2_bytes").notNull(),
-  recordedAt: integer("recorded_at", { mode: "timestamp_ms" }).notNull(),
-  /** The highest budget alert sent this month (50 or 80 per cent of the ceiling), or 0. */
-  budgetAlertPercent: integer("budget_alert_percent").notNull().default(0),
-});
 // --- Learning Layer review and publishing (ADR-0003, ADR-0006, ADR-0007) ---
 
 /** An editor sending a Learning Layer Revision for review. Its existence makes the Revision "submitted". */
@@ -1307,4 +1235,77 @@ export const deletionLedger = sqliteTable("deletion_ledger", {
   /** Why: "learner.deleted" (they asked) or "learner.inactive". */
   reason: text("reason").notNull(),
   deletedAt: integer("deleted_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+// --- Monitoring (docs/handover/runbook.md, monitoring and alerts) ---
+
+/**
+ * An email that couldn't be sent (app/lib/email.server.ts), for the hourly monitor. Only its
+ * subject and when: never the address or the text.
+ */
+export const emailFailure = sqliteTable(
+  "email_failure",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    subject: text("subject").notNull(),
+    failedAt: integer("failed_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("email_failure_failed_at_idx").on(table.failedAt)],
+);
+
+/**
+ * A request the Worker answered with a 5xx or failed outright (workers/app.ts), for the monitor's
+ * error rate. Only when: Cloudflare's own error count misses the 500s React Router answers with.
+ */
+export const serverError = sqliteTable(
+  "server_error",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    failedAt: integer("failed_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("server_error_failed_at_idx").on(table.failedAt)],
+);
+
+/**
+ * One run of a scheduled job (workers/app.ts), so the monitor sees runs that failed and jobs that
+ * stopped running. `ok` stays empty while it runs, and for good if the Worker died part-way.
+ */
+export const jobRun = sqliteTable(
+  "job_run",
+  {
+    id: text("id").primaryKey(),
+    job: text("job").$type<JobName>().notNull(),
+    startedAt: integer("started_at", { mode: "timestamp_ms" }).notNull(),
+    finishedAt: integer("finished_at", { mode: "timestamp_ms" }),
+    ok: integer("ok", { mode: "boolean" }),
+    /** Why it failed, redacted (app/lib/log.server.ts). */
+    error: text("error"),
+  },
+  (table) => [index("job_run_job_idx").on(table.job, table.startedAt)],
+);
+
+/** An ongoing problem the monitor has told the technical owner about, until it clears (app/lib/monitor-rules.ts). */
+export const monitorAlert = sqliteTable("monitor_alert", {
+  check: text("check").$type<CheckId>().primaryKey(),
+  failingSince: integer("failing_since", { mode: "timestamp_ms" }).notNull(),
+  lastAlertedAt: integer("last_alerted_at", { mode: "timestamp_ms" }).notNull(),
+  summary: text("summary").notNull(),
+});
+
+/**
+ * A month's media usage (VAC-10), refreshed daily from Cloudflare's figures for the whole account.
+ * Its cost is worked out from these when shown (app/lib/usage-rules.ts).
+ */
+export const usageMonth = sqliteTable("usage_month", {
+  /** The calendar month in UTC, as "2026-10". */
+  month: text("month").primaryKey(),
+  /** Minutes of video Stream holds, at the latest reading. */
+  storedMinutes: real("stored_minutes").notNull(),
+  /** Minutes of video Stream delivered so far this month. */
+  deliveredMinutes: real("delivered_minutes").notNull(),
+  /** Bytes held in R2, across every bucket, at the latest reading. */
+  r2Bytes: integer("r2_bytes").notNull(),
+  recordedAt: integer("recorded_at", { mode: "timestamp_ms" }).notNull(),
+  /** The highest budget alert sent this month (50 or 80 per cent of the ceiling), or 0. */
+  budgetAlertPercent: integer("budget_alert_percent").notNull().default(0),
 });

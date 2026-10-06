@@ -8,8 +8,14 @@ export const ADMIN = "http://admin.localhost";
 /** A minimal cookie jar so a test can act as one browser across requests. */
 export class Browser {
   cookies = new Map<string, string>();
-  /** Each simulated browser has its own client IP, as Cloudflare would report it. */
-  ip = `203.0.113.${Math.floor(Math.random() * 250) + 1}`;
+  /**
+   * Each simulated browser has its own client IP, as Cloudflare would report it, drawn at random
+   * from the 16 million addresses of 10.0.0.0/8. Per-address limits (public forms, sign-in) then
+   * count each browser apart, so a test that uses up its own limit never refuses another test's
+   * sends, as it could when browsers shared 250 addresses. (IPv4: Better Auth groups IPv6
+   * addresses by /64.)
+   */
+  ip = `10.${[...crypto.getRandomValues(new Uint8Array(3))].join(".")}`;
 
   async fetch(path: string, init: RequestInit & { form?: Record<string, string>; multipart?: FormData } = {}) {
     const url = path.startsWith("http") ? path : `${ADMIN}${path}`;
