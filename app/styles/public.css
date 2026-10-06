@@ -23,8 +23,6 @@
   --mist: #a9bcc2;
   /* Kesa deepened for small text, labels and the focus ring: 5.3:1 on Shell, where Kesa is 3.5:1. */
   --kesa-deep: #a9472a;
-  --kesa-100: #f6ded5;
-  --voivoi-100: #f7e7c2;
 
   /* Type: Bricolage Grotesque speaks, Jost is read. */
   --font-display: "Bricolage Grotesque Variable", "Arial Narrow", system-ui, sans-serif;
@@ -42,6 +40,9 @@
   --weave-gap: clamp(0.6rem, 0.4rem + 0.8vw, 1rem);
   --strand-inset: clamp(0.35rem, 0.2rem + 0.5vw, 0.7rem);
   --tile-radius: 18px;
+  /* One repeat of the weave, used as a mask so each tile can tint its own strands. */
+  --strand-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect x='3.5' y='1.5' width='11' height='15' rx='1.6'/%3E%3Crect x='19.5' y='3.5' width='15' height='11' rx='1.6'/%3E%3Crect x='1.5' y='21.5' width='15' height='11' rx='1.6'/%3E%3Crect x='21.5' y='19.5' width='11' height='15' rx='1.6'/%3E%3C/svg%3E");
+  --tile-name-size: 2.4rem;
   --plate-radius: 10px;
   --measure: 66ch;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -543,7 +544,8 @@ html:has(.public) {
 .pane-body blockquote {
   margin: 1.5em 0;
   padding: 1rem 1.25rem;
-  background: var(--voivoi-100);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--voivoi);
   border-radius: var(--plate-radius);
   font-size: 1.2rem;
   line-height: 1.6;
@@ -710,12 +712,24 @@ html:has(.public) {
   color: #d5dfe2;
 }
 
+/* Signed like a letter from the mat's maker: small, set apart from the action below it. */
 .sign-off {
-  margin-top: auto;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 1rem 1.5rem;
+  gap: 0.6rem;
+}
+
+.sign-off::before {
+  content: "";
+  width: 0.7rem;
+  height: 0.5rem;
+  border-radius: 2px;
+  background: var(--kesa);
+}
+
+.tile-welcome .sign-off,
+.tile-welcome .dateline {
+  order: 2;
 }
 
 .public .tile-welcome .primary-link {
@@ -729,11 +743,10 @@ html:has(.public) {
 }
 
 .signature {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.15rem;
-  letter-spacing: 0.05em;
-  color: var(--shell);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: var(--mist);
 }
 
 .tile-welcome .dateline {
@@ -744,7 +757,11 @@ html:has(.public) {
   outline-color: var(--voivoi);
 }
 
-/* The six areas: tiles alternately upright and sideways, as the strands of the mark are. */
+/*
+ * The six areas: tiles alternately upright and sideways, as the strands of the mark are. On
+ * phones and tablets the alternation is an inset; on wide screens the tiles take the strands'
+ * own shapes, upright ones two rows tall and sideways ones two columns wide.
+ */
 
 .area-tiles {
   list-style: none;
@@ -752,9 +769,7 @@ html:has(.public) {
   padding: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-auto-rows: 1fr;
   gap: var(--weave-gap);
-  height: 100%;
 }
 
 .area-tiles li {
@@ -768,7 +783,7 @@ html:has(.public) {
   flex-direction: column;
   justify-content: space-between;
   gap: 1.25rem;
-  min-height: 11rem;
+  min-height: 9.5rem;
   background: var(--tile-bg);
   color: var(--tile-fg);
   box-shadow: inset 0 0 0 2px var(--tile-edge, transparent);
@@ -806,10 +821,52 @@ html:has(.public) {
   outline-color: var(--ink);
 }
 
+/*
+ * In the full mat, the tall tiles (the upright strands and the welcome) fill the height between
+ * their heading and their words with their own strands, so the mat shows through instead of an
+ * empty field. The band is never shorter than one whole repeat and repeats whole strands only.
+ * Decorative only; set in the desktop mat below.
+ */
+.area-tiles .tile::after,
+.tile-welcome::after {
+  order: 1;
+  flex: 1 1 0;
+  min-height: 36px;
+  background-color: var(--tile-strand);
+  -webkit-mask: var(--strand-mask) center / 36px 36px round space;
+  mask: var(--strand-mask) center / 36px 36px round space;
+}
+
+.tile-text {
+  order: 2;
+}
+
+.tile-learn {
+  --tile-strand: #b95334;
+}
+
+.tile-voices,
+.tile-ezine {
+  --tile-strand: #ddad45;
+}
+
+.tile-discover {
+  --tile-strand: var(--sand);
+}
+
+.tile-connect,
+.tile-welcome {
+  --tile-strand: var(--ink-2);
+}
+
+.tile-resources {
+  --tile-strand: #24505f;
+}
+
 .tile-name {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--step-3);
+  font-size: var(--tile-name-size);
   line-height: 0.92;
   letter-spacing: -0.025em;
 }
@@ -849,7 +906,7 @@ html:has(.public) {
 }
 
 .tile-updates {
-  background: var(--voivoi-100);
+  background: var(--voivoi);
 }
 
 .tile-latest h2,
@@ -872,22 +929,63 @@ html:has(.public) {
   font-size: var(--step-0);
 }
 
-@media (min-width: 40rem) {
+/*
+ * Two columns (tablets, and laptops below the full mat): Learn crosses the head, Voices stands
+ * upright beside Discover and Connect, and E-zine and Resources stand upright at the foot. The
+ * left column reads before the right, as the areas are listed.
+ */
+@media (min-width: 40rem) and (max-width: 79.999rem) {
   .area-tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(9.5rem, auto);
   }
 
-  /* In two columns the weave alternates along each row and down each column. */
-  .area-tiles li:nth-child(4n + 3) .tile {
-    --inset-inline: 0;
-    --inset-block: var(--strand-inset);
+  .area-tiles li:has(.tile-learn) {
+    grid-column: 1 / -1;
+    grid-row: 1;
   }
 
-  .area-tiles li:nth-child(4n + 4) .tile {
+  .area-tiles li:has(.tile-voices) {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+  }
+
+  .area-tiles li:has(.tile-discover) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .area-tiles li:has(.tile-connect) {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .area-tiles li:has(.tile-ezine) {
+    grid-column: 1;
+    grid-row: 4 / span 2;
+  }
+
+  .area-tiles li:has(.tile-resources) {
+    grid-column: 2;
+    grid-row: 4 / span 2;
+  }
+
+  .area-tiles :is(.tile-voices, .tile-ezine, .tile-resources) {
     --inset-inline: var(--strand-inset);
     --inset-block: 0;
   }
 
+  .area-tiles :is(.tile-learn, .tile-discover, .tile-connect) {
+    --inset-inline: 0;
+    --inset-block: var(--strand-inset);
+  }
+
+  .area-tiles :is(.tile-voices, .tile-ezine, .tile-resources)::after {
+    content: "";
+  }
+}
+
+@media (min-width: 40rem) {
   .mat {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -899,29 +997,90 @@ html:has(.public) {
   }
 }
 
-@media (min-width: 64rem) {
+@media (min-width: 80rem) {
+  /* Five columns: the welcome takes two and the areas three; the latest pieces close the mat
+     beside the ways to take part and the newsletter, stacked. */
   .mat {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .tile-welcome {
     grid-column: 1 / span 2;
-    grid-row: 1 / span 2;
   }
 
   .areas {
-    grid-column: 3 / span 2;
-    grid-row: 1 / span 3;
+    grid-column: 3 / span 3;
   }
 
   .tile-latest {
-    grid-column: 1 / span 2;
-    grid-row: 3;
+    grid-column: 1 / span 3;
+    grid-row: 2 / span 2;
   }
 
   .tile-participate,
   .tile-updates {
-    grid-column: span 2;
+    grid-column: 4 / span 2;
+  }
+
+  .area-tiles {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr);
+    grid-auto-rows: minmax(9.5rem, auto);
+  }
+
+  .areas {
+    --tile-name-size: 2rem;
+  }
+
+  .area-tiles :is(.tile-discover, .tile-connect)::after,
+  .tile-welcome::after {
+    content: "";
+  }
+
+  .public .area-tiles .tile {
+    padding: 1.1rem 1.1rem 1.25rem;
+  }
+
+  /* Sideways strands across the head: Learn and Voices, two columns wide. */
+  .area-tiles li:has(.tile-learn) {
+    grid-column: 1 / span 2;
+    grid-row: 1;
+  }
+
+  .area-tiles li:has(.tile-voices) {
+    grid-column: 3 / span 2;
+    grid-row: 1;
+  }
+
+  /* Upright strands at either edge, two rows tall: the areas with the shortest descriptions. */
+  .area-tiles li:has(.tile-discover) {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+  }
+
+  .area-tiles li:has(.tile-connect) {
+    grid-column: 4;
+    grid-row: 2 / span 2;
+  }
+
+  /* Two more sideways strands woven between them. */
+  .area-tiles li:has(.tile-ezine) {
+    grid-column: 2 / span 2;
+    grid-row: 2;
+  }
+
+  .area-tiles li:has(.tile-resources) {
+    grid-column: 2 / span 2;
+    grid-row: 3;
+  }
+
+  .area-tiles :is(.tile-discover, .tile-connect) {
+    --inset-inline: var(--strand-inset);
+    --inset-block: 0;
+  }
+
+  .area-tiles :is(.tile-learn, .tile-voices, .tile-ezine, .tile-resources) {
+    --inset-inline: 0;
+    --inset-block: var(--strand-inset);
   }
 }
 
@@ -933,6 +1092,10 @@ html:has(.public) {
   padding: 0;
   max-width: 48rem;
   display: grid;
+}
+
+.tile-latest .piece-list {
+  max-width: none;
 }
 
 .public .piece-list li {
@@ -980,12 +1143,12 @@ html:has(.public) {
   font-weight: 600;
 }
 
-/* What isn't open yet: said plainly, on a Voivoi wash. */
+/* What isn't open yet: said plainly, on a Sand plate. */
 .not-open {
   font-size: 1rem;
   line-height: 1.5;
   color: var(--ink);
-  background: var(--voivoi-100);
+  background: var(--sand);
   border-radius: var(--plate-radius);
   padding: 0.9rem 1.1rem;
 }
@@ -1192,7 +1355,7 @@ blockquote.notice-wording {
 }
 
 .form-alert {
-  background: var(--kesa-100);
+  background: var(--paper);
   box-shadow: inset 0 0 0 2px var(--kesa-deep);
   border-radius: var(--plate-radius);
   padding: 0.85rem 1.1rem;
@@ -1675,8 +1838,7 @@ blockquote.notice-wording {
 
 /* The line being played is a Voivoi strand, said in words to assistive technology by the player. */
 .public .transcript-segment.playing {
-  background: var(--voivoi-100);
-  box-shadow: inset 0 0 0 2px var(--voivoi);
+  background: var(--voivoi);
 }
 
 .public .transcript-fijian {
@@ -1689,6 +1851,11 @@ blockquote.notice-wording {
   color: var(--muted);
   margin: 0.25rem 0;
   white-space: normal;
+}
+
+/* Muted grey is under 4.5:1 on Voivoi, so the playing line's English is set in Ink. */
+.public .transcript-segment.playing .transcript-english {
+  color: var(--ink);
 }
 
 .public .meaning-word {
@@ -1799,7 +1966,7 @@ blockquote.notice-wording {
   margin: 1rem 0;
   padding: 0.9rem 1.1rem;
   border-radius: var(--plate-radius);
-  background: var(--voivoi-100);
+  background: var(--sand);
 }
 
 .public .stage-intro h2 {

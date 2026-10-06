@@ -48,10 +48,12 @@ export default function Home({ loaderData }: Route.ComponentProps) {
             <WovenMark />
           </div>
           <p className="welcome-statement">{loaderData.welcomeStatement ?? DEFAULT_WELCOME}</p>
-          <p className="sign-off">
+          <p className="welcome-action">
             <Link to={first ? first.path : "#areas"} className="primary-link">
               {first ? "Read the latest" : "Explore the areas"}
             </Link>
+          </p>
+          <p className="sign-off">
             <span className="signature">{siteName}</span>
           </p>
           {first?.publishedAt && (
