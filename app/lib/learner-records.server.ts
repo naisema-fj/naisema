@@ -13,6 +13,7 @@ import {
   user as userTable,
   verification,
 } from "~db/schema";
+import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
 import { letterText, sendEmail } from "./email.server";
 import { INACTIVE_DAYS, INACTIVITY_WARNING_DAYS, inactivityStep, LEARNER_PATHS } from "./learner-progress";
@@ -52,6 +53,11 @@ export async function clearHistory(db: Database, userId: string) {
   await db.batch([...historyDeletes(db, userId)]);
 }
 
+const DELETION_REASONS = {
+  "learner.deleted": "Deleted by the learner",
+  "learner.inactive": "Unused for two years",
+} as const;
+
 /**
  * Deletes a Learner Account and everything it holds, at once, and adds it to the deletion ledger so
  * a restored backup deletes it again (ADR-0009). Backups older than this keep it for at most 35
@@ -63,9 +69,18 @@ export async function deleteLearnerAccount(
   reason: "learner.deleted" | "learner.inactive",
 ) {
   const deletedAt = new Date();
+  const subjectHash = await sha256Hex(userId);
   const person = await db.select({ email: userTable.email }).from(userTable).where(eq(userTable.id, userId)).get();
   await db.batch([
-    db.insert(deletionLedger).values({ subjectHash: await sha256Hex(userId), reason, deletedAt }),
+    db.insert(deletionLedger).values({ subjectHash, reason, deletedAt }),
+    // Audited by the ledger's hash: the audit log outlives the account and must not name it (CMS-05).
+    auditInsert(db, {
+      actorId: null,
+      action: "learner_account.deleted",
+      objectType: "learner_account",
+      objectId: subjectHash,
+      details: { reason: DELETION_REASONS[reason] },
+    }),
     ...historyDeletes(db, userId),
     // Sign-in links not yet used, which name the address.
     db

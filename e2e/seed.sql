@@ -6,8 +6,14 @@ ON CONFLICT(key) DO UPDATE SET value = excluded.value;
 -- One staff administrator per browser project for the admin sign-in journey, reset on every run.
 DELETE FROM user WHERE email LIKE 'e2e-admin-%@naisema.test';
 DELETE FROM email_outbox;
--- Sign-in links sent by earlier local runs count towards the per-address limit; forget them.
+-- Sign-in links sent by earlier local runs count towards the per-address limit; forget them. The
+-- audit log is append-only (migrations/0020), so this local fixture lifts the guard for that alone.
+DROP TRIGGER IF EXISTS audit_event_no_delete;
 DELETE FROM audit_event WHERE object_id LIKE 'e2e-%';
+CREATE TRIGGER audit_event_no_delete BEFORE DELETE ON audit_event
+BEGIN
+	SELECT RAISE(ABORT, 'The audit log is append-only');
+END;
 DELETE FROM rate_limit;
 INSERT INTO user (id, name, email, email_verified, created_at, updated_at) VALUES
   ('e2e-admin-desktop', 'E2E Admin', 'e2e-admin-desktop-chromium@naisema.test', 0, 0, 0),

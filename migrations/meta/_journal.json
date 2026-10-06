@@ -141,6 +141,13 @@
       "when": 1791258718998,
       "tag": "0019_learner_accounts",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1791260867057,
+      "tag": "0020_audit_log_append_only",
+      "breakpoints": true
     }
   ]
 }

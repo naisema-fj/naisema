@@ -604,6 +604,13 @@ describe("a learner's data", () => {
       .bind(hash)
       .first();
     expect(ledger).toEqual({ reason: "learner.deleted" });
+    // The audit log records the deletion by the same hash, never the account's ID or address.
+    const audited = await env.DB.prepare(
+      "SELECT actor_id AS actorId, object_type AS type, details FROM audit_event WHERE action = 'learner_account.deleted' AND object_id = ?1",
+    )
+      .bind(hash)
+      .first();
+    expect(audited).toEqual({ actorId: null, type: "learner_account", details: '{"reason":"Deleted by the learner"}' });
     await expect(env.DB.prepare("UPDATE deletion_ledger SET reason = 'x'").run()).rejects.toThrow();
     await expect(env.DB.prepare("DELETE FROM deletion_ledger").run()).rejects.toThrow();
     expect((await learner.browser.fetch(`${PUBLIC}/account`)).headers.get("Location")).toBe("/account/sign-in");
