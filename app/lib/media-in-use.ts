@@ -1,4 +1,5 @@
 import type { ArticleSnapshot } from "./article-fields";
+import { episodeRecording } from "./episode-fields";
 
 const ASSET_ID = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})";
 /** A media library address: an image at /media/images/{id}/{width} or a file at /media/files/{id}. */
@@ -18,7 +19,7 @@ export function mediaAssetIdsIn(snapshot: ArticleSnapshot): string[] {
     if (id) ids.add(id);
   });
   if (snapshot.resource?.source.kind === "file") ids.add(snapshot.resource.source.assetId);
-  if (snapshot.episode) ids.add(snapshot.episode.audioAssetId);
+  if (snapshot.episode) ids.add(episodeRecording(snapshot.episode).assetId);
   if (snapshot.creator) ids.add(snapshot.creator.portraitAssetId);
   if (snapshot.video) ids.add(snapshot.video.videoAssetId);
   return [...ids];

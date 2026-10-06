@@ -23,10 +23,21 @@ type Approval = {
   conditions: string | null;
   carriedFromNumber: number | null;
   decidedAt: Date | string;
+  /** A Learning Layer's Knowledge Holder Approval: who the Review Link they saw it through was for. */
+  reviewLinkRecipient?: string | null;
+  /** Where an editor downloads the approval's private evidence, if it has any. */
+  evidence?: { name: string; href: string } | null;
 };
 
 type Props = {
   revisionNumber: number;
+  /** What is reviewed and published, as staff name it. */
+  subject?: "article" | "Learning Layer";
+  /**
+   * A Learning Layer's Review Links: a Knowledge Holder Approval names the one they saw the
+   * Revision through, and can carry private evidence.
+   */
+  reviewLinks?: { id: string; label: string }[];
   review: {
     state: RevisionState;
     flags: ContentFlag[];
@@ -62,11 +73,20 @@ function describeApproval(approval: Approval) {
     ? `by ${approval.knowledgeHolderName} (${approval.knowledgeHolderMethod}), recorded by ${approval.reviewerEmail}`
     : `by ${approval.reviewerEmail}`;
   const carried = approval.carriedFromNumber ? `, carried forward from revision ${approval.carriedFromNumber}` : "";
-  return `${verb} ${who} on ${formatDate(approval.decidedAt)}${carried}`;
+  const seen = approval.reviewLinkRecipient ? `, seen through the Review Link for ${approval.reviewLinkRecipient}` : "";
+  return `${verb} ${who} on ${formatDate(approval.decidedAt)}${seen}${carried}`;
 }
 
 /** Review and publication for one Revision: what it needs, what is decided, and what you can do. */
-export function ReviewPanel({ revisionNumber, review, eligibility, abilities, reviewerChoices }: Props) {
+export function ReviewPanel({
+  revisionNumber,
+  subject = "article",
+  reviewLinks,
+  review,
+  eligibility,
+  abilities,
+  reviewerChoices,
+}: Props) {
   const approvals = new Map(review.approvals.map((approval) => [approval.id, approval]));
 
   return (
@@ -75,7 +95,7 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
       <dl>
         <dt>This revision</dt>
         <dd>{STATE_NAMES[review.state]}</dd>
-        <dt>Article</dt>
+        <dt>{subject === "article" ? "Article" : subject}</dt>
         <dd>
           {PUBLICATION_NAMES[review.publicationState]}
           {review.publishedNumber !== null && review.publicationState !== "unpublished"
@@ -190,10 +210,27 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
       ))}
 
       {abilities.canRecordKnowledgeHolder && (
-        <Form method="post" className="decision-form">
+        <Form method="post" className="decision-form" encType={reviewLinks ? "multipart/form-data" : undefined}>
           <h3>Record a Knowledge Holder Approval</h3>
           <p>Record it only for revision {revisionNumber}, the exact revision the Knowledge Holder saw.</p>
           <input type="hidden" name="intent" value="knowledgeHolder" />
+          {reviewLinks &&
+            (reviewLinks.length ? (
+              <>
+                <label htmlFor="kh-link">The Review Link they saw it through</label>
+                <select id="kh-link" name="reviewLinkId" required>
+                  {reviewLinks.map((link) => (
+                    <option key={link.id} value={link.id}>
+                      {link.label}
+                    </option>
+                  ))}
+                </select>
+              </>
+            ) : (
+              <p>
+                Issue a Review Link first: the approval names the link the Knowledge Holder saw this revision through.
+              </p>
+            ))}
           <label htmlFor="kh-name">Knowledge Holder</label>
           <input id="kh-name" name="knowledgeHolderName" required />
           <label htmlFor="kh-method">How they gave approval</label>
@@ -205,6 +242,19 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
           <input id="kh-scope" name="scope" />
           <label htmlFor="kh-notes">Notes</label>
           <textarea id="kh-notes" name="notes" rows={2} />
+          {reviewLinks && (
+            <>
+              <label htmlFor="kh-evidence">Evidence (optional: PDF, JPEG, PNG or WebP, up to 10 MB)</label>
+              <p id="kh-evidence-hint">Kept privately, for editors only, once it passes its virus scan.</p>
+              <input
+                id="kh-evidence"
+                name="evidence"
+                type="file"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
+                aria-describedby="kh-evidence-hint"
+              />
+            </>
+          )}
           <button type="submit">Record approval</button>
         </Form>
       )}
@@ -233,14 +283,14 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
       {abilities.canWithdraw && review.publicationState === "published" && (
         <Form method="post" className="inline-form">
           <input type="hidden" name="intent" value="withdraw" />
-          <button type="submit">Withdraw the article</button>
+          <button type="submit">Withdraw the {subject}</button>
         </Form>
       )}
       {abilities.canWithdraw &&
         (review.publicationState === "unpublished" || review.publicationState === "withdrawn") && (
           <Form method="post" className="inline-form">
             <input type="hidden" name="intent" value="archive" />
-            <button type="submit">Archive the article</button>
+            <button type="submit">Archive the {subject}</button>
           </Form>
         )}
 
@@ -254,6 +304,11 @@ export function ReviewPanel({ revisionNumber, review, eligibility, abilities, re
                 {approval.scope && `. Reviewed: ${approval.scope}`}
                 {approval.conditions && `. Conditions: ${approval.conditions}`}
                 {approval.notes && `. Notes: ${approval.notes}`}
+                {approval.evidence && (
+                  <>
+                    . <a href={approval.evidence.href}>Download the evidence ({approval.evidence.name})</a>
+                  </>
+                )}
               </li>
             ))}
           </ul>

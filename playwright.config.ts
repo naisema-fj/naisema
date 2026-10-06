@@ -36,7 +36,7 @@ export default defineConfig({
   ],
   webServer: {
     // Serves the production build with local D1, migrated and seeded with e2e fixtures.
-    command: `node scripts/ensure-dev-vars.mjs && pnpm db:migrate:local && pnpm wrangler d1 execute DB --local --file e2e/seed.sql && pnpm preview --port ${port} --strictPort`,
+    command: `node scripts/ensure-dev-vars.mjs && pnpm db:migrate:local && pnpm wrangler d1 execute DB --local --file e2e/seed.sql && pnpm wrangler r2 object put naisema-dev-video-masters/masters/e2e-public-video --local --file e2e/fixtures/market.mp4 --content-type video/mp4 && pnpm preview --port ${port} --strictPort`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -1,15 +1,16 @@
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration, useMatches } from "react-router";
 import type { Route } from "./+types/root";
 import "./app.css";
+import { pageHydrates, type RouteHandle } from "./lib/route-handle";
 import { useNonce } from "./lib/security-headers";
 
 /**
  * A route opts out of client JavaScript with `export const handle = { hydrate: false }`
- * when it has nothing interactive (docs/phase-1a-defaults.md §7).
+ * when it has nothing interactive (docs/phase-1a-defaults.md §7, app/lib/route-handle.ts).
  */
 function useHydrates() {
   const leaf = useMatches().at(-1);
-  return (leaf?.handle as { hydrate?: boolean } | undefined)?.hydrate !== false;
+  return pageHydrates(leaf?.handle as RouteHandle | undefined, leaf?.loaderData);
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {

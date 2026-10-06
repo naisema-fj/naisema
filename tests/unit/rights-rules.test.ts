@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { assetRightsProblems, expiryWarningsDue, type RightsFacts, rightsProblems } from "~/lib/rights-rules";
+import {
+  assetRightsProblems,
+  expiryWarningsDue,
+  type RightsFacts,
+  rightsProblems,
+  teachingRightsProblems,
+} from "~/lib/rights-rules";
 
 const now = new Date("2026-10-01T00:00:00Z");
 const days = (count: number) => new Date(now.getTime() + count * 86_400_000);
@@ -183,6 +189,63 @@ describe("expiryWarningsDue", () => {
         sent: [],
         now,
       }),
+    ).toEqual([]);
+  });
+});
+
+describe("teachingRightsProblems: what a Learning Layer needs on its Video's rights", () => {
+  const teaching = record({ permittedUses: ["translate", "transcribe", "educationalAdaptation"] });
+
+  it("needs Publish and each teaching use, each from a current record; an Excerpt needs Excerpt too", () => {
+    expect(teachingRightsProblems({ records: [record(), teaching], excerpt: false, now })).toEqual([]);
+    expect(teachingRightsProblems({ records: [record(), teaching], excerpt: true, now })).toEqual([
+      "Its Video has no current Rights Record granting Excerpt.",
+    ]);
+    expect(
+      teachingRightsProblems({
+        records: [record({ permittedUses: ["publish", "translate"] })],
+        excerpt: false,
+        now,
+      }),
+    ).toEqual([
+      "Its Video has no current Rights Record granting Transcribe.",
+      "Its Video has no current Rights Record granting Educational adaptation.",
+    ]);
+  });
+
+  it("is lost with the teaching record, while the Video keeps its own Publish grant", () => {
+    const withdrawn = { ...teaching, withdrawnAt: days(-1) };
+    expect(teachingRightsProblems({ records: [record(), withdrawn], excerpt: false, now })).toEqual([
+      "Its Video's Rights Record granting Translate was withdrawn.",
+      "Its Video's Rights Record granting Transcribe was withdrawn.",
+      "Its Video's Rights Record granting Educational adaptation was withdrawn.",
+    ]);
+    expect(rightsProblems({ records: [record(), withdrawn], needsGuardianPermission: false, now })).toEqual([]);
+  });
+
+  it("is lost with the Video's Publish grant too, and says when a grant expired", () => {
+    expect(
+      teachingRightsProblems({ records: [record({ expiresAt: days(-1) }), teaching], excerpt: false, now }),
+    ).toEqual(["Its Video's Rights Record granting Publish expired on 30 Sept 2026."]);
+  });
+
+  it("ignores records for parts of the Video", () => {
+    expect(
+      teachingRightsProblems({
+        records: [record(), { ...teaching, part: { kind: "speaker", name: "Mere" } }],
+        excerpt: false,
+        now,
+      }),
+    ).toHaveLength(3);
+  });
+
+  it("needs guardian permission when the Video shows identifiable children", () => {
+    const guardian = record({ guardianPermission: true });
+    expect(
+      teachingRightsProblems({ records: [record(), teaching], excerpt: false, needsGuardianPermission: true, now }),
+    ).toEqual(["Identifiable children in its Video need current, documented guardian permission granting Publish."]);
+    expect(
+      teachingRightsProblems({ records: [guardian, teaching], excerpt: false, needsGuardianPermission: true, now }),
     ).toEqual([]);
   });
 });

@@ -4,6 +4,7 @@ import { getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireRightsManager } from "~/lib/content.server";
 import { episodeParts } from "~/lib/episode-fields";
+import { layersOfVideo } from "~/lib/learning-layers.server";
 import { publicItemChanged } from "~/lib/public-change.server";
 import { rightsAction, rightsPageData } from "~/lib/rights-page.server";
 import type { Route } from "./+types/rights";
@@ -28,6 +29,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { db, article } = await requireArticleRights(request, context.get(cloudflareContext).env, params.id);
   return {
     article: { id: article.id, title: article.currentRevision.snapshot.title },
+    // Learning Layers on a Video rely on its rights too (VID-01, VCMS-06).
+    layers: article.type === "video" ? await layersOfVideo(db, article.id) : [],
     ...(await rightsPageData(db, { type: "content_item", id: article.id }, partsOf(article.currentRevision.snapshot))),
     done: new URL(request.url).searchParams.get("done"),
   };
@@ -44,7 +47,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 }
 
 export default function Rights({ loaderData, actionData }: Route.ComponentProps) {
-  const { article, parts, records, contributors, done } = loaderData;
+  const { article, parts, records, contributors, done, layers } = loaderData;
   return (
     <main id="main" className="page">
       <p>
@@ -61,6 +64,23 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
               a Resource's file, an Episode's audio) needs a Rights Record of its own, on the file's page in the media
               library.
             </p>
+            {layers.length > 0 && (
+              <>
+                <p>
+                  Learning Layers on this Video need its rights too: Publish, Translate, Transcribe and Educational
+                  adaptation, plus Excerpt for one built on an Excerpt. Withdrawing a record that grants only those
+                  teaching uses takes the Learning Layers down and leaves the Video; withdrawing its Publish grant takes
+                  down both. These depend on it:
+                </p>
+                <ul>
+                  {layers.map((layer) => (
+                    <li key={layer.id}>
+                      <a href={`/admin/learning-layers/${layer.id}`}>{layer.title}</a>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
             {parts.length > 0 && (
               <p>
                 A speaker or guest, a piece of music or an archive clip this Episode lists can have Rights Records of

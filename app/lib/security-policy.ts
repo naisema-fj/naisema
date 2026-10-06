@@ -39,6 +39,8 @@ export function applySecurityHeaders(
   );
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Nothing on the site records anyone: learners practise speaking aloud with no microphone (VID-08).
+  headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   if (!allowIndexing) {
     headers.set("X-Robots-Tag", "noindex, nofollow");
   }

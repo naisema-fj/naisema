@@ -1,17 +1,53 @@
+import type { Activity, ActivityProblem } from "./activities";
+import type { Annotation, AnnotationProblem, ContextNote, ExpressionDetails, NoteProblem } from "./annotations";
+import type { LayerFlag } from "./layer-review-rules";
 import type { ReviewType } from "./permissions";
-import { type Excerpt, formatTimecode, parseTimecode, type Segment } from "./segment-rules";
+import { type Excerpt, formatTimecode, parseTimecode, type Segment, type SegmentProblem } from "./segment-rules";
+import { retokenise } from "./tokens";
 
 /**
- * What a Learning Layer Revision holds (ADR-0001, ADR-0006, docs/phase-1a-defaults.md §2): its
- * title and level, the clip it is built on (the whole video or an Excerpt), and its Segments.
- * Tokens, Annotations, Activities and the Completion Rule are added to it by later work.
+ * What a Learning Layer Revision holds (ADR-0001, ADR-0006, ADR-0011, docs/phase-1a-defaults.md
+ * §2): its title and level, the clip it is built on (the whole video or an Excerpt), its Segments
+ * with their tokens, its Annotations and cultural or context notes, and a copy of each Expression
+ * its Annotations use, so the Revision says exactly what was reviewed, and its Activities, whose
+ * required flags are its Completion Rule.
  */
 export type LearningLayerSnapshot = {
   title: string;
   level: LayerLevel;
+  /** Its Content Flags: whether it needs a Knowledge Holder's approval (ADR-0003). */
+  flags: LayerFlag[];
   excerpt: Excerpt;
   segments: Segment[];
+  annotations: Annotation[];
+  notes: ContextNote[];
+  /** The Expressions its Annotations use, as they were when it was saved, by ID. */
+  expressions: Record<string, ExpressionDetails>;
+  activities: Activity[];
 };
+
+/**
+ * A stored snapshot with everything later work added filled in: Revisions saved before tokens,
+ * Annotations, Activities or flags existed have none.
+ */
+export function withDefaults(
+  snapshot: Partial<LearningLayerSnapshot> & Pick<LearningLayerSnapshot, "title" | "level">,
+) {
+  return {
+    title: snapshot.title,
+    level: snapshot.level,
+    flags: snapshot.flags ?? [],
+    excerpt: snapshot.excerpt ?? null,
+    segments: (snapshot.segments ?? []).map((segment) => ({
+      ...segment,
+      tokens: segment.tokens ?? retokenise([], segment.fijian),
+    })),
+    annotations: snapshot.annotations ?? [],
+    notes: snapshot.notes ?? [],
+    expressions: snapshot.expressions ?? {},
+    activities: snapshot.activities ?? [],
+  } satisfies LearningLayerSnapshot;
+}
 
 export const LAYER_LEVELS = {
   beginner: "Beginner",
@@ -31,8 +67,18 @@ export const layerSpan = (excerpt: Excerpt) =>
     ? `Excerpt ${formatTimecode(excerpt.sourceStartMs)} to ${formatTimecode(excerpt.sourceEndMs)}`
     : "Whole video";
 
-export type LayerDetails = { title: string; level: LayerLevel; excerpt: Excerpt };
+export type LayerDetails = { title: string; level: LayerLevel; flags: LayerFlag[]; excerpt: Excerpt };
 export type LayerDetailField = "title" | "level" | "sourceStartMs" | "sourceEndMs";
+
+/** Why a save was refused, with the problems found in each part, for the editor to show. */
+export type LayerRefusal = {
+  error: string;
+  errors?: Partial<Record<LayerDetailField, string>>;
+  problems?: SegmentProblem[];
+  annotationProblems?: AnnotationProblem[];
+  noteProblems?: NoteProblem[];
+  activityProblems?: ActivityProblem[];
+};
 
 export type ReadLayerDetails =
   | { ok: true; details: LayerDetails }
@@ -41,11 +87,18 @@ export type ReadLayerDetails =
 const isLevel = (value: string): value is LayerLevel => Object.hasOwn(LAYER_LEVELS, value);
 
 /**
- * A Learning Layer's title, level and clip, as the form sends them: `clip` is "whole" or
- * "excerpt", and an Excerpt has source in and out times inside the video.
+ * A Learning Layer's title, level, cultural review flag and clip, as the form sends them: `clip`
+ * is "whole" or "excerpt", and an Excerpt has source in and out times inside the video.
  */
 export function readLayerDetails(
-  input: { title: string; level: string; clip: string; sourceStart: string; sourceEnd: string },
+  input: {
+    title: string;
+    level: string;
+    clip: string;
+    sourceStart: string;
+    sourceEnd: string;
+    sensitiveCultural?: string;
+  },
   videoDurationMs: number,
 ): ReadLayerDetails {
   const errors: Partial<Record<LayerDetailField, string>> = {};
@@ -65,20 +118,33 @@ export function readLayerDetails(
     if (start !== null && end !== null) excerpt = { sourceStartMs: start, sourceEndMs: end };
   }
   if (Object.keys(errors).length) return { ok: false, errors };
-  return { ok: true, details: { title, level: input.level as LayerLevel, excerpt } };
+  const flags: LayerFlag[] = input.sensitiveCultural === "on" ? ["sensitiveCultural"] : [];
+  return { ok: true, details: { title, level: input.level as LayerLevel, flags, excerpt } };
 }
 
 /**
  * The parts of a Learning Layer each Review Type covers, which its fingerprints are taken over
- * (ADR-0003, ADR-0006). Language review covers the Fijian and English and the Variety taught;
- * cultural review the words, who speaks and which part of the video is used; accessibility the
- * captions as timed text; safeguarding the words and what is shown; editorial everything.
+ * (ADR-0003, ADR-0006). Language review covers the Fijian and English, the Variety taught, the
+ * Annotations, the Expressions they use and the Activities' words and answers; cultural review
+ * the words, who speaks, which part of the video is used, the Annotations, the cultural and
+ * context notes and the Activities' words, which can carry context too; accessibility the
+ * captions as timed text, the notes and the Activities, which their text route shows;
+ * safeguarding the words, notes, real-world prompts and what is shown; editorial everything.
+ * Token IDs aren't covered: they only anchor Annotations. Which Activities are required, and their
+ * order, are editorial only: they change no words.
  */
 export function learningLayerReviewFields(
   snapshot: LearningLayerSnapshot,
   languageVariety: string,
 ): Record<ReviewType, unknown> {
   const words = snapshot.segments.map(({ id, fijian, english }) => ({ id, fijian, english }));
+  // Authoring state, not what a reviewer approves: the vocabulary choice and the check flag.
+  const annotations = snapshot.annotations.map(({ inVocabulary, needsCheck, ...annotation }) => annotation);
+  const { expressions, notes } = snapshot;
+  const activities = snapshot.activities
+    .map(({ required, ...activity }) => activity)
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const realWorld = activities.filter((activity) => activity.kind === "real-world");
   const spoken = snapshot.segments.map(({ id, fijian, english, speaker }) => ({ id, fijian, english, speaker }));
   const timed = snapshot.segments.map(({ id, startMs, endMs, fijian, english }) => ({
     id,
@@ -88,10 +154,22 @@ export function learningLayerReviewFields(
     english,
   }));
   return {
-    language: { languageVariety, words },
-    cultural: { title: snapshot.title, excerpt: snapshot.excerpt, spoken },
-    editorial: { ...snapshot, segments: snapshot.segments.map(({ draft, retimed, ...segment }) => segment) },
-    accessibility: { title: snapshot.title, timed },
-    safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken },
+    language: { languageVariety, words, annotations, expressions, activities },
+    cultural: {
+      title: snapshot.title,
+      excerpt: snapshot.excerpt,
+      spoken,
+      annotations,
+      expressions,
+      notes,
+      activities,
+    },
+    editorial: {
+      ...snapshot,
+      segments: snapshot.segments.map(({ draft, retimed, tokens, ...segment }) => segment),
+      annotations,
+    },
+    accessibility: { title: snapshot.title, timed, notes, activities },
+    safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, notes, realWorld },
   };
 }

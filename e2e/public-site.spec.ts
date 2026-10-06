@@ -13,41 +13,43 @@ async function expectNoHorizontalScroll(page: Page) {
   expect(overflow).toBeLessThanOrEqual(0);
 }
 
-test("the homepage, an area, an article and the not-found page pass axe", async ({ page }) => {
-  for (const path of [
-    "/",
-    "/ezine",
-    "/learn",
-    ARTICLE,
-    "/about",
-    "/nowhere",
-    "/search?q=village",
-    "/search?q=zzzz",
-    "/resources/e2e-dictionary-link",
-    "/topics/e2e-ceremonies",
-    "/topics",
-    "/voices",
-    EPISODE,
-    "/connect",
-    "/connect/providers",
-    PROVIDER,
-    "/connect/offerings",
-    "/connect/offerings?cost=paid",
-    "/connect/creators",
-    CREATOR,
-    "/forms/contribute",
-    "/forms/teach",
-    "/forms/consultation",
-    "/newsletter",
-    "/newsletter/unsubscribe",
-    "/report",
-    "/privacy/request",
-    "/community-standards",
-  ]) {
+// Every public page type passes axe: one test per page, so each has its own time budget and a
+// failure names the page.
+for (const path of [
+  "/",
+  "/ezine",
+  "/learn",
+  ARTICLE,
+  "/about",
+  "/nowhere",
+  "/search?q=village",
+  "/search?q=zzzz",
+  "/resources/e2e-dictionary-link",
+  "/topics/e2e-ceremonies",
+  "/topics",
+  "/voices",
+  EPISODE,
+  "/connect",
+  "/connect/providers",
+  PROVIDER,
+  "/connect/offerings",
+  "/connect/offerings?cost=paid",
+  "/connect/creators",
+  CREATOR,
+  "/forms/contribute",
+  "/forms/teach",
+  "/forms/consultation",
+  "/newsletter",
+  "/newsletter/unsubscribe",
+  "/report",
+  "/privacy/request",
+  "/community-standards",
+]) {
+  test(`${path} passes axe`, async ({ page }) => {
     await page.goto(path);
     await expectNoAxeViolations(page);
-  }
-});
+  });
+}
 
 test("a visitor searches, narrows by area, finds nothing, and starts again", async ({ page }) => {
   await page.goto("/search");
@@ -139,6 +141,11 @@ test("pages reflow at 320 px and at 200% zoom without sideways scrolling", async
       EPISODE,
       PROVIDER,
       CREATOR,
+      // A Video's page and its Learning Layer's player.
+      "/learn/e2e-market-talanoa",
+      "/learn/e2e-market-talanoa/language/e2e-layer-public",
+      "/learn/e2e-market-talanoa/language/e2e-layer-public?stage=support",
+      "/learn/e2e-market-talanoa/language/e2e-layer-public?stage=respond",
     ]) {
       await page.goto(path);
       await expectNoHorizontalScroll(page);
