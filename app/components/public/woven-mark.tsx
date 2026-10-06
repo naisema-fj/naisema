@@ -1,6 +1,6 @@
 /**
  * The NAISEMA mark: an N woven from 25 strands, alternately upright and sideways, on the brand's
- * 5 by 5 weave. Its two colours come from the surrounding CSS (`--mark-fg`, `--mark-bg`), so one
+ * 5 by 5 weave. Its two colours come from the surrounding CSS (`--mark-n`, `--mark-ground`), so one
  * drawing serves every ground; the strands carry classes, never inline styles (the CSP allows none).
  */
 

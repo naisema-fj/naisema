@@ -1237,6 +1237,12 @@ html:has(.public) {
   .public .primary-link:hover {
     transform: none;
   }
+
+  /* The strand keeps its inset: nothing moves, the shadow alone marks the tile. */
+  .public .area-tiles .tile:hover,
+  .public .area-tiles .tile:focus-visible {
+    margin: var(--inset-block, 0) var(--inset-inline, 0);
+  }
 }
 
 /*
@@ -1647,7 +1653,7 @@ blockquote.notice-wording {
   margin-top: 1rem;
 }
 
-/* Topic pages: subtopic filters as a row of ruled postmark links. */
+/* Topic pages: subtopic filters as a row of underlined links. */
 
 .subtopics ul,
 .area-sections ul {
@@ -1733,6 +1739,7 @@ blockquote.notice-wording {
   aspect-ratio: 1;
   object-fit: cover;
   border: 1px solid var(--line);
+  border-radius: var(--tile-radius);
 }
 
 .creator .sample {
@@ -1786,6 +1793,7 @@ blockquote.notice-wording {
 .public .player-controls fieldset {
   border: 1px solid var(--line);
   padding: 0.5rem 0.75rem;
+  border-radius: var(--plate-radius);
 }
 
 .public .caption-switches button,
@@ -1801,6 +1809,7 @@ blockquote.notice-wording {
   color: var(--ink);
   font: inherit;
   cursor: pointer;
+  border-radius: 8px;
 }
 
 .public .key-word {
@@ -1882,6 +1891,7 @@ blockquote.notice-wording {
   background: var(--paper);
   font-family: var(--font-text);
   font-size: var(--step-0);
+  border-radius: var(--plate-radius);
 }
 
 .public .meaning-popover:focus {
@@ -1940,6 +1950,7 @@ blockquote.notice-wording {
   background: var(--paper);
   color: var(--ink);
   text-decoration: none;
+  border-radius: 8px;
 }
 
 .public .stage-steps a:hover {
@@ -1993,6 +2004,7 @@ blockquote.notice-wording {
   color: var(--ink);
   font: inherit;
   cursor: pointer;
+  border-radius: 8px;
 }
 
 .public .help-control > button[aria-expanded="true"] {
@@ -2011,6 +2023,7 @@ blockquote.notice-wording {
   padding: 0.75rem;
   border: 1px solid var(--line);
   background: var(--paper);
+  border-radius: var(--plate-radius);
 }
 
 .public .stage-help ul {
@@ -2042,6 +2055,7 @@ blockquote.notice-wording {
   padding: 0.75rem 1rem;
   border: 1px solid var(--line);
   background: var(--paper);
+  border-radius: var(--plate-radius);
 }
 
 .public .learner-activities fieldset {
@@ -2110,6 +2124,7 @@ blockquote.notice-wording {
   padding: 0.75rem 1rem;
   border: 1px solid var(--line);
   background: var(--paper);
+  border-radius: var(--plate-radius);
 }
 
 .public .learner-progress h2 {
@@ -2121,6 +2136,7 @@ blockquote.notice-wording {
   margin-top: 0.75rem;
   border: 1px solid var(--line);
   padding: 0.5rem 0.75rem;
+  border-radius: var(--plate-radius);
 }
 
 .public .learner-settings .checkbox {
