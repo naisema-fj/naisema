@@ -38,7 +38,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     files: article.type === "resource" ? await downloadChoices(db) : [],
     audio: article.type === "episode" ? await episodeAudioChoices(db) : [],
     images: article.type === "creator" ? await imageChoices(db) : [],
-    videos: article.type === "video" ? await videoChoices(db) : [],
+    videos: article.type === "video" || article.type === "episode" ? await videoChoices(db) : [],
   };
 }
 

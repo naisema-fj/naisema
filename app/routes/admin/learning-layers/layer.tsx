@@ -1,7 +1,8 @@
 import { data, Form, redirect } from "react-router";
 import { TimelineEditor } from "~/components/timeline-editor";
 import { cloudflareContext } from "~/lib/cloudflare";
-import type { LayerDetailField } from "~/lib/learning-layer-fields";
+import { detailsOf, listExpressions } from "~/lib/expressions.server";
+import type { LayerRefusal } from "~/lib/learning-layer-fields";
 import {
   educatorChoices,
   openLearningLayer,
@@ -9,7 +10,7 @@ import {
   saveLearningLayer,
   setAssignment,
 } from "~/lib/learning-layers.server";
-import type { SegmentProblem } from "~/lib/segment-rules";
+import { PUBLICATION_NAMES, type PublicationState } from "~/lib/review-names";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
 import type { Route } from "./+types/layer";
 
@@ -64,6 +65,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     videoTitle: layer.video.title,
     baseRevisionId: layer.currentRevision.id,
     revisionNumber: layer.currentRevision.number,
+    publicationState: layer.publicationState as PublicationState,
     snapshot: layer.currentRevision.snapshot,
     videoDurationMs: video.durationMs,
     orientation: video.orientation,
@@ -71,18 +73,17 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     previewError,
     saved: saved === String(layer.currentRevision.number),
     isEditor,
+    // The whole library, so every Expression can be chosen (1a's library is small).
+    library: (await listExpressions(db, layer.languageVariety, "", 10_000)).map((row) => ({
+      id: row.id,
+      ...detailsOf(row),
+    })),
     educators: layer.assignedEducators,
     choices: isEditor
       ? (await educatorChoices(db)).filter((choice) => !layer.assignedEducatorIds.includes(choice.id))
       : [],
   };
 }
-
-type ActionData = {
-  error: string;
-  errors?: Partial<Record<LayerDetailField, string>>;
-  problems?: SegmentProblem[];
-};
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
@@ -97,7 +98,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       String(form.get("educatorId") ?? ""),
       intent === "assign",
     );
-    if (!result.ok) return data<ActionData>({ error: result.error }, { status: 400 });
+    if (!result.ok) return data<LayerRefusal>({ error: result.error }, { status: 400 });
     return redirect(`/admin/learning-layers/${layer.id}`);
   }
   const field = (name: string) => String(form.get(name) ?? "");
@@ -108,9 +109,14 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     clip: field("clip"),
     sourceStart: field("sourceStart"),
     sourceEnd: field("sourceEnd"),
+    sensitiveCultural: field("sensitiveCultural"),
     segments: field("segments"),
+    annotations: field("annotations"),
+    notes: field("notes"),
+    newExpressions: field("newExpressions"),
+    activities: field("activities"),
   });
-  if (!saved.ok) return data<ActionData>(saved, { status: 400 });
+  if (!saved.ok) return data<LayerRefusal>(saved, { status: 400 });
   return redirect(`/admin/learning-layers/${layer.id}?saved=${saved.number}`);
 }
 
@@ -123,7 +129,14 @@ export default function LearningLayerEditor({ loaderData, actionData }: Route.Co
         <a href={`/admin/videos/${loaderData.videoId}/learning-layers`}>Learning Layers on {loaderData.videoTitle}</a>
       </p>
       <h1>{loaderData.snapshot.title}</h1>
-      <p className="meta">Revision {loaderData.revisionNumber} · Standard Fijian</p>
+      <p className="meta">
+        Revision {loaderData.revisionNumber} · Standard Fijian · {PUBLICATION_NAMES[loaderData.publicationState]}
+      </p>
+      <p>
+        <a href={`/admin/learning-layers/${loaderData.id}/revisions/${loaderData.revisionNumber}`}>
+          Review and publishing for revision {loaderData.revisionNumber}
+        </a>
+      </p>
       {loaderData.saved && <p role="status">Saved as revision {loaderData.revisionNumber}.</p>}
       <TimelineEditor
         // A new revision starts the editor afresh from what was saved.
@@ -135,6 +148,7 @@ export default function LearningLayerEditor({ loaderData, actionData }: Route.Co
         orientation={loaderData.orientation}
         preview={loaderData.preview}
         previewError={loaderData.previewError}
+        library={loaderData.library}
         refused={actionData ?? null}
       />
       <section aria-labelledby="educators-heading">

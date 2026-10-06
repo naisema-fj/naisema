@@ -1,4 +1,5 @@
 import { cloudflareContext } from "~/lib/cloudflare";
+import { layerQueues, type QueueEntry } from "~/lib/layer-review.server";
 import { LAYER_LEVELS, layerSpan } from "~/lib/learning-layer-fields";
 import { layersFor, requireLayerStaff, videosFor } from "~/lib/learning-layers.server";
 import type { Route } from "./+types/index";
@@ -9,14 +10,20 @@ export function meta() {
 
 /**
  * GET /admin/learning-layers — the Learning Layers someone may open (an Educator's assigned ones,
- * every one for an editor) and the Videos they may add one to.
+ * every one for an editor) and the Videos they may add one to. Editors also see what is waiting
+ * for review, what is ready to publish and what is held up by a video that failed processing.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { db, actor, isEditor } = await requireLayerStaff(context.get(cloudflareContext).env, request);
-  const [layers, videos] = await Promise.all([layersFor(db, actor), videosFor(db, actor)]);
+  const [layers, videos, queues] = await Promise.all([
+    layersFor(db, actor),
+    videosFor(db, actor),
+    isEditor ? layerQueues(db) : null,
+  ]);
   const videoTitles = new Map(videos.map((video) => [video.id, video.title]));
   return {
     isEditor,
+    queues,
     videos,
     layers: layers.map((layer) => ({
       ...layer,
@@ -34,6 +41,37 @@ export default function LearningLayers({ loaderData }: Route.ComponentProps) {
         <a href="/admin">Back to staff home</a>
       </p>
       <h1>Learning Layers</h1>
+      <p>
+        <a href="/admin/expressions">Expressions</a>: the words and phrases Annotations link to.
+      </p>
+      {loaderData.queues && (
+        <>
+          <Queue
+            heading="Waiting for review"
+            empty="Nothing submitted is waiting for a review."
+            entries={loaderData.queues.missingReview}
+            detail={(entry) => [`still needs ${entry.waitingFor.join(", ")}.`, ...entry.blockers].join(" ")}
+          />
+          <Queue
+            heading="Approved but held up"
+            empty="Nothing approved is held up."
+            entries={loaderData.queues.heldUp}
+            detail={(entry) => entry.blockers.join(" ")}
+          />
+          <Queue
+            heading="Ready to publish"
+            empty="Nothing is ready to publish."
+            entries={loaderData.queues.readyToPublish}
+            detail={() => "every review and right is in place"}
+          />
+          <Queue
+            heading="Video failed processing"
+            empty="No Learning Layer is held up by its video."
+            entries={loaderData.queues.failedProcessing}
+            detail={(entry) => entry.reason ?? "processing failed"}
+          />
+        </>
+      )}
       <h2>{loaderData.isEditor ? "Every Learning Layer" : "Learning Layers assigned to you"}</h2>
       {loaderData.layers.length ? (
         <ul className="item-list">
@@ -75,5 +113,38 @@ export default function LearningLayers({ loaderData }: Route.ComponentProps) {
         <p>{loaderData.isEditor ? "No Videos yet. Add one under Content." : "None yet."}</p>
       )}
     </main>
+  );
+}
+
+/** One of the editors' queues: each Learning Layer's current revision, its Video and what it waits on. */
+function Queue({
+  heading,
+  empty,
+  entries,
+  detail,
+}: {
+  heading: string;
+  empty: string;
+  entries: QueueEntry[];
+  detail: (entry: QueueEntry) => string;
+}) {
+  return (
+    <section aria-label={heading}>
+      <h2>{heading}</h2>
+      {entries.length ? (
+        <ul className="item-list">
+          {entries.map((entry) => (
+            <li key={entry.learningLayerId}>
+              <a href={`/admin/learning-layers/${entry.learningLayerId}/revisions/${entry.number}`}>
+                {`${entry.title}, revision ${entry.number}`}
+              </a>
+              <span className="meta">{[entry.videoTitle, detail(entry)].filter(Boolean).join(" · ")}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>{empty}</p>
+      )}
+    </section>
   );
 }

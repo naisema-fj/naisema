@@ -855,6 +855,13 @@ export const learningLayer = sqliteTable(
     currentDraftRevisionId: text("current_draft_revision_id").references(
       (): AnySQLiteColumn => learningLayerRevision.id,
     ),
+    currentPublishedRevisionId: text("current_published_revision_id").references(
+      (): AnySQLiteColumn => learningLayerRevision.id,
+    ),
+    /** unpublished → published → withdrawn → archived, on its own, apart from its Video (ADR-0001). */
+    publicationState: text("publication_state").notNull().default("unpublished"),
+    firstPublishedAt: integer("first_published_at", { mode: "timestamp_ms" }),
+    lastPublishedAt: integer("last_published_at", { mode: "timestamp_ms" }),
     createdBy: text("created_by").notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
@@ -918,6 +925,136 @@ export const learningLayerEducator = sqliteTable(
     primaryKey({ columns: [table.learningLayerId, table.userId] }),
     index("learning_layer_educator_user_idx").on(table.userId),
   ],
+);
+
+// --- Learning Layer review and publishing (ADR-0003, ADR-0006, ADR-0007) ---
+
+/** An editor sending a Learning Layer Revision for review. Its existence makes the Revision "submitted". */
+export const learningLayerSubmission = sqliteTable("learning_layer_submission", {
+  revisionId: text("revision_id")
+    .primaryKey()
+    .references(() => learningLayerRevision.id),
+  submittedBy: text("submitted_by").notNull(),
+  submittedAt: integer("submitted_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/** A reviewer asked to review a Learning Layer for one Review Type; it applies to all its Revisions. */
+export const learningLayerReviewAssignment = sqliteTable(
+  "learning_layer_review_assignment",
+  {
+    id: text("id").primaryKey(),
+    learningLayerId: text("learning_layer_id")
+      .notNull()
+      .references(() => learningLayer.id),
+    reviewType: text("review_type").notNull(),
+    reviewerId: text("reviewer_id").notNull(),
+    assignedBy: text("assigned_by").notNull(),
+    assignedAt: integer("assigned_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("learning_layer_review_assignment_idx").on(table.learningLayerId, table.reviewType, table.reviewerId),
+    index("learning_layer_review_assignment_reviewer_idx").on(table.reviewerId),
+  ],
+);
+
+/**
+ * A view-only link to one exact Learning Layer Revision for someone without a staff account, such
+ * as a Knowledge Holder. Only a hash of its token is kept. It lasts 14 days and can be revoked.
+ */
+export const reviewLink = sqliteTable(
+  "review_link",
+  {
+    id: text("id").primaryKey(),
+    revisionId: text("revision_id")
+      .notNull()
+      .references(() => learningLayerRevision.id),
+    tokenHash: text("token_hash").notNull(),
+    /** Who it was made for, in the editor's words. */
+    recipient: text("recipient").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    revokedAt: integer("revoked_at", { mode: "timestamp_ms" }),
+    revokedBy: text("revoked_by"),
+  },
+  (table) => [
+    uniqueIndex("review_link_token_idx").on(table.tokenHash),
+    index("review_link_revision_idx").on(table.revisionId),
+  ],
+);
+
+/** One opening of a Review Link, whether it still worked or not. */
+export const reviewLinkAccess = sqliteTable(
+  "review_link_access",
+  {
+    id: text("id").primaryKey(),
+    reviewLinkId: text("review_link_id")
+      .notNull()
+      .references(() => reviewLink.id),
+    /** "viewed", or why not: "expired" or "revoked". */
+    outcome: text("outcome").notNull(),
+    accessedAt: integer("accessed_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("review_link_access_link_idx").on(table.reviewLinkId)],
+);
+
+/**
+ * A Review Approval on one exact Learning Layer Revision: write-once like the Content Items' (a
+ * trigger refuses UPDATE). A Knowledge Holder Approval also records the Review Link they saw the
+ * Revision through and any private evidence of their approval, kept in the EVIDENCE bucket.
+ */
+export const learningLayerApproval = sqliteTable(
+  "learning_layer_approval",
+  {
+    id: text("id").primaryKey(),
+    revisionId: text("revision_id")
+      .notNull()
+      .references(() => learningLayerRevision.id),
+    reviewType: text("review_type").notNull(),
+    languageVariety: text("language_variety"),
+    decision: text("decision").notNull(),
+    /** The reviewer; for a Knowledge Holder Approval, the editor who recorded it. */
+    reviewerId: text("reviewer_id").notNull(),
+    scope: text("scope"),
+    notes: text("notes"),
+    knowledgeHolderName: text("knowledge_holder_name"),
+    knowledgeHolderMethod: text("knowledge_holder_method"),
+    conditions: text("conditions"),
+    reviewLinkId: text("review_link_id").references(() => reviewLink.id),
+    evidenceAssetId: text("evidence_asset_id").references((): AnySQLiteColumn => mediaAsset.id),
+    evidenceKey: text("evidence_key"),
+    evidenceName: text("evidence_name"),
+    evidenceType: text("evidence_type"),
+    carriedForwardFromId: text("carried_forward_from_id").references((): AnySQLiteColumn => learningLayerApproval.id),
+    decidedAt: integer("decided_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("learning_layer_approval_revision_idx").on(table.revisionId)],
+);
+
+/**
+ * An Expression (ADR-0011, VID-07): a word or multiword phrase with its general meaning, grammar
+ * note and pronunciation guidance, reused by Annotations across Learning Layers. An idiom also has
+ * its literal meaning. Each Learning Layer Revision keeps a copy of the Expressions it uses, so a
+ * later change here shows in a Learning Layer only when it is next saved, and is reviewed then.
+ */
+export const expression = sqliteTable(
+  "expression",
+  {
+    id: text("id").primaryKey(),
+    languageVariety: text("language_variety").notNull(),
+    headword: text("headword").notNull(),
+    /** The headword as matched: Unicode lower case, so "Ā" and "ā" are the same word. */
+    headwordKey: text("headword_key").notNull(),
+    generalMeaning: text("general_meaning").notNull(),
+    grammarNote: text("grammar_note").notNull().default(""),
+    pronunciation: text("pronunciation").notNull().default(""),
+    literalMeaning: text("literal_meaning"),
+    createdBy: text("created_by").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+    updatedBy: text("updated_by").notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("expression_headword_idx").on(table.languageVariety, table.headwordKey)],
 );
 
 // --- Monitoring (docs/handover/runbook.md, monitoring and alerts) ---

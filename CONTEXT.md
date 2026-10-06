@@ -35,21 +35,40 @@ _Avoid_: Lesson, VideoLearningObject, learning object, practice unit
 A timed span of a Learning Layer's clip holding the Fijian text, English translation and optional speaker for that span.
 _Avoid_: Cue, caption line (for the record)
 
+**Token**:
+One word of a Segment's Fijian text (each part of a hyphenated compound is its own token), with an ID that stays the same when the text around it is edited, so Annotations stay anchored to it.
+_Avoid_: Character offset (as an anchor)
+
 **Expression**:
-A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save.
+A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save. Expressions are kept in a library for each Language Variety and reused across Learning Layers.
 _Avoid_: Vocab item, word (when a phrase or idiom is meant)
 
 **Annotation**:
 A link from a range of tokens in one Segment to an Expression, carrying the contextual meaning at that moment.
 _Avoid_: Tooltip, gloss
 
+**Context Note**:
+A cultural or context note on a whole Learning Layer or one Segment, always with who the knowledge comes from.
+_Avoid_: Caption, tooltip
+
+**Vocabulary List**:
+The Expressions an Educator chose from a Learning Layer's Annotations, each with the moments it occurs.
+
 **Activity**:
-A practice or comprehension task in a Learning Layer, with reviewed answers or a model response, feedback and an accessible alternative.
+A practice or comprehension task in a Learning Layer, on one Segment or the whole clip, with reviewed answers or a model response, feedback and an accessible text alternative. In 1a: listen and repeat (with the Educator's pronunciation guidance, never recorded), comprehension, listening discrimination, "what would you say next?" and the optional real-world prompt.
 _Avoid_: Quiz, exercise
 
 **Completion Rule**:
-The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). Watching alone never satisfies it, and real-world use is never required.
+The Educator-defined condition under which a Learner has completed a Learning Layer; by default every required activity attempted with feedback viewed (or its accessible equivalent). The Educator defines it by marking Activities required; with none required it can't be met. Watching alone never satisfies it, and real-world use is never required.
 _Avoid_: Finished, mastered, passed
+
+**Immersion Route**:
+The guided order of eight Stages a Learner is led through on a Learning Layer, from watching naturally to using it with someone. Any Stage can be opened, skipped or revisited, and help asked for, without penalty.
+_Avoid_: Lesson plan, course
+
+**Stage**:
+One step of the Immersion Route, deciding what the player shows (which captions, whether English is on the page at all, meanings, notes) and which Activities are done in it.
+_Avoid_: Level, step (in the record; learners read "step")
 
 **Video Asset**:
 A video source master kept as Na iSema's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
@@ -106,7 +125,7 @@ _Avoid_: Licence (for the record), consent (for rights)
 One specific use a Rights Record grants: publish, excerpt, translate, transcribe, educational adaptation, commercial or AI training. Each is granted separately; none implies another.
 
 **Review Link**:
-A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account.
+A signed, view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account. In 1a it shows a Learning Layer Revision, lasts 14 days and logs every opening.
 _Avoid_: Preview URL, share link
 
 **Knowledge Holder**:
@@ -114,7 +133,7 @@ A person or authority with standing to permit use of culturally sensitive knowle
 _Avoid_: Elder (as a role), cultural reviewer
 
 **Knowledge Holder Approval**:
-A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions.
+A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions. For a Learning Layer it also names the Review Link they saw it through, and can carry private evidence.
 
 ## People and roles
 

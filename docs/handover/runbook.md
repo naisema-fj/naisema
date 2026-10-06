@@ -128,13 +128,29 @@ An item can be published, and later served, only while a current Rights Record g
 
 ## Public site
 
-The public site (`app/routes/public/`, styles in `app/styles/public.css`, design record in `DESIGN.md`) serves the homepage, the six area pages at `/{area}`, Articles at `/{area}/{slug}`, the footer pages, `/sitemap.xml` and `/robots.txt`. Public pages ship no client JavaScript (`script-src 'none'`).
+The public site (`app/routes/public/`, styles in `app/styles/public.css`, design record in `DESIGN.md`) serves the homepage, the six area pages at `/{area}`, Articles, Resources, Episodes and Videos at `/{area}/{slug}`, Learning Layers at `/{area}/{slug}/language/{id}`, the footer pages, `/sitemap.xml` and `/robots.txt`. Public pages ship no client JavaScript (`script-src 'none'`), except pages that play video: a Video, a video Episode and a Learning Layer's player. Those load the player's script with a per-response nonce and are never cached (`Cache-Control: private, no-store`), because they carry a signed playback address.
 
 - **What is shown:** only an item's current published Revision, and only while it is eligible (ADR-0007). A withdrawn or archived item answers 410; a draft, a never-published item or one that has lost its rights answers 404. Review Labels come from the approvals actually recorded on the published Revision; there is no "verified" label.
 - **Changing an address:** editors change an item's slug from its edit page ("Web address"). The old slug is kept in `slug_redirect` and answers with a 301 to the new address while the item is eligible; no item, including the same one, can take an old slug again, because browsers keep permanent redirects and moving back would loop.
 - **Caching:** public HTML and the sitemap are cached at the edge for at most 5 minutes (`Cache-Control: public, max-age=60, s-maxage=300`); errors are never cached and the admin host is never cached. Publishing, withdrawing, archiving, a rights withdrawal or a slug change purges the affected pages (`/`, the area, the item and the sitemap) for every origin in the `PUBLIC_ORIGINS` var in `wrangler.jsonc`; review decisions purge the item's pages too. Staging's `workers.dev` address isn't listed, so it relies on the 5-minute ceiling; add it to `PUBLIC_ORIGINS` if testers use it. Query strings are ignored, so each page has one cached copy. The Worker purges its own data centre through the Cache API; to purge every data centre, set the `CLOUDFLARE_ZONE_ID` var and the `CACHE_PURGE_TOKEN` secret (a token with **Zone › Cache Purge › Purge**, limited to the `naisema.com` zone). Without them, other data centres can serve a page for up to 5 minutes after a change, which is the stated limit. Cached pages are keyed by the deployed Worker version (the `CF_VERSION_METADATA` binding), so a deploy starts with an empty cache and never serves pages that point at the previous build's stylesheet.
 - **Sitemap and robots:** `/sitemap.xml` lists the homepage, the six areas and every item in the search index (see Public search). `/robots.txt` disallows everything unless `ALLOW_INDEXING = "true"`, and then disallows only `/admin`.
 - **Fonts:** Jost and Literata are self-hosted from the `@fontsource-variable` packages (SIL Open Font License 1.1); nothing is loaded from a font CDN.
+
+## Learner player
+
+A published Video's page plays its footage and lists, under **Explore the language**, the Learning Layers that are public on it. A Learning Layer is shown only while both its own published Revision and its Video's published Revision are eligible (decision log 1a-14), so withdrawing either, a rights withdrawal or a Case hold takes it down on the next request. The player (`app/components/learner-player.tsx`) has:
+
+- Fijian and English captions, switched independently. They are native `<track>`s generated on each request from the published Segments at `/language/<id>/captions/fijian` and `/english`, and are never uploaded to Stream.
+- A transcript that follows the video and seeks from any Segment.
+- Word and phrase meanings opened by tap, click or keyboard, and the vocabulary list.
+- Replay of a Segment once or on a loop, with a Stop button.
+- Three speeds: normal, 0.75× and 0.5×.
+
+The player guides learners through the eight Stages of the Immersion Route (`app/lib/immersion.ts`, decision log 1a-16), one page each at `?stage=`. Each Stage is sent only what it shows, so a line's English is fetched from `/language/<id>/english/<segment id>` only when a learner asks for it in a Stage without it. Activities are done in their Stage, and progress and support choices are kept in the browser tab's session only. Learning events (`segment_replayed`, `support_toggled`, `activity_attempted`, `feedback_viewed`, `learning_completed`) go to `/language/<id>/events` and into the `EVENTS` Analytics Engine dataset, with the Learning Layer's IDs only.
+
+An Excerpt's Learning Layer plays only between its in and out times. Players ask `/videos/<item id>/playback` for a new signed address when theirs runs out. Locally, videos play from `/videos/<item id>/stream`. The e2e suite puts a short real clip (`e2e/fixtures/market.mp4`) into local R2 when it starts, so its journey plays real footage.
+
+A Voices Episode can use a video in place of audio (**Recording: Video** on its form). It then plays like a Video, with its transcript, and needs the video to have finished processing and the file its own Rights Record.
 
 ## Public search
 
@@ -264,7 +280,7 @@ Until these are set, a video fails with "Video processing isn't set up in this e
 
 ## Learning Layers
 
-Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in `app/lib/learning-layers.server.ts`, `segment-rules.ts`, `webvtt.ts` and `components/timeline-editor.tsx`.
+Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in `app/lib/learning-layers.server.ts`, `segment-rules.ts`, `webvtt.ts`, `activities.ts`, `components/timeline-editor.tsx` and `components/activities-editor.tsx`.
 
 1. **A Video:** an editor adds a Video under Content and chooses a Video Asset that has finished processing (see Video). It can't be published until the learner player exists.
 2. **Educators:** on the Video's edit page, **Learning Layers and Educators** opens `/admin/videos/<id>/learning-layers`, where editors assign Educators.
@@ -272,7 +288,26 @@ Learning Layers (ADR-0001, ADR-0006) sit on Video Content Items. The code is in 
 4. **Segments:** the timeline editor (`/admin/learning-layers/<id>`) shows the video with the captions over it, in landscape or vertical layout. Each Segment has a start and end, which can be typed, nudged 100 ms at a time with the arrow keys, or set from the playhead. It also has an optional speaker, the Fijian and an English translation. **Replay** plays one Segment. Problems are listed at the top, each naming its Segment and field, and a save with problems is refused. Every save is a new Revision; a save from an outdated Revision is refused so no one's work is overwritten.
 5. **WebVTT:** import a Fijian file to replace the Segments, or an English file to fill translations. Imported text is marked "Unreviewed draft" until someone presses **I've checked this text**. The saved Segments download as Fijian or English WebVTT.
 
+6. **Annotations:** under a Segment, select a word, or a first and last word, then **Annotate**. Link the selection to an Expression from the library or define a new one: the word or phrase, its general meaning, an optional grammar note and pronunciation guide, and for an idiom its literal meaning. Then say what it means at that moment, and whether it goes on the vocabulary list. Editing the Fijian keeps Annotations on their words. When a word an Annotation needs is gone, the Annotation is listed under **Annotations and notes to check**; select the words again and press **Move to the selected words**, or remove it. When an edit repeats an annotated word, the Annotation is listed too: check it's on the right copy and press **It's on the right word**, or move it. Each part of a hyphenated compound is its own word, so select the first and last part to annotate the whole compound.
+7. **Notes:** add cultural or context notes to a Segment or to the whole Learning Layer, each with who the knowledge comes from.
+8. **Vocabulary list:** shown under the Segments, built from the Annotations marked for it, with when each occurs.
+9. **Activities:** under **Activities**, choose a kind and **Add an Activity**. Choose which Segment it practises, or the whole clip, and write its prompt, its choices (tick the correct ones) or model response, its feedback and a text alternative for learners who can't use the audio or speak. Listen and repeat also takes pronunciation guidance; **Start from the Expressions' pronunciation** fills it from the Segment's Annotations. Tick **Required for completion** on the Activities a learner must do. Learners complete the Learning Layer once they have tried each required one and seen its feedback; watching never completes it, and real-world prompts are never required. **Preview as a learner** shows an Activity as learners will see it, with its text version. Problems are listed under **Activities to check**.
+
+The Expression library is at `/admin/expressions`, linked from **Learning Layers**. Editors can change any Expression there; an Educator can change one they added until a Learning Layer they aren't assigned to uses it. Learning Layers pick a change up when they are next saved, and their editor shows it first.
+
 Educators see only the Learning Layers they are assigned to, under **Learning Layers** on the staff home page.
+
+### Reviewing and publishing a Learning Layer
+
+The code is in `app/lib/layer-review.server.ts`, `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
+
+1. **Flag:** tick **Culturally sensitive** in the editor when a Knowledge Holder must approve it. A Learning Layer on a Video flagged culturally sensitive starts ticked and can't be published unticked. Language review in Standard Fijian is always required.
+2. **Submit:** an editor or an assigned Educator submits the current revision. Editors then assign a language reviewer.
+3. **Review Link:** for a Knowledge Holder, issue a Review Link from the revision page, saying who it is for. Copy the address at once: it is shown only once. It opens on the public site with no sign-in, shows the revision watermarked "Draft for review", is never cached or indexed, and lasts 14 days. Every opening is logged, and the page lists how often each link was opened. If the Video has no Rights Record granting Publish yet, the page warns you: share it only with people the rights holder has agreed can see it. **Revoke** stops it at once.
+4. **Knowledge Holder Approval:** once the link has been opened, an editor who didn't write or edit the revision records who approved it, how, the link they saw it through, any conditions, and optionally evidence (PDF or image), which is scanned and kept privately for editors.
+5. **Publish:** the revision page lists everything still missing. A Learning Layer publishes only when it is submitted with every required review approved; it has Segments with no unreviewed drafts or retimed Segments, nothing that lost its place, and a required Activity; its video has finished processing; and its Video's Rights Records grant Publish, Translate, Transcribe and Educational adaptation (and Excerpt for one on an Excerpt), with the footage's own record granting Publish. Withdrawing or archiving it leaves its Video as it is.
+
+Editors see three queues on **Learning Layers**: waiting for review, ready to publish, and held up by a video that failed processing. A video's page in the media library lists the Learning Layers on it, and a Video's rights page lists the Learning Layers that rely on its rights. Reviewers find Learning Layers in **Your reviews**.
 
 ## Custom domains
 

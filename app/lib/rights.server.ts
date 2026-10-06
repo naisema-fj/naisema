@@ -2,8 +2,8 @@ import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { contributor, mediaAsset, rightsRecord, rightsRecordContributor, user } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
+import { discardEvidence, scannedEvidence, storeEvidence } from "./evidence.server";
 import { type EvidenceFile, readEvidenceFile } from "./evidence-file";
-import { quarantineFile } from "./media.server";
 import {
   isCurrent,
   isPermittedUse,
@@ -231,7 +231,7 @@ export async function recordRights(
   rights: RightsForm,
 ): Promise<string> {
   const id = crypto.randomUUID();
-  const evidence = await quarantineFile(env, db, recordedBy, rights.evidence, "evidence");
+  const evidence = await storeEvidence(env, db, recordedBy, rights.evidence);
   try {
     await db.batch([
       db.insert(rightsRecord).values({
@@ -270,23 +270,8 @@ export async function recordRights(
       }),
     ]);
   } catch (error) {
-    // The evidence belongs to no record: refuse it wherever its scan has got to, including a copy
-    // already passed to the evidence bucket. Never let a failed clean-up hide why the record wasn't written.
-    const reason = "Its Rights Record wasn't saved.";
-    await Promise.all([
-      db
-        .update(mediaAsset)
-        .set({ status: "failed", statusReason: reason, scannedAt: new Date(), updatedAt: new Date() })
-        .where(eq(mediaAsset.id, evidence.id)),
-      env.EVIDENCE.delete(evidence.destinationKey),
-      recordAudit(db, {
-        actorId: recordedBy,
-        action: "media_asset.failed",
-        objectType: "media_asset",
-        objectId: evidence.id,
-        details: { reason },
-      }),
-    ]).catch(() => undefined);
+    // The evidence belongs to no record: refuse it wherever its scan has got to.
+    await discardEvidence(env, db, recordedBy, evidence, "Its Rights Record wasn't saved.");
     throw error;
   }
   return id;
@@ -333,21 +318,14 @@ export async function withdrawRights(
 export async function readEvidence(env: Env, db: Database, readBy: string, recordId: string) {
   const record = await db.select().from(rightsRecord).where(eq(rightsRecord.id, recordId)).get();
   if (!record) return null;
-  if (record.evidenceAssetId) {
-    const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, record.evidenceAssetId)).get();
-    if (asset?.status !== "ready") {
-      return {
-        unavailable: asset?.statusReason ?? "This evidence is still being scanned for viruses. Try again shortly.",
-      };
-    }
-  }
-  const object = await env.EVIDENCE.get(record.evidenceKey);
-  if (!object) return null;
+  const evidence = await scannedEvidence(env, db, record.evidenceAssetId, record.evidenceKey);
+  if (!evidence) return null;
+  if ("unavailable" in evidence) return { unavailable: evidence.unavailable };
   await recordAudit(db, {
     actorId: readBy,
     action: "rights_evidence.read",
     objectType: "rights_record",
     objectId: recordId,
   });
-  return { object, name: record.evidenceName, type: record.evidenceType };
+  return { object: evidence.object, name: record.evidenceName, type: record.evidenceType };
 }
