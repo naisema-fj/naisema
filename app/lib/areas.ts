@@ -24,7 +24,7 @@ export const AREA_INFO: Record<PrimaryArea, { description: string; notYetOpen?: 
     notYetOpen: "Videos with captions, word meanings and practice open once the first ones are reviewed.",
   },
   voices: {
-    description: "Na iSema Voices: conversations with Fijians at home and abroad, each with a full transcript.",
+    description: "NAISEMA Voices: conversations with Fijians at home and abroad, each with a full transcript.",
   },
   discover: { description: "Places, history and the ways things are done." },
   connect: { description: "Classes, courses and people who teach." },

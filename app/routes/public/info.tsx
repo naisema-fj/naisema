@@ -20,10 +20,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema" }];
+  if (!loaderData) return [{ title: "NAISEMA" }];
   const title = loaderData.published?.title ?? loaderData.page.title;
   return [
-    { title: `${title} · Na iSema` },
+    { title: `${title} · NAISEMA` },
     ...(loaderData.published ? [{ name: "description", content: loaderData.published.summary }] : []),
   ];
 }
@@ -35,10 +35,10 @@ export function meta({ loaderData }: Route.MetaArgs) {
 function FixedRoutes({ path }: { path: string }) {
   if (path === "community-standards") {
     return (
-      <section className="letter letter-narrow fixed-routes" aria-labelledby="report-heading">
+      <section className="pane pane-narrow fixed-routes" aria-labelledby="report-heading">
         <h2 id="report-heading">Reporting a problem</h2>
         <p>
-          If something on Na iSema could cause harm, is wrong, or uses someone's work without permission, tell us. Every
+          If something on NAISEMA could cause harm, is wrong, or uses someone's work without permission, tell us. Every
           page has a "Report a problem" link, or <Link to="/report">report it here</Link>. Only the people who handle
           reports see what you send, and you can appeal what we decide.
         </p>
@@ -47,7 +47,7 @@ function FixedRoutes({ path }: { path: string }) {
   }
   if (path === "privacy") {
     return (
-      <section className="letter letter-narrow fixed-routes" aria-labelledby="your-information-heading">
+      <section className="pane pane-narrow fixed-routes" aria-labelledby="your-information-heading">
         <h2 id="your-information-heading">Your information</h2>
         <p>
           <Link to="/privacy/request">
@@ -68,11 +68,11 @@ export default function Info({ loaderData }: Route.ComponentProps) {
       {published ? (
         <ContentLetter item={published} />
       ) : (
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>{page.title}</h1>
           <p>This page is being written. It will set out {page.purpose}.</p>
           <p>
-            <Link to="/">Go to the Na iSema home page</Link>
+            <Link to="/">Go to the NAISEMA home page</Link>
           </p>
         </article>
       )}

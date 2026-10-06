@@ -2,7 +2,7 @@ import { latestToday } from "./calendar";
 import type { RightsPart } from "./rights-rules";
 
 /**
- * What a Na iSema Voices Episode adds to a Content Item (docs/phase-1a-defaults.md §9): its
+ * What a NAISEMA Voices Episode adds to a Content Item (docs/phase-1a-defaults.md §9): its
  * recording from the media library (audio, or a video in its place), who is speaking, the music and
  * archive clips it uses, when it was recorded, how long it is, its transcript and the approved
  * places it is also distributed. Stored in the Episode's Revision snapshot.

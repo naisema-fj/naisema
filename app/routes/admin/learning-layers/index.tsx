@@ -5,7 +5,7 @@ import { layerQueues, type QueueEntry } from "~/lib/publication.server";
 import type { Route } from "./+types/index";
 
 export function meta() {
-  return [{ title: "Learning Layers · Na iSema staff" }];
+  return [{ title: "Learning Layers · NAISEMA staff" }];
 }
 
 /**

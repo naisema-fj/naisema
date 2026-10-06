@@ -12,7 +12,7 @@ import type { Route } from "./+types/rights";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `Rights for ${loaderData?.article.title ?? "article"} · Na iSema staff` }];
+  return [{ title: `Rights for ${loaderData?.article.title ?? "article"} · NAISEMA staff` }];
 }
 
 async function requireArticleRights(request: Request, env: Env, articleId: string) {

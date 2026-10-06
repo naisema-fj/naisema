@@ -83,14 +83,14 @@ describe("Pages", () => {
 
     const { id } = await create(editor, "page", {
       page: "inclusion",
-      title: "Inclusion at Na iSema",
+      title: "Inclusion at NAISEMA",
       summary: "How we work to be usable by everyone.",
     });
     expect(await read("/inclusion")).toContain("This page is being written");
     await publish(editor, id);
 
     const page = await read("/inclusion");
-    expect(page).toContain("<h1>Inclusion at Na iSema</h1>");
+    expect(page).toContain("<h1>Inclusion at NAISEMA</h1>");
     expect(page).toContain("Bula vinaka.");
     expect(page).not.toContain("This page is being written");
     expect(await read("/sitemap.xml")).toContain(`<loc>${PUBLIC}/inclusion</loc>`);

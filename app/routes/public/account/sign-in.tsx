@@ -21,7 +21,7 @@ export const handle: RouteHandle = { hydrate: false, turnstile: true, noindex: t
 export const headers = () => ({ "Cache-Control": PRIVATE_NO_STORE });
 
 export function meta() {
-  return [{ title: "Sign in to save your learning · Na iSema" }];
+  return [{ title: "Sign in to save your learning · NAISEMA" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -49,7 +49,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (problem) errors.email = problem;
   if (form.get("adult") !== "yes") {
     errors.adult =
-      "Learning accounts are for people aged 18 or older. You can still use everything on Na iSema without one.";
+      "Learning accounts are for people aged 18 or older. You can still use everything on NAISEMA without one.";
   }
   if (Object.keys(errors).length) return data({ sent: false as const, errors, values }, { status: 400 });
   await requestLearnerSignInLink(env, request, normaliseEmail(email));
@@ -68,7 +68,7 @@ export default function LearnerSignIn({ loaderData, actionData }: Route.Componen
           </p>
           <p>
             <Link reloadDocument to="/">
-              Back to Na iSema
+              Back to NAISEMA
             </Link>
           </p>
         </article>
@@ -82,13 +82,13 @@ export default function LearnerSignIn({ loaderData, actionData }: Route.Componen
       <article className="letter letter-narrow">
         <h1>Save your learning</h1>
         <p className="standfirst">
-          Everything on Na iSema is open without an account. An optional learning account keeps the videos and words you
+          Everything on NAISEMA is open without an account. An optional learning account keeps the videos and words you
           save, and where you are in each video, on every device you use.
         </p>
         {loaderData.deleted && (
           <p role="status">
             Your learning account and everything saved in it are deleted. Copies in our backups are deleted within 35
-            days. You can still use everything on Na iSema without an account.
+            days. You can still use everything on NAISEMA without an account.
           </p>
         )}
         {loaderData.expired && (
@@ -119,7 +119,7 @@ export default function LearnerSignIn({ loaderData, actionData }: Route.Componen
           <TurnstileField siteKey={loaderData.siteKey} />
           <button type="submit">Email me a sign-in link</button>
         </Form>
-        <p>Under 18? You're welcome to use everything on Na iSema without an account, or with a parent or carer.</p>
+        <p>Under 18? You're welcome to use everything on NAISEMA without an account, or with a parent or carer.</p>
       </article>
     </main>
   );

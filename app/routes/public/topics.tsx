@@ -25,13 +25,13 @@ export async function loader({ context }: Route.LoaderArgs) {
 }
 
 export function meta() {
-  return [{ title: "Topics · Na iSema" }];
+  return [{ title: "Topics · NAISEMA" }];
 }
 
 export default function Topics({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main">
-      <article className="letter letter-narrow" aria-labelledby="topics-heading">
+      <article className="pane pane-narrow" aria-labelledby="topics-heading">
         <h1 id="topics-heading">Topics</h1>
         {loaderData.topics.length ? (
           <ul className="topic-index">

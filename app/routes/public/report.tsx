@@ -28,7 +28,7 @@ export const handle = { hydrate: false, turnstile: true };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Report a problem · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Report a problem · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 /** The public item a report is about, by the id its page's link carries. */
@@ -74,7 +74,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
   if (actionData?.sent) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>Thank you for telling us</h1>
           <p role="status">
             Your report has been received, reference {actionData.reference}. Only the people who handle reports can read
@@ -83,7 +83,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
           <p>
             If you left your email address, we'll tell you what we decided and how to ask for it to be looked at again.
           </p>
-          <p>{item ? <Link to={item.path}>Back to {item.title}</Link> : <Link to="/">Back to Na iSema</Link>}</p>
+          <p>{item ? <Link to={item.path}>Back to {item.title}</Link> : <Link to="/">Back to NAISEMA</Link>}</p>
         </article>
       </main>
     );
@@ -92,7 +92,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Report a problem</h1>
         <p className="standfirst">
           {item ? (
@@ -100,7 +100,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
               You're reporting <Link to={item.path}>{item.title}</Link>.{" "}
             </>
           ) : null}
-          Tell us if something on Na iSema could cause harm, is wrong, or uses someone's work without permission. Only
+          Tell us if something on NAISEMA could cause harm, is wrong, or uses someone's work without permission. Only
           the people who handle reports will see what you send.{" "}
           <Link to="/community-standards">Our community standards</Link>
         </p>

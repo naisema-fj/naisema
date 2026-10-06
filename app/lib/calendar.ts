@@ -6,7 +6,7 @@
 export const latestToday = (now = new Date()) => new Date(now.getTime() + 14 * 3_600_000).toISOString().slice(0, 10);
 
 /**
- * Today's date in Fiji (UTC+12, no daylight saving), as YYYY-MM-DD: the calendar Na iSema's own
+ * Today's date in Fiji (UTC+12, no daylight saving), as YYYY-MM-DD: the calendar NAISEMA's own
  * agreements are dated in, so one starts and ends on Fiji's days.
  */
 export const fijiToday = (now = new Date()) => new Date(now.getTime() + 12 * 3_600_000).toISOString().slice(0, 10);

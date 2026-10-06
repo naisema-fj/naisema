@@ -22,7 +22,7 @@ import type { Route } from "./+types/submission";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.submission.name ?? "Submission"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.submission.name ?? "Submission"} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

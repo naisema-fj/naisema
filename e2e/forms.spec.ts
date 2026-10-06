@@ -28,7 +28,7 @@ test("a visitor sends an enquiry: refused answers are kept, success comes once s
   await expect(page.getByText("We can't take this without your agreement.")).toBeVisible();
   await expectNoAxeViolations(page);
 
-  await page.getByLabel("Na iSema may keep what I send and use it to reply to me").check();
+  await page.getByLabel("NAISEMA may keep what I send and use it to reply to me").check();
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("heading", { name: "Thank you, it's been sent" })).toBeVisible();
   await expectNoAxeViolations(page);
@@ -43,7 +43,7 @@ test("a contributor is sent an upload link and sends their file into quarantine"
   await page.getByLabel("Your name").fill(name);
   await page.getByLabel("Your email address").fill(email);
   await page.getByLabel("What you'd like to share").fill("My grandmother's meke, recorded in 1998.");
-  await page.getByLabel("Na iSema may keep what I send and use it to reply to me").check();
+  await page.getByLabel("NAISEMA may keep what I send and use it to reply to me").check();
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("heading", { name: "Thank you, it's been sent" })).toBeVisible();
 

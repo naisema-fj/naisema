@@ -10,7 +10,7 @@ import type { Route } from "./+types/offering-edit";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.offering.title ?? "Offering"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.offering.title ?? "Offering"} · NAISEMA staff` }];
 }
 
 async function requireOffering(request: Request, env: Env, id: string) {

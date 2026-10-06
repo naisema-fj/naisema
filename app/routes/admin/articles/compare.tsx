@@ -12,8 +12,8 @@ import type { Route } from "./+types/compare";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema staff" }];
-  return [{ title: `Compare revisions ${loaderData.from.number} and ${loaderData.to.number} · Na iSema staff` }];
+  if (!loaderData) return [{ title: "NAISEMA staff" }];
+  return [{ title: `Compare revisions ${loaderData.from.number} and ${loaderData.to.number} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

@@ -111,7 +111,7 @@ test("a visitor finds a class under Connect, sees who offers it and where its li
   await expect(offering).toContainText("lami.example, another website");
   await offering.getByRole("link", { name: "Lami Language School" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Lami Language School" })).toBeVisible();
-  await expect(page.getByText("A Na iSema Partner, under a recorded Partnership Agreement.")).toBeVisible();
+  await expect(page.getByText("A NAISEMA Partner, under a recorded Partnership Agreement.")).toBeVisible();
 });
 
 test("the menu works by keyboard on a phone-width screen", async ({ page }) => {

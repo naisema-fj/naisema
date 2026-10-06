@@ -21,7 +21,7 @@ import type { Route } from "./+types/edit";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.provider.name ?? "Provider"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.provider.name ?? "Provider"} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

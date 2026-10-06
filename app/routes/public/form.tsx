@@ -31,7 +31,7 @@ export const handle = { hydrate: false, turnstile: true };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.title ?? "Get in touch"} · Na iSema` }];
+  return [{ title: `${loaderData?.title ?? "Get in touch"} · NAISEMA` }];
 }
 
 function formType(path: string | undefined) {
@@ -96,7 +96,7 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
   if (actionData?.sent) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>Thank you, it's been sent</h1>
           <p role="status">
             We've received your {SUBMISSION_TYPES[type].name.toLowerCase()}, and someone on our team will read it.
@@ -113,7 +113,7 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
             </p>
           )}
           <p>
-            <Link to="/">Back to Na iSema</Link>
+            <Link to="/">Back to NAISEMA</Link>
           </p>
         </article>
       </main>
@@ -123,7 +123,7 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>{title}</h1>
         <p className="standfirst">{intro}</p>
         <Form method="post" className="public-form" noValidate>

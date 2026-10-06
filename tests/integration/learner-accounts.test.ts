@@ -80,7 +80,7 @@ describe("signing up for a Learner Account", () => {
     const { browser, userId, opened } = await signUp(email);
 
     const [sent] = await emailsTo(email);
-    expect(sent.subject).toBe("Your Na iSema sign-in link");
+    expect(sent.subject).toBe("Your NAISEMA sign-in link");
     expect(linkIn(sent.text)).toMatch(/^https:\/\/naisema\.test\/account\/auth\/magic-link\/verify\?token=/);
     expect(opened.status).toBe(302);
     expect(opened.headers.get("Location")).toBe(`${PUBLIC}/account?welcome=1`);
@@ -118,7 +118,7 @@ describe("signing up for a Learner Account", () => {
 
     expect(await reply.text()).toContain("Check your email");
     const [sent] = await emailsTo(email);
-    expect(sent.subject).toBe("Signing in to Na iSema");
+    expect(sent.subject).toBe("Signing in to NAISEMA");
     expect(sent.text).toContain("staff account");
     expect(linkIn(sent.text)).toBeUndefined();
 

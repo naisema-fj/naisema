@@ -212,7 +212,7 @@ export async function receiveCase(
     { id, reporterEmail: input.email, reporterName: input.name },
     `We've received your ${kindName}`,
     [
-      `Thank you. Na iSema has received your ${kindName}, reference ${reference}. Only the people who handle these can read it.`,
+      `Thank you. NAISEMA has received your ${kindName}, reference ${reference}. Only the people who handle these can read it.`,
       "We'll email you when we've decided what to do, and you can ask for that decision to be looked at again.",
     ],
   );
@@ -280,7 +280,7 @@ export async function caseDetail(db: Database, actor: Actor, id: string, now = n
         ),
       ),
   ]);
-  // A data request is about what Na iSema holds for the address: show the privacy contact where to look.
+  // A data request is about what NAISEMA holds for the address: show the privacy contact where to look.
   const requesterData =
     found.kind === "data_request" && found.reporterEmail
       ? await Promise.all([

@@ -15,7 +15,7 @@ export const handle = { hydrate: false, turnstile: true };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Unsubscribe from the newsletter · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Unsubscribe from the newsletter · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 export function loader({ context }: Route.LoaderArgs) {
@@ -41,13 +41,13 @@ export default function Unsubscribe({ loaderData, actionData }: Route.ComponentP
   if (actionData?.done) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>You're unsubscribed</h1>
           <p role="status">
-            {actionData.email} won't be sent the Na iSema newsletter. You can sign up again at any time.
+            {actionData.email} won't be sent the NAISEMA newsletter. You can sign up again at any time.
           </p>
           <p>
-            <Link to="/">Back to Na iSema</Link>
+            <Link to="/">Back to NAISEMA</Link>
           </p>
         </article>
       </main>
@@ -57,7 +57,7 @@ export default function Unsubscribe({ loaderData, actionData }: Route.ComponentP
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Unsubscribe from the newsletter</h1>
         <p className="standfirst">Every newsletter also has its own unsubscribe link at the bottom.</p>
         <Form method="post" className="public-form" noValidate>

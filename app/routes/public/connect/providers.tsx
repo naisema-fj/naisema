@@ -29,7 +29,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   return [
-    { title: "Providers · Connect · Na iSema" },
+    { title: "Providers · Connect · NAISEMA" },
     { name: "description", content: "Organisations and people who teach Fijian language and culture." },
     ...(loaderData?.kind ? [{ name: "robots", content: "noindex" }] : []),
   ];
@@ -49,12 +49,12 @@ export default function Providers({ loaderData }: Route.ComponentProps) {
           <li aria-current="page">Providers</li>
         </ol>
       </nav>
-      <article className="letter" aria-labelledby="providers-heading">
-        <header className="letter-head">
+      <article className="pane" aria-labelledby="providers-heading">
+        <header className="pane-head">
           <h1 id="providers-heading">Providers</h1>
           <p className="lede">Organisations and people who teach Fijian language and culture.</p>
           <p>
-            Being listed doesn't mean a partnership or that Na iSema endorses them. A Partner is marked as one. You can
+            Being listed doesn't mean a partnership or that NAISEMA endorses them. A Partner is marked as one. You can
             also <Link to="/connect/offerings">browse everything they offer</Link>.
           </p>
         </header>
@@ -73,7 +73,7 @@ export default function Providers({ loaderData }: Route.ComponentProps) {
           <button type="submit">Show</button>
         </Form>
         {loaderData.providers.length ? (
-          <ul className="letter-list">
+          <ul className="piece-list">
             {loaderData.providers.map((row) => (
               <li key={row.path}>
                 <Link to={row.path}>{row.name}</Link>

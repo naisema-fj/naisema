@@ -137,8 +137,8 @@ async function gatherReadings(
 
 async function sendAlert(env: Env, plan: { failing: string[]; recovered: string[] }) {
   const subject = plan.failing.length
-    ? `Na iSema ${env.ENVIRONMENT}: ${plural(plan.failing.length, "problem", "problems")}`
-    : `Na iSema ${env.ENVIRONMENT}: back to normal`;
+    ? `NAISEMA ${env.ENVIRONMENT}: ${plural(plan.failing.length, "problem", "problems")}`
+    : `NAISEMA ${env.ENVIRONMENT}: back to normal`;
   const text = [
     ...(plan.failing.length ? ["These need attention:", "", ...plan.failing.map((line) => `- ${line}`), ""] : []),
     ...(plan.recovered.length ? ["Back to normal:", "", ...plan.recovered.map((line) => `- ${line}`), ""] : []),

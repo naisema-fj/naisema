@@ -1,8 +1,8 @@
 {
-  "id": "2ec6ff19-c983-408a-8c41-f22de67cca21",
-  "prevId": "e688e690-33fa-4c4a-841a-742d716fa98a",
   "version": "6",
   "dialect": "sqlite",
+  "id": "2038614e-5fed-4e88-b24a-8d73f4a9fb3e",
+  "prevId": "2ec6ff19-c983-408a-8c41-f22de67cca21",
   "tables": {
     "account": {
       "name": "account",
@@ -114,18 +114,141 @@
         "account_user_id_user_id_fk": {
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
+          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "activity_attempt": {
+      "name": "activity_attempt",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "learning_layer_id": {
+          "name": "learning_layer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "revision_id": {
+          "name": "revision_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "activity_id": {
+          "name": "activity_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "activity_fingerprint": {
+          "name": "activity_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correct": {
+          "name": "correct",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempted_at": {
+          "name": "attempted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "activity_attempt_layer_idx": {
+          "name": "activity_attempt_layer_idx",
+          "columns": [
+            "user_id",
+            "learning_layer_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "activity_attempt_user_id_user_id_fk": {
+          "name": "activity_attempt_user_id_user_id_fk",
+          "tableFrom": "activity_attempt",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "activity_attempt_learning_layer_id_learning_layer_id_fk": {
+          "name": "activity_attempt_learning_layer_id_learning_layer_id_fk",
+          "tableFrom": "activity_attempt",
+          "tableTo": "learning_layer",
+          "columnsFrom": [
+            "learning_layer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "activity_attempt_revision_id_learning_layer_revision_id_fk": {
+          "name": "activity_attempt_revision_id_learning_layer_revision_id_fk",
+          "tableFrom": "activity_attempt",
+          "tableTo": "learning_layer_revision",
+          "columnsFrom": [
+            "revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "activity_attempt_user_id_id_pk": {
+          "columns": [
+            "user_id",
+            "id"
+          ],
+          "name": "activity_attempt_user_id_id_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
@@ -197,6 +320,72 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "bookmark": {
+      "name": "bookmark",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_item_id": {
+          "name": "content_item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "saved_at": {
+          "name": "saved_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "bookmark_user_id_user_id_fk": {
+          "name": "bookmark_user_id_user_id_fk",
+          "tableFrom": "bookmark",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "bookmark_content_item_id_content_item_id_fk": {
+          "name": "bookmark_content_item_id_content_item_id_fk",
+          "tableFrom": "bookmark",
+          "tableTo": "content_item",
+          "columnsFrom": [
+            "content_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "bookmark_user_id_content_item_id_pk": {
+          "columns": [
+            "user_id",
+            "content_item_id"
+          ],
+          "name": "bookmark_user_id_content_item_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "case_evidence": {
       "name": "case_evidence",
       "columns": {
@@ -242,28 +431,28 @@
         "case_evidence_asset_id_media_asset_id_fk": {
           "name": "case_evidence_asset_id_media_asset_id_fk",
           "tableFrom": "case_evidence",
+          "tableTo": "media_asset",
           "columnsFrom": [
             "asset_id"
           ],
-          "tableTo": "media_asset",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "case_evidence_case_id_case_record_id_fk": {
           "name": "case_evidence_case_id_case_record_id_fk",
           "tableFrom": "case_evidence",
+          "tableTo": "case_record",
           "columnsFrom": [
             "case_id"
           ],
-          "tableTo": "case_record",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -481,15 +670,15 @@
         "case_record_content_item_id_content_item_id_fk": {
           "name": "case_record_content_item_id_content_item_id_fk",
           "tableFrom": "case_record",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -577,15 +766,15 @@
         "consent_record_notice_id_notice_id_fk": {
           "name": "consent_record_notice_id_notice_id_fk",
           "tableFrom": "consent_record",
+          "tableTo": "notice",
           "columnsFrom": [
             "notice_id"
           ],
-          "tableTo": "notice",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -658,36 +847,36 @@
           "columns": [
             "content_item_id"
           ],
-          "where": "\"content_hold\".\"lifted_at\" IS NULL",
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"content_hold\".\"lifted_at\" IS NULL"
         }
       },
       "foreignKeys": {
         "content_hold_content_item_id_content_item_id_fk": {
           "name": "content_hold_content_item_id_content_item_id_fk",
           "tableFrom": "content_hold",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "content_hold_case_id_case_record_id_fk": {
           "name": "content_hold_case_id_case_record_id_fk",
           "tableFrom": "content_hold",
+          "tableTo": "case_record",
           "columnsFrom": [
             "case_id"
           ],
-          "tableTo": "case_record",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -797,28 +986,28 @@
         "content_item_current_draft_revision_id_revision_id_fk": {
           "name": "content_item_current_draft_revision_id_revision_id_fk",
           "tableFrom": "content_item",
+          "tableTo": "revision",
           "columnsFrom": [
             "current_draft_revision_id"
           ],
-          "tableTo": "revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "content_item_current_published_revision_id_revision_id_fk": {
           "name": "content_item_current_published_revision_id_revision_id_fk",
           "tableFrom": "content_item",
+          "tableTo": "revision",
           "columnsFrom": [
             "current_published_revision_id"
           ],
-          "tableTo": "revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -858,6 +1047,44 @@
         },
         "created_at": {
           "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "deletion_ledger": {
+      "name": "deletion_ledger",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "subject_hash": {
+          "name": "subject_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
@@ -1120,6 +1347,388 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "learner_account": {
+      "name": "learner_account",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "adult_declared_at": {
+          "name": "adult_declared_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_active_at": {
+          "name": "last_active_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "inactivity_warned_at": {
+          "name": "inactivity_warned_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "preferences": {
+          "name": "preferences",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learner_account_last_active_idx": {
+          "name": "learner_account_last_active_idx",
+          "columns": [
+            "last_active_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "learner_account_user_id_user_id_fk": {
+          "name": "learner_account_user_id_user_id_fk",
+          "tableFrom": "learner_account",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "learner_event": {
+      "name": "learner_event",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learner_event_received_idx": {
+          "name": "learner_event_received_idx",
+          "columns": [
+            "received_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "learner_event_user_id_user_id_fk": {
+          "name": "learner_event_user_id_user_id_fk",
+          "tableFrom": "learner_event",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "learner_event_user_id_event_id_pk": {
+          "columns": [
+            "user_id",
+            "event_id"
+          ],
+          "name": "learner_event_user_id_event_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "learner_rate_limit": {
+      "name": "learner_rate_limit",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "count": {
+          "name": "count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request": {
+          "name": "last_request",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learner_rate_limit_key_unique": {
+          "name": "learner_rate_limit_key_unique",
+          "columns": [
+            "key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "learner_sign_in_link": {
+      "name": "learner_sign_in_link",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "email_hash": {
+          "name": "email_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learner_sign_in_link_email_idx": {
+          "name": "learner_sign_in_link_email_idx",
+          "columns": [
+            "email_hash",
+            "sent_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "learner_video_state": {
+      "name": "learner_video_state",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "learning_layer_id": {
+          "name": "learning_layer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "revision_id": {
+          "name": "revision_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "stage": {
+          "name": "stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position_ms": {
+          "name": "position_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "segment_id": {
+          "name": "segment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "visited": {
+          "name": "visited",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'[]'"
+        },
+        "captions": {
+          "name": "captions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "real_world": {
+          "name": "real_world",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "completed_revision_id": {
+          "name": "completed_revision_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learner_video_state_updated_idx": {
+          "name": "learner_video_state_updated_idx",
+          "columns": [
+            "user_id",
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "learner_video_state_user_id_user_id_fk": {
+          "name": "learner_video_state_user_id_user_id_fk",
+          "tableFrom": "learner_video_state",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "learner_video_state_learning_layer_id_learning_layer_id_fk": {
+          "name": "learner_video_state_learning_layer_id_learning_layer_id_fk",
+          "tableFrom": "learner_video_state",
+          "tableTo": "learning_layer",
+          "columnsFrom": [
+            "learning_layer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "learner_video_state_revision_id_learning_layer_revision_id_fk": {
+          "name": "learner_video_state_revision_id_learning_layer_revision_id_fk",
+          "tableFrom": "learner_video_state",
+          "tableTo": "learning_layer_revision",
+          "columnsFrom": [
+            "revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "learner_video_state_completed_revision_id_learning_layer_revision_id_fk": {
+          "name": "learner_video_state_completed_revision_id_learning_layer_revision_id_fk",
+          "tableFrom": "learner_video_state",
+          "tableTo": "learning_layer_revision",
+          "columnsFrom": [
+            "completed_revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "learner_video_state_user_id_learning_layer_id_pk": {
+          "columns": [
+            "user_id",
+            "learning_layer_id"
+          ],
+          "name": "learner_video_state_user_id_learning_layer_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "learning_layer": {
       "name": "learning_layer",
       "columns": {
@@ -1215,41 +1824,41 @@
         "learning_layer_content_item_id_content_item_id_fk": {
           "name": "learning_layer_content_item_id_content_item_id_fk",
           "tableFrom": "learning_layer",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "learning_layer_current_draft_revision_id_learning_layer_revision_id_fk": {
           "name": "learning_layer_current_draft_revision_id_learning_layer_revision_id_fk",
           "tableFrom": "learning_layer",
+          "tableTo": "learning_layer_revision",
           "columnsFrom": [
             "current_draft_revision_id"
           ],
-          "tableTo": "learning_layer_revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "learning_layer_current_published_revision_id_learning_layer_revision_id_fk": {
           "name": "learning_layer_current_published_revision_id_learning_layer_revision_id_fk",
           "tableFrom": "learning_layer",
+          "tableTo": "learning_layer_revision",
           "columnsFrom": [
             "current_published_revision_id"
           ],
-          "tableTo": "learning_layer_revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1399,54 +2008,54 @@
         "learning_layer_approval_revision_id_learning_layer_revision_id_fk": {
           "name": "learning_layer_approval_revision_id_learning_layer_revision_id_fk",
           "tableFrom": "learning_layer_approval",
+          "tableTo": "learning_layer_revision",
           "columnsFrom": [
             "revision_id"
           ],
-          "tableTo": "learning_layer_revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "learning_layer_approval_review_link_id_review_link_id_fk": {
           "name": "learning_layer_approval_review_link_id_review_link_id_fk",
           "tableFrom": "learning_layer_approval",
+          "tableTo": "review_link",
           "columnsFrom": [
             "review_link_id"
           ],
-          "tableTo": "review_link",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "learning_layer_approval_evidence_asset_id_media_asset_id_fk": {
           "name": "learning_layer_approval_evidence_asset_id_media_asset_id_fk",
           "tableFrom": "learning_layer_approval",
+          "tableTo": "media_asset",
           "columnsFrom": [
             "evidence_asset_id"
           ],
-          "tableTo": "media_asset",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "learning_layer_approval_carried_forward_from_id_learning_layer_approval_id_fk": {
           "name": "learning_layer_approval_carried_forward_from_id_learning_layer_approval_id_fk",
           "tableFrom": "learning_layer_approval",
+          "tableTo": "learning_layer_approval",
           "columnsFrom": [
             "carried_forward_from_id"
           ],
-          "tableTo": "learning_layer_approval",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1498,28 +2107,28 @@
         "learning_layer_educator_learning_layer_id_learning_layer_id_fk": {
           "name": "learning_layer_educator_learning_layer_id_learning_layer_id_fk",
           "tableFrom": "learning_layer_educator",
+          "tableTo": "learning_layer",
           "columnsFrom": [
             "learning_layer_id"
           ],
-          "tableTo": "learning_layer",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "learning_layer_educator_user_id_user_id_fk": {
           "name": "learning_layer_educator_user_id_user_id_fk",
           "tableFrom": "learning_layer_educator",
+          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1602,15 +2211,15 @@
         "learning_layer_review_assignment_learning_layer_id_learning_layer_id_fk": {
           "name": "learning_layer_review_assignment_learning_layer_id_learning_layer_id_fk",
           "tableFrom": "learning_layer_review_assignment",
+          "tableTo": "learning_layer",
           "columnsFrom": [
             "learning_layer_id"
           ],
-          "tableTo": "learning_layer",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1685,15 +2294,15 @@
         "learning_layer_revision_learning_layer_id_learning_layer_id_fk": {
           "name": "learning_layer_revision_learning_layer_id_learning_layer_id_fk",
           "tableFrom": "learning_layer_revision",
+          "tableTo": "learning_layer",
           "columnsFrom": [
             "learning_layer_id"
           ],
-          "tableTo": "learning_layer",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1730,15 +2339,15 @@
         "learning_layer_submission_revision_id_learning_layer_revision_id_fk": {
           "name": "learning_layer_submission_revision_id_learning_layer_revision_id_fk",
           "tableFrom": "learning_layer_submission",
+          "tableTo": "learning_layer_revision",
           "columnsFrom": [
             "revision_id"
           ],
-          "tableTo": "learning_layer_revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1775,15 +2384,15 @@
         "link_report_content_item_id_content_item_id_fk": {
           "name": "link_report_content_item_id_content_item_id_fk",
           "tableFrom": "link_report",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1930,15 +2539,15 @@
         "media_asset_uploaded_by_user_id_fk": {
           "name": "media_asset_uploaded_by_user_id_fk",
           "tableFrom": "media_asset",
+          "tableTo": "user",
           "columnsFrom": [
             "uploaded_by"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1982,15 +2591,15 @@
         "media_upload_part_asset_id_media_asset_id_fk": {
           "name": "media_upload_part_asset_id_media_asset_id_fk",
           "tableFrom": "media_upload_part",
+          "tableTo": "media_asset",
           "columnsFrom": [
             "asset_id"
           ],
-          "tableTo": "media_asset",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -2333,15 +2942,15 @@
         "offering_provider_id_provider_id_fk": {
           "name": "offering_provider_id_provider_id_fk",
           "tableFrom": "offering",
+          "tableTo": "provider",
           "columnsFrom": [
             "provider_id"
           ],
-          "tableTo": "provider",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2428,15 +3037,15 @@
         "partnership_agreement_provider_id_provider_id_fk": {
           "name": "partnership_agreement_provider_id_provider_id_fk",
           "tableFrom": "partnership_agreement",
+          "tableTo": "provider",
           "columnsFrom": [
             "provider_id"
           ],
-          "tableTo": "provider",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2725,28 +3334,28 @@
         "review_approval_revision_id_revision_id_fk": {
           "name": "review_approval_revision_id_revision_id_fk",
           "tableFrom": "review_approval",
+          "tableTo": "revision",
           "columnsFrom": [
             "revision_id"
           ],
-          "tableTo": "revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "review_approval_carried_forward_from_id_review_approval_id_fk": {
           "name": "review_approval_carried_forward_from_id_review_approval_id_fk",
           "tableFrom": "review_approval",
+          "tableTo": "review_approval",
           "columnsFrom": [
             "carried_forward_from_id"
           ],
-          "tableTo": "review_approval",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2814,15 +3423,15 @@
         "review_assignment_content_item_id_content_item_id_fk": {
           "name": "review_assignment_content_item_id_content_item_id_fk",
           "tableFrom": "review_assignment",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2916,15 +3525,15 @@
         "review_link_revision_id_learning_layer_revision_id_fk": {
           "name": "review_link_revision_id_learning_layer_revision_id_fk",
           "tableFrom": "review_link",
+          "tableTo": "learning_layer_revision",
           "columnsFrom": [
             "revision_id"
           ],
-          "tableTo": "learning_layer_revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2976,15 +3585,15 @@
         "review_link_access_review_link_id_review_link_id_fk": {
           "name": "review_link_access_review_link_id_review_link_id_fk",
           "tableFrom": "review_link_access",
+          "tableTo": "review_link",
           "columnsFrom": [
             "review_link_id"
           ],
-          "tableTo": "review_link",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3066,15 +3675,15 @@
         "revision_content_item_id_content_item_id_fk": {
           "name": "revision_content_item_id_content_item_id_fk",
           "tableFrom": "revision",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3111,15 +3720,15 @@
         "revision_submission_revision_id_revision_id_fk": {
           "name": "revision_submission_revision_id_revision_id_fk",
           "tableFrom": "revision_submission",
+          "tableTo": "revision",
           "columnsFrom": [
             "revision_id"
           ],
-          "tableTo": "revision",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3156,15 +3765,15 @@
         "rights_expiry_warning_rights_record_id_rights_record_id_fk": {
           "name": "rights_expiry_warning_rights_record_id_rights_record_id_fk",
           "tableFrom": "rights_expiry_warning",
+          "tableTo": "rights_record",
           "columnsFrom": [
             "rights_record_id"
           ],
-          "tableTo": "rights_record",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -3324,15 +3933,15 @@
         "rights_record_evidence_asset_id_media_asset_id_fk": {
           "name": "rights_record_evidence_asset_id_media_asset_id_fk",
           "tableFrom": "rights_record",
+          "tableTo": "media_asset",
           "columnsFrom": [
             "evidence_asset_id"
           ],
-          "tableTo": "media_asset",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3362,28 +3971,28 @@
         "rights_record_contributor_rights_record_id_rights_record_id_fk": {
           "name": "rights_record_contributor_rights_record_id_rights_record_id_fk",
           "tableFrom": "rights_record_contributor",
+          "tableTo": "rights_record",
           "columnsFrom": [
             "rights_record_id"
           ],
-          "tableTo": "rights_record",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "rights_record_contributor_contributor_id_contributor_id_fk": {
           "name": "rights_record_contributor_contributor_id_contributor_id_fk",
           "tableFrom": "rights_record_contributor",
+          "tableTo": "contributor",
           "columnsFrom": [
             "contributor_id"
           ],
-          "tableTo": "contributor",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -3478,18 +4087,125 @@
         "role_assignment_user_id_user_id_fk": {
           "name": "role_assignment_user_id_user_id_fk",
           "tableFrom": "role_assignment",
+          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "saved_vocabulary": {
+      "name": "saved_vocabulary",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expression_id": {
+          "name": "expression_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_revision_id": {
+          "name": "source_revision_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "learning_layer_id": {
+          "name": "learning_layer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "saved_at": {
+          "name": "saved_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "saved_vocabulary_user_id_user_id_fk": {
+          "name": "saved_vocabulary_user_id_user_id_fk",
+          "tableFrom": "saved_vocabulary",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "saved_vocabulary_expression_id_expression_id_fk": {
+          "name": "saved_vocabulary_expression_id_expression_id_fk",
+          "tableFrom": "saved_vocabulary",
+          "tableTo": "expression",
+          "columnsFrom": [
+            "expression_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "saved_vocabulary_source_revision_id_learning_layer_revision_id_fk": {
+          "name": "saved_vocabulary_source_revision_id_learning_layer_revision_id_fk",
+          "tableFrom": "saved_vocabulary",
+          "tableTo": "learning_layer_revision",
+          "columnsFrom": [
+            "source_revision_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "saved_vocabulary_learning_layer_id_learning_layer_id_fk": {
+          "name": "saved_vocabulary_learning_layer_id_learning_layer_id_fk",
+          "tableFrom": "saved_vocabulary",
+          "tableTo": "learning_layer",
+          "columnsFrom": [
+            "learning_layer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "saved_vocabulary_user_id_expression_id_source_revision_id_pk": {
+          "columns": [
+            "user_id",
+            "expression_id",
+            "source_revision_id"
+          ],
+          "name": "saved_vocabulary_user_id_expression_id_source_revision_id_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
@@ -3574,15 +4290,15 @@
         "search_entry_content_item_id_content_item_id_fk": {
           "name": "search_entry_content_item_id_content_item_id_fk",
           "tableFrom": "search_entry",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3620,28 +4336,28 @@
         "search_entry_topic_content_item_id_content_item_id_fk": {
           "name": "search_entry_topic_content_item_id_content_item_id_fk",
           "tableFrom": "search_entry_topic",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "search_entry_topic_topic_id_topic_id_fk": {
           "name": "search_entry_topic_topic_id_topic_id_fk",
           "tableFrom": "search_entry_topic",
+          "tableTo": "topic",
           "columnsFrom": [
             "topic_id"
           ],
-          "tableTo": "topic",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -3770,15 +4486,15 @@
         "session_user_id_user_id_fk": {
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
+          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3853,15 +4569,15 @@
         "slug_redirect_content_item_id_content_item_id_fk": {
           "name": "slug_redirect_content_item_id_content_item_id_fk",
           "tableFrom": "slug_redirect",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -3914,15 +4630,15 @@
         "staff_session_session_id_session_id_fk": {
           "name": "staff_session_session_id_session_id_fk",
           "tableFrom": "staff_session",
+          "tableTo": "session",
           "columnsFrom": [
             "session_id"
           ],
-          "tableTo": "session",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4114,28 +4830,28 @@
         "topic_parent_topic_id_topic_id_fk": {
           "name": "topic_parent_topic_id_topic_id_fk",
           "tableFrom": "topic",
+          "tableTo": "topic",
           "columnsFrom": [
             "parent_topic_id"
           ],
-          "tableTo": "topic",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "topic_lead_item_id_content_item_id_fk": {
           "name": "topic_lead_item_id_content_item_id_fk",
           "tableFrom": "topic",
+          "tableTo": "content_item",
           "columnsFrom": [
             "lead_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4210,15 +4926,15 @@
         "two_factor_user_id_user_id_fk": {
           "name": "two_factor_user_id_user_id_fk",
           "tableFrom": "two_factor",
+          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4298,15 +5014,15 @@
         "upload_link_submission_id_submission_id_fk": {
           "name": "upload_link_submission_id_submission_id_fk",
           "tableFrom": "upload_link",
+          "tableTo": "submission",
           "columnsFrom": [
             "submission_id"
           ],
-          "tableTo": "submission",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4336,28 +5052,28 @@
         "upload_link_file_asset_id_media_asset_id_fk": {
           "name": "upload_link_file_asset_id_media_asset_id_fk",
           "tableFrom": "upload_link_file",
+          "tableTo": "media_asset",
           "columnsFrom": [
             "asset_id"
           ],
-          "tableTo": "media_asset",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "upload_link_file_link_id_upload_link_id_fk": {
           "name": "upload_link_file_link_id_upload_link_id_fk",
           "tableFrom": "upload_link_file",
+          "tableTo": "upload_link",
           "columnsFrom": [
             "link_id"
           ],
-          "tableTo": "upload_link",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4688,28 +5404,28 @@
         "video_asset_id_media_asset_id_fk": {
           "name": "video_asset_id_media_asset_id_fk",
           "tableFrom": "video_asset",
+          "tableTo": "media_asset",
           "columnsFrom": [
             "id"
           ],
-          "tableTo": "media_asset",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "video_asset_owner_id_user_id_fk": {
           "name": "video_asset_owner_id_user_id_fk",
           "tableFrom": "video_asset",
+          "tableTo": "user",
           "columnsFrom": [
             "owner_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -4761,28 +5477,28 @@
         "video_educator_content_item_id_content_item_id_fk": {
           "name": "video_educator_content_item_id_content_item_id_fk",
           "tableFrom": "video_educator",
+          "tableTo": "content_item",
           "columnsFrom": [
             "content_item_id"
           ],
-          "tableTo": "content_item",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "video_educator_user_id_user_id_fk": {
           "name": "video_educator_user_id_user_id_fk",
           "tableFrom": "video_educator",
+          "tableTo": "user",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "user",
           "columnsTo": [
             "id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -4801,9 +5517,9 @@
   "views": {},
   "enums": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
+    "tables": {},
+    "columns": {}
   },
   "internal": {
     "indexes": {}

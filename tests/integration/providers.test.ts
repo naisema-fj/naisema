@@ -48,8 +48,8 @@ describe("Providers (PART-01)", () => {
     expect(page).toContain('<h1 id="provider-heading">Lami Language School</h1>');
     expect(page).toContain("Evening classes.");
     expect(page).toContain("<dd>Not known</dd>");
-    expect(page).toContain("doesn&#x27;t mean a partnership or that Na iSema endorses them");
-    expect(page).not.toContain("A Na iSema Partner");
+    expect(page).toContain("doesn&#x27;t mean a partnership or that NAISEMA endorses them");
+    expect(page).not.toContain("A NAISEMA Partner");
     expect(await read("/connect/providers")).toContain(`href="${path}"`);
   });
 
@@ -116,10 +116,10 @@ describe("Partners, sponsorship and features (PART-03, PUB-04)", () => {
     const { id, path } = await addProvider(editor);
 
     expect((await recordAgreement(editor, id, { startsOn: "2027-01-01" })).status).toBe(302);
-    expect(await read(path)).not.toContain("A Na iSema Partner");
+    expect(await read(path)).not.toContain("A NAISEMA Partner");
 
     expect((await recordAgreement(editor, id)).status).toBe(302);
-    expect(await read(path)).toContain("A Na iSema Partner");
+    expect(await read(path)).toContain("A NAISEMA Partner");
 
     const agreement = await env.DB.prepare(
       "SELECT id FROM partnership_agreement WHERE provider_id = ?1 AND starts_on = '2026-01-01'",
@@ -129,10 +129,10 @@ describe("Partners, sponsorship and features (PART-03, PUB-04)", () => {
     await editor.browser.fetch(`/admin/providers/${id}`, {
       form: { intent: "endAgreement", agreementId: agreement?.id as string },
     });
-    expect(await read(path)).not.toContain("A Na iSema Partner");
+    expect(await read(path)).not.toContain("A NAISEMA Partner");
   });
 
-  it("only let a Partner's Offering be shown or hosted on Na iSema, and hide it when the partnership ends", async () => {
+  it("only let a Partner's Offering be shown or hosted on NAISEMA, and hide it when the partnership ends", async () => {
     const editor = await staff("editor", { role: "editor" });
     const { id, path } = await addProvider(editor);
     const embed = {
@@ -196,7 +196,7 @@ describe("Keeping Connect's pages current", () => {
     expect(await read("/sitemap.xml")).not.toContain(path);
   });
 
-  it("says when the Na iSema item an Offering is on is no longer public", async () => {
+  it("says when the NAISEMA item an Offering is on is no longer public", async () => {
     const editor = await staff("editor", { role: "editor" });
     const { id, path } = await addProvider(editor);
     await recordAgreement(editor, id);
@@ -211,7 +211,7 @@ describe("Keeping Connect's pages current", () => {
         .status,
     ).toBe(302);
 
-    expect(await read(path)).toContain("It isn&#x27;t available on Na iSema right now.");
+    expect(await read(path)).toContain("It isn&#x27;t available on NAISEMA right now.");
   });
 
   it("keeps a refused agreement's values, and won't end one that isn't this Provider's", async () => {

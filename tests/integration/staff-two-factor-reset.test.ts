@@ -52,7 +52,7 @@ describe("resetting a staff member's two-factor", () => {
     await admin.browser.fetch("/admin/staff", { form: { intent: "resetTwoFactor", userId: reviewer.userId } });
 
     const email = (await emailsTo("lost-phone3@naisema.test")).at(-1);
-    expect(email?.subject).toBe("Your Na iSema two-factor was reset");
+    expect(email?.subject).toBe("Your NAISEMA two-factor was reset");
     expect(email?.text).toContain("reset-admin3@naisema.test");
     expect(email?.text).toMatch(/didn't ask for this/);
   });

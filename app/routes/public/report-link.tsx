@@ -8,7 +8,7 @@ export const handle = { hydrate: false };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Report a broken link · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Report a broken link · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 /** Reports arrive from the button on a Resource's page; opening this address directly shows how. */
@@ -26,7 +26,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 export default function ReportLink({ actionData }: Route.ComponentProps) {
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>{actionData ? "Thank you" : "Report a broken link"}</h1>
         {actionData ? (
           <>

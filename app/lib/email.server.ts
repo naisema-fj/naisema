@@ -55,4 +55,4 @@ export const alertRecipients = (env: Env) =>
 
 /** A letter to a member of the public: a greeting, by name when we have one, the paragraphs, a sign-off. */
 export const letterText = (name: string, paragraphs: string[]) =>
-  [`Bula${name ? ` ${name}` : ""},`, ...paragraphs, "Vinaka,\nNa iSema"].join("\n\n");
+  [`Bula${name ? ` ${name}` : ""},`, ...paragraphs, "Vinaka,\nNAISEMA"].join("\n\n");

@@ -49,10 +49,10 @@ export async function requestLearnerSignInLink(env: Env, request: Request, email
   if (existing && (await hasStaffRole(db, existing.id))) {
     await sendEmail(env, {
       to: email,
-      subject: "Signing in to Na iSema",
+      subject: "Signing in to NAISEMA",
       text: letterText("", [
-        "Someone asked to sign in to a Na iSema learning account with this address.",
-        "This address belongs to a Na iSema staff account, so it can't also hold a learning account. To keep your learning separate, sign up with another email address.",
+        "Someone asked to sign in to a NAISEMA learning account with this address.",
+        "This address belongs to a NAISEMA staff account, so it can't also hold a learning account. To keep your learning separate, sign up with another email address.",
         "If you did not ask, you can ignore this email.",
       ]),
     });

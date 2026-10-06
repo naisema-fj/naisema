@@ -27,19 +27,19 @@ describe("public home page", () => {
   });
 
   it("uses the site name stored in the database as the page title and the welcome's sign-off", async () => {
-    await setSiteSetting("site_name", "Na iSema Staging");
+    await setSiteSetting("site_name", "NAISEMA Staging");
 
     const html = await (await SELF.fetch("https://naisema.test/")).text();
 
-    expect(html).toContain("<title>Na iSema Staging</title>");
-    expect(html).toContain('<span class="signature">Na iSema Staging</span>');
+    expect(html).toContain("<title>NAISEMA Staging</title>");
+    expect(html).toContain('<span class="signature">NAISEMA Staging</span>');
   });
 
   it("still renders with the default name before any settings exist", async () => {
     const response = await SELF.fetch("https://naisema.test/");
 
     expect(response.status).toBe(200);
-    expect(await response.text()).toContain('<span class="signature">Na iSema</span>');
+    expect(await response.text()).toContain('<span class="signature">NAISEMA</span>');
   });
 });
 

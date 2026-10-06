@@ -22,7 +22,7 @@ export function createAuth(env: Env, request: Request) {
   const db = getDb(env.DB);
 
   return betterAuth({
-    appName: "Na iSema",
+    appName: "NAISEMA",
     baseURL: origin,
     basePath: AUTH_BASE_PATH,
     secret: env.BETTER_AUTH_SECRET,
@@ -60,9 +60,9 @@ export function createAuth(env: Env, request: Request) {
         sendMagicLink: async ({ email, url }) => {
           await sendEmail(env, {
             to: email,
-            subject: "Your Na iSema sign-in link",
+            subject: "Your NAISEMA sign-in link",
             text: [
-              "Use this link to sign in to Na iSema staff tools:",
+              "Use this link to sign in to NAISEMA staff tools:",
               "",
               url,
               "",
@@ -72,7 +72,7 @@ export function createAuth(env: Env, request: Request) {
           });
         },
       }),
-      twoFactor({ issuer: "Na iSema", allowPasswordless: true }),
+      twoFactor({ issuer: "NAISEMA", allowPasswordless: true }),
     ],
   });
 }
@@ -97,7 +97,7 @@ export function createLearnerAuth(env: Env, request: Request) {
   const db = getDb(env.DB);
 
   return betterAuth({
-    appName: "Na iSema",
+    appName: "NAISEMA",
     baseURL: origin,
     basePath: LEARNER_AUTH_BASE_PATH,
     secret: env.BETTER_AUTH_SECRET,
@@ -133,11 +133,11 @@ export function createLearnerAuth(env: Env, request: Request) {
         sendMagicLink: async ({ email, url }) => {
           await sendEmail(env, {
             to: email,
-            subject: "Your Na iSema sign-in link",
+            subject: "Your NAISEMA sign-in link",
             text: [
               "Bula,",
               "",
-              "Use this link to sign in to your Na iSema learning account:",
+              "Use this link to sign in to your NAISEMA learning account:",
               "",
               url,
               "",
@@ -145,7 +145,7 @@ export function createLearnerAuth(env: Env, request: Request) {
               "If you did not ask to sign in, you can ignore this email: no account is made until the link is used.",
               "",
               "Vinaka,",
-              "Na iSema",
+              "NAISEMA",
             ].join("\n"),
           });
         },

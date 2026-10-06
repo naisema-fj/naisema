@@ -23,7 +23,7 @@ export const handle: RouteHandle = { noindex: true };
 export const headers = () => ({ "Cache-Control": PRIVATE_NO_STORE });
 
 export function meta() {
-  return [{ title: "Your learning · Na iSema" }];
+  return [{ title: "Your learning · NAISEMA" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

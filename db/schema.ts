@@ -799,7 +799,7 @@ export const contentHold = sqliteTable(
 
 /**
  * A Video Asset (ADR-0008): a scanned video master kept in the private VIDEO_MASTERS bucket as
- * Na iSema's original, and the copy a video provider (Cloudflare Stream) made of it for delivery.
+ * NAISEMA's original, and the copy a video provider (Cloudflare Stream) made of it for delivery.
  * It shares its ID with the media library upload it came from. Its length and picture size are
  * read from the master itself; the provider's reports only move its state forwards.
  */

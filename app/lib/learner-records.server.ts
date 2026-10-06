@@ -121,9 +121,9 @@ export async function handleInactiveLearners(env: Env, db: Database, now: Date) 
       } else if (step === "warn") {
         await sendEmail(env, {
           to: account.email,
-          subject: "Your Na iSema learning account will be deleted",
+          subject: "Your NAISEMA learning account will be deleted",
           text: letterText("", [
-            "You haven't used your Na iSema learning account for nearly two years. We don't keep accounts nobody uses, so in 30 days it will be deleted, with everything saved in it.",
+            "You haven't used your NAISEMA learning account for nearly two years. We don't keep accounts nobody uses, so in 30 days it will be deleted, with everything saved in it.",
             `To keep it, sign in at ${primaryPublicOrigin(env)}${LEARNER_PATHS.signIn} before then. To keep a copy of what you saved, download it from your learning page first.`,
             "If you're happy for it to go, you don't need to do anything.",
           ]),

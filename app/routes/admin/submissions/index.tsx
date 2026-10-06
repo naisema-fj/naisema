@@ -7,7 +7,7 @@ import type { Route } from "./+types/index";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Submissions · Na iSema staff" }];
+  return [{ title: "Submissions · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

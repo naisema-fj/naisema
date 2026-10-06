@@ -25,7 +25,7 @@ import type { Route } from "./+types/revision";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: loaderData ? `Revision ${loaderData.revision.number} · Na iSema staff` : "Na iSema staff" }];
+  return [{ title: loaderData ? `Revision ${loaderData.revision.number} · NAISEMA staff` : "NAISEMA staff" }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

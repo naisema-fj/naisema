@@ -17,7 +17,7 @@ test("a staff member signs in with an email link and an authenticator code", asy
   await expectNoAxeViolations(page);
   await confirmTwoFactorCode(page, key);
 
-  await expect(page.getByRole("heading", { name: "Na iSema staff" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "NAISEMA staff" })).toBeVisible();
   await expect(page.getByText("Administrator")).toBeVisible();
   await expectNoAxeViolations(page);
 

@@ -73,8 +73,8 @@ describe("the media cost report", () => {
 
     const subjects = (await budgetAlerts(owner)).map((email) => email.subject);
     expect(subjects).toEqual([
-      "Na iSema development: media costs on course for 50% of the monthly ceiling",
-      "Na iSema development: media costs on course for 80% of the monthly ceiling",
+      "NAISEMA development: media costs on course for 50% of the monthly ceiling",
+      "NAISEMA development: media costs on course for 80% of the monthly ceiling",
     ]);
     expect(await budgetAlerts(address)).toHaveLength(2);
     expect((await budgetAlerts(owner))[0].text).toContain("6000 minutes stored");

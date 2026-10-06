@@ -18,7 +18,7 @@ export async function getSiteSettings(db: Database): Promise<SiteSettings> {
   const byKey = new Map(rows.map((row) => [row.key, row.value]));
 
   return {
-    siteName: byKey.get(SITE_NAME_KEY) ?? "Na iSema",
+    siteName: byKey.get(SITE_NAME_KEY) ?? "NAISEMA",
     welcomeStatement: byKey.get(WELCOME_STATEMENT_KEY) ?? null,
   };
 }

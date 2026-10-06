@@ -73,9 +73,9 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema" }];
+  if (!loaderData) return [{ title: "NAISEMA" }];
   return [
-    { title: `${loaderData.title}: explore the language of ${loaderData.videoTitle} · Na iSema` },
+    { title: `${loaderData.title}: explore the language of ${loaderData.videoTitle} · NAISEMA` },
     { name: "description", content: `Fijian captions, a transcript and word meanings for ${loaderData.videoTitle}.` },
   ];
 }

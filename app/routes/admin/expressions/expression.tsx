@@ -7,7 +7,7 @@ import { requireLayerStaff } from "~/lib/learning-layers.server";
 import type { Route } from "./+types/expression";
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.expression.headword ?? "Expression"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.expression.headword ?? "Expression"} · NAISEMA staff` }];
 }
 
 async function requireExpression(env: Env, request: Request, id: string) {

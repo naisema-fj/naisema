@@ -1,310 +1,383 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-01T01:58:28+00:00",
-  "title": "Design System: Na iSema",
+  "generatedAt": "2026-10-06T03:43:14+00:00",
+  "title": "Design System: NAISEMA",
   "extensions": {
     "colorMeta": {
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#0f2b35",
+        "tonalRamp": [
+          "oklch(15% 0.028 224.4)",
+          "oklch(26% 0.038 224.4)",
+          "oklch(38% 0.038 224.4)",
+          "oklch(49% 0.038 224.4)",
+          "oklch(61% 0.038 224.4)",
+          "oklch(72% 0.038 224.4)",
+          "oklch(84% 0.038 224.4)",
+          "oklch(95% 0.032 224.4)"
+        ]
+      },
+      "ink-deep": {
+        "role": "primary",
+        "displayName": "Ink Deep",
+        "canonical": "#0a1d24",
+        "tonalRamp": [
+          "oklch(15% 0.028 224.5)",
+          "oklch(26% 0.028 224.5)",
+          "oklch(38% 0.028 224.5)",
+          "oklch(49% 0.028 224.5)",
+          "oklch(61% 0.028 224.5)",
+          "oklch(72% 0.028 224.5)",
+          "oklch(84% 0.028 224.5)",
+          "oklch(95% 0.028 224.5)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink-2",
+        "canonical": "#1b3f4c",
+        "tonalRamp": [
+          "oklch(15% 0.029 224.3)",
+          "oklch(26% 0.047 224.3)",
+          "oklch(38% 0.047 224.3)",
+          "oklch(49% 0.047 224.3)",
+          "oklch(61% 0.047 224.3)",
+          "oklch(72% 0.047 224.3)",
+          "oklch(84% 0.047 224.3)",
+          "oklch(95% 0.031 224.3)"
+        ]
+      },
+      "kesa": {
+        "role": "secondary",
+        "displayName": "Kesa",
+        "canonical": "#d2603f",
+        "tonalRamp": [
+          "oklch(15% 0.052 36.9)",
+          "oklch(26% 0.088 36.9)",
+          "oklch(38% 0.126 36.9)",
+          "oklch(49% 0.152 36.9)",
+          "oklch(61% 0.152 36.9)",
+          "oklch(72% 0.152 36.9)",
+          "oklch(84% 0.092 36.9)",
+          "oklch(95% 0.024 36.9)"
+        ]
+      },
+      "kesa-deep": {
+        "role": "secondary",
+        "displayName": "Kesa Deep",
+        "canonical": "#a9472a",
+        "tonalRamp": [
+          "oklch(15% 0.052 37.0)",
+          "oklch(26% 0.088 37.0)",
+          "oklch(38% 0.126 37.0)",
+          "oklch(49% 0.136 37.0)",
+          "oklch(61% 0.136 37.0)",
+          "oklch(72% 0.136 37.0)",
+          "oklch(84% 0.092 37.0)",
+          "oklch(95% 0.024 37.0)"
+        ]
+      },
+      "voivoi": {
+        "role": "tertiary",
+        "displayName": "Voivoi",
+        "canonical": "#e9be5b",
+        "tonalRamp": [
+          "oklch(15% 0.031 85.8)",
+          "oklch(26% 0.053 85.8)",
+          "oklch(38% 0.077 85.8)",
+          "oklch(49% 0.101 85.8)",
+          "oklch(61% 0.123 85.8)",
+          "oklch(72% 0.127 85.8)",
+          "oklch(84% 0.127 85.8)",
+          "oklch(95% 0.053 85.8)"
+        ]
+      },
+      "voivoi-light": {
+        "role": "tertiary",
+        "displayName": "Voivoi Light",
+        "canonical": "#f1cd78",
+        "tonalRamp": [
+          "oklch(15% 0.032 87.1)",
+          "oklch(26% 0.054 87.1)",
+          "oklch(38% 0.076 87.1)",
+          "oklch(49% 0.100 87.1)",
+          "oklch(61% 0.112 87.1)",
+          "oklch(72% 0.112 87.1)",
+          "oklch(84% 0.112 87.1)",
+          "oklch(95% 0.056 87.1)"
+        ]
+      },
+      "shell": {
+        "role": "neutral",
+        "displayName": "Shell",
+        "canonical": "#f6f5f2",
+        "tonalRamp": [
+          "oklch(15% 0.004 91.4)",
+          "oklch(26% 0.004 91.4)",
+          "oklch(38% 0.004 91.4)",
+          "oklch(49% 0.004 91.4)",
+          "oklch(61% 0.004 91.4)",
+          "oklch(72% 0.004 91.4)",
+          "oklch(84% 0.004 91.4)",
+          "oklch(95% 0.004 91.4)"
+        ]
+      },
       "sand": {
         "role": "neutral",
-        "displayName": "Sand Ground",
-        "canonical": "#eee7d9",
+        "displayName": "Sand",
+        "canonical": "#e8e5de",
         "tonalRamp": [
-          "oklch(15% 0.02 84.6)",
-          "oklch(25% 0.02 84.6)",
-          "oklch(35% 0.02 84.6)",
-          "oklch(45% 0.02 84.6)",
-          "oklch(58% 0.02 84.6)",
-          "oklch(72% 0.02 84.6)",
-          "oklch(85% 0.02 84.6)",
-          "oklch(95% 0.02 84.6)"
+          "oklch(15% 0.010 87.5)",
+          "oklch(26% 0.010 87.5)",
+          "oklch(38% 0.010 87.5)",
+          "oklch(49% 0.010 87.5)",
+          "oklch(61% 0.010 87.5)",
+          "oklch(72% 0.010 87.5)",
+          "oklch(84% 0.010 87.5)",
+          "oklch(95% 0.010 87.5)"
         ]
       },
-      "sheet": {
+      "paper": {
         "role": "neutral",
-        "displayName": "Letter Sheet",
-        "canonical": "#fbf9f4",
+        "displayName": "Paper",
+        "canonical": "#ffffff",
         "tonalRamp": [
-          "oklch(15% 0.007 88.6)",
-          "oklch(25% 0.007 88.6)",
-          "oklch(35% 0.007 88.6)",
-          "oklch(45% 0.007 88.6)",
-          "oklch(58% 0.007 88.6)",
-          "oklch(72% 0.007 88.6)",
-          "oklch(85% 0.007 88.6)",
-          "oklch(95% 0.007 88.6)"
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(38% 0.000 89.9)",
+          "oklch(49% 0.000 89.9)",
+          "oklch(61% 0.000 89.9)",
+          "oklch(72% 0.000 89.9)",
+          "oklch(84% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
         ]
       },
-      "ink": {
+      "line": {
         "role": "neutral",
-        "displayName": "Near-Black Ink",
-        "canonical": "#1e1c19",
+        "displayName": "Line",
+        "canonical": "#d6d2c8",
         "tonalRamp": [
-          "oklch(15% 0.006 78.2)",
-          "oklch(25% 0.006 78.2)",
-          "oklch(35% 0.006 78.2)",
-          "oklch(45% 0.006 78.2)",
-          "oklch(58% 0.006 78.2)",
-          "oklch(72% 0.006 78.2)",
-          "oklch(85% 0.006 78.2)",
-          "oklch(95% 0.006 78.2)"
+          "oklch(15% 0.014 88.7)",
+          "oklch(26% 0.014 88.7)",
+          "oklch(38% 0.014 88.7)",
+          "oklch(49% 0.014 88.7)",
+          "oklch(61% 0.014 88.7)",
+          "oklch(72% 0.014 88.7)",
+          "oklch(84% 0.014 88.7)",
+          "oklch(95% 0.014 88.7)"
         ]
       },
-      "ink-soft": {
+      "muted": {
         "role": "neutral",
-        "displayName": "Soft Ink",
-        "canonical": "#4a4640",
+        "displayName": "Muted",
+        "canonical": "#56686e",
         "tonalRamp": [
-          "oklch(15% 0.011 78.2)",
-          "oklch(25% 0.011 78.2)",
-          "oklch(35% 0.011 78.2)",
-          "oklch(45% 0.011 78.2)",
-          "oklch(58% 0.011 78.2)",
-          "oklch(72% 0.011 78.2)",
-          "oklch(85% 0.011 78.2)",
-          "oklch(95% 0.011 78.2)"
+          "oklch(15% 0.024 220.0)",
+          "oklch(26% 0.024 220.0)",
+          "oklch(38% 0.024 220.0)",
+          "oklch(49% 0.024 220.0)",
+          "oklch(61% 0.024 220.0)",
+          "oklch(72% 0.024 220.0)",
+          "oklch(84% 0.024 220.0)",
+          "oklch(95% 0.024 220.0)"
         ]
       },
-      "teal-950": {
-        "role": "primary",
-        "displayName": "Night Teal",
-        "canonical": "#062e36",
-        "tonalRamp": [
-          "#062e36",
-          "#0a3d47",
-          "#0b5563",
-          "oklch(55% 0.07 214.6)",
-          "oklch(68% 0.06 214.6)",
-          "oklch(78% 0.045 214.6)",
-          "#b9d6d8",
-          "#e1eeee"
-        ]
-      },
-      "teal-900": {
-        "role": "primary",
-        "displayName": "Deep Teal Ink",
-        "canonical": "#0a3d47",
-        "tonalRamp": [
-          "#062e36",
-          "#0a3d47",
-          "#0b5563",
-          "oklch(55% 0.07 214.6)",
-          "oklch(68% 0.06 214.6)",
-          "oklch(78% 0.045 214.6)",
-          "#b9d6d8",
-          "#e1eeee"
-        ]
-      },
-      "teal-700": {
-        "role": "primary",
-        "displayName": "Airmail Teal",
-        "canonical": "#0b5563",
-        "tonalRamp": [
-          "#062e36",
-          "#0a3d47",
-          "#0b5563",
-          "oklch(55% 0.07 214.6)",
-          "oklch(68% 0.06 214.6)",
-          "oklch(78% 0.045 214.6)",
-          "#b9d6d8",
-          "#e1eeee"
-        ]
-      },
-      "teal-200": {
+      "mist": {
         "role": "neutral",
-        "displayName": "Pale Teal",
-        "canonical": "#b9d6d8",
+        "displayName": "Mist",
+        "canonical": "#a9bcc2",
         "tonalRamp": [
-          "#062e36",
-          "#0a3d47",
-          "#0b5563",
-          "oklch(55% 0.07 214.6)",
-          "oklch(68% 0.06 214.6)",
-          "oklch(78% 0.045 214.6)",
-          "#b9d6d8",
-          "#e1eeee"
+          "oklch(15% 0.023 218.7)",
+          "oklch(26% 0.023 218.7)",
+          "oklch(38% 0.023 218.7)",
+          "oklch(49% 0.023 218.7)",
+          "oklch(61% 0.023 218.7)",
+          "oklch(72% 0.023 218.7)",
+          "oklch(84% 0.023 218.7)",
+          "oklch(95% 0.023 218.7)"
         ]
       },
-      "teal-100": {
+      "shell-dim": {
         "role": "neutral",
-        "displayName": "Teal Wash",
-        "canonical": "#e1eeee",
+        "displayName": "Shell Dim",
+        "canonical": "#d5dfe2",
         "tonalRamp": [
-          "#062e36",
-          "#0a3d47",
-          "#0b5563",
-          "oklch(55% 0.07 214.6)",
-          "oklch(68% 0.06 214.6)",
-          "oklch(78% 0.045 214.6)",
-          "#b9d6d8",
-          "#e1eeee"
+          "oklch(15% 0.012 217.6)",
+          "oklch(26% 0.012 217.6)",
+          "oklch(38% 0.012 217.6)",
+          "oklch(49% 0.012 217.6)",
+          "oklch(61% 0.012 217.6)",
+          "oklch(72% 0.012 217.6)",
+          "oklch(84% 0.012 217.6)",
+          "oklch(95% 0.012 217.6)"
         ]
       },
-      "masi": {
+      "kesa-strand": {
         "role": "secondary",
-        "displayName": "Masi Brown",
-        "canonical": "#6b3a22",
+        "displayName": "Kesa Strand",
+        "canonical": "#b95334",
         "tonalRamp": [
-          "oklch(15% 0.078 45.8)",
-          "oklch(25% 0.078 45.8)",
-          "oklch(35% 0.078 45.8)",
-          "oklch(45% 0.078 45.8)",
-          "oklch(58% 0.078 45.8)",
-          "oklch(72% 0.078 45.8)",
-          "oklch(85% 0.078 45.8)",
-          "oklch(95% 0.078 45.8)"
+          "oklch(15% 0.052 37.5)",
+          "oklch(26% 0.088 37.5)",
+          "oklch(38% 0.124 37.5)",
+          "oklch(49% 0.140 37.5)",
+          "oklch(61% 0.140 37.5)",
+          "oklch(72% 0.140 37.5)",
+          "oklch(84% 0.092 37.5)",
+          "oklch(95% 0.024 37.5)"
         ]
       },
-      "masi-200": {
-        "role": "secondary",
-        "displayName": "Masi Wash",
-        "canonical": "#e8d7c7",
+      "voivoi-strand": {
+        "role": "tertiary",
+        "displayName": "Voivoi Strand",
+        "canonical": "#ddad45",
         "tonalRamp": [
-          "oklch(15% 0.078 45.8)",
-          "oklch(25% 0.078 45.8)",
-          "oklch(35% 0.078 45.8)",
-          "oklch(45% 0.078 45.8)",
-          "oklch(58% 0.078 45.8)",
-          "oklch(72% 0.078 45.8)",
-          "oklch(85% 0.078 45.8)",
-          "oklch(95% 0.078 45.8)"
+          "oklch(15% 0.031 83.6)",
+          "oklch(26% 0.053 83.6)",
+          "oklch(38% 0.077 83.6)",
+          "oklch(49% 0.099 83.6)",
+          "oklch(61% 0.123 83.6)",
+          "oklch(72% 0.131 83.6)",
+          "oklch(84% 0.131 83.6)",
+          "oklch(95% 0.049 83.6)"
         ]
       },
-      "rule": {
+      "ink-2-strand": {
         "role": "neutral",
-        "displayName": "Hairline Rule",
-        "canonical": "rgb(10 61 71 / 0.22)",
+        "displayName": "Ink-2 Strand",
+        "canonical": "#24505f",
         "tonalRamp": [
-          "rgb(10 61 71 / 0.9)",
-          "rgb(10 61 71 / 0.7)",
-          "rgb(10 61 71 / 0.5)",
-          "rgb(10 61 71 / 0.35)",
-          "rgb(10 61 71 / 0.22)",
-          "rgb(10 61 71 / 0.15)",
-          "rgb(10 61 71 / 0.1)",
-          "rgb(10 61 71 / 0.05)"
+          "oklch(15% 0.028 223.0)",
+          "oklch(26% 0.048 223.0)",
+          "oklch(38% 0.054 223.0)",
+          "oklch(49% 0.054 223.0)",
+          "oklch(61% 0.054 223.0)",
+          "oklch(72% 0.054 223.0)",
+          "oklch(84% 0.054 223.0)",
+          "oklch(95% 0.032 223.0)"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Page and letter titles; the salutation."
+        "purpose": "The welcome greeting on the Ink tile only."
       },
       "headline": {
         "displayName": "Headline",
-        "purpose": "Section headings and envelope addressee names."
+        "purpose": "Every page h1, inside its head tile."
+      },
+      "tile-name": {
+        "displayName": "Tile Name",
+        "purpose": "Area names on homepage tiles; 2rem inside the desktop mat."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "List item links, h3, the signature."
+        "purpose": "h2 section and quiet-tile headings."
+      },
+      "title-small": {
+        "displayName": "Title Small",
+        "purpose": "h3, piece titles in ruled lists, panel headings."
       },
       "wordmark": {
         "displayName": "Wordmark",
-        "purpose": "Na iSema in the header only."
-      },
-      "body": {
-        "displayName": "Body",
-        "purpose": "Default page text."
-      },
-      "body-reading": {
-        "displayName": "Body reading",
-        "purpose": "Article bodies at a 68ch measure."
+        "purpose": "NAISEMA beside the woven mark in header and footer."
       },
       "lede": {
         "displayName": "Lede",
-        "purpose": "Summary under a title, in soft ink."
+        "purpose": "The summary under a head tile."
       },
-      "nav": {
-        "displayName": "Nav",
-        "purpose": "Header and menu area links."
+      "body": {
+        "displayName": "Body",
+        "purpose": "Site default text, tile text, nav links."
       },
-      "postmark": {
-        "displayName": "Postmark",
-        "purpose": "Uppercase dates, formats, Review Labels and list marks between hairline rules."
+      "body-reading": {
+        "displayName": "Body Reading",
+        "purpose": "Article bodies at a 66ch measure."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Uppercase masi word introducing a value or postmark group."
+        "purpose": "Uppercase field and fact labels, datelines, list marks; Kesa Deep or Muted. Never a kicker."
       }
     },
     "shadows": [
       {
-        "name": "sheet",
-        "value": "0 1px 2px rgb(30 28 25 / 0.06), 0 22px 48px -30px rgb(6 46 54 / 0.35)",
-        "purpose": "Every letter sheet."
+        "name": "tile-lift",
+        "value": "0 18px 30px -18px rgb(10 29 36 / 0.55)",
+        "purpose": "An area tile pulled taut under hover or keyboard focus, with translateY(-2px)."
       },
       {
-        "name": "envelope-rest",
-        "value": "0 2px 4px rgb(30 28 25 / 0.05)",
-        "purpose": "Envelope fronts at rest."
-      },
-      {
-        "name": "envelope-lifted",
-        "value": "0 18px 30px -18px rgb(6 46 54 / 0.45)",
-        "purpose": "Envelope on hover and keyboard focus, with translateY(-3px)."
-      },
-      {
-        "name": "button",
-        "value": "0 6px 16px -10px rgb(6 46 54 / 0.6)",
-        "purpose": "The primary button only."
+        "name": "button-rest",
+        "value": "0 8px 18px -12px rgb(10 29 36 / 0.7)",
+        "purpose": "The primary link button at rest; it rises 1px on hover."
       },
       {
         "name": "menu-drop",
-        "value": "0 16px 32px -20px rgb(6 46 54 / 0.4)",
-        "purpose": "The open mobile menu panel."
+        "value": "0 16px 32px -20px rgb(15 43 53 / 0.45)",
+        "purpose": "The open phone menu panel beneath the header."
+      },
+      {
+        "name": "inset-edge",
+        "value": "inset 0 0 0 2px <colour>",
+        "purpose": "Edge for white tiles and embedded items (Line), blockquotes (Voivoi) and form alerts (Kesa Deep)."
       }
     ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "All transitions."
+        "purpose": "The one easing curve for every state transition."
       },
       {
-        "name": "link",
+        "name": "link-underline",
         "value": "160ms",
-        "purpose": "Underline thickness on link hover."
+        "purpose": "Link underline thickens 2px to 3px and tucks 0.24em to 0.18em."
       },
       {
         "name": "button",
         "value": "200ms",
-        "purpose": "Primary button fill and 1px rise."
+        "purpose": "Primary button background and 1px rise."
       },
       {
-        "name": "envelope",
-        "value": "260ms",
-        "purpose": "Envelope lift, shadow and edge darkening. Every transform is removed under prefers-reduced-motion."
+        "name": "pull-taut",
+        "value": "320ms",
+        "purpose": "Area tile inset relaxes to flush, lifts 2px and gains the tile-lift shadow. Under prefers-reduced-motion the transition and rise are removed."
       }
     ],
     "breakpoints": [
       {
-        "name": "envelopes-single",
-        "value": "34rem (max)"
+        "name": "narrowest",
+        "value": "24rem",
+        "purpose": "Max-width: wordmark and menu tighten to one row at 320px or 200% zoom."
       },
       {
-        "name": "welcome-dateline-stack",
-        "value": "40rem (max)"
+        "name": "dl-stack",
+        "value": "34rem",
+        "purpose": "Max-width: definition lists stack."
+      },
+      {
+        "name": "tablet",
+        "value": "40rem",
+        "purpose": "Min-width: two-column mat and two-column area weave (to 79.999rem); below it, one column with inset alternation."
       },
       {
         "name": "menu",
-        "value": "52rem (max)"
+        "value": "56rem",
+        "purpose": "Max-width: header nav becomes the native disclosure menu."
       },
       {
-        "name": "home-two-column",
-        "value": "60rem (min); envelopes drop to two across below 60rem"
+        "name": "full-mat",
+        "value": "80rem",
+        "purpose": "Min-width: five-column mat; areas take the strands' own shapes."
       }
     ],
-    "airmail": {
-      "band": "repeating-linear-gradient(-45deg, #0b5563 0 10px, #fbf9f4 10px 14px, #6b3a22 14px 24px, #fbf9f4 24px 28px)",
-      "fine": "repeating-linear-gradient(-45deg, #0b5563 0 7px, #fbf9f4 7px 10px, #6b3a22 10px 17px, #fbf9f4 17px 20px)",
-      "fineDark": "repeating-linear-gradient(-45deg, #062e36 0 7px, #fbf9f4 7px 10px, #6b3a22 10px 17px, #fbf9f4 17px 20px)",
-      "purpose": "The airmail edge: 8px header band, 6px letter band, 4px embedded-item border, 5px envelope border (fine)."
-    },
     "layout": {
-      "column": "76rem inside one gutter",
-      "letter": "46rem",
-      "letterNarrow": "40rem",
-      "measure": "68ch"
+      "column": "80rem inside one gutter",
+      "pane": "48rem (narrow 42rem)",
+      "measure": "66ch",
+      "strandMaskRepeat": "36px"
     }
   },
   "components": [
@@ -312,129 +385,160 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The one way forward in a view, e.g. 'Read the latest' in the welcome letter's sign-off.",
+      "description": "The way in: Ink link button on light grounds, rising 1px on hover.",
       "html": "<a class=\"ds-btn-primary\" href=\"#\">Read the latest</a>",
-      "css": ".ds-btn-primary { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; background: #0a3d47; color: #fbf9f4; text-decoration: none; padding: 0.8rem 1.4rem; border-radius: 3px; min-height: 44px; display: inline-flex; align-items: center; box-shadow: 0 6px 16px -10px rgb(6 46 54 / 0.6); transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary:hover { background: #062e36; transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 3px solid #6b3a22; outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-btn-primary { transition: none; } .ds-btn-primary:hover { transform: none; } }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; min-height: 48px; box-sizing: border-box; padding: 0.8rem 1.6rem; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; font-weight: 600; font-size: 1.0625rem; background: #0f2b35; color: #f6f5f2; text-decoration: none; border-radius: 10px; box-shadow: 0 8px 18px -12px rgb(10 29 36 / 0.7); transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-primary:hover { background: #0a1d24; transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 3px solid #a9472a; outline-offset: 3px; }"
     },
     {
-      "name": "Text Link",
-      "kind": "custom",
-      "refersTo": "link",
-      "description": "Inline link in reading text.",
-      "html": "<p class=\"ds-p\">Read <a class=\"ds-link\" href=\"#\">More from E-zine</a> next.</p>",
-      "css": ".ds-p { font-family: 'Literata Variable', Georgia, 'Times New Roman', serif; font-size: 1.0625rem; color: #1e1c19; } .ds-link { color: #0b5563; text-decoration-thickness: 1px; text-underline-offset: 0.22em; transition: text-decoration-thickness 160ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-link:hover { color: #0a3d47; text-decoration-thickness: 2px; } .ds-link:focus-visible { outline: 3px solid #6b3a22; outline-offset: 3px; border-radius: 2px; }"
+      "name": "Button on Ink",
+      "kind": "button",
+      "refersTo": "button-on-ink",
+      "description": "The primary button inside the Ink welcome tile: Voivoi with Ink text, Voivoi focus ring.",
+      "html": "<div class=\"ds-ink-ground\"><a class=\"ds-btn-ink\" href=\"#\">Read the latest</a></div>",
+      "css": ".ds-ink-ground { background: #0f2b35; padding: 1.5rem; border-radius: 18px; } .ds-btn-ink { display: inline-flex; align-items: center; min-height: 48px; box-sizing: border-box; padding: 0.8rem 1.6rem; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; font-weight: 600; font-size: 1.0625rem; background: #e9be5b; color: #0f2b35; text-decoration: none; border-radius: 10px; box-shadow: 0 8px 18px -12px rgb(10 29 36 / 0.7); transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn-ink:hover { background: #f1cd78; transform: translateY(-1px); } .ds-btn-ink:focus-visible { outline: 3px solid #e9be5b; outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Plain white field with an Ink hairline, 8px corners; errors take a 2px Kesa Deep border.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Your email</span><input class=\"ds-input\" type=\"email\" placeholder=\"name@example.com\"></label>",
+      "css": ".ds-field { display: grid; gap: 0.35rem; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; } .ds-field-label { font-weight: 600; font-size: 0.95rem; color: #0f2b35; } .ds-input { font: inherit; font-size: 1.0625rem; color: #0f2b35; background: #ffffff; border: 1px solid #0f2b35; border-radius: 8px; padding: 0.55rem 0.75rem; min-height: 44px; box-sizing: border-box; width: 100%; } .ds-input:focus-visible { outline: 3px solid #a9472a; outline-offset: 3px; } .ds-input[aria-invalid='true'] { border: 2px solid #a9472a; }"
     },
     {
       "name": "Header Navigation",
       "kind": "nav",
       "refersTo": "nav-link",
-      "description": "Sheet bar under the airmail band; wordmark left, areas inline, current area underlined in masi.",
-      "html": "<header class=\"ds-header\"><div class=\"ds-airmail\"></div><div class=\"ds-header-in\"><a class=\"ds-wordmark\" href=\"#\">Na iSema</a><ul class=\"ds-nav\"><li><a href=\"#\">Learn</a></li><li><a href=\"#\">Voices</a></li><li><a href=\"#\" aria-current=\"page\">E-zine</a></li></ul></div></header>",
-      "css": ".ds-header { background: #fbf9f4; border-bottom: 1px solid rgb(10 61 71 / 0.22); } .ds-airmail { height: 8px; background: repeating-linear-gradient(-45deg, #0b5563 0 10px, #fbf9f4 10px 14px, #6b3a22 14px 24px, #fbf9f4 24px 28px); } .ds-header-in { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 0.85rem 1.5rem; } .ds-wordmark { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 650; font-size: 1.6rem; letter-spacing: -0.01em; color: #0a3d47; text-decoration: none; } .ds-nav { list-style: none; margin: 0; padding: 0; display: flex; gap: 0.25rem 1.5rem; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 500; font-size: 1rem; } .ds-nav a { color: #1e1c19; text-decoration: none; padding: 0.35rem 0; border-bottom: 2px solid transparent; display: inline-block; } .ds-nav a:hover { color: #0b5563; border-bottom-color: #b9d6d8; } .ds-nav a[aria-current=page] { color: #0a3d47; border-bottom-color: #6b3a22; } .ds-nav a:focus-visible, .ds-wordmark:focus-visible { outline: 3px solid #6b3a22; outline-offset: 3px; border-radius: 2px; }"
+      "description": "Shell header: woven mark and wordmark, area links with a Voivoi hover rule and a Kesa current rule.",
+      "html": "<header class=\"ds-header\"><a class=\"ds-wordmark\" href=\"#\"><svg class=\"ds-mark\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect class=\"ds-n\" x=\"12.5\" y=\"10.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"28.5\" y=\"12.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"48.5\" y=\"10.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"64.5\" y=\"12.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"84.5\" y=\"10.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"10.5\" y=\"30.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"30.5\" y=\"28.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"46.5\" y=\"30.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"66.5\" y=\"28.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"82.5\" y=\"30.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"12.5\" y=\"46.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"28.5\" y=\"48.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"48.5\" y=\"46.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"64.5\" y=\"48.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"84.5\" y=\"46.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"10.5\" y=\"66.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"30.5\" y=\"64.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"46.5\" y=\"66.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"66.5\" y=\"64.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"82.5\" y=\"66.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"12.5\" y=\"82.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"28.5\" y=\"84.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"48.5\" y=\"82.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"64.5\" y=\"84.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"84.5\" y=\"82.5\" width=\"11\" height=\"15\" rx=\"1.6\"/></svg>NAISEMA</a><ul class=\"ds-nav\"><li><a href=\"#\" aria-current=\"page\">Learn</a></li><li><a href=\"#\">Voices</a></li><li><a href=\"#\">Discover</a></li><li class=\"ds-search\"><a href=\"#\">Search</a></li></ul></header>",
+      "css": ".ds-header { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding: 0.9rem 1.5rem; background: #f6f5f2; border-bottom: 1px solid #d6d2c8; } .ds-wordmark { display: inline-flex; align-items: center; gap: 0.7rem; font-family: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif; font-weight: 700; font-size: 1.5rem; letter-spacing: 0.05em; color: #0f2b35; text-decoration: none; min-height: 44px; } .ds-mark { width: 2.6rem; height: 2.6rem; } .ds-mark .ds-n { fill: #0f2b35; } .ds-mark .ds-g { fill: #d2603f; } .ds-nav { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.25rem 1.6rem; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; font-weight: 500; font-size: 1.0625rem; } .ds-nav a { display: inline-block; padding: 0.4rem 0; color: #0f2b35; text-decoration: none; border-bottom: 3px solid transparent; } .ds-nav a:hover { border-bottom-color: #e9be5b; } .ds-nav a[aria-current='page'] { font-weight: 600; border-bottom-color: #d2603f; } .ds-nav a:focus-visible { outline: 3px solid #a9472a; outline-offset: 3px; border-radius: 4px; } .ds-search { padding-left: 1.5rem; border-left: 1px solid #d6d2c8; }"
     },
     {
-      "name": "Mobile Menu Toggle",
-      "kind": "button",
-      "refersTo": "menu-toggle",
-      "description": "Native details/summary disclosure below 52rem; three drawn bars, no glyph, no JavaScript.",
-      "html": "<details class=\"ds-menu\"><summary>Menu</summary></details>",
-      "css": ".ds-menu > summary { list-style: none; cursor: pointer; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; color: #0a3d47; padding: 0.5rem 0.9rem; border: 1px solid rgb(10 61 71 / 0.22); border-radius: 4px; display: inline-flex; align-items: center; gap: 0.6rem; min-height: 44px; box-sizing: border-box; } .ds-menu > summary::-webkit-details-marker { display: none; } .ds-menu > summary::before { content: ''; width: 18px; height: 12px; background: linear-gradient(#0a3d47, #0a3d47) top / 100% 2px no-repeat, linear-gradient(#0a3d47, #0a3d47) center / 100% 2px no-repeat, linear-gradient(#0a3d47, #0a3d47) bottom / 100% 2px no-repeat; } .ds-menu[open] > summary { background: #e1eeee; } .ds-menu > summary:focus-visible { outline: 3px solid #6b3a22; outline-offset: 3px; }"
-    },
-    {
-      "name": "Letter Sheet",
+      "name": "Area Tile",
       "kind": "card",
-      "refersTo": "letter-sheet",
-      "description": "The page's one sheet: square, airmail band at its head, soft long shadow, title, lede and From line.",
-      "html": "<div class=\"ds-sand\"><article class=\"ds-letter\"><h1>A letter from home</h1><p class=\"ds-lede\">How the village greets a visitor who has been away a long time.</p><p class=\"ds-from\"><span class=\"ds-label\">From</span> Na iSema</p></article></div>",
-      "css": ".ds-sand { background: #eee7d9; padding: 2rem; } .ds-letter { position: relative; max-width: 46rem; margin: 0 auto; background: #fbf9f4; padding: 2.5rem 2.5rem; box-shadow: 0 1px 2px rgb(30 28 25 / 0.06), 0 22px 48px -30px rgb(6 46 54 / 0.35); font-family: 'Literata Variable', Georgia, 'Times New Roman', serif; font-size: 1.0625rem; line-height: 1.65; color: #1e1c19; } .ds-letter::before { content: ''; position: absolute; inset: 0 0 auto; height: 6px; background: repeating-linear-gradient(-45deg, #0b5563 0 10px, #fbf9f4 10px 14px, #6b3a22 14px 24px, #fbf9f4 24px 28px); } .ds-letter h1 { margin: 0; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(2.3rem, 1.6rem + 3.2vw, 3.9rem); line-height: 1.1; letter-spacing: -0.015em; color: #0a3d47; } .ds-lede { margin: 1rem 0 0; font-size: 1.25rem; line-height: 1.5; color: #4a4640; } .ds-from { margin: 1rem 0 0; } .ds-label { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: #6b3a22; margin-right: 0.4rem; }"
+      "refersTo": "tile-voices",
+      "description": "An area tile in its area colour, inset as a strand; it pulls taut (flush and lifted) on hover and focus.",
+      "html": "<div class=\"ds-mat\"><a class=\"ds-tile ds-tile-voices ds-upright\" href=\"#\"><span class=\"ds-tile-name\">Voices</span><span class=\"ds-tile-text\">Conversations with Fijians at home and abroad, each with a full transcript.</span></a><a class=\"ds-tile ds-tile-connect ds-across\" href=\"#\"><span class=\"ds-tile-name\">Connect</span><span class=\"ds-tile-text\">Classes, courses and people who teach.</span></a></div>",
+      "css": ".ds-mat { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; background: #f6f5f2; padding: 1rem; } .ds-tile { display: flex; flex-direction: column; justify-content: space-between; gap: 1.25rem; min-height: 9.5rem; padding: 1.5rem; border-radius: 18px; box-sizing: border-box; text-decoration: none; transition: margin 320ms cubic-bezier(0.16, 1, 0.3, 1), transform 320ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 320ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-upright { margin: 0 0.6rem; } .ds-across { margin: 0.6rem 0; } .ds-tile-voices { background: #e9be5b; color: #0f2b35; } .ds-tile-connect { background: #0f2b35; color: #f6f5f2; } .ds-tile-name { font-family: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif; font-weight: 800; font-size: 2.4rem; line-height: 0.92; letter-spacing: -0.025em; } .ds-tile-text { font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; font-size: 1.0625rem; line-height: 1.45; max-width: 22rem; } .ds-tile:hover, .ds-tile:focus-visible { margin: 0; transform: translateY(-2px); box-shadow: 0 18px 30px -18px rgb(10 29 36 / 0.55); } .ds-tile:focus-visible { outline: 3px solid #0f2b35; outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-tile { transition: none; } .ds-tile:hover, .ds-tile:focus-visible { transform: none; } }"
     },
     {
-      "name": "Postmarks",
+      "name": "Learn Tile with Shell Plate",
+      "kind": "card",
+      "refersTo": "tile-learn",
+      "description": "Kesa carries only the display name; the description and its note ride a Shell plate.",
+      "html": "<a class=\"ds-learn\" href=\"#\"><span class=\"ds-learn-name\">Learn</span><span class=\"ds-plate\">Fijian language and culture, one step at a time.<span class=\"ds-note\">Some parts not open yet</span></span></a>",
+      "css": ".ds-learn { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.5rem; border-radius: 18px; background: #d2603f; color: #0f2b35; text-decoration: none; max-width: 26rem; } .ds-learn:focus-visible { outline: 3px solid #0f2b35; outline-offset: 3px; } .ds-learn-name { font-family: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif; font-weight: 800; font-size: 2.4rem; line-height: 0.92; letter-spacing: -0.025em; } .ds-plate { display: grid; gap: 0.6rem; background: #f6f5f2; color: #0f2b35; border-radius: 10px; padding: 0.75rem 0.9rem; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; font-size: 1.0625rem; line-height: 1.45; } .ds-note { font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: #a9472a; }"
+    },
+    {
+      "name": "Strand Band",
+      "kind": "custom",
+      "refersTo": "tile-connect",
+      "description": "The slack in a tall tile filled with its own strands: a 36px masked weave repeat tinted per tile.",
+      "html": "<div class=\"ds-tall\"><span class=\"ds-tall-name\">Connect</span><span class=\"ds-band\" aria-hidden=\"true\"></span><span class=\"ds-tall-text\">Classes, courses and people who teach.</span></div>",
+      "css": ".ds-tall { display: flex; flex-direction: column; gap: 1.25rem; height: 22rem; width: 14rem; padding: 1.1rem; border-radius: 18px; background: #0f2b35; color: #f6f5f2; box-sizing: border-box; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; } .ds-tall-name { font-family: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif; font-weight: 800; font-size: 2rem; line-height: 0.92; letter-spacing: -0.025em; } .ds-band { flex: 1 1 0; min-height: 36px; background-color: #1b3f4c; -webkit-mask: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect x='3.5' y='1.5' width='11' height='15' rx='1.6'/%3E%3Crect x='19.5' y='3.5' width='15' height='11' rx='1.6'/%3E%3Crect x='1.5' y='21.5' width='15' height='11' rx='1.6'/%3E%3Crect x='21.5' y='19.5' width='11' height='15' rx='1.6'/%3E%3C/svg%3E\") center / 36px 36px round space; mask: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect x='3.5' y='1.5' width='11' height='15' rx='1.6'/%3E%3Crect x='19.5' y='3.5' width='15' height='11' rx='1.6'/%3E%3Crect x='1.5' y='21.5' width='15' height='11' rx='1.6'/%3E%3Crect x='21.5' y='19.5' width='11' height='15' rx='1.6'/%3E%3C/svg%3E\") center / 36px 36px round space; } .ds-tall-text { line-height: 1.45; }"
+    },
+    {
+      "name": "Head Tile",
+      "kind": "custom",
+      "refersTo": "head-tile",
+      "description": "Every page opens on a tile: the area colour for Articles and area pages, Sand otherwise. Only the h1 sits on it.",
+      "html": "<div class=\"ds-head\"><h1>A letter from home</h1></div><p class=\"ds-lede\">How the village greets a visitor who has been away a long time.</p>",
+      "css": ".ds-head { background: #e9be5b; border-radius: 18px; padding: clamp(1.4rem, 1rem + 2vw, 2.5rem); } .ds-head h1 { margin: 0; font-family: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif; font-weight: 800; font-size: clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem); line-height: 0.95; letter-spacing: -0.025em; color: #0f2b35; } .ds-lede { margin: 1.1rem 0 0; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; font-size: 1.3rem; line-height: 1.5; color: #0f2b35; max-width: 40rem; }"
+    },
+    {
+      "name": "Fact Lines",
       "kind": "chip",
-      "refersTo": "postmark",
-      "description": "Flat, ruled factual lines for format, dates and Review Labels. Never seals or badges.",
-      "html": "<ul class=\"ds-postmarks\"><li>Article</li><li>Published <time datetime=\"2026-09-21\">21 Sept 2026</time></li></ul><p class=\"ds-rl-head\">Review Labels</p><ul class=\"ds-postmarks ds-rl\"><li>Opinion or personal experience</li></ul>",
-      "css": ".ds-postmarks { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: #0b5563; font-variant-numeric: tabular-nums; } .ds-postmarks li { border-block: 1px solid rgb(10 61 71 / 0.22); padding: 0.2rem 0; } .ds-rl li { border-block-color: #0b5563; } .ds-rl { margin-top: 0.6rem; } .ds-rl-head { margin: 1.5rem 0 0; padding-top: 1rem; border-top: 1px solid rgb(10 61 71 / 0.22); font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: #6b3a22; }"
+      "refersTo": "label",
+      "description": "Facts and Review Labels as flat lines led by woven strands, never badges.",
+      "html": "<div class=\"ds-facts-wrap\"><ul class=\"ds-facts\"><li>Article</li><li>Published 21 Sept 2026</li></ul><p class=\"ds-label\">Review labels</p><ul class=\"ds-facts ds-col\"><li>Opinion or personal experience</li></ul></div>",
+      "css": ".ds-facts-wrap { font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; color: #0f2b35; background: #f6f5f2; padding: 1rem; } .ds-facts { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-weight: 500; font-size: 0.95rem; font-variant-numeric: tabular-nums; } .ds-col { flex-direction: column; margin-top: 0.6rem; } .ds-facts li { display: flex; align-items: baseline; gap: 0.6rem; } .ds-facts li::before { content: ''; flex: none; width: 0.5rem; height: 0.7rem; border-radius: 2px; background: #d2603f; transform: translateY(0.05rem); } .ds-facts li:nth-child(even)::before { width: 0.7rem; height: 0.5rem; background: #0f2b35; transform: translateY(-0.05rem); } .ds-label { margin: 1.5rem 0 0; padding-top: 1rem; border-top: 1px solid #d6d2c8; font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.14em; text-transform: uppercase; color: #a9472a; }"
     },
     {
-      "name": "Envelope Front",
-      "kind": "card",
-      "refersTo": "envelope",
-      "description": "An area addressed as an envelope: fine airmail border, empty double-ruled stamp box, availability as a masi postmark; lifts on hover and focus.",
-      "html": "<a class=\"ds-envelope\" href=\"#\"><span class=\"ds-env-mark\">Some parts not open yet</span><span class=\"ds-env-stamp\"></span><span class=\"ds-env-addr\"><span class=\"ds-env-name\">Learn</span><span class=\"ds-env-desc\">Fijian language and culture, one step at a time.</span></span></a>",
-      "css": ".ds-envelope { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr; grid-template-areas: 'mark stamp' 'address address'; column-gap: 0.75rem; aspect-ratio: 8 / 5; max-width: 24rem; box-sizing: border-box; padding: 1rem 1rem 1.4rem; border: 5px solid transparent; background: linear-gradient(#fbf9f4, #fbf9f4) padding-box, repeating-linear-gradient(-45deg, #0b5563 0 7px, #fbf9f4 7px 10px, #6b3a22 10px 17px, #fbf9f4 17px 20px) border-box; color: #1e1c19; text-decoration: none; box-shadow: 0 2px 4px rgb(30 28 25 / 0.05); transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 260ms cubic-bezier(0.16, 1, 0.3, 1); } .ds-envelope:hover, .ds-envelope:focus-visible { transform: translateY(-3px); background: linear-gradient(#fbf9f4, #fbf9f4) padding-box, repeating-linear-gradient(-45deg, #062e36 0 7px, #fbf9f4 7px 10px, #6b3a22 10px 17px, #fbf9f4 17px 20px) border-box; box-shadow: 0 18px 30px -18px rgb(6 46 54 / 0.45); } .ds-envelope:focus-visible { outline: 3px solid #6b3a22; outline-offset: 3px; } .ds-env-addr { grid-area: address; align-self: end; display: grid; gap: 0.35rem; padding-inline-start: 12%; } .ds-env-name { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: clamp(1.4rem, 1.2rem + 0.8vw, 1.75rem); line-height: 1.1; color: #0a3d47; } .ds-env-desc { font-family: 'Literata Variable', Georgia, 'Times New Roman', serif; font-size: 1rem; line-height: 1.5; color: #4a4640; } .ds-env-stamp { grid-area: stamp; width: 2.75rem; height: 3.25rem; border: 1px solid #0b5563; outline: 1px solid rgb(10 61 71 / 0.22); outline-offset: 3px; margin: 4px; } .ds-env-mark { grid-area: mark; justify-self: end; align-self: center; text-align: end; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.1em; text-transform: uppercase; color: #6b3a22; border-block: 1px solid currentColor; padding: 0.15rem 0; } @media (prefers-reduced-motion: reduce) { .ds-envelope { transition: none; } .ds-envelope:hover, .ds-envelope:focus-visible { transform: none; } }"
-    },
-    {
-      "name": "Not Open Yet Line",
+      "name": "Woven Strip and Footer",
       "kind": "custom",
-      "refersTo": "not-open",
-      "description": "Availability stated plainly as a line between two masi rules.",
-      "html": "<p class=\"ds-not-open\"><span class=\"ds-label\">Not open yet</span> Video lessons open once the Learning Layers are ready.</p>",
-      "css": ".ds-not-open { font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; font-size: 1rem; line-height: 1.5; color: #0a3d47; border-block: 1px solid #6b3a22; padding: 0.6rem 0; } .ds-label { font-weight: 600; font-size: 0.8125rem; letter-spacing: 0.12em; text-transform: uppercase; color: #6b3a22; margin-right: 0.4rem; }"
-    },
-    {
-      "name": "Footer",
-      "kind": "custom",
-      "refersTo": "site-footer",
-      "description": "Masi placeholder strip, labelled as placeholder, over a deep teal field.",
-      "html": "<footer class=\"ds-footer\"><div class=\"ds-masi\"></div><div class=\"ds-footer-in\"><a href=\"#\">About</a> <a href=\"#\">Privacy</a><p>The pattern above is a placeholder in the spirit of masi, until commissioned and culturally reviewed artwork arrives.</p></div></footer>",
-      "css": ".ds-footer { background: #0a3d47; color: #fbf9f4; font-family: 'Jost Variable', 'Avenir Next', 'Segoe UI', system-ui, sans-serif; } .ds-masi { height: 18px; background-color: #fbf9f4; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18' viewBox='0 0 36 18'%3E%3Cpath d='M0 18 9 0l9 18z' fill='%236b3a22'/%3E%3Cpath d='M18 18 27 0l9 18z' fill='%231e1c19'/%3E%3Cpath d='M9 18 13.5 9 18 18z' fill='%23fbf9f4'/%3E%3Cpath d='M27 18l4.5-9 4.5 9z' fill='%23fbf9f4'/%3E%3C/svg%3E\"); background-repeat: repeat-x; background-size: 36px 18px; } .ds-footer-in { padding: 2rem 1.5rem 2.5rem; } .ds-footer a { color: #fbf9f4; margin-right: 1.75rem; } .ds-footer a:hover { color: #e8d7c7; } .ds-footer a:focus-visible { outline: 3px solid #e8d7c7; outline-offset: 3px; } .ds-footer p { max-width: 60ch; font-size: 0.9rem; line-height: 1.6; color: #e1eeee; }"
+      "refersTo": "ink",
+      "description": "The brand's approved woven strip above the Ink footer, with the mark in Shell on Kesa.",
+      "html": "<footer class=\"ds-footer\"><div class=\"ds-strip\"></div><div class=\"ds-foot-inner\"><p class=\"ds-foot-mark\"><svg class=\"ds-mark\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><rect class=\"ds-n\" x=\"12.5\" y=\"10.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"28.5\" y=\"12.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"48.5\" y=\"10.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"64.5\" y=\"12.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"84.5\" y=\"10.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"10.5\" y=\"30.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"30.5\" y=\"28.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"46.5\" y=\"30.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"66.5\" y=\"28.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"82.5\" y=\"30.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"12.5\" y=\"46.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"28.5\" y=\"48.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"48.5\" y=\"46.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"64.5\" y=\"48.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"84.5\" y=\"46.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"10.5\" y=\"66.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"30.5\" y=\"64.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"46.5\" y=\"66.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"66.5\" y=\"64.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"82.5\" y=\"66.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"12.5\" y=\"82.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"28.5\" y=\"84.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"48.5\" y=\"82.5\" width=\"11\" height=\"15\" rx=\"1.6\"/><rect class=\"ds-g\" x=\"64.5\" y=\"84.5\" width=\"15\" height=\"11\" rx=\"1.6\"/><rect class=\"ds-n\" x=\"84.5\" y=\"82.5\" width=\"11\" height=\"15\" rx=\"1.6\"/></svg>NAISEMA</p><a href=\"#\">About</a> <a href=\"#\">Newsletter</a></div></footer>",
+      "css": ".ds-strip { height: 36px; background-color: #f6f5f2; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='36' viewBox='0 0 72 36'%3E%3Crect x='3.5' y='1.5' width='11' height='15' rx='1.6' fill='%230f2b35'/%3E%3Crect x='19.5' y='3.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='39.5' y='1.5' width='11' height='15' rx='1.6' fill='%23e9be5b'/%3E%3Crect x='55.5' y='3.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='1.5' y='21.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='21.5' y='19.5' width='11' height='15' rx='1.6' fill='%230f2b35'/%3E%3Crect x='37.5' y='21.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='57.5' y='19.5' width='11' height='15' rx='1.6' fill='%23e9be5b'/%3E%3C/svg%3E\"); background-repeat: repeat-x; background-size: 72px 36px; } .ds-foot-inner { background: #0f2b35; color: #f6f5f2; padding: 2rem 1.5rem; font-family: 'Jost Variable', 'Century Gothic', 'Avenir Next', system-ui, sans-serif; } .ds-foot-mark { display: flex; align-items: center; gap: 0.7rem; margin: 0 0 1rem; font-family: 'Bricolage Grotesque Variable', 'Arial Narrow', system-ui, sans-serif; font-weight: 700; font-size: 1.3rem; letter-spacing: 0.05em; } .ds-foot-mark .ds-mark { width: 2.2rem; height: 2.2rem; } .ds-mark .ds-n { fill: #f6f5f2; } .ds-mark .ds-g { fill: #d2603f; } .ds-foot-inner a { color: #f6f5f2; margin-right: 1.75rem; text-decoration-color: #e9be5b; text-decoration-thickness: 2px; text-underline-offset: 0.24em; } .ds-foot-inner a:hover { color: #e9be5b; } .ds-foot-inner a:focus-visible { outline: 3px solid #e9be5b; outline-offset: 3px; border-radius: 4px; }"
     }
   ],
   "narrative": {
-    "northStar": "Letters home",
-    "overview": "Every public page is a letter from home: an off-white sheet laid on a slightly deeper sand ground, written in deep teal ink, edged with an airmail band in teal and masi brown, and marked with flat postmark lines that state when it was sent and exactly what it was reviewed for. The system is quiet, factual and warm. It reads like correspondence, not like a portal: one sheet per page, a signature, a dateline, envelopes that point to the six areas.\n\nDensity is low and the reading measure is held. Depth is paper-on-table: sheets carry a soft, long shadow; nothing else floats. Interaction is native and script-free: envelopes lift on hover and keyboard focus, the mobile menu is a native disclosure, and every motion has a reduced-motion fallback. Tapa depth is restrained to a single masi strip at the top of the footer, which is a labelled placeholder until commissioned, culturally reviewed artwork arrives.\n\nThe photo hero over a grid of image cards is rejected for this world; areas are addressed as envelope fronts, and pieces are listed as ruled lines.",
+    "northStar": "The Woven Mat",
+    "overview": "The public site is an ibe, a woven mat. Everything NAISEMA offers is laid out as rounded tiles set in the weave of its own mark: each tile is a strand, alternately upright and sideways, and the alternation stays visible at every width. The brand is the material. Ink, Kesa, Voivoi and Shell are the four colours of the woven N, Sand and Ink-2 are the quiet strands between them, and the mark's own 11 by 15 strand shape is reused as fact bullets, the sign-off strand, the masked weave inside tall tiles and the woven strip that runs above the Ink footer.\n\nDensity is generous and flat. Tiles rest on a Shell ground with a narrow weave gap between them, carry one heavy Bricolage Grotesque name each, and let any slack fill with their own strands rather than an empty field. Reading pages are calm: a coloured head tile, then Jost on Shell at a 66ch measure, with facts and Review Labels set as flat lines led by woven strands, never as badges. The system refuses the category default of a photo hero over a grid of image cards, and the identity is binding: the woven N mark, the four brand colours and the Bricolage and Jost pairing are fixed by the NAISEMA brand.\n\nMotion is one gesture: a tile pulls taut under the pointer or keyboard focus, its inset relaxing to flush as it lifts. Everything works without JavaScript and without inline styles; colour reaches the mark and the strands through custom properties and classes only.",
     "keyCharacteristics": [
-      "Off-white sheets (square-cornered) on a sand ground, with a soft long shadow.",
-      "The airmail edge: a -45deg teal and masi stripe at the head of the page and of every letter, and as the border of envelopes and embedded items.",
-      "Postmark lines: small, uppercase, letter-spaced Jost between two hairline rules; flat and factual, never seals or badges.",
-      "Jost for interface and headings, Literata for reading.",
-      "An empty, double-ruled stamp box on every envelope; no stamp art until commissioned work exists.",
-      "No client JavaScript on public pages; interaction is CSS and native HTML only."
+      "Rounded tiles (18px) in the four brand colours plus Sand, white and Ink-2, on a Shell ground.",
+      "Every tile alternates upright and sideways: an inset on phones, the strands' own shapes on tablets and desktops.",
+      "One colour per area, shared by its homepage tile and its pages' head tile.",
+      "Bricolage Grotesque ExtraBold speaks; Jost is read.",
+      "Woven-strand bullets, masked strand bands and the woven strip carry the mark's geometry through the whole site.",
+      "Flat at rest; soft lift only as a response to the pointer."
     ],
     "rules": [
       {
-        "name": "The Two Inks Rule",
-        "body": "Colour comes from deep teal and masi brown only. There is no third accent, no success green, no warning amber; state is said in words.",
+        "name": "The Shell Plate Rule",
+        "body": "Small text never sits on Kesa. On a Kesa tile anything smaller than the tile name rides a Shell plate (10px radius) in Ink, with Kesa Deep for its label; on a Kesa head tile only the heading sits on the colour.",
         "section": "colors"
       },
       {
-        "name": "The Teal Speaks, Masi Signs Rule",
-        "body": "Teal carries headings, links and facts (dates, formats, Review Labels). Masi carries signatures, labels that introduce a value, availability marks and focus. Do not swap them.",
+        "name": "The One Colour Per Area Rule",
+        "body": "Each area owns one tile colour, shared by its homepage tile and the head tile of its pages: Learn Kesa, Voices and E-zine Voivoi, Discover white with a Line edge, Connect Ink, Resources Ink-2. A page without an area takes a Sand head.",
         "section": "colors"
       },
       {
-        "name": "The Sans Addresses, Serif Speaks Rule",
-        "body": "Jost for anything that names, labels, navigates or marks; Literata for anything meant to be read as sentences.",
+        "name": "The Deep For Small Rule",
+        "body": "Kesa fills, underlines and bullets; Kesa Deep is the only orange for text below display size, for errors and for the focus ring on light grounds.",
+        "section": "colors"
+      },
+      {
+        "name": "The Speaks And Reads Rule",
+        "body": "Bricolage Grotesque is for headings, tile names, the wordmark and piece titles; Jost is for everything read, including form labels, buttons, labels and facts. No system display face stands in for Bricolage.",
         "section": "typography"
       },
       {
-        "name": "The Tabular Date Rule",
-        "body": "Every date is a postmark: uppercase Jost with tabular numerals, written \"21 Sept 2026\" in a machine-readable time element.",
+        "name": "The Label Names A Fact Rule",
+        "body": "The uppercase tracked label names the field or fact it sits beside (From, Topics, Review Labels, Published, a format). It never floats above a heading as decoration.",
         "section": "typography"
       },
       {
-        "name": "The Only Sheets Float Rule",
-        "body": "Shadows belong to paper objects (letters, envelopes, the open menu) and the single primary button. Lines and labels stay flat on the page.",
+        "name": "The Weave Rule",
+        "body": "Area tiles alternate upright and sideways at every width: by shape (two rows tall or two tracks wide) where the grid allows, by an upright or sideways inset where it does not.",
+        "section": "layout"
+      },
+      {
+        "name": "The Strand Band Rule",
+        "body": "A tall tile never shows an empty field: the slack between its heading and its words fills with its own strands, a 36px masked weave repeat tinted per tile, never shorter than one whole repeat and repeating whole strands only. It is decorative and appears only where tiles are tall (the welcome, Discover and Connect on desktop; Voices, E-zine and Resources on tablet).",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Mat Rule",
+        "body": "Tiles rest flat. Shadows are soft, Ink-tinted and negative-spread, and they mean lift; there are no hard offset shadows.",
         "section": "elevation"
+      },
+      {
+        "name": "The Strand Corner Rule",
+        "body": "Three radii only: 18px for tiles, 10px for plates and buttons, 8px for fields. A container never has square corners.",
+        "section": "shapes"
       }
     ],
     "dos": [
-      "Do put every page's content on a sheet over the sand ground, headed by the airmail band.",
-      "Do state dates, formats and Review Labels as postmark lines: uppercase Jost 600 at 0.8125rem, 0.1em tracking, tabular numerals, between hairline rules.",
-      "Do say what isn't open yet in plain words, as a ruled line, rather than hiding or disabling it.",
-      "Do label placeholder art as placeholder, in visible text near it.",
-      "Do build interaction from CSS and native HTML (hover, focus-visible, details/summary), with a reduced-motion fallback for every transform.",
-      "Do use the masi 3px focus ring at 3px offset (masi wash on the teal footer)."
+      "**Do** lay new surfaces out as tiles on the Shell ground: 18px corners, a weave gap between them, and the upright or sideways alternation visible at every width.",
+      "**Do** give an area's pages its tile colour on the head tile, and a Sand head tile to any page without an area.",
+      "**Do** put any text smaller than the tile name on a Shell plate when it sits on Kesa (The Shell Plate Rule).",
+      "**Do** set facts and Review Labels as flat lines with woven-strand bullets (Kesa upright, Ink sideways, 2px radius).",
+      "**Do** use Kesa Deep (#a9472a) for small orange text and the focus ring on light grounds, and switch the ring to Voivoi on Ink.",
+      "**Do** fill the slack in tall tiles with their own masked strands, in whole 36px repeats only.",
+      "**Do** keep buttons, menu links and form controls at least 44px tall, and give every hover a matching keyboard focus state.",
+      "**Do** colour the woven mark only through `--mark-n` and `--mark-ground`."
     ],
     "donts": [
-      "Don't show a \"verified\" badge, seal, tick or stamp-like roundel; Review Labels are flat lines generated from real approvals.",
-      "Don't fill the stamp box or the masi strip with invented cultural imagery; they stay empty or placeholder until commissioned, culturally reviewed artwork exists.",
-      "Don't introduce a third accent colour or colour-coded status.",
-      "Don't round sheets, envelopes or callouts.",
-      "Don't use hard-offset shadows or shadows on lines, labels and lists.",
-      "Don't use glyph or icon-font icons; draw small marks in CSS (as the menu bars are).",
-      "Don't replace the envelopes with photo cards or lead a page with a photo hero."
+      "**Don't** set small text on Kesa: Ink on Kesa is 3.87:1, good only for display sizes.",
+      "**Don't** turn facts, formats or Review Labels into badges, pills or chips, and never show a generic \"verified\" mark.",
+      "**Don't** open a page with a photo hero over a grid of image cards.",
+      "**Don't** redraw, recolour outside its two properties, or crop the woven mark or the woven strip; both are approved brand artwork.",
+      "**Don't** use glyph icons; draw the device from strands, as the menu toggle does.",
+      "**Don't** float an uppercase label above a heading as a kicker; a label names the fact beside it.",
+      "**Don't** give a container square corners or a hard offset shadow; ruled 1px Line rules are the only unrounded division.",
+      "**Don't** use inline styles; colour and geometry reach components through classes and custom properties only."
     ]
   }
 }

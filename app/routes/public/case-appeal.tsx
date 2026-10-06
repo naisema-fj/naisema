@@ -14,7 +14,7 @@ export const handle = { hydrate: false };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Appeal a decision · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Appeal a decision · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 async function caseOrNotFound(env: Env, token: string) {
@@ -52,7 +52,7 @@ export default function CaseAppeal({ loaderData, actionData }: Route.ComponentPr
   const values: Values = actionData && !actionData.appealed ? actionData.values : {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Appeal a decision</h1>
         <p>
           About your {kind} {reference}: {outcome}.
