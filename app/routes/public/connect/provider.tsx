@@ -63,8 +63,8 @@ export default function Provider({ loaderData }: Route.ComponentProps) {
           <li aria-current="page">{provider.name}</li>
         </ol>
       </nav>
-      <article className="letter" aria-labelledby="provider-heading">
-        <header className="letter-head">
+      <article className="pane" aria-labelledby="provider-heading">
+        <header className="pane-head">
           <h1 id="provider-heading">{provider.name}</h1>
           {provider.description && <p className="lede">{provider.description}</p>}
           <p>

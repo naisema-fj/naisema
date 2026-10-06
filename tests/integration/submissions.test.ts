@@ -91,7 +91,7 @@ describe("public forms (PUB-05)", () => {
     const html = await page.text();
     expect(html).toContain('class="cf-turnstile"');
     expect(html).toContain(`data-sitekey="${TURNSTILE_TEST_KEYS.siteKey}"`);
-    expect(html).toContain("Na iSema keeps what you send on this form");
+    expect(html).toContain("NAISEMA keeps what you send on this form");
     expect(html).not.toContain("checked");
   });
 
@@ -221,6 +221,7 @@ describe("Consent Records (DATA-02)", () => {
     const opened = await send(link);
     expect(opened.status).toBe(200);
     const page = await opened.text();
+    // The agreement was given under version 1, so the page shows version 1's words exactly.
     expect(page).toContain("Na iSema keeps what you send on this form");
     expect(page).toContain("notice version 1");
     expect(

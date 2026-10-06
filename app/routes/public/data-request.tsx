@@ -55,7 +55,7 @@ export default function DataRequest({ loaderData, actionData }: Route.ComponentP
   if (actionData?.sent) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>We have your request</h1>
           <p role="status">
             Your request has been received, reference {actionData.reference}. Our privacy contact will handle it and
@@ -72,7 +72,7 @@ export default function DataRequest({ loaderData, actionData }: Route.ComponentP
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Your information</h1>
         <p className="standfirst">
           Ask for a copy of what NAISEMA holds about you, or for it to be corrected or deleted. Our privacy contact

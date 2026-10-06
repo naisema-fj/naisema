@@ -46,7 +46,7 @@ export default function Consent({ loaderData, actionData }: Route.ComponentProps
   const { purpose, givenOn, withdrawnOn, wording, version } = loaderData;
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Your agreement</h1>
         <p>
           On {givenOn} you agreed to: <strong>{purpose}</strong>.

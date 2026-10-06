@@ -96,7 +96,7 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
   if (actionData?.sent) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>Thank you, it's been sent</h1>
           <p role="status">
             We've received your {SUBMISSION_TYPES[type].name.toLowerCase()}, and someone on our team will read it.
@@ -123,7 +123,7 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>{title}</h1>
         <p className="standfirst">{intro}</p>
         <Form method="post" className="public-form" noValidate>

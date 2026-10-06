@@ -54,8 +54,8 @@ export default function Offerings({ loaderData }: Route.ComponentProps) {
           <li aria-current="page">Classes and courses</li>
         </ol>
       </nav>
-      <article className="letter" aria-labelledby="offerings-heading">
-        <header className="letter-head">
+      <article className="pane" aria-labelledby="offerings-heading">
+        <header className="pane-head">
           <h1 id="offerings-heading">Classes and courses</h1>
           <p className="lede">What listed Providers offer, and how to get to it.</p>
           <p>Being listed doesn't mean a partnership or that NAISEMA endorses them.</p>

@@ -60,7 +60,7 @@ export default function Newsletter({ loaderData, actionData }: Route.ComponentPr
   if (actionData?.sent) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>Check your email</h1>
           <p role="status">
             We've asked our newsletter service to email {actionData.email}. Open that email and confirm, and the
@@ -77,7 +77,7 @@ export default function Newsletter({ loaderData, actionData }: Route.ComponentPr
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>The newsletter</h1>
         <p className="standfirst">
           News from NAISEMA: new stories and recordings, classes and consultations. You'll be asked to confirm before

@@ -1,4 +1,5 @@
 import { isRouteErrorResponse, Link, Outlet, useLocation } from "react-router";
+import { WovenMark } from "~/components/public/woven-mark";
 import { AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { INFO_PAGES } from "~/lib/info-pages";
 import type { Route } from "./+types/layout";
@@ -31,9 +32,9 @@ function AreaLinks() {
 function SiteHeader() {
   return (
     <header className="site-header">
-      <div className="airmail-band" />
       <div className="site-header-inner">
         <Link reloadDocument to="/" className="wordmark">
+          <WovenMark />
           NAISEMA
         </Link>
         <nav aria-label="Main" className="site-nav">
@@ -54,8 +55,12 @@ function SiteHeader() {
 function SiteFooter() {
   return (
     <footer className="site-footer">
-      <div className="masi-strip" />
+      <div className="weave-strip" />
       <div className="site-footer-inner">
+        <p className="wordmark footer-wordmark">
+          <WovenMark />
+          NAISEMA
+        </p>
         <nav aria-label="About NAISEMA">
           <ul className="footer-links">
             {INFO_PAGES.map((page) => (
@@ -83,8 +88,7 @@ function SiteFooter() {
           </ul>
         </nav>
         <p className="footer-note">
-          NAISEMA connects Fijians abroad, and everyone else, with Fijian language and culture. The pattern above is a
-          placeholder in the spirit of masi, until commissioned and culturally reviewed artwork arrives.
+          NAISEMA connects Fijians abroad, and everyone else, with Fijian language and culture.
         </p>
       </div>
     </footer>
@@ -122,7 +126,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     <div className="public">
       <SiteHeader />
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>{title}</h1>
           <p>{text}</p>
           <p>

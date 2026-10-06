@@ -65,9 +65,11 @@ export default function Area({ loaderData }: Route.ComponentProps) {
           <li aria-current="page">{AREA_NAMES[area]}</li>
         </ol>
       </nav>
-      <article className="letter area-letter" aria-labelledby="area-heading">
-        <header className="letter-head">
-          <h1 id="area-heading">{AREA_NAMES[area]}</h1>
+      <article className="pane area-pane" aria-labelledby="area-heading">
+        <header className="pane-intro">
+          <div className={`pane-head tile-${area}`}>
+            <h1 id="area-heading">{AREA_NAMES[area]}</h1>
+          </div>
           <p className="lede">{info.description}</p>
           {items[0]?.publishedAt && (
             <p className="dateline">
@@ -83,7 +85,7 @@ export default function Area({ loaderData }: Route.ComponentProps) {
         {featured && <ConnectListings featured={featured} />}
         {featured && items.length > 0 && <h2>Newest in {AREA_NAMES[area]}</h2>}
         {items.length ? (
-          <ul className="letter-list">
+          <ul className="piece-list">
             {items.map((item) => (
               <li key={item.path}>
                 <Link to={item.path}>{item.title}</Link>
@@ -138,7 +140,7 @@ function ConnectListings({ featured }: { featured: Featured }) {
       {chosen.length > 0 && (
         <section aria-labelledby="featured-heading">
           <h2 id="featured-heading">Featured by our editors</h2>
-          <ul className="letter-list">
+          <ul className="piece-list">
             {chosen.map((row) => (
               <li key={`${row.path}|${row.name}`}>
                 <Link to={row.path}>{row.name}</Link>

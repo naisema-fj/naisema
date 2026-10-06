@@ -33,6 +33,7 @@ Six primary areas: Learn, Voices, Discover, Connect, E-zine and Resources (docs/
 
 - PRD §28 direction, binding: clean typography, off-white and deep teal, restrained tapa-inspired depth (docs/phase-1a-defaults.md §6).
 - No generic "verified" badge anywhere; only Review Labels generated from real approvals (PUB-02).
+- The NAISEMA brand identity is binding: the woven N mark, Ink #0F2B35, Kesa #D2603F, Voivoi #E9BE5B and Shell #F6F5F2, Bricolage Grotesque for display and Jost for text. Its woven strip is approved artwork.
 - Placeholder imagery is labelled as placeholder until commissioned, culturally reviewed artwork arrives. No fabricated cultural imagery.
 
 ## Evidence on Hand

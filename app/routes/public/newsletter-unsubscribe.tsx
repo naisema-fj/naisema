@@ -41,7 +41,7 @@ export default function Unsubscribe({ loaderData, actionData }: Route.ComponentP
   if (actionData?.done) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>You're unsubscribed</h1>
           <p role="status">
             {actionData.email} won't be sent the NAISEMA newsletter. You can sign up again at any time.
@@ -57,7 +57,7 @@ export default function Unsubscribe({ loaderData, actionData }: Route.ComponentP
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Unsubscribe from the newsletter</h1>
         <p className="standfirst">Every newsletter also has its own unsubscribe link at the bottom.</p>
         <Form method="post" className="public-form" noValidate>
