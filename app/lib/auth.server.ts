@@ -20,7 +20,7 @@ export function createAuth(env: Env, request: Request) {
   const db = getDb(env.DB);
 
   return betterAuth({
-    appName: "Na iSema",
+    appName: "NAISEMA",
     baseURL: origin,
     basePath: AUTH_BASE_PATH,
     secret: env.BETTER_AUTH_SECRET,
@@ -58,9 +58,9 @@ export function createAuth(env: Env, request: Request) {
         sendMagicLink: async ({ email, url }) => {
           await sendEmail(env, {
             to: email,
-            subject: "Your Na iSema sign-in link",
+            subject: "Your NAISEMA sign-in link",
             text: [
-              "Use this link to sign in to Na iSema staff tools:",
+              "Use this link to sign in to NAISEMA staff tools:",
               "",
               url,
               "",
@@ -70,7 +70,7 @@ export function createAuth(env: Env, request: Request) {
           });
         },
       }),
-      twoFactor({ issuer: "Na iSema", allowPasswordless: true }),
+      twoFactor({ issuer: "NAISEMA", allowPasswordless: true }),
     ],
   });
 }

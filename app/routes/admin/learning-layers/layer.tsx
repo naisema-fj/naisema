@@ -20,7 +20,7 @@ export const handle = { video: true };
 export const headers = () => ({ "Cache-Control": "private, no-store" });
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.snapshot.title ?? "Learning Layer"} · Na iSema staff` }];
+  return [{ title: `${loaderData?.snapshot.title ?? "Learning Layer"} · NAISEMA staff` }];
 }
 
 async function requireLayer(env: Env, request: Request, id: string) {

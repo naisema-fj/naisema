@@ -10,7 +10,7 @@ import type { Route } from "./+types/staff";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Staff and roles · Na iSema staff" }];
+  return [{ title: "Staff and roles · NAISEMA staff" }];
 }
 
 async function requireAdministrator(request: Request, env: Env) {

@@ -1,4 +1,4 @@
-# Na iSema
+# NAISEMA
 
 ## Agent skills
 

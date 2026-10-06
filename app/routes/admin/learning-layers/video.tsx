@@ -17,7 +17,7 @@ import { formatVideoLength } from "~/lib/video-rules";
 import type { Route } from "./+types/video";
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `Learning Layers on ${loaderData?.title ?? "a Video"} · Na iSema staff` }];
+  return [{ title: `Learning Layers on ${loaderData?.title ?? "a Video"} · NAISEMA staff` }];
 }
 
 async function requireVideo(env: Env, request: Request, id: string) {

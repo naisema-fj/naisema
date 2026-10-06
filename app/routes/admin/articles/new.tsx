@@ -26,7 +26,7 @@ const typeOf = (request: Request): ContentType => {
 };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `New ${CONTENT_TYPE_NAMES[loaderData?.type ?? "article"].toLowerCase()} · Na iSema staff` }];
+  return [{ title: `New ${CONTENT_TYPE_NAMES[loaderData?.type ?? "article"].toLowerCase()} · NAISEMA staff` }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

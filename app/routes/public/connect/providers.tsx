@@ -29,7 +29,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   return [
-    { title: "Providers · Connect · Na iSema" },
+    { title: "Providers · Connect · NAISEMA" },
     { name: "description", content: "Organisations and people who teach Fijian language and culture." },
     ...(loaderData?.kind ? [{ name: "robots", content: "noindex" }] : []),
   ];
@@ -54,7 +54,7 @@ export default function Providers({ loaderData }: Route.ComponentProps) {
           <h1 id="providers-heading">Providers</h1>
           <p className="lede">Organisations and people who teach Fijian language and culture.</p>
           <p>
-            Being listed doesn't mean a partnership or that Na iSema endorses them. A Partner is marked as one. You can
+            Being listed doesn't mean a partnership or that NAISEMA endorses them. A Partner is marked as one. You can
             also <Link to="/connect/offerings">browse everything they offer</Link>.
           </p>
         </header>

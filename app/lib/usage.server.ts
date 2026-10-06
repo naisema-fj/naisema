@@ -40,7 +40,7 @@ export async function recordUsage(env: Env, db: Database, metrics: PlatformMetri
   if (due === null) return;
   const administrators = (await activeHolders(db, "administrator")).map((holder) => holder.email);
   const recipients = [...new Set([...alertRecipients(env), ...administrators])];
-  const subject = `Na iSema ${env.ENVIRONMENT}: media costs on course for ${due}% of the monthly ceiling`;
+  const subject = `NAISEMA ${env.ENVIRONMENT}: media costs on course for ${due}% of the monthly ceiling`;
   const text = [
     `This month is projected to cost about ${formatAud(estimate.aud)}, ${estimate.percentOfCeiling}% of the ${formatAud(MONTHLY_CEILING_AUD)} ceiling.`,
     "",

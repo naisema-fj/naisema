@@ -1,6 +1,6 @@
 // Worker configuration. The top level is local development; `env.staging` and
 // `env.production` are selected at build time with CLOUDFLARE_ENV (see
-// docs/handover/runbook.md). All resources live in the one Na iSema Cloudflare
+// docs/handover/runbook.md). All resources live in the one NAISEMA Cloudflare
 // account (ADR-0004) and are created with the Oceania location hint.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -36,7 +36,7 @@
     "WORKER_NAME": "naisema-dev",
     // Where the public site answers, so a withdrawal can purge its cached pages (app/lib/public-cache.server.ts).
     "PUBLIC_ORIGINS": "http://localhost:5173,http://localhost:4173",
-    "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
+    "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>",
     "EMAIL_OUTBOX": "true",
     // Which environment this is, recorded on every Video Asset, as one Stream account serves them all.
     "ENVIRONMENT": "development",
@@ -86,7 +86,7 @@
     { "binding": "EVIDENCE", "bucket_name": "naisema-dev-evidence" },
     // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
     { "binding": "QUARANTINE", "bucket_name": "naisema-dev-quarantine" },
-    // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+    // Video masters, NAISEMA's originals, private; Stream copies each from a pre-signed address (ADR-0008).
     { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-dev-video-masters" }
   ],
   "env": {
@@ -105,7 +105,7 @@
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
         "WORKER_NAME": "naisema-staging",
         "PUBLIC_ORIGINS": "https://staging.naisema.com",
-        "EMAIL_FROM": "Na iSema Staging <no-reply@naisema.com>",
+        "EMAIL_FROM": "NAISEMA Staging <no-reply@naisema.com>",
         // Staging never adds anyone to the real newsletter list.
         "NEWSLETTER_OUTBOX": "true",
         "ENVIRONMENT": "staging",
@@ -152,7 +152,7 @@
         { "binding": "EVIDENCE", "bucket_name": "naisema-staging-evidence" },
         // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
         { "binding": "QUARANTINE", "bucket_name": "naisema-staging-quarantine" },
-        // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+        // Video masters, NAISEMA's originals, private; Stream copies each from a pre-signed address (ADR-0008).
         { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-staging-video-masters" }
       ]
     },
@@ -163,7 +163,7 @@
         "ADMIN_HOSTNAME": "admin.naisema.com",
         "WORKER_NAME": "naisema-production",
         "PUBLIC_ORIGINS": "https://naisema.com",
-        "EMAIL_FROM": "Na iSema <no-reply@naisema.com>",
+        "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>",
         "ENVIRONMENT": "production",
         // Cloudflare Stream, once its secrets are set (docs/handover/runbook.md, video).
         "VIDEO_PROVIDER": "stream",
@@ -210,7 +210,7 @@
         { "binding": "EVIDENCE", "bucket_name": "naisema-production-evidence" },
         // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
         { "binding": "QUARANTINE", "bucket_name": "naisema-production-quarantine" },
-        // Video masters, Na iSema's originals, private; Stream copies each from a pre-signed address (ADR-0008).
+        // Video masters, NAISEMA's originals, private; Stream copies each from a pre-signed address (ADR-0008).
         { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-production-video-masters" }
       ]
     }

@@ -8,7 +8,7 @@ import type { Route } from "./+types/consents";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Consent Records · Na iSema staff" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Consent Records · NAISEMA staff" }, { name: "robots", content: "noindex" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

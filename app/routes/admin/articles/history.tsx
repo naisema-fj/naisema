@@ -9,7 +9,7 @@ import type { Route } from "./+types/history";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `History of ${loaderData?.article.currentRevision.snapshot.title ?? "article"} · Na iSema staff` }];
+  return [{ title: `History of ${loaderData?.article.currentRevision.snapshot.title ?? "article"} · NAISEMA staff` }];
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {

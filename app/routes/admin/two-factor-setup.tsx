@@ -8,7 +8,7 @@ import type { Route } from "./+types/two-factor-setup";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Set up your authenticator app · Na iSema staff" }];
+  return [{ title: "Set up your authenticator app · NAISEMA staff" }];
 }
 
 function describeKey(totpURI: string) {
@@ -63,9 +63,9 @@ export default function TwoFactorSetup({ loaderData, actionData }: Route.Compone
         </Form>
       ) : (
         <>
-          <h2>1. Add Na iSema to your app</h2>
+          <h2>1. Add NAISEMA to your app</h2>
           <p>Scan this QR code with your authenticator app.</p>
-          <img src={key.qrCode} width={200} height={200} alt="QR code for adding Na iSema to an authenticator app" />
+          <img src={key.qrCode} width={200} height={200} alt="QR code for adding NAISEMA to an authenticator app" />
           <p>
             Or type this key into the app instead: <code data-totp-secret={key.secret}>{key.secret}</code>
           </p>

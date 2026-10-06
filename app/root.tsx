@@ -61,7 +61,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <h1>{notFound ? "Page not found" : "Something went wrong"}</h1>
       <p>{details}</p>
       <p>
-        <a href="/">Go to the Na iSema home page</a>
+        <a href="/">Go to the NAISEMA home page</a>
       </p>
       {stack && (
         <pre>

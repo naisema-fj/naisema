@@ -18,7 +18,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   return [
-    { title: "Creators · Connect · Na iSema" },
+    { title: "Creators · Connect · NAISEMA" },
     { name: "description", content: "Fijian creators and their work, each with a free sample." },
     ...(loaderData?.media ? [{ name: "robots", content: "noindex" }] : []),
   ];

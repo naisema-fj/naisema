@@ -7,7 +7,7 @@ import type { Route } from "./+types/notices";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Consent notices · Na iSema staff" }];
+  return [{ title: "Consent notices · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

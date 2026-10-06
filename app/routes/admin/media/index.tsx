@@ -17,7 +17,7 @@ import type { Route } from "./+types/index";
 export const handle = { video: true };
 
 export function meta() {
-  return [{ title: "Media library · Na iSema staff" }];
+  return [{ title: "Media library · NAISEMA staff" }];
 }
 
 const STATUS_NAMES: Record<MediaStatus, string> = {

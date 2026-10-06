@@ -6,7 +6,7 @@ import type { Route } from "./+types/sign-in";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Sign in · Na iSema staff" }];
+  return [{ title: "Sign in · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -34,8 +34,8 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
       <main id="main" className="page">
         <h1>Check your email</h1>
         <p>
-          If <strong>{actionData.email}</strong> belongs to a Na iSema staff account, we have sent it a sign-in link.
-          The link works once and expires in 15 minutes.
+          If <strong>{actionData.email}</strong> belongs to a NAISEMA staff account, we have sent it a sign-in link. The
+          link works once and expires in 15 minutes.
         </p>
       </main>
     );
@@ -43,7 +43,7 @@ export default function SignIn({ actionData }: Route.ComponentProps) {
 
   return (
     <main id="main" className="page">
-      <h1>Sign in to Na iSema staff tools</h1>
+      <h1>Sign in to NAISEMA staff tools</h1>
       <p>We will email you a sign-in link. You will then confirm it is you with your authenticator app.</p>
       <Form method="post">
         <label htmlFor="email">Email address</label>

@@ -33,7 +33,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   return [
-    { title: "Classes and courses · Connect · Na iSema" },
+    { title: "Classes and courses · Connect · NAISEMA" },
     // A filtered list is a view of this page, not a page of its own.
     ...(loaderData?.filtered ? [{ name: "robots", content: "noindex" }] : []),
   ];
@@ -58,7 +58,7 @@ export default function Offerings({ loaderData }: Route.ComponentProps) {
         <header className="letter-head">
           <h1 id="offerings-heading">Classes and courses</h1>
           <p className="lede">What listed Providers offer, and how to get to it.</p>
-          <p>Being listed doesn't mean a partnership or that Na iSema endorses them.</p>
+          <p>Being listed doesn't mean a partnership or that NAISEMA endorses them.</p>
         </header>
         <Form method="get" className="search-form filters" aria-label="Narrow the list">
           <label htmlFor="language">Language</label>

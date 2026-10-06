@@ -9,7 +9,7 @@ import type { Route } from "./+types/reviews";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Your reviews · Na iSema staff" }];
+  return [{ title: "Your reviews · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

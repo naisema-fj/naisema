@@ -168,7 +168,7 @@ async function recheckHits(
         path: itemPath(item),
         title: published.snapshot.title,
         summary: published.snapshot.summary,
-        areaName: area ? AREA_NAMES[area] : "Na iSema",
+        areaName: area ? AREA_NAMES[area] : "NAISEMA",
         // An Episode's listing says how long it is: "Episode · 32 min".
         formatName: published.snapshot.episode
           ? `${FORMAT_NAMES.episode} · ${formatDuration(published.snapshot.episode.durationSeconds)}`

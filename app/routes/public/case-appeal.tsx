@@ -14,7 +14,7 @@ export const handle = { hydrate: false };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Appeal a decision · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Appeal a decision · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 async function caseOrNotFound(env: Env, token: string) {

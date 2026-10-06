@@ -35,11 +35,11 @@ export async function resetTwoFactor(env: Env, resetBy: ResetBy, userId: string)
 
   await sendEmail(env, {
     to: member.email,
-    subject: "Your Na iSema two-factor was reset",
+    subject: "Your NAISEMA two-factor was reset",
     text: [
-      `An administrator (${resetBy.user.email}) reset the two-factor on your Na iSema staff account.`,
+      `An administrator (${resetBy.user.email}) reset the two-factor on your NAISEMA staff account.`,
       "",
-      "Next time you sign in to Na iSema staff tools, you'll set up your authenticator app again.",
+      "Next time you sign in to NAISEMA staff tools, you'll set up your authenticator app again.",
       "",
       "If you didn't ask for this, tell another administrator or the technical owner straight away.",
     ].join("\n"),

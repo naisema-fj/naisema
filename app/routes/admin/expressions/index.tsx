@@ -6,7 +6,7 @@ import { requireLayerStaff } from "~/lib/learning-layers.server";
 import type { Route } from "./+types/index";
 
 export function meta() {
-  return [{ title: "Expressions · Na iSema staff" }];
+  return [{ title: "Expressions · NAISEMA staff" }];
 }
 
 /**

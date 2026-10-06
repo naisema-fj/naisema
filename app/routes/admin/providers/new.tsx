@@ -9,7 +9,7 @@ import type { Route } from "./+types/new";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Add a provider · Na iSema staff" }];
+  return [{ title: "Add a provider · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {

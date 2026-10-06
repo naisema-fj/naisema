@@ -118,7 +118,7 @@ function ListingFlagsFields({ values, errors }: { values: Values; errors: Errors
           // A refused form (it has an intent) shows what was ticked; a saved listing, whether it is featured.
           defaultChecked={"intent" in values ? values.featured === "on" : Boolean(values.featureRationale)}
         />
-        <label htmlFor="featured">Featured by Na iSema editors</label>
+        <label htmlFor="featured">Featured by NAISEMA editors</label>
       </div>
       <Text
         name="featureRationale"
@@ -221,7 +221,7 @@ export function OfferingForm({
 }: {
   values: Values;
   errors?: Errors;
-  /** Na iSema items an Offering under licence can be on. */
+  /** NAISEMA items an Offering under licence can be on. */
   items: { id: string; title: string }[];
   submitLabel: string;
 }) {
@@ -285,7 +285,7 @@ export function OfferingForm({
       />
       <fieldset aria-describedby={errors.accessMode ? "access-hint accessMode-error" : "access-hint"}>
         <legend>How visitors get to it (exactly one)</legend>
-        <p id="access-hint">Shown or hosted on Na iSema only for a Partner.</p>
+        <p id="access-hint">Shown or hosted on NAISEMA only for a Partner.</p>
         {Object.entries(ACCESS_MODES).map(([mode, name]) => (
           <div key={mode} className="choice">
             <input
@@ -301,18 +301,18 @@ export function OfferingForm({
         {fieldError("accessMode")}
         <Text
           name="accessUrl"
-          label="Web address (on their website, or shown on Na iSema)"
+          label="Web address (on their website, or shown on NAISEMA)"
           type="url"
           value={text("accessUrl")}
           errors={errors}
         />
         <Text
           name="accessNote"
-          label="How Na iSema refers people (for a referral)"
+          label="How NAISEMA refers people (for a referral)"
           value={text("accessNote")}
           errors={errors}
         />
-        <label htmlFor="accessContentItemId">The Na iSema item it is on (under licence)</label>
+        <label htmlFor="accessContentItemId">The NAISEMA item it is on (under licence)</label>
         <select
           id="accessContentItemId"
           name="accessContentItemId"

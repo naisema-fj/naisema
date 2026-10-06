@@ -284,7 +284,7 @@ describe("notices", () => {
   it("get new versions from the privacy contact, which forms show from then on, keeping the old", async () => {
     const privacy = await staff("privacy", { role: "privacy_contact" });
     const editor = await staff("editor", { role: "editor" });
-    const wording = `Na iSema keeps what you send, version ${crypto.randomUUID()}.`;
+    const wording = `NAISEMA keeps what you send, version ${crypto.randomUUID()}.`;
 
     expect((await editor.browser.fetch("/admin/notices", { form: { purpose: "reply", wording } })).status).toBe(403);
     const published = await privacy.browser.fetch("/admin/notices", { form: { purpose: "reply", wording } });

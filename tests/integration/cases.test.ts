@@ -179,7 +179,7 @@ describe("who can open a Case (AC-05)", () => {
     ).toHaveLength(1);
   });
 
-  it("data requests go to the privacy contact, who sees what Na iSema holds for the address", async () => {
+  it("data requests go to the privacy contact, who sees what NAISEMA holds for the address", async () => {
     const privacy = await staff("privacy", { role: "privacy_contact" });
     const lead = await staff("lead", { role: "safeguarding_lead" });
     const email = address();
@@ -198,7 +198,7 @@ describe("who can open a Case (AC-05)", () => {
     expect(found).toMatchObject({ kind: "data_request" });
     expect((await lead.browser.fetch(`/admin/cases/${found.id}`)).status).toBe(403);
     const page = await (await privacy.browser.fetch(`/admin/cases/${found.id}`)).text();
-    expect(page).toContain("What Na iSema holds for this address");
+    expect(page).toContain("What NAISEMA holds for this address");
     expect(page).toContain("Sera Vula");
   });
 });

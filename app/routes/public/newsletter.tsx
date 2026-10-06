@@ -19,7 +19,7 @@ export const handle = { hydrate: false, turnstile: true };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "The newsletter · Na iSema" }];
+  return [{ title: "The newsletter · NAISEMA" }];
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -67,7 +67,7 @@ export default function Newsletter({ loaderData, actionData }: Route.ComponentPr
             newsletter will start. Nothing is sent until you do.
           </p>
           <p>
-            <Link to="/">Back to Na iSema</Link>
+            <Link to="/">Back to NAISEMA</Link>
           </p>
         </article>
       </main>
@@ -80,7 +80,7 @@ export default function Newsletter({ loaderData, actionData }: Route.ComponentPr
       <article className="letter letter-narrow">
         <h1>The newsletter</h1>
         <p className="standfirst">
-          News from Na iSema: new stories and recordings, classes and consultations. You'll be asked to confirm before
+          News from NAISEMA: new stories and recordings, classes and consultations. You'll be asked to confirm before
           anything is sent.
         </p>
         <Form method="post" className="public-form" noValidate>

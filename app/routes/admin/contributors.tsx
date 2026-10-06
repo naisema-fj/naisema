@@ -7,7 +7,7 @@ import type { Route } from "./+types/contributors";
 export const handle = { hydrate: false };
 
 export function meta() {
-  return [{ title: "Contributors · Na iSema staff" }];
+  return [{ title: "Contributors · NAISEMA staff" }];
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -36,7 +36,7 @@ export default function Contributors({ loaderData, actionData }: Route.Component
       </p>
       <h1>Contributors</h1>
       <p>
-        Anyone whose story, recording or knowledge appears in Na iSema content. Rights Records say which contributors
+        Anyone whose story, recording or knowledge appears in NAISEMA content. Rights Records say which contributors
         they cover. Don't record contact details here.
       </p>
       {loaderData.contributors.length ? (

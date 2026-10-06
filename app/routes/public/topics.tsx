@@ -25,7 +25,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 }
 
 export function meta() {
-  return [{ title: "Topics · Na iSema" }];
+  return [{ title: "Topics · NAISEMA" }];
 }
 
 export default function Topics({ loaderData }: Route.ComponentProps) {

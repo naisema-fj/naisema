@@ -34,7 +34,7 @@ function SiteHeader() {
       <div className="airmail-band" />
       <div className="site-header-inner">
         <Link reloadDocument to="/" className="wordmark">
-          Na iSema
+          NAISEMA
         </Link>
         <nav aria-label="Main" className="site-nav">
           <AreaLinks />
@@ -56,7 +56,7 @@ function SiteFooter() {
     <footer className="site-footer">
       <div className="masi-strip" />
       <div className="site-footer-inner">
-        <nav aria-label="About Na iSema">
+        <nav aria-label="About NAISEMA">
           <ul className="footer-links">
             {INFO_PAGES.map((page) => (
               <li key={page.path}>
@@ -83,7 +83,7 @@ function SiteFooter() {
           </ul>
         </nav>
         <p className="footer-note">
-          Na iSema connects Fijians abroad, and everyone else, with Fijian language and culture. The pattern above is a
+          NAISEMA connects Fijians abroad, and everyone else, with Fijian language and culture. The pattern above is a
           placeholder in the spirit of masi, until commissioned and culturally reviewed artwork arrives.
         </p>
       </div>
@@ -105,7 +105,7 @@ export default function PublicLayout() {
 function errorPage(error: unknown) {
   const status = isRouteErrorResponse(error) ? error.status : 500;
   return status === 410
-    ? { title: "This has been withdrawn", text: "It is no longer published on Na iSema." }
+    ? { title: "This has been withdrawn", text: "It is no longer published on NAISEMA." }
     : status === 404
       ? { title: "We couldn't find that page", text: "It may have moved, or it may not be published yet." }
       : { title: "Something went wrong", text: "Something went wrong on our side. Please try again in a moment." };
@@ -113,7 +113,7 @@ function errorPage(error: unknown) {
 
 /** Pages below an error boundary don't contribute meta, so an error page gets its title here. */
 export function meta({ error }: Route.MetaArgs) {
-  return [{ title: error ? `${errorPage(error).title} · Na iSema` : "Na iSema" }];
+  return [{ title: error ? `${errorPage(error).title} · NAISEMA` : "NAISEMA" }];
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
@@ -127,7 +127,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
           <p>{text}</p>
           <p>
             <Link reloadDocument to="/">
-              Go to the Na iSema home page
+              Go to the NAISEMA home page
             </Link>
           </p>
         </article>

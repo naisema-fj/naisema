@@ -49,11 +49,11 @@ export const REPORT_REASONS = {
 } as const;
 export type ReportReason = keyof typeof REPORT_REASONS;
 
-/** What a person can ask about the information Na iSema holds on them (DATA-03). */
+/** What a person can ask about the information NAISEMA holds on them (DATA-03). */
 export const DATA_REQUESTS = {
-  access: "A copy of what Na iSema holds about me",
-  deletion: "Delete what Na iSema holds about me",
-  correction: "Correct something Na iSema holds about me",
+  access: "A copy of what NAISEMA holds about me",
+  deletion: "Delete what NAISEMA holds about me",
+  correction: "Correct something NAISEMA holds about me",
   other: "Something else",
 } as const;
 export type DataRequestReason = keyof typeof DATA_REQUESTS;
@@ -62,7 +62,7 @@ export type DataRequestReason = keyof typeof DATA_REQUESTS;
 export const CONTENT_OUTCOMES = {
   no_action: "We looked into it and decided no change was needed",
   content_changed: "The content has been changed",
-  content_removed: "The content has been removed from Na iSema",
+  content_removed: "The content has been removed from NAISEMA",
   other: "We acted on it in another way",
 } as const;
 
@@ -209,7 +209,7 @@ export type CaseDataRequest = {
   consents: GivenConsent[];
 };
 
-/** Reads the privacy route's form: a request to see, correct or delete what Na iSema holds. */
+/** Reads the privacy route's form: a request to see, correct or delete what NAISEMA holds. */
 export function readDataRequest(form: FormData): Read<CaseDataRequest, "request"> | Refused {
   const { errors, values, text, choice } = fieldReader(form);
   const name = text("name", CASE_LIMITS.name, "Enter your name.");

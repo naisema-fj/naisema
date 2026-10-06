@@ -61,16 +61,16 @@ export type AgeSuitability = keyof typeof AGE_SUITABILITY;
 export const ACCESS_MODES = {
   external_link: "On the Provider's website",
   enquiry: "Ask the Provider",
-  referral: "Through a Na iSema referral",
-  authorised_embed: "Shared by Na iSema with the Provider's authorisation",
-  licensed_native: "On Na iSema, under licence",
+  referral: "Through a NAISEMA referral",
+  authorised_embed: "Shared by NAISEMA with the Provider's authorisation",
+  licensed_native: "On NAISEMA, under licence",
 } as const;
 export type AccessMode = keyof typeof ACCESS_MODES;
 
-/** Access modes that need a current Partnership Agreement: Na iSema shows or hosts the Provider's work. */
+/** Access modes that need a current Partnership Agreement: NAISEMA shows or hosts the Provider's work. */
 export const PARTNER_ONLY_MODES: readonly AccessMode[] = ["authorised_embed", "licensed_native"];
 
-export const HANDLED_BY = { provider: "The Provider", naisema: "Na iSema", unknown: "Not known" } as const;
+export const HANDLED_BY = { provider: "The Provider", naisema: "NAISEMA", unknown: "Not known" } as const;
 export type HandledBy = keyof typeof HANDLED_BY;
 
 export const COST_KINDS = { free: "Free", paid: "Paid", unknown: "Not known" } as const;
@@ -192,9 +192,9 @@ export function readOfferingFields(form: FormData): Result<OfferingDetails> {
   if (mode === "external_link" || mode === "authorised_embed") {
     access = { mode, url: url("accessUrl", "Enter the web address visitors go to.") };
   } else if (mode === "referral") {
-    access = { mode, note: text("accessNote", LISTING_LIMITS.short, "Say how Na iSema refers people.") };
+    access = { mode, note: text("accessNote", LISTING_LIMITS.short, "Say how NAISEMA refers people.") };
   } else if (mode === "licensed_native") {
-    const contentItemId = text("accessContentItemId", 100, "Choose the Na iSema item it is on.");
+    const contentItemId = text("accessContentItemId", 100, "Choose the NAISEMA item it is on.");
     access = { mode, contentItemId };
   } else if (mode !== "enquiry") errors.accessMode = "Choose how visitors get to it.";
 

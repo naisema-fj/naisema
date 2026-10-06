@@ -45,9 +45,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  if (!loaderData) return [{ title: "Na iSema" }];
+  if (!loaderData) return [{ title: "NAISEMA" }];
   return [
-    { title: `${AREA_NAMES[loaderData.area]} · Na iSema` },
+    { title: `${AREA_NAMES[loaderData.area]} · NAISEMA` },
     { name: "description", content: AREA_INFO[loaderData.area].description },
   ];
 }

@@ -14,7 +14,7 @@ export const handle = { hydrate: false };
 export const headers = () => ({ "Cache-Control": "no-store" });
 
 export function meta() {
-  return [{ title: "Your agreement · Na iSema" }, { name: "robots", content: "noindex" }];
+  return [{ title: "Your agreement · NAISEMA" }, { name: "robots", content: "noindex" }];
 }
 
 async function consentOrNotFound(env: Env, token: string) {
@@ -64,7 +64,7 @@ export default function Consent({ loaderData, actionData }: Route.ComponentProps
           </Form>
         )}
         <p>
-          <Link to="/privacy">How Na iSema handles your information</Link>
+          <Link to="/privacy">How NAISEMA handles your information</Link>
         </p>
       </article>
     </main>

@@ -26,7 +26,7 @@ Six primary areas: Learn, Voices, Discover, Connect, E-zine and Resources (docs/
 
 - Public pages ship no client JavaScript unless a page needs interaction, and run under a strict content security policy: no inline scripts or styles.
 - Services not live yet (Learning Layers, provider listings, forms, the newsletter) say so plainly (PUB-01) instead of looking broken or being hidden.
-- The product name is written **Na iSema**.
+- The product name is written **NAISEMA**.
 - Partners appear only where a Partnership Agreement exists (docs/phase-1a-defaults.md §5; recorded from the docs, not re-confirmed).
 
 ## Brand Commitments

@@ -17,7 +17,7 @@ OWN-WORLD: Off-white sheets on a slightly deeper sand ground. Deep teal ink for 
 
 STORY: The visitor reads a welcome letter, sees what each area holds and what isn't open yet, opens an Article, and sees who wrote it, when, and exactly what it was reviewed for.
 
-FIRST VIEWPORT: The airmail band across the top; the wordmark Na iSema at left with the six areas inline (a menu on phones). A wide letter sheet: "Bula vinaka" as the salutation, the welcome statement at reading size, signed "Na iSema". Below it, the six areas addressed like envelope fronts in a 3 by 2 grid, each with a postmark-style availability line. The primary action, "Read the latest", sits in the letter's sign-off.
+FIRST VIEWPORT: The airmail band across the top; the wordmark NAISEMA at left with the six areas inline (a menu on phones). A wide letter sheet: "Bula vinaka" as the salutation, the welcome statement at reading size, signed "NAISEMA". Below it, the six areas addressed like envelope fronts in a 3 by 2 grid, each with a postmark-style availability line. The primary action, "Read the latest", sits in the letter's sign-off.
 
 SIGNATURE INTERACTION: Without JavaScript, envelope fronts lift and their airmail edge darkens on hover and keyboard focus; the mobile menu is a native disclosure.
 

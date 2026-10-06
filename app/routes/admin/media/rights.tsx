@@ -9,7 +9,7 @@ import type { Route } from "./+types/rights";
 export const handle = { hydrate: false };
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `Rights for ${loaderData?.asset.name ?? "a file"} · Na iSema staff` }];
+  return [{ title: `Rights for ${loaderData?.asset.name ?? "a file"} · NAISEMA staff` }];
 }
 
 /** A media library file that has passed its scan; evidence and refused files have no rights page. */
