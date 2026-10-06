@@ -60,7 +60,7 @@ export default function UploadLink({ loaderData, actionData, params }: Route.Com
   if (actionData?.finished) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>Vinaka, that's everything</h1>
           <p role="status">
             We have your files. Each one is checked for viruses before anyone opens it, and an editor will be in touch.
@@ -73,7 +73,7 @@ export default function UploadLink({ loaderData, actionData, params }: Route.Com
   if (!loaderData.open) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>This link no longer works</h1>
           <p>
             Upload links work for a few days, and stop once you've said you've finished. If you still have files to send
@@ -85,7 +85,7 @@ export default function UploadLink({ loaderData, actionData, params }: Route.Com
   }
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Upload your files</h1>
         <p className="standfirst">
           Bula {loaderData.name}. Send the material you offered us here. This link is only for you, and works until{" "}

@@ -88,8 +88,8 @@ export default function Topic({ loaderData }: Route.ComponentProps) {
           <li aria-current="page">{topic.name}</li>
         </ol>
       </nav>
-      <article className="letter topic-letter" aria-labelledby="topic-heading">
-        <header className="letter-head">
+      <article className="pane topic-pane" aria-labelledby="topic-heading">
+        <header className="pane-head">
           <h1 id="topic-heading">{topic.name}</h1>
           {topic.description && <p className="lede">{topic.description}</p>}
         </header>
@@ -119,7 +119,7 @@ export default function Topic({ loaderData }: Route.ComponentProps) {
         {lead && (
           <section aria-labelledby="lead-heading" className="lead-feature">
             <h2 id="lead-heading">Featured</h2>
-            <ul className="letter-list">
+            <ul className="piece-list">
               <Card item={lead} />
             </ul>
           </section>
@@ -128,7 +128,7 @@ export default function Topic({ loaderData }: Route.ComponentProps) {
         <section aria-labelledby="items-heading">
           <h2 id="items-heading">{subtopic ? `In ${subtopic.name}` : `In ${topic.name}`}</h2>
           {items.length ? (
-            <ul className="letter-list">
+            <ul className="piece-list">
               {items.map((item) => (
                 <Card key={item.id} item={item} />
               ))}

@@ -20,7 +20,7 @@ export function DateMark({ label, date }: { label?: string; date: Date | string 
  */
 export function Postmarks({ children, label }: { children: React.ReactNode; label: string }) {
   return (
-    <ul className="postmarks" aria-label={label}>
+    <ul className="fact-lines" aria-label={label}>
       {children}
     </ul>
   );

@@ -39,8 +39,8 @@ export default function Creators({ loaderData }: Route.ComponentProps) {
           <li aria-current="page">Creators</li>
         </ol>
       </nav>
-      <article className="letter" aria-labelledby="creators-heading">
-        <header className="letter-head">
+      <article className="pane" aria-labelledby="creators-heading">
+        <header className="pane-head">
           <h1 id="creators-heading">Creators</h1>
           <p className="lede">Fijian creators and their work, each with a free sample.</p>
         </header>
@@ -57,7 +57,7 @@ export default function Creators({ loaderData }: Route.ComponentProps) {
           <button type="submit">Show</button>
         </Form>
         {creators.length ? (
-          <ul className="letter-list">
+          <ul className="piece-list">
             {creators.map((creator) => (
               <li key={creator.path}>
                 <Link to={creator.path}>{creator.name}</Link>

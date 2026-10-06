@@ -25,9 +25,11 @@ export function ContentLetter({
   const updated = item.lastPublishedAt;
   const name = item.format.toLowerCase();
   return (
-    <article className="letter">
-      <header className="letter-head">
-        <h1>{item.title}</h1>
+    <article className="pane">
+      <header className="pane-intro">
+        <div className={`pane-head tile-${item.area ?? "none"}`}>
+          <h1>{item.title}</h1>
+        </div>
         <p className="lede">{item.summary}</p>
         <p className="from">
           <span className="from-label">From</span> {item.credit}
@@ -68,13 +70,13 @@ export function ContentLetter({
       {item.episode && <EpisodePlayer title={item.title} episode={item.episode} />}
       {item.creator && <CreatorDetails creator={item.creator} />}
 
-      <div className="letter-body">
+      <div className="pane-body">
         <ArticleBodyView body={item.body} embeds={item.embeds} />
       </div>
 
       {item.episode && <Transcript paragraphs={item.episode.transcript} />}
 
-      <footer className="letter-foot">
+      <footer className="pane-foot">
         {item.topics.length > 0 && (
           <p>
             <span className="from-label">Topics</span>{" "}
@@ -97,7 +99,7 @@ export function ContentLetter({
         {item.related.length > 0 && (
           <section aria-labelledby="related-heading" className="related">
             <h2 id="related-heading">Related</h2>
-            <ul className="letter-list">
+            <ul className="piece-list">
               {item.related.map((related) => (
                 <li key={related.path}>
                   <Link reloadDocument to={related.path}>
@@ -165,7 +167,7 @@ function StoryVideo({
       {video.layers.length > 0 && (
         <section aria-labelledby="explore-heading" className="explore-language">
           <h3 id="explore-heading">Explore the language</h3>
-          <ul className="letter-list">
+          <ul className="piece-list">
             {video.layers.map((layer) => (
               <li key={layer.id}>
                 <Link to={layer.path} reloadDocument>

@@ -43,7 +43,7 @@ export default function Search({ loaderData }: Route.ComponentProps) {
   const searching = isSearching(filters);
   return (
     <main id="main">
-      <article className="letter search-letter" aria-labelledby="search-heading">
+      <article className="pane search-pane" aria-labelledby="search-heading">
         <h1 id="search-heading">Search</h1>
         <search>
           <form method="get" action="/search" className="search-form">
@@ -100,7 +100,7 @@ export default function Search({ loaderData }: Route.ComponentProps) {
           <section className="search-results" aria-labelledby="results-heading">
             <h2 id="results-heading">{total === 1 ? "1 result" : `${total} results`}</h2>
             {results.length ? (
-              <ul className="letter-list">
+              <ul className="piece-list">
                 {results.map((result) => (
                   <li key={result.id}>
                     <Link to={result.path}>{result.title}</Link>

@@ -76,7 +76,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
   if (actionData?.sent) {
     return (
       <main id="main">
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>Thank you for telling us</h1>
           <p role="status">
             Your report has been received, reference {actionData.reference}. Only the people who handle reports can read
@@ -94,7 +94,7 @@ export default function Report({ loaderData, actionData }: Route.ComponentProps)
   const values: Values = actionData?.values ?? {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Report a problem</h1>
         <p className="standfirst">
           {item ? (

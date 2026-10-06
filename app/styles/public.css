@@ -1,120 +1,103 @@
 /*
- * The public site: "Letters home" (direction in .impeccable/surfaces/app-routes-home-tsx.md).
- * Every page is a letter from home: off-white sheets on a sand ground, deep teal ink, an airmail
- * edge in teal and masi brown, and flat postmark lines for dates and Review Labels.
- * Loaded only by the public layout; no inline styles anywhere (the CSP allows none).
+ * The public site: "Woven mat" (direction in .impeccable/surfaces/app-routes-home-tsx.md).
+ * The NAISEMA brand laid out as an ibe: tiles in Ink, Kesa, Voivoi and Shell, set upright and
+ * sideways like the strands of the woven mark, on a Shell ground, with the brand's woven strip
+ * above the footer. Loaded only by the public layout; no inline styles anywhere (the CSP allows none).
  */
+@import "@fontsource-variable/bricolage-grotesque";
 @import "@fontsource-variable/jost";
-@import "@fontsource-variable/literata";
 
 .public {
-  /* Palette */
-  --sand: #eee7d9;
-  --sheet: #fbf9f4;
-  --ink: #1e1c19;
-  --ink-soft: #4a4640;
-  --teal-950: #062e36;
-  --teal-900: #0a3d47;
-  --teal-700: #0b5563;
-  --teal-200: #b9d6d8;
-  --teal-100: #e1eeee;
-  --masi: #6b3a22;
-  --masi-200: #e8d7c7;
-  --rule: rgb(10 61 71 / 0.22);
+  /* The brand palette */
+  --ink: #0f2b35;
+  --ink-deep: #0a1d24;
+  --ink-2: #1b3f4c;
+  --kesa: #d2603f;
+  --voivoi: #e9be5b;
+  --shell: #f6f5f2;
+  /* Quiet tiles, lines and text tones from the brand boards */
+  --sand: #e8e5de;
+  --paper: #ffffff;
+  --line: #d6d2c8;
+  --muted: #56686e;
+  --mist: #a9bcc2;
+  /* Kesa deepened for small text, labels and the focus ring: 5.3:1 on Shell, where Kesa is 3.5:1. */
+  --kesa-deep: #a9472a;
+  --kesa-100: #f6ded5;
+  --voivoi-100: #f7e7c2;
 
-  /* Type */
-  --font-ui: "Jost Variable", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-  --font-read: "Literata Variable", Georgia, "Times New Roman", serif;
+  /* Type: Bricolage Grotesque speaks, Jost is read. */
+  --font-display: "Bricolage Grotesque Variable", "Arial Narrow", system-ui, sans-serif;
+  --font-text: "Jost Variable", "Century Gothic", "Avenir Next", system-ui, sans-serif;
   --step--1: 0.8125rem;
   --step-0: 1.0625rem;
-  --step-1: 1.25rem;
-  --step-2: clamp(1.4rem, 1.2rem + 0.8vw, 1.75rem);
-  --step-3: clamp(1.9rem, 1.5rem + 1.8vw, 2.6rem);
-  --step-4: clamp(2.3rem, 1.6rem + 3.2vw, 3.9rem);
+  --step-1: 1.3rem;
+  --step-2: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+  --step-3: clamp(2rem, 1.5rem + 2vw, 2.9rem);
+  --step-4: clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem);
+  --step-5: clamp(3.1rem, 2rem + 5vw, 6rem);
 
-  /* Space and motion */
-  --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
-  --measure: 68ch;
+  /* The weave: tiles are rounded like the mark's strands and inset upright or sideways. */
+  --gutter: clamp(1rem, 0.6rem + 2vw, 3.5rem);
+  --weave-gap: clamp(0.6rem, 0.4rem + 0.8vw, 1rem);
+  --strand-inset: clamp(0.35rem, 0.2rem + 0.5vw, 0.7rem);
+  --tile-radius: 18px;
+  --plate-radius: 10px;
+  --measure: 66ch;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-
-  /* The airmail edge: teal and masi brown stripes on the sheet colour. */
-  --airmail: repeating-linear-gradient(
-    -45deg,
-    var(--teal-700) 0 10px,
-    var(--sheet) 10px 14px,
-    var(--masi) 14px 24px,
-    var(--sheet) 24px 28px
-  );
-  /* The same stripe at envelope scale, fine enough to read as slanted bars on a thin edge. */
-  --airmail-fine: repeating-linear-gradient(
-    -45deg,
-    var(--teal-700) 0 7px,
-    var(--sheet) 7px 10px,
-    var(--masi) 10px 17px,
-    var(--sheet) 17px 20px
-  );
-  --airmail-fine-dark: repeating-linear-gradient(
-    -45deg,
-    var(--teal-950) 0 7px,
-    var(--sheet) 7px 10px,
-    var(--masi) 10px 17px,
-    var(--sheet) 17px 20px
-  );
-  --airmail-dark: repeating-linear-gradient(
-    -45deg,
-    var(--teal-950) 0 10px,
-    var(--sheet) 10px 14px,
-    var(--masi) 14px 24px,
-    var(--sheet) 24px 28px
-  );
 
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--sand);
+  background: var(--shell);
   color: var(--ink);
-  font-family: var(--font-read);
+  font-family: var(--font-text);
   font-size: var(--step-0);
   line-height: 1.65;
   text-rendering: optimizeLegibility;
 }
 
-/* The page's own scrollbar, in the site's ink on its ground. */
+/* The page's own scrollbar, in Ink on Shell. */
 html:has(.public) {
-  scrollbar-color: #0b5563 #eee7d9;
+  scrollbar-color: #0f2b35 #f6f5f2;
+  background: #f6f5f2;
 }
 
 .public ::selection {
-  background: var(--teal-200);
+  background: var(--voivoi);
   color: var(--ink);
 }
 
 .public a {
-  color: var(--teal-700);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
-  transition: text-decoration-thickness 160ms var(--ease-out);
+  color: var(--ink);
+  text-decoration-color: var(--kesa);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.24em;
+  transition:
+    text-decoration-thickness 160ms var(--ease-out),
+    text-underline-offset 160ms var(--ease-out);
 }
 
 .public a:hover {
-  color: var(--teal-900);
-  text-decoration-thickness: 2px;
+  color: var(--ink);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.18em;
 }
 
 .public :focus-visible {
-  outline: 3px solid var(--masi);
+  outline: 3px solid var(--kesa-deep);
   outline-offset: 3px;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .public h1,
 .public h2,
 .public h3,
 .public h4 {
-  font-family: var(--font-ui);
-  color: var(--teal-900);
-  line-height: 1.1;
-  letter-spacing: -0.015em;
+  font-family: var(--font-display);
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -125,46 +108,57 @@ html:has(.public) {
 
 .public h1 {
   font-size: var(--step-4);
-  font-weight: 600;
+  font-weight: 800;
 }
 
 .public h2 {
   font-size: var(--step-2);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .public h3 {
   font-size: var(--step-1);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* The page column shares its edges with the header and footer: 76rem inside one gutter. */
+/* The page column shares its edges with the header and footer: 80rem inside one gutter. */
 .public main {
   flex: 1;
   width: 100%;
-  max-width: calc(76rem + 2 * var(--gutter));
+  max-width: calc(80rem + 2 * var(--gutter));
   margin-inline: auto;
   box-sizing: border-box;
-  padding: clamp(1.5rem, 1rem + 2vw, 3rem) var(--gutter) clamp(3rem, 2rem + 4vw, 5rem);
+  padding: clamp(1.25rem, 0.8rem + 1.5vw, 2.25rem) var(--gutter) clamp(3rem, 2rem + 4vw, 5.5rem);
+}
+
+/* The woven mark, coloured by where it sits. */
+.woven-mark {
+  --mark-n: var(--ink);
+  --mark-ground: var(--kesa);
+  display: block;
+  flex: none;
+}
+
+.woven-mark .strand-n {
+  fill: var(--mark-n);
+}
+
+.woven-mark .strand-ground {
+  fill: var(--mark-ground);
 }
 
 /* Header */
 
-.airmail-band {
-  height: 8px;
-  background: var(--airmail);
-}
-
 .site-header {
-  background: var(--sheet);
-  border-bottom: 1px solid var(--rule);
+  background: var(--shell);
+  border-bottom: 1px solid var(--line);
   position: relative;
 }
 
 .site-header-inner {
-  max-width: 76rem;
+  max-width: 80rem;
   margin: 0 auto;
-  padding: 0.85rem var(--gutter);
+  padding: 0.9rem var(--gutter);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -172,12 +166,22 @@ html:has(.public) {
 }
 
 .public .wordmark {
-  font-family: var(--font-ui);
-  font-weight: 650;
-  font-size: 1.6rem;
-  letter-spacing: -0.01em;
-  color: var(--teal-900);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: var(--ink);
   text-decoration: none;
+  min-height: 44px;
+}
+
+.wordmark .woven-mark {
+  width: 2.6rem;
+  height: 2.6rem;
 }
 
 .area-links {
@@ -186,28 +190,26 @@ html:has(.public) {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 1.5rem;
-  font-family: var(--font-ui);
+  gap: 0.25rem 1.6rem;
   font-weight: 500;
-  font-size: 1rem;
+  font-size: 1.0625rem;
 }
 
-.area-links a {
+.public .area-links a {
   color: var(--ink);
   text-decoration: none;
-  padding: 0.35rem 0;
-  border-bottom: 2px solid transparent;
+  padding: 0.4rem 0;
+  border-bottom: 3px solid transparent;
   display: inline-block;
 }
 
-.area-links a:hover {
-  color: var(--teal-700);
-  border-bottom-color: var(--teal-200);
+.public .area-links a:hover {
+  border-bottom-color: var(--voivoi);
 }
 
-.area-links a[aria-current="page"] {
-  color: var(--teal-900);
-  border-bottom-color: var(--masi);
+.public .area-links a[aria-current="page"] {
+  font-weight: 600;
+  border-bottom-color: var(--kesa);
 }
 
 .site-menu {
@@ -217,12 +219,11 @@ html:has(.public) {
 .site-menu > summary {
   list-style: none;
   cursor: pointer;
-  font-family: var(--font-ui);
   font-weight: 600;
-  color: var(--teal-900);
-  padding: 0.5rem 0.9rem;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
+  color: var(--ink);
+  padding: 0.5rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
@@ -234,19 +235,27 @@ html:has(.public) {
   display: none;
 }
 
-/* Three drawn bars, not a glyph. */
+/* Three drawn strands, not a glyph. */
 .site-menu > summary::before {
   content: "";
   width: 18px;
   height: 12px;
   background:
-    linear-gradient(var(--teal-900), var(--teal-900)) top / 100% 2px no-repeat,
-    linear-gradient(var(--teal-900), var(--teal-900)) center / 100% 2px no-repeat,
-    linear-gradient(var(--teal-900), var(--teal-900)) bottom / 100% 2px no-repeat;
+    linear-gradient(var(--ink), var(--ink)) top / 100% 2px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat,
+    linear-gradient(var(--ink), var(--ink)) bottom / 100% 2px no-repeat;
 }
 
 .site-menu[open] > summary {
-  background: var(--teal-100);
+  background: var(--ink);
+  color: var(--shell);
+}
+
+.site-menu[open] > summary::before {
+  background:
+    linear-gradient(var(--shell), var(--shell)) top / 100% 2px no-repeat,
+    linear-gradient(var(--shell), var(--shell)) center / 100% 2px no-repeat,
+    linear-gradient(var(--shell), var(--shell)) bottom / 100% 2px no-repeat;
 }
 
 .site-menu > nav {
@@ -255,25 +264,29 @@ html:has(.public) {
   right: 0;
   top: 100%;
   z-index: 10;
-  background: var(--sheet);
-  border-bottom: 1px solid var(--rule);
-  box-shadow: 0 16px 32px -20px rgb(6 46 54 / 0.4);
+  background: var(--shell);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 16px 32px -20px rgb(15 43 53 / 0.45);
   padding: 0.5rem var(--gutter) 1rem;
 }
 
 .site-menu .area-links {
   flex-direction: column;
   gap: 0;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
 .site-menu .area-links a {
   display: block;
-  padding: 0.7rem 0;
-  border-bottom: 1px solid var(--rule);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--line);
 }
 
-@media (max-width: 52rem) {
+.site-menu .area-links a[aria-current="page"] {
+  border-bottom: 3px solid var(--kesa);
+}
+
+@media (max-width: 56rem) {
   .site-nav {
     display: none;
   }
@@ -283,40 +296,95 @@ html:has(.public) {
   }
 }
 
-/* Letters */
+/* At the narrowest phones (320 px, or 200% zoom) the wordmark and menu tighten to fit one row. */
+@media (max-width: 24rem) {
+  .site-header-inner {
+    gap: 0.75rem;
+  }
 
-.letter {
-  max-width: 46rem;
+  .public .wordmark {
+    font-size: 1.2rem;
+    gap: 0.5rem;
+  }
+
+  .wordmark .woven-mark {
+    width: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .site-menu > summary {
+    padding-inline: 0.85rem;
+  }
+}
+
+/* Panes: a page's content on the Shell ground, headed by a tile. */
+
+.pane {
+  max-width: 48rem;
   margin: 0 auto;
-  background: var(--sheet);
   position: relative;
-  padding: clamp(1.75rem, 1.2rem + 2.5vw, 3.5rem) clamp(1.25rem, 0.8rem + 3vw, 3.75rem);
-  box-shadow:
-    0 1px 2px rgb(30 28 25 / 0.06),
-    0 22px 48px -30px rgb(6 46 54 / 0.35);
   box-sizing: border-box;
 }
 
-.letter::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 6px;
-  background: var(--airmail);
+.pane-narrow {
+  max-width: 42rem;
 }
 
-.letter-narrow {
-  max-width: 40rem;
-}
-
-.letter > * + * {
+.pane > * + * {
   margin-top: 1rem;
+}
+
+/*
+ * The head tile: Sand by default; an Article or area page takes its area's colour. Only the
+ * heading sits on a coloured head, so small text never lands on Kesa.
+ */
+.pane-head {
+  display: grid;
+  gap: 0.9rem;
+  background: var(--sand);
+  border-radius: var(--tile-radius);
+  padding: clamp(1.4rem, 1rem + 2vw, 2.5rem);
+}
+
+.pane > :where(.pane-head, .pane-intro) + * {
+  margin-top: 1.5rem;
+}
+
+/* A page whose heading opens it bare (forms, info pages, errors) gets the same Sand head tile. */
+.pane > h1:first-child {
+  background: var(--sand);
+  border-radius: var(--tile-radius);
+  padding: clamp(1.4rem, 1rem + 2vw, 2.5rem);
+  font-size: var(--step-4);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+}
+
+.pane > :where(h1:first-child) + * {
+  margin-top: 1.5rem;
+}
+
+/* An Article's or area's opening: its head tile in the area's colour, then the lede and byline. */
+.pane-intro {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.pane-head h1 {
+  font-size: var(--step-4);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
 }
 
 .lede {
   font-size: var(--step-1);
   line-height: 1.5;
-  color: var(--ink-soft);
+  color: var(--ink);
+  max-width: 40rem;
+}
+
+.pane-head .lede {
+  color: var(--ink);
 }
 
 .from {
@@ -324,153 +392,198 @@ html:has(.public) {
 }
 
 .from-label {
-  font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--step--1);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--masi);
+  color: var(--kesa-deep);
   margin-right: 0.4rem;
 }
 
-/* Postmarks: flat, ruled, factual lines. Never seals or badges. */
+/* Area colours: one tile colour per area, shared by its homepage tile and its pages' heads. */
+.tile-learn {
+  --tile-bg: var(--kesa);
+  --tile-fg: var(--ink);
+  --tile-plate: var(--shell);
+}
 
-.postmarks {
+.tile-voices,
+.tile-ezine {
+  --tile-bg: var(--voivoi);
+  --tile-fg: var(--ink);
+}
+
+.tile-discover {
+  --tile-bg: var(--paper);
+  --tile-fg: var(--ink);
+  --tile-edge: var(--line);
+}
+
+.tile-connect {
+  --tile-bg: var(--ink);
+  --tile-fg: var(--shell);
+}
+
+.tile-resources {
+  --tile-bg: var(--ink-2);
+  --tile-fg: var(--shell);
+}
+
+.pane-head:is(.tile-learn, .tile-voices, .tile-ezine, .tile-discover, .tile-connect, .tile-resources) {
+  background: var(--tile-bg);
+  box-shadow: inset 0 0 0 2px var(--tile-edge, transparent);
+}
+
+.pane-head:is(.tile-learn, .tile-voices, .tile-ezine, .tile-discover, .tile-connect, .tile-resources) h1 {
+  color: var(--tile-fg);
+}
+
+/* What a page is and what it was reviewed for: flat lines, each led by a woven strand. */
+
+.fact-lines {
   list-style: none;
   margin: 1.25rem 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--teal-700);
+  gap: 0.5rem 1.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
-.postmarks li {
-  border-block: 1px solid var(--rule);
-  padding: 0.2rem 0;
+.fact-lines li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
 }
 
-.review-labels .postmarks li {
-  border-block-color: var(--teal-700);
+.fact-lines li::before {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.7rem;
+  border-radius: 2px;
+  background: var(--kesa);
+  transform: translateY(0.05rem);
 }
 
-/* Review Labels sit under their own label, apart from the format and dates. */
+.fact-lines li:nth-child(even)::before {
+  width: 0.7rem;
+  height: 0.5rem;
+  background: var(--ink);
+  transform: translateY(-0.05rem);
+}
+
+/* Review Labels sit under their own label, one per line, apart from the format and dates. */
 .review-labels {
   margin-top: 1.5rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--line);
 }
 
 .public .review-labels-heading {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: var(--step--1);
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--masi);
+  color: var(--kesa-deep);
 }
 
-.review-labels .postmarks {
+.review-labels .fact-lines {
   margin-top: 0.6rem;
+  flex-direction: column;
 }
 
 .no-review {
   margin-top: 0.4rem;
-  font-family: var(--font-ui);
   font-size: 1rem;
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
-/* A letter's dateline: one flat postmark line. */
+/* A dateline: one flat fact. */
 .dateline {
-  font-family: var(--font-ui);
   font-weight: 600;
   font-size: var(--step--1);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--teal-700);
+  color: var(--muted);
   font-variant-numeric: tabular-nums;
   justify-self: start;
-  border-block: 1px solid var(--rule);
-  padding: 0.2rem 0;
 }
 
 /* Reading */
 
-.letter-body {
+.pane-body {
   max-width: var(--measure);
   font-size: 1.125rem;
   line-height: 1.75;
 }
 
-.letter-body > * + * {
+.pane-body > * + * {
   margin-top: 1.1em;
 }
 
-.letter-body h2 {
+.pane-body h2 {
   margin-top: 2em;
 }
 
-.letter-body h3,
-.letter-body h4 {
+.pane-body h3,
+.pane-body h4 {
   margin-top: 1.6em;
 }
 
 /* Less space below a heading than above it, so it belongs to what follows. */
-.letter-body :is(h2, h3, h4) + * {
+.pane-body :is(h2, h3, h4) + * {
   margin-top: 0.5em;
 }
 
-.letter-body blockquote {
+.pane-body blockquote {
   margin: 1.5em 0;
-  padding: 0 0 0 1.25rem;
-  border-left: 1px solid var(--masi);
-  font-style: italic;
-  color: var(--ink-soft);
+  padding: 1rem 1.25rem;
+  background: var(--voivoi-100);
+  border-radius: var(--plate-radius);
+  font-size: 1.2rem;
+  line-height: 1.6;
 }
 
-.letter-body img {
+.pane-body img {
   max-width: 100%;
   height: auto;
   display: block;
+  border-radius: var(--plate-radius);
 }
 
-.letter-body ul,
-.letter-body ol {
+.pane-body ul,
+.pane-body ol {
   padding-left: 1.4rem;
+}
+
+.pane-body li::marker {
+  color: var(--kesa-deep);
 }
 
 .public .callout {
   border-left: 0;
-  background: var(--teal-100);
+  background: var(--sand);
+  border-radius: var(--plate-radius);
   padding: 1rem 1.25rem;
   margin: 1.5em 0;
 }
 
 .public .embedded-item {
-  border: 4px solid transparent;
-  background:
-    linear-gradient(var(--sheet), var(--sheet)) padding-box,
-    var(--airmail) border-box;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--line);
+  border-radius: var(--plate-radius);
   padding: 0.9rem 1.1rem;
   margin: 1.5em 0;
-  font-family: var(--font-ui);
   font-weight: 600;
 }
 
-.letter-head {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.letter-foot {
-  border-top: 1px solid var(--rule);
+.pane-foot {
+  border-top: 1px solid var(--line);
   margin-top: 2.5rem;
   padding-top: 1.5rem;
   display: grid;
@@ -480,16 +593,15 @@ html:has(.public) {
 .sources {
   white-space: pre-line;
   font-size: 1rem;
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
 /* Breadcrumbs */
 
 .breadcrumb {
-  max-width: 46rem;
+  max-width: 48rem;
   margin: 0 auto 1rem;
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
 .breadcrumb ol {
@@ -503,279 +615,251 @@ html:has(.public) {
 
 .breadcrumb li + li::before {
   content: "/";
-  color: var(--ink-soft);
+  color: var(--muted);
   margin-right: 0.5rem;
 }
 
 .breadcrumb [aria-current="page"] {
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
-/* Homepage */
-
-.home {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: clamp(3rem, 2rem + 4vw, 5.5rem) clamp(2rem, 1rem + 3vw, 4.5rem);
-}
-
-/* The welcome letter spans the column; its text keeps a reading measure, dated top right. */
-.welcome {
-  max-width: none;
-  margin: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: 2rem;
-}
-
-.public .welcome > * {
-  grid-column: 1 / -1;
-}
-
-.welcome .dateline {
-  grid-column: 2;
-  grid-row: 1;
-  margin: 0;
-}
-
-.welcome .letter-body {
-  max-width: 40rem;
-  font-size: clamp(1.2rem, 1.05rem + 0.6vw, 1.45rem);
-  line-height: 1.6;
-  margin-top: 1.25rem;
-}
-
-/* Signed at the left; the way in sits at the sheet's right edge, under the dateline. */
-.sign-off {
-  margin-top: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem 2rem;
-}
-
-.signature {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: var(--step-1);
-  color: var(--masi);
-}
+/* Buttons and the way in */
 
 .public .primary-link {
-  font-family: var(--font-ui);
   font-weight: 600;
-  background: var(--teal-900);
-  color: var(--sheet);
+  font-size: 1.0625rem;
+  background: var(--ink);
+  color: var(--shell);
   text-decoration: none;
-  padding: 0.8rem 1.4rem;
-  border-radius: 3px;
-  min-height: 44px;
+  padding: 0.8rem 1.6rem;
+  border-radius: var(--plate-radius);
+  min-height: 48px;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  box-shadow: 0 6px 16px -10px rgb(6 46 54 / 0.6);
+  box-shadow: 0 8px 18px -12px rgb(10 29 36 / 0.7);
   transition:
     background-color 200ms var(--ease-out),
     transform 200ms var(--ease-out);
 }
 
 .public .primary-link:hover {
-  background: var(--teal-950);
-  color: var(--sheet);
+  background: var(--ink-deep);
+  color: var(--shell);
   transform: translateY(-1px);
 }
 
-.areas h2,
-.latest h2,
-.participate h2,
-.updates h2 {
-  margin-bottom: 1.25rem;
-}
-
-.notices {
-  display: grid;
-  align-content: start;
-  gap: 2.5rem;
-}
-
-@media (min-width: 60rem) {
-  .home {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  }
-
-  .welcome,
-  .areas {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 40rem) {
-  .welcome .dateline {
-    grid-column: 1;
-    grid-row: auto;
-    margin-top: 1rem;
-  }
-}
-
 /*
- * Envelope fronts: a thin airmail edge, the area's name set as the address in the lower half,
- * and a stamp corner at top right where any availability line sits like a cancellation.
+ * The homepage: the mat. On wide screens the welcome is a 2 by 2 tile, the six areas weave to
+ * its right, and the latest pieces sit under the welcome; the ways to take part close it.
  */
 
-.envelopes {
+.home {
+  max-width: calc(80rem + 2 * var(--gutter));
+}
+
+.mat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--weave-gap);
+}
+
+.tile {
+  border-radius: var(--tile-radius);
+  padding: clamp(1.25rem, 0.9rem + 1.4vw, 2rem);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.tile-welcome {
+  background: var(--ink);
+  color: var(--shell);
+  padding: clamp(1.6rem, 1rem + 3vw, 3.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.25rem, 1rem + 1vw, 2rem);
+}
+
+.welcome-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.public .tile-welcome h1 {
+  font-size: var(--step-5);
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+  color: var(--shell);
+  max-width: 6ch;
+}
+
+.tile-welcome .woven-mark {
+  --mark-n: var(--shell);
+  --mark-ground: var(--kesa);
+  width: clamp(4.5rem, 3rem + 5vw, 8.5rem);
+  height: auto;
+  aspect-ratio: 1;
+}
+
+.welcome-statement {
+  max-width: 34rem;
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem);
+  line-height: 1.5;
+  color: #d5dfe2;
+}
+
+.sign-off {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+
+.public .tile-welcome .primary-link {
+  background: var(--voivoi);
+  color: var(--ink);
+}
+
+.public .tile-welcome .primary-link:hover {
+  background: #f1cd78;
+  color: var(--ink);
+}
+
+.signature {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
+  color: var(--shell);
+}
+
+.tile-welcome .dateline {
+  color: var(--mist);
+}
+
+.public .tile-welcome :focus-visible {
+  outline-color: var(--voivoi);
+}
+
+/* The six areas: tiles alternately upright and sideways, as the strands of the mark are. */
+
+.area-tiles {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(1rem, 0.6rem + 1.5vw, 1.75rem);
-}
-
-.public .envelope {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "mark stamp"
-    "address address";
-  column-gap: 0.75rem;
-  aspect-ratio: 8 / 5;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
+  gap: var(--weave-gap);
   height: 100%;
-  box-sizing: border-box;
-  padding: 1rem 1rem 1.4rem;
-  border: 5px solid transparent;
-  background:
-    linear-gradient(var(--sheet), var(--sheet)) padding-box,
-    var(--airmail-fine) border-box;
-  color: var(--ink);
+}
+
+.area-tiles li {
+  display: flex;
+  min-width: 0;
+}
+
+.public .area-tiles .tile {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  min-height: 11rem;
+  background: var(--tile-bg);
+  color: var(--tile-fg);
+  box-shadow: inset 0 0 0 2px var(--tile-edge, transparent);
   text-decoration: none;
-  box-shadow: 0 2px 4px rgb(30 28 25 / 0.05);
   transition:
-    transform 260ms var(--ease-out),
-    box-shadow 260ms var(--ease-out);
+    margin 320ms var(--ease-out),
+    transform 320ms var(--ease-out),
+    box-shadow 320ms var(--ease-out);
 }
 
-.public .envelope:hover,
-.public .envelope:focus-visible {
-  transform: translateY(-3px);
-  background:
-    linear-gradient(var(--sheet), var(--sheet)) padding-box,
-    var(--airmail-fine-dark) border-box;
-  box-shadow: 0 18px 30px -18px rgb(6 46 54 / 0.45);
-  color: var(--ink);
+.public .area-tiles .tile {
+  margin: var(--inset-block, 0) var(--inset-inline, 0);
 }
 
-.envelope-address {
-  grid-area: address;
-  align-self: end;
+.area-tiles .tile-upright {
+  --inset-inline: var(--strand-inset);
+}
+
+.area-tiles .tile-across {
+  --inset-block: var(--strand-inset);
+}
+
+/* The weave pulls taut under the pointer: the strand's inset relaxes to flush and it lifts. */
+.public .area-tiles .tile:hover,
+.public .area-tiles .tile:focus-visible {
+  margin: 0;
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 2px var(--tile-edge, transparent),
+    0 18px 30px -18px rgb(10 29 36 / 0.55);
+  color: var(--tile-fg);
+}
+
+.public .area-tiles .tile:focus-visible {
+  outline-color: var(--ink);
+}
+
+.tile-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-3);
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+}
+
+.tile-text {
   display: grid;
-  gap: 0.35rem;
-  padding-inline-start: clamp(0.25rem, 12%, 3rem);
+  gap: 0.6rem;
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  max-width: 22rem;
 }
 
-.envelope-name {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: var(--step-2);
-  color: var(--teal-900);
-  line-height: 1.1;
+/* Small text never sits on Kesa: it rides a Shell plate. */
+.tile-learn .tile-text {
+  background: var(--tile-plate);
+  color: var(--ink);
+  border-radius: var(--plate-radius);
+  padding: 0.75rem 0.9rem;
 }
 
-.envelope-description {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--ink-soft);
-}
-
-/* An empty stamp box, ruled twice: no stamp art until commissioned work exists. */
-.envelope-stamp {
-  grid-area: stamp;
-  width: 2.75rem;
-  height: 3.25rem;
-  border: 1px solid var(--teal-700);
-  outline: 1px solid var(--rule);
-  outline-offset: 3px;
-  margin: 4px;
-}
-
-.envelope-mark,
-.list-mark {
-  font-family: var(--font-ui);
+.tile-note {
   font-weight: 600;
   font-size: var(--step--1);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--masi);
 }
 
-.envelope-mark {
-  grid-area: mark;
-  justify-self: end;
-  align-self: center;
-  text-align: end;
-  border-block: 1px solid currentColor;
-  padding: 0.15rem 0;
+.tile-learn .tile-note {
+  color: var(--kesa-deep);
 }
 
-.list-mark {
-  color: var(--teal-700);
+/* The latest pieces, the ways to take part and the newsletter: quiet tiles. */
+
+.tile-latest,
+.tile-participate {
+  background: var(--sand);
 }
 
-@media (max-width: 60rem) {
-  .envelopes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.tile-updates {
+  background: var(--voivoi-100);
 }
 
-@media (max-width: 34rem) {
-  .envelopes {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .public .envelope {
-    aspect-ratio: auto;
-    min-height: 11rem;
-  }
-
-  .envelope-address {
-    padding-inline-start: 0;
-    margin-top: 1.25rem;
-  }
+.tile-latest h2,
+.tile-participate h2,
+.tile-updates h2 {
+  margin-bottom: 1rem;
 }
 
-/* Lists of pieces */
-
-.letter-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-width: 46rem;
-  display: grid;
-}
-
-.public .letter-list li {
-  display: grid;
-  gap: 0.35rem;
-  padding: 1.25rem 0;
-  border-top: 1px solid var(--rule);
-}
-
-.public .letter-list li:last-child {
-  border-bottom: 1px solid var(--rule);
-}
-
-.public .letter-list a {
-  font-family: var(--font-ui);
-  font-weight: 600;
-  font-size: var(--step-1);
-  line-height: 1.25;
-}
-
-.participate,
-.updates {
-  max-width: 46rem;
+.tile-updates :where(p + p) {
+  margin-top: 0.75rem;
 }
 
 .participate-links {
@@ -784,44 +868,216 @@ html:has(.public) {
   padding: 0;
   display: grid;
   gap: 0.6rem;
-  font-family: var(--font-ui);
   font-weight: 500;
   font-size: var(--step-0);
 }
 
-.public .notices > * + * {
-  border-top: 1px solid var(--rule);
-  padding-top: 2.5rem;
+@media (min-width: 40rem) {
+  .area-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* In two columns the weave alternates along each row and down each column. */
+  .area-tiles li:nth-child(4n + 3) .tile {
+    --inset-inline: 0;
+    --inset-block: var(--strand-inset);
+  }
+
+  .area-tiles li:nth-child(4n + 4) .tile {
+    --inset-inline: var(--strand-inset);
+    --inset-block: 0;
+  }
+
+  .mat {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tile-welcome,
+  .areas,
+  .tile-latest {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 64rem) {
+  .mat {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .tile-welcome {
+    grid-column: 1 / span 2;
+    grid-row: 1 / span 2;
+  }
+
+  .areas {
+    grid-column: 3 / span 2;
+    grid-row: 1 / span 3;
+  }
+
+  .tile-latest {
+    grid-column: 1 / span 2;
+    grid-row: 3;
+  }
+
+  .tile-participate,
+  .tile-updates {
+    grid-column: span 2;
+  }
+}
+
+/* Lists of pieces: ruled lines, each title in the display face. */
+
+.piece-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 48rem;
+  display: grid;
+}
+
+.public .piece-list li {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.15rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.public .piece-list li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.public .piece-list a {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-1);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.public .piece-list a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--kesa);
+}
+
+.list-mark {
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Area pages */
 
-.public .area-letter > .letter-list {
+.public .area-pane > .piece-list {
   margin-top: 2rem;
 }
 
-.public .area-letter > .see-all {
+.public .area-pane > .see-all {
   margin-top: 1.25rem;
-  font-family: var(--font-ui);
   font-weight: 600;
 }
 
-/* What isn't open yet: a ruled postmark line, stated plainly. */
+/* What isn't open yet: said plainly, on a Voivoi wash. */
 .not-open {
-  font-family: var(--font-ui);
   font-size: 1rem;
   line-height: 1.5;
-  color: var(--teal-900);
-  border-block: 1px solid var(--masi);
-  padding: 0.6rem 0;
+  color: var(--ink);
+  background: var(--voivoi-100);
+  border-radius: var(--plate-radius);
+  padding: 0.9rem 1.1rem;
+}
+
+.not-open .from-label {
+  color: var(--ink);
 }
 
 .empty {
-  color: var(--ink-soft);
+  color: var(--muted);
+}
+
+/* Footer: the brand's woven strip, then an Ink field. */
+
+.weave-strip {
+  height: 36px;
+  background-color: var(--shell);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='36' viewBox='0 0 72 36'%3E%3Crect x='3.5' y='1.5' width='11' height='15' rx='1.6' fill='%230f2b35'/%3E%3Crect x='19.5' y='3.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='39.5' y='1.5' width='11' height='15' rx='1.6' fill='%23e9be5b'/%3E%3Crect x='55.5' y='3.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='1.5' y='21.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='21.5' y='19.5' width='11' height='15' rx='1.6' fill='%230f2b35'/%3E%3Crect x='37.5' y='21.5' width='15' height='11' rx='1.6' fill='%23d2603f'/%3E%3Crect x='57.5' y='19.5' width='11' height='15' rx='1.6' fill='%23e9be5b'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-size: 72px 36px;
+}
+
+.site-footer {
+  background: var(--ink);
+  color: var(--shell);
+}
+
+.site-footer-inner {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 2.25rem var(--gutter) 2.75rem;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.public .footer-wordmark {
+  color: var(--shell);
+  font-size: 1.3rem;
+}
+
+.footer-wordmark .woven-mark {
+  --mark-n: var(--shell);
+  --mark-ground: var(--kesa);
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.footer-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+}
+
+.public .site-footer a {
+  color: var(--shell);
+  text-decoration-color: var(--voivoi);
+}
+
+.public .site-footer a:hover {
+  color: var(--voivoi);
+}
+
+.public .site-footer :focus-visible {
+  outline-color: var(--voivoi);
+}
+
+.footer-note {
+  max-width: 60ch;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--mist);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public a,
+  .public .area-tiles .tile,
+  .public .primary-link {
+    transition: none;
+  }
+
+  .public .area-tiles .tile:hover,
+  .public .area-tiles .tile:focus-visible,
+  .public .primary-link:hover {
+    transform: none;
+  }
 }
 
 /*
- * Public forms (enquiries, proposals, the newsletter): plain fields on a letter sheet. Each
+ * Public forms (enquiries, proposals, the newsletter): plain fields on the Shell ground. Each
  * consent is its own box with the notice's words beside it, set in the reading face.
  */
 
@@ -838,21 +1094,21 @@ html:has(.public) {
 
 .public-form label,
 .public-form legend {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: 0.95rem;
-  color: var(--teal-900);
+  color: var(--ink);
 }
 
 .public-form .optional {
   font-weight: 400;
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
 .public-form .hint {
   margin: 0;
   font-size: 0.95rem;
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
 .public .public-form input[type="text"],
@@ -861,9 +1117,9 @@ html:has(.public) {
 .public .public-form textarea {
   font: inherit;
   color: var(--ink);
-  background: var(--sheet);
-  border: 1px solid var(--teal-700);
-  border-radius: 3px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
   padding: 0.55rem 0.75rem;
   min-height: 44px;
   width: 100%;
@@ -875,7 +1131,7 @@ html:has(.public) {
 }
 
 .public .public-form [aria-invalid="true"] {
-  border-color: var(--masi);
+  border-color: var(--kesa-deep);
   border-width: 2px;
 }
 
@@ -884,7 +1140,7 @@ html:has(.public) {
   width: 1.25rem;
   height: 1.25rem;
   margin: 0.2rem 0 0;
-  accent-color: var(--teal-700);
+  accent-color: var(--ink);
   flex: none;
 }
 
@@ -898,7 +1154,7 @@ html:has(.public) {
 }
 
 .form-consents {
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--line);
   padding-top: 1.25rem;
   gap: 1.25rem;
 }
@@ -917,28 +1173,30 @@ html:has(.public) {
 .notice-wording {
   margin: 0.5rem 0 0 2rem;
   font-size: 0.95rem;
-  color: var(--ink-soft);
+  color: var(--muted);
 }
 
 blockquote.notice-wording {
   margin: 0 0 1.5rem;
-  padding-left: 1rem;
-  border-left: 3px solid var(--teal-200);
+  padding: 0.9rem 1.1rem;
+  background: var(--sand);
+  border-radius: var(--plate-radius);
 }
 
 .public .field-error {
   margin: 0;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: 0.95rem;
-  color: var(--masi);
+  color: var(--kesa-deep);
 }
 
 .form-alert {
-  border-left: 4px solid var(--masi);
-  background: var(--masi-200);
-  padding: 0.75rem 1rem;
-  font-family: var(--font-ui);
+  background: var(--kesa-100);
+  box-shadow: inset 0 0 0 2px var(--kesa-deep);
+  border-radius: var(--plate-radius);
+  padding: 0.85rem 1.1rem;
+  font-family: var(--font-text);
   font-weight: 600;
 }
 
@@ -948,20 +1206,20 @@ blockquote.notice-wording {
 
 .public .public-form button {
   justify-self: start;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: 1rem;
-  background: var(--teal-900);
-  color: var(--sheet);
+  background: var(--ink);
+  color: var(--paper);
   border: 0;
-  border-radius: 3px;
+  border-radius: 8px;
   padding: 0 1.6rem;
   min-height: 44px;
   cursor: pointer;
 }
 
 .public .public-form button:hover {
-  background: var(--teal-950);
+  background: var(--ink-deep);
 }
 
 .public .public-form button:disabled {
@@ -970,7 +1228,7 @@ blockquote.notice-wording {
 }
 
 .report-problem {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: 0.95rem;
 }
 
@@ -982,11 +1240,11 @@ blockquote.notice-wording {
   padding-left: 1.25rem;
 }
 
-/* Search: a plain form on a letter sheet; results are the same ruled list as an area's. */
+/* Search: a plain form; results are the same ruled list as an area's. */
 
 .area-links .search-item {
   padding-left: 1.5rem;
-  border-left: 1px solid var(--rule);
+  border-left: 1px solid var(--line);
 }
 
 .site-menu .area-links .search-item {
@@ -1001,10 +1259,10 @@ blockquote.notice-wording {
 
 .search-form label,
 .search-filters legend {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: 0.95rem;
-  color: var(--teal-900);
+  color: var(--ink);
 }
 
 .search-words {
@@ -1021,9 +1279,9 @@ blockquote.notice-wording {
 .public .search-form select {
   font: inherit;
   color: var(--ink);
-  background: var(--sheet);
-  border: 1px solid var(--teal-700);
-  border-radius: 3px;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 8px;
   padding: 0.55rem 0.75rem;
   min-height: 44px;
   width: 100%;
@@ -1031,20 +1289,20 @@ blockquote.notice-wording {
 }
 
 .public .search-form button {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: 1rem;
-  background: var(--teal-900);
-  color: var(--sheet);
+  background: var(--ink);
+  color: var(--paper);
   border: 0;
-  border-radius: 3px;
+  border-radius: 8px;
   padding: 0 1.4rem;
   min-height: 44px;
   cursor: pointer;
 }
 
 .public .search-form button:hover {
-  background: var(--teal-950);
+  background: var(--ink-deep);
 }
 
 .search-filters {
@@ -1062,7 +1320,7 @@ blockquote.notice-wording {
   font-size: var(--step--1);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--masi);
+  color: var(--kesa-deep);
 }
 
 .search-filters p {
@@ -1071,7 +1329,7 @@ blockquote.notice-wording {
 }
 
 .search-reset {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
 }
 
 .public .search-results {
@@ -1098,7 +1356,7 @@ blockquote.notice-wording {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem 1.5rem;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
 }
 
 @media (max-width: 40rem) {
@@ -1107,13 +1365,13 @@ blockquote.notice-wording {
   }
 }
 
-/* Resources: what a visitor reads before downloading, set as a ruled card on the letter. */
+/* Resources and Episodes: what a visitor reads before downloading or listening, on a Sand tile. */
 
 .resource-details,
 .episode {
   margin-top: 1.5rem;
-  padding: 1.25rem 1.25rem 1.4rem;
-  border-block: 1px solid var(--masi);
+  padding: clamp(1.1rem, 0.9rem + 1vw, 1.6rem);
+  border-radius: var(--tile-radius);
   background: var(--sand);
 }
 
@@ -1135,12 +1393,12 @@ blockquote.notice-wording {
 .episode dt,
 .creator dt,
 .facts dt {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
   font-size: var(--step--1);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--masi);
+  color: var(--kesa-deep);
   padding-top: 0.2rem;
 }
 
@@ -1157,13 +1415,13 @@ blockquote.notice-wording {
 
 .public .report-link button {
   font: inherit;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: 0.95rem;
   background: none;
   border: 0;
   padding: 0.5rem 0;
   min-height: 44px;
-  color: var(--teal-700);
+  color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 0.22em;
   cursor: pointer;
@@ -1210,7 +1468,7 @@ blockquote.notice-wording {
 }
 
 .transcript .speaker {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
 }
 
 /* The view beacon (content_opened): an image no one sees. */
@@ -1236,7 +1494,7 @@ blockquote.notice-wording {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem 1.25rem;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-weight: 600;
 }
 
@@ -1249,11 +1507,11 @@ blockquote.notice-wording {
 }
 
 .public .subtopics a[aria-current="page"] {
-  color: var(--teal-900);
-  border-bottom-color: var(--masi);
+  color: var(--ink);
+  border-bottom-color: var(--kesa-deep);
 }
 
-.public .topic-letter > section {
+.public .topic-pane > section {
   margin-top: 2rem;
 }
 
@@ -1261,72 +1519,6 @@ blockquote.notice-wording {
   padding-left: 1.25rem;
   display: grid;
   gap: 0.5rem;
-}
-
-/* Footer: a restrained masi strip, then a deep teal field. */
-
-.masi-strip {
-  height: 18px;
-  background-color: var(--sheet);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='18' viewBox='0 0 36 18'%3E%3Cpath d='M0 18 9 0l9 18z' fill='%236b3a22'/%3E%3Cpath d='M18 18 27 0l9 18z' fill='%231e1c19'/%3E%3Cpath d='M9 18 13.5 9 18 18z' fill='%23fbf9f4'/%3E%3Cpath d='M27 18l4.5-9 4.5 9z' fill='%23fbf9f4'/%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-size: 36px 18px;
-}
-
-.site-footer {
-  background: var(--teal-900);
-  color: var(--sheet);
-}
-
-.site-footer-inner {
-  max-width: 76rem;
-  margin: 0 auto;
-  padding: 2rem var(--gutter) 2.5rem;
-  display: grid;
-  gap: 1.25rem;
-  font-family: var(--font-ui);
-}
-
-.footer-links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.75rem;
-}
-
-.public .site-footer a {
-  color: var(--sheet);
-}
-
-.public .site-footer a:hover {
-  color: var(--masi-200);
-}
-
-.public .site-footer :focus-visible {
-  outline-color: var(--masi-200);
-}
-
-.footer-note {
-  max-width: 60ch;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: var(--teal-100);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .public a,
-  .public .envelope,
-  .public .primary-link {
-    transition: none;
-  }
-
-  .public .envelope:hover,
-  .public .envelope:focus-visible,
-  .public .primary-link:hover {
-    transform: none;
-  }
 }
 
 /* Connect: Providers, Offerings and Creators. */
@@ -1342,7 +1534,7 @@ blockquote.notice-wording {
 .offering {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
+  border-top: 1px solid var(--line);
 }
 
 .offering h3 {
@@ -1363,9 +1555,9 @@ blockquote.notice-wording {
 
 /* Sponsorship and editorial features, always disclosed in the same plain voice. */
 .disclosure {
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: 0.95rem;
-  color: var(--masi);
+  color: var(--kesa-deep);
 }
 
 .creator {
@@ -1377,7 +1569,7 @@ blockquote.notice-wording {
   width: min(16rem, 60%);
   aspect-ratio: 1;
   object-fit: cover;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--line);
 }
 
 .creator .sample {
@@ -1412,7 +1604,7 @@ blockquote.notice-wording {
   width: 100%;
   max-height: 80vh;
   object-fit: contain;
-  background: var(--teal-950);
+  background: var(--ink-deep);
 }
 
 .public .explore-language {
@@ -1425,11 +1617,11 @@ blockquote.notice-wording {
   flex-wrap: wrap;
   gap: 0.75rem 1.5rem;
   margin-top: 1rem;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
 }
 
 .public .player-controls fieldset {
-  border: 1px solid var(--rule);
+  border: 1px solid var(--line);
   padding: 0.5rem 0.75rem;
 }
 
@@ -1441,24 +1633,24 @@ blockquote.notice-wording {
   min-height: 2.75rem;
   margin: 0.15rem 0.35rem 0.15rem 0;
   padding: 0.35rem 0.75rem;
-  border: 1px solid var(--teal-700);
-  background: var(--sheet);
-  color: var(--teal-900);
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
 }
 
 .public .key-word {
   margin-left: 0.5rem;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: var(--step--1, 0.9rem);
-  color: var(--masi);
+  color: var(--kesa-deep);
 }
 
 .public .caption-switches button[aria-pressed="true"],
 .public .segment-tools button[aria-pressed="true"] {
-  background: var(--teal-900);
-  color: var(--sheet);
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .public .speed-choice label {
@@ -1478,12 +1670,13 @@ blockquote.notice-wording {
 
 .public .transcript-segment {
   padding: 0.75rem;
-  border-left: 4px solid transparent;
+  border-radius: var(--plate-radius);
 }
 
+/* The line being played is a Voivoi strand, said in words to assistive technology by the player. */
 .public .transcript-segment.playing {
-  border-left-color: var(--masi);
-  background: var(--masi-200);
+  background: var(--voivoi-100);
+  box-shadow: inset 0 0 0 2px var(--voivoi);
 }
 
 .public .transcript-fijian {
@@ -1493,7 +1686,7 @@ blockquote.notice-wording {
 }
 
 .public .transcript-english {
-  color: var(--ink-soft);
+  color: var(--muted);
   margin: 0.25rem 0;
   white-space: normal;
 }
@@ -1511,21 +1704,21 @@ blockquote.notice-wording {
 }
 
 .public .meaning-word[aria-expanded="true"] {
-  background: var(--teal-100);
+  background: var(--sand);
 }
 
 .public .meaning-popover {
   display: block;
   margin: 0.5rem 0;
   padding: 0.75rem;
-  border: 1px solid var(--teal-700);
-  background: var(--sheet);
-  font-family: var(--font-ui);
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  font-family: var(--font-text);
   font-size: var(--step-0);
 }
 
 .public .meaning-popover:focus {
-  outline: 3px solid var(--teal-700);
+  outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -1546,7 +1739,7 @@ blockquote.notice-wording {
 .public .public-video > p[role="alert"] {
   margin: 0;
   padding: 0.5rem 0.75rem;
-  background: var(--sheet);
+  background: var(--paper);
   color: var(--ink);
 }
 
@@ -1566,7 +1759,7 @@ blockquote.notice-wording {
   margin: 1rem 0;
   padding: 0;
   list-style: none;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
   font-size: var(--step--1);
 }
 
@@ -1576,14 +1769,14 @@ blockquote.notice-wording {
   gap: 0.35rem;
   min-height: 2.75rem;
   padding: 0.25rem 0.65rem;
-  border: 1px solid var(--rule);
-  background: var(--sheet);
-  color: var(--teal-900);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
   text-decoration: none;
 }
 
 .public .stage-steps a:hover {
-  border-color: var(--teal-700);
+  border-color: var(--ink);
 }
 
 .public .stage-steps .step-number {
@@ -1592,21 +1785,21 @@ blockquote.notice-wording {
 }
 
 .public .stage-steps .visited a {
-  border-color: var(--teal-700);
-  background: var(--teal-100);
+  border-color: var(--ink);
+  background: var(--sand);
 }
 
 .public .stage-steps a[aria-current="step"] {
-  border-color: var(--teal-900);
-  background: var(--teal-900);
-  color: var(--sheet);
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .public .stage-intro {
   margin: 1rem 0;
-  padding: 0.75rem 1rem;
-  border-left: 4px solid var(--masi);
-  background: var(--sheet);
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--plate-radius);
+  background: var(--voivoi-100);
 }
 
 .public .stage-intro h2 {
@@ -1628,29 +1821,29 @@ blockquote.notice-wording {
   min-height: 2.75rem;
   margin: 0.15rem 0.35rem 0.15rem 0;
   padding: 0.35rem 0.75rem;
-  border: 1px solid var(--teal-700);
-  background: var(--sheet);
-  color: var(--teal-900);
+  border: 1px solid var(--ink);
+  background: var(--paper);
+  color: var(--ink);
   font: inherit;
   cursor: pointer;
 }
 
 .public .help-control > button[aria-expanded="true"] {
-  background: var(--teal-900);
-  color: var(--sheet);
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .public .learner-activities button:disabled {
-  border-color: var(--rule);
-  color: var(--ink-soft);
+  border-color: var(--line);
+  color: var(--muted);
   cursor: not-allowed;
 }
 
 .public .stage-help {
   margin-top: 0.5rem;
   padding: 0.75rem;
-  border: 1px solid var(--rule);
-  background: var(--sheet);
+  border: 1px solid var(--line);
+  background: var(--paper);
 }
 
 .public .stage-help ul {
@@ -1680,8 +1873,8 @@ blockquote.notice-wording {
 .public .learner-activities .activity-preview {
   margin-top: 0.5rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--rule);
-  background: var(--sheet);
+  border: 1px solid var(--line);
+  background: var(--paper);
 }
 
 .public .learner-activities fieldset {
@@ -1704,18 +1897,19 @@ blockquote.notice-wording {
 }
 
 .public .activity-alternative {
-  padding-left: 0.75rem;
-  border-left: 4px solid var(--teal-700);
+  padding: 0.75rem 1rem;
+  border-radius: var(--plate-radius);
+  background: var(--sand);
 }
 
 .public .activity-feedback {
   margin-top: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: var(--teal-100);
+  background: var(--sand);
 }
 
 .public .meta {
-  color: var(--ink-soft);
+  color: var(--muted);
   font-size: var(--step--1);
 }
 
@@ -1726,8 +1920,9 @@ blockquote.notice-wording {
 
 .public .context-notes li {
   margin: 0.75rem 0;
-  padding-left: 0.75rem;
-  border-left: 4px solid var(--masi);
+  padding: 0.75rem 1rem;
+  border-radius: var(--plate-radius);
+  background: var(--sand);
 }
 
 .public .context-notes p {
@@ -1740,14 +1935,14 @@ blockquote.notice-wording {
   justify-content: space-between;
   gap: 0.75rem;
   margin: 1.5rem 0;
-  font-family: var(--font-ui);
+  font-family: var(--font-text);
 }
 
 .public .learner-progress {
   margin: 1.5rem 0;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--rule);
-  background: var(--sheet);
+  border: 1px solid var(--line);
+  background: var(--paper);
 }
 
 .public .learner-progress h2 {
@@ -1757,7 +1952,7 @@ blockquote.notice-wording {
 
 .public .learner-settings {
   margin-top: 0.75rem;
-  border: 1px solid var(--rule);
+  border: 1px solid var(--line);
   padding: 0.5rem 0.75rem;
 }
 

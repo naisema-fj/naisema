@@ -52,7 +52,7 @@ export default function CaseAppeal({ loaderData, actionData }: Route.ComponentPr
   const values: Values = actionData && !actionData.appealed ? actionData.values : {};
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>Appeal a decision</h1>
         <p>
           About your {kind} {reference}: {outcome}.

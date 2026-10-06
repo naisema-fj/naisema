@@ -26,7 +26,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 export default function ReportLink({ actionData }: Route.ComponentProps) {
   return (
     <main id="main">
-      <article className="letter letter-narrow">
+      <article className="pane pane-narrow">
         <h1>{actionData ? "Thank you" : "Report a broken link"}</h1>
         {actionData ? (
           <>

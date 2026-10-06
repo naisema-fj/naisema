@@ -35,7 +35,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 function FixedRoutes({ path }: { path: string }) {
   if (path === "community-standards") {
     return (
-      <section className="letter letter-narrow fixed-routes" aria-labelledby="report-heading">
+      <section className="pane pane-narrow fixed-routes" aria-labelledby="report-heading">
         <h2 id="report-heading">Reporting a problem</h2>
         <p>
           If something on NAISEMA could cause harm, is wrong, or uses someone's work without permission, tell us. Every
@@ -47,7 +47,7 @@ function FixedRoutes({ path }: { path: string }) {
   }
   if (path === "privacy") {
     return (
-      <section className="letter letter-narrow fixed-routes" aria-labelledby="your-information-heading">
+      <section className="pane pane-narrow fixed-routes" aria-labelledby="your-information-heading">
         <h2 id="your-information-heading">Your information</h2>
         <p>
           <Link to="/privacy/request">
@@ -68,7 +68,7 @@ export default function Info({ loaderData }: Route.ComponentProps) {
       {published ? (
         <ContentLetter item={published} />
       ) : (
-        <article className="letter letter-narrow">
+        <article className="pane pane-narrow">
           <h1>{page.title}</h1>
           <p>This page is being written. It will set out {page.purpose}.</p>
           <p>
