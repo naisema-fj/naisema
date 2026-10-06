@@ -2,6 +2,7 @@ import { isRouteErrorResponse, Link, Outlet, useLocation } from "react-router";
 import { WovenMark } from "~/components/public/woven-mark";
 import { AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { INFO_PAGES } from "~/lib/info-pages";
+import { LEARNER_PATHS } from "~/lib/learner-progress";
 import type { Route } from "./+types/layout";
 import "~/styles/public.css";
 import { SUBMISSION_TYPES } from "~/lib/submission-fields";
@@ -78,6 +79,11 @@ function SiteFooter() {
             <li>
               <Link reloadDocument to="/newsletter">
                 Newsletter
+              </Link>
+            </li>
+            <li>
+              <Link reloadDocument to={LEARNER_PATHS.home}>
+                Your learning
               </Link>
             </li>
             <li>

@@ -1,7 +1,6 @@
 import { and, asc, eq, like, or } from "drizzle-orm";
 import { contentItem, offering, partnershipAgreement, provider } from "~db/schema";
 import { auditInsert } from "./audit.server";
-import { requireEditor } from "./content.server";
 import type { Database } from "./db.server";
 import {
   ACCESS_MODES,
@@ -22,11 +21,12 @@ import {
   providerPath,
   sponsorsText,
 } from "./listing-fields";
-import { eligiblePublished, itemPath } from "./public.server";
+import { itemPath } from "./public.server";
 import { purgePublicPages } from "./public-cache.server";
 import { linkHost } from "./resource-fields";
 import { formatDay } from "./rights-rules";
 import { firstFreeSlug, slugify } from "./slug";
+import { publicItem } from "./visibility.server";
 
 /**
  * Providers, their Offerings and Partnership Agreements (PART-01–03): plain listings editors keep,
@@ -263,14 +263,6 @@ export async function providersHosting(db: Database, contentItemId: string) {
     .where(and(eq(offering.accessMode, "licensed_native"), like(offering.access, `%${contentItemId}%`)));
 }
 
-/** The editor gate plus the Provider a staff page is about; 404 if there is none. */
-export async function requireProvider(env: Env, request: Request, id: string) {
-  const staff = await requireEditor(env, request);
-  const found = await getProvider(staff.db, id);
-  if (!found) throw new Response("Not found", { status: 404 });
-  return { ...staff, provider: found };
-}
-
 // --- What the public site shows ---
 
 /** Agreements for many Providers at once, by Provider. */
@@ -412,7 +404,7 @@ export async function offeringView(
     action = { kind: "text", text: `NAISEMA can refer you: ${access.note}` };
   } else if (access.mode === "licensed_native") {
     const item = await db.select().from(contentItem).where(eq(contentItem.id, access.contentItemId)).get();
-    const published = item ? await eligiblePublished(db, item, now) : null;
+    const published = item ? await publicItem(db, item, now) : null;
     action =
       item && published
         ? { kind: "item", label: `Open ${published.snapshot.title} on NAISEMA`, path: itemPath(item) }

@@ -1,84 +1,69 @@
-import { eq, sql } from "drizzle-orm";
-import { contentItem } from "~db/schema";
+import { desc, eq, inArray, type SQL, sql } from "drizzle-orm";
+import { contentItem, learningLayer } from "~db/schema";
 import { auditInsert, recordAudit } from "./audit.server";
-import { activeHold } from "./content-holds.server";
 import type { Database } from "./db.server";
-import { readyDownload, readyEpisodeAudio } from "./media-delivery.server";
+import { type LayerReview, loadLayerReview } from "./layer-review.server";
 import { type Actor, can } from "./permissions";
-import { loadReview, type Review, type ReviewActionResult } from "./review.server";
-import { requirementName } from "./review-names";
-import { mediaRightsFacts, rightsFactsFor } from "./rights.server";
-import { assetRightsProblems, rightsProblems } from "./rights-rules";
-import { readyVideo } from "./video-assets.server";
-
-export type Eligibility = { eligible: true } | { eligible: false; reasons: string[] };
+import { publicItemChanged } from "./public-change.server";
+import { type Review, type ReviewActionResult, refuse } from "./review.server";
+import { type PublicationState, requirementName } from "./review-names";
+import { videoItem } from "./video-items.server";
+import { isEligible, isLayerEligible, layerRevisionEligibility, reasonTexts } from "./visibility.server";
 
 /**
- * The one eligibility decision (ADR-0007): may this exact Revision be published, right now? It
- * must have been submitted, every review its Content Flags require must be approved on it, and its
- * rights must be current at this moment: a current Rights Record granting Publish, plus current
- * guardian permission when it shows identifiable children. Because it is evaluated on every call,
- * an expiry or withdrawal takes effect immediately. Each media library file the Revision uses
- * needs a current Rights Record of its own too; the item's record covers its words and anything
- * from other sites. An item hidden pending a Case's review is never eligible.
+ * Publishing, withdrawing and archiving Content Items and Learning Layers, and the editors' queue of
+ * what is ready to publish. Whether a Revision may be published is the eligibility decision
+ * (app/lib/visibility.server.ts, ADR-0007), asked again at the moment of publishing. Each change
+ * also brings the public site up to date itself, its search entry and the cached pages showing it,
+ * so no caller can forget to (ADR-0007's removal target, AC-03).
  */
-export async function isEligible(db: Database, revisionId: string, now = new Date()): Promise<Eligibility> {
-  const review = await loadReview(db, revisionId);
-  if (!review) return { eligible: false, reasons: ["That revision doesn't exist."] };
-  return eligibilityFor(db, review, now);
-}
 
-/** isEligible for a Revision whose review was loaded in this same request. */
-export async function eligibilityFor(db: Database, review: Review, now = new Date()): Promise<Eligibility> {
-  const reasons: string[] = [];
-  if (await activeHold(db, review.contentItem.id)) {
-    reasons.push("It is hidden while a Case about it is reviewed. The safeguarding lead can show it again.");
-  }
-  if (!review.submitted) reasons.push("It hasn't been submitted for review.");
-  if (review.videoAssetId && !(await readyVideo(db, review.videoAssetId))) {
-    reasons.push("Its video hasn't finished processing.");
-  }
-  for (const { requirement, status } of review.progress) {
-    if (status === "approved") continue;
-    const name = requirementName(requirement);
-    reasons.push(status === "rejected" ? `${name} was rejected.` : `${name} is still needed.`);
-  }
-  if (review.resourceAssetId && !(await readyDownload(db, review.resourceAssetId))) {
-    reasons.push("Its file isn't in the media library as a PDF or audio file that has passed its virus scan.");
-  }
-  const recording = review.episode?.recording;
-  if (recording?.kind === "audio" && !(await readyEpisodeAudio(db, recording.assetId))) {
-    reasons.push("Its audio isn't in the media library as an MP3 or M4A file that has passed its virus scan.");
-  }
-  if (review.episode && !review.episode.hasTranscript) {
-    reasons.push("It has no transcript yet. Every Episode is published with a reviewed transcript.");
-  }
-  reasons.push(
-    ...rightsProblems({
-      records: await rightsFactsFor(db, { type: "content_item", id: review.contentItem.id }),
-      needsGuardianPermission: review.flags.includes("identifiableChildren"),
-      // Only parts this Revision lists can be held up by their own records.
-      parts: review.episode?.parts ?? [],
-      now,
-    }),
-  );
-  if (review.creatorSampleId && !(await isPublicNow(db, review.creatorSampleId, now))) {
-    reasons.push("Its free sample isn't published right now.");
-  }
-  reasons.push(...assetRightsProblems(await mediaRightsFacts(db, review.mediaAssetIds), now));
-  return reasons.length ? { eligible: false, reasons } : { eligible: true };
+export type PublicationAction = "publish" | "withdraw" | "archive";
+
+const ITEM_ACTIONS = { publish: publishItem, withdraw: withdrawItem, archive: archiveItem };
+const LAYER_ACTIONS = { publish: publishLayer, withdraw: withdrawLayer, archive: archiveLayer };
+
+/**
+ * Publishes, withdraws or archives a Content Item's Revision, then rebuilds its search entry and
+ * purges the pages showing it.
+ */
+export async function changePublication(
+  env: Env,
+  db: Database,
+  actor: Actor,
+  review: Review,
+  action: PublicationAction,
+  /** Why, in the editor's words, for a withdrawal or archiving; kept in the audit log. */
+  reason = "",
+): Promise<ReviewActionResult> {
+  const result = await ITEM_ACTIONS[action](db, actor, review, reason);
+  if (result.ok) await publicItemChanged(env, db, review.contentItem.id);
+  return result;
 }
 
 /**
- * Whether a Content Item is public right now: published, and its published Revision eligible. It
- * mirrors `eligiblePublished`, which lives in public.server and imports this module. A Creator
- * Profile's sample can't itself be a Creator Profile, so this never recurses further.
+ * Publishes, withdraws or archives a Learning Layer's Revision. A Learning Layer shows on its
+ * Video's pages, so those are brought up to date as the Video's own change would be.
  */
-async function isPublicNow(db: Database, contentItemId: string, now: Date) {
-  const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
-  if (item?.publicationState !== "published" || !item.currentPublishedRevisionId) return false;
-  return (await isEligible(db, item.currentPublishedRevisionId, now)).eligible;
+export async function changeLayerPublication(
+  env: Env,
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  action: PublicationAction,
+  /** Why, in the editor's words, for a withdrawal or archiving; kept in the audit log. */
+  reason = "",
+): Promise<ReviewActionResult> {
+  const result = await LAYER_ACTIONS[action](db, actor, review, reason);
+  if (result.ok) await publicItemChanged(env, db, review.layer.contentItemId);
+  return result;
 }
+
+/** A reason, trimmed and bounded, as audit details; nothing when none was given. */
+const reasonDetails = (reason: string) => {
+  const trimmed = reason.trim().slice(0, 500);
+  return trimmed ? { details: { reason: trimmed } } : {};
+};
 
 const setState = (db: Database, contentItemId: string, values: Partial<typeof contentItem.$inferInsert>) =>
   db
@@ -91,7 +76,7 @@ const setState = (db: Database, contentItemId: string, values: Partial<typeof co
  * publishing. An earlier Revision comes back by restoring it, which carries its approvals forward.
  * A refused attempt is audited too.
  */
-export async function publishRevision(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function publishItem(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
   if (!can(actor, { action: "revision.publish" })) return { ok: false, error: "Only editors can publish." };
   const { contentItem: item } = review;
   if (item.publicationState === "archived") return { ok: false, error: "Archived items can't be published." };
@@ -105,9 +90,12 @@ export async function publishRevision(db: Database, actor: Actor, review: Review
       action: "publish.refused",
       objectType: "revision",
       objectId: review.revisionId,
-      details: { reasons: eligibility.reasons },
+      details: { reasons: reasonTexts(eligibility) },
     });
-    return { ok: false, error: `Revision ${review.number} can't be published yet. ${eligibility.reasons.join(" ")}` };
+    return {
+      ok: false,
+      error: `Revision ${review.number} can't be published yet. ${reasonTexts(eligibility).join(" ")}`,
+    };
   }
   await db.batch([
     db
@@ -133,7 +121,7 @@ export async function publishRevision(db: Database, actor: Actor, review: Review
 }
 
 /** Takes a published item down. Its published Revision is kept on record; nothing is served. */
-export async function withdraw(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function withdrawItem(db: Database, actor: Actor, review: Review, reason: string): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return { ok: false, error: "Only editors can withdraw." };
   if (review.contentItem.publicationState !== "published")
     return { ok: false, error: "Only published items can be withdrawn." };
@@ -144,13 +132,14 @@ export async function withdraw(db: Database, actor: Actor, review: Review): Prom
       action: "content_item.withdrawn",
       objectType: "content_item",
       objectId: review.contentItem.id,
+      ...reasonDetails(reason),
     }),
   ]);
   return { ok: true };
 }
 
 /** Retires an item that isn't published. Archived items can't be published again. */
-export async function archive(db: Database, actor: Actor, review: Review): Promise<ReviewActionResult> {
+async function archiveItem(db: Database, actor: Actor, review: Review, reason: string): Promise<ReviewActionResult> {
   if (!can(actor, { action: "content.withdraw" })) return { ok: false, error: "Only editors can archive." };
   const state = review.contentItem.publicationState;
   if (state === "published") return { ok: false, error: "Withdraw the item before archiving it." };
@@ -162,7 +151,169 @@ export async function archive(db: Database, actor: Actor, review: Review): Promi
       action: "content_item.archived",
       objectType: "content_item",
       objectId: review.contentItem.id,
+      ...reasonDetails(reason),
     }),
   ]);
   return { ok: true };
 }
+
+type LayerColumns = typeof learningLayer.$inferInsert;
+
+const setLayerState = (
+  db: Database,
+  learningLayerId: string,
+  values: { [Column in keyof LayerColumns]?: LayerColumns[Column] | SQL },
+) =>
+  db
+    .update(learningLayer)
+    .set({ ...values, updatedAt: new Date() })
+    .where(eq(learningLayer.id, learningLayerId));
+
+/**
+ * Publishes this exact Revision, if it is the latest and eligible at this moment. A refused attempt
+ * is audited with its reasons (VAC-06).
+ */
+async function publishLayer(db: Database, actor: Actor, review: LayerReview): Promise<ReviewActionResult> {
+  if (!can(actor, { action: "revision.publish" })) return refuse("Only editors can publish.");
+  if (review.layer.publicationState === "archived") return refuse("Archived Learning Layers can't be published.");
+  if (review.layer.currentDraftRevisionId !== review.revisionId) {
+    return refuse("Only the latest revision can be published.");
+  }
+  // Asked afresh, as for a Content Item: a decision may have landed since the review was loaded.
+  const eligibility = await isLayerEligible(db, review.revisionId);
+  if (!eligibility.eligible) {
+    await recordAudit(db, {
+      actorId: actor.userId,
+      action: "learning_layer.publish_refused",
+      objectType: "learning_layer_revision",
+      objectId: review.revisionId,
+      details: { reasons: reasonTexts(eligibility) },
+    });
+    return refuse(`Revision ${review.number} can't be published yet. ${reasonTexts(eligibility).join(" ")}`);
+  }
+  await db.batch([
+    setLayerState(db, review.layer.id, {
+      publicationState: "published",
+      currentPublishedRevisionId: review.revisionId,
+      // Republishing keeps the first publication date; the last one moves on.
+      firstPublishedAt: sql`coalesce(${learningLayer.firstPublishedAt}, ${Date.now()})`,
+      lastPublishedAt: new Date(),
+    }),
+    auditInsert(db, {
+      actorId: actor.userId,
+      action: "learning_layer.published",
+      objectType: "learning_layer",
+      objectId: review.layer.id,
+      details: { revisionId: review.revisionId, number: review.number },
+    }),
+  ]);
+  return { ok: true };
+}
+
+/** Takes a published Learning Layer down, leaving its Video as it is. */
+async function withdrawLayer(
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  reason: string,
+): Promise<ReviewActionResult> {
+  if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can withdraw.");
+  if (review.layer.publicationState !== "published") return refuse("Only published Learning Layers can be withdrawn.");
+  await db.batch([
+    setLayerState(db, review.layer.id, { publicationState: "withdrawn" }),
+    auditInsert(db, {
+      actorId: actor.userId,
+      action: "learning_layer.withdrawn",
+      objectType: "learning_layer",
+      objectId: review.layer.id,
+      ...reasonDetails(reason),
+    }),
+  ]);
+  return { ok: true };
+}
+
+/** Retires a Learning Layer that isn't published. It can't be published again. */
+async function archiveLayer(
+  db: Database,
+  actor: Actor,
+  review: LayerReview,
+  reason: string,
+): Promise<ReviewActionResult> {
+  if (!can(actor, { action: "content.withdraw" })) return refuse("Only editors can archive.");
+  const state = review.layer.publicationState;
+  if (state === "published") return refuse("Withdraw the Learning Layer before archiving it.");
+  if (state === "archived") return refuse("This Learning Layer is already archived.");
+  await db.batch([
+    setLayerState(db, review.layer.id, { publicationState: "archived" }),
+    auditInsert(db, {
+      actorId: actor.userId,
+      action: "learning_layer.archived",
+      objectType: "learning_layer",
+      objectId: review.layer.id,
+      ...reasonDetails(reason),
+    }),
+  ]);
+  return { ok: true };
+}
+
+/**
+ * The editors' queues for Learning Layers (VCMS-06): current drafts submitted but still missing a
+ * review (or rejected), with anything else they still need; drafts approved but held up, with why;
+ * drafts ready to publish; and Learning Layers whose video failed processing. Each shows its Video.
+ * Evaluated live, like eligibility, so nothing goes stale; 1a has few enough Learning Layers to
+ * work it out per request.
+ */
+export async function layerQueues(db: Database, now = new Date()) {
+  const layers = await db
+    .select({ id: learningLayer.id, revisionId: learningLayer.currentDraftRevisionId })
+    .from(learningLayer)
+    .where(inArray(learningLayer.publicationState, ["unpublished", "published", "withdrawn"]))
+    .orderBy(desc(learningLayer.updatedAt));
+  const missingReview: QueueEntry[] = [];
+  const heldUp: QueueEntry[] = [];
+  const readyToPublish: QueueEntry[] = [];
+  const failedProcessing: QueueEntry[] = [];
+  for (const { revisionId } of layers) {
+    const review = revisionId ? await loadLayerReview(db, revisionId) : null;
+    if (!review) continue;
+    const video = await videoItem(db, review.layer.contentItemId);
+    const waitingFor = review.progress
+      .filter((item) => item.status !== "approved")
+      .map((item) => `${requirementName(item.requirement)}${item.status === "rejected" ? " (rejected)" : ""}`);
+    const eligibility = await layerRevisionEligibility(db, review, now, video);
+    const entry: QueueEntry = {
+      learningLayerId: review.layer.id,
+      number: review.number,
+      title: review.snapshot.title,
+      videoTitle: video?.title ?? null,
+      publicationState: review.layer.publicationState,
+      waitingFor,
+      // What it needs besides its reviews: readiness, processing and rights.
+      blockers: eligibility.eligible
+        ? []
+        : eligibility.reasons
+            .filter((reason) => reason.kind !== "unsubmitted" && reason.kind !== "review")
+            .map((reason) => reason.text),
+    };
+    if (video?.video.state === "failed") failedProcessing.push({ ...entry, reason: video.video.stateReason });
+    if (!review.submitted) continue;
+    if (waitingFor.length) missingReview.push(entry);
+    else if (!eligibility.eligible) heldUp.push(entry);
+    // Ready unless this very revision is already out; a withdrawn one can be published again.
+    const live =
+      review.layer.publicationState === "published" && review.layer.currentPublishedRevisionId === review.revisionId;
+    if (eligibility.eligible && !live) readyToPublish.push(entry);
+  }
+  return { missingReview, heldUp, readyToPublish, failedProcessing };
+}
+
+export type QueueEntry = {
+  learningLayerId: string;
+  number: number;
+  title: string;
+  videoTitle: string | null;
+  publicationState: PublicationState;
+  waitingFor: string[];
+  blockers: string[];
+  reason?: string | null;
+};

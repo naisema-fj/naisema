@@ -32,7 +32,7 @@ const TOKEN_ROUTES = /\/(consent|upload|cases\/appeal)\/[^/?#\s]+/g;
 /** A query string: search words, and playback or link tokens. */
 const QUERY = /\?[^\s#"']+/g;
 /**
- * Random or signed tokens (signed-tokens.server.ts): long URL-safe runs with an upper-case letter
+ * Random or signed tokens (access-links.ts, signed-tokens.server.ts): long URL-safe runs with an upper-case letter
  * or underscore, which record IDs (UUIDs) and slugs (lower-case) never have.
  */
 const LONG_TOKEN = /[A-Za-z0-9_.-]{32,}/g;

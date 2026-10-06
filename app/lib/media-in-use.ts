@@ -1,5 +1,5 @@
 import type { ArticleSnapshot } from "./article-fields";
-import { episodeRecording } from "./episode-fields";
+import { contentKind } from "./content-kinds";
 
 const ASSET_ID = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})";
 /** A media library address: an image at /media/images/{id}/{width} or a file at /media/files/{id}. */
@@ -7,9 +7,10 @@ const MEDIA_PATH = new RegExp(`^/media/(?:images/${ASSET_ID}/|files/${ASSET_ID}$
 
 /**
  * The media library files a Revision shows or offers, each once: images and links in its body
- * that point at the media library (as a path on this site or on any of our hosts), a Resource's
- * file, an Episode's audio, a Creator's portrait and a Video's master. Each needs a current Rights Record of its own for the Revision to
- * be public (#17, ADR-0007). Images from other sites are covered by the item's own Rights Record.
+ * that point at the media library (as a path on this site or on any of our hosts), and the files
+ * its kind offers (a Resource's file, an Episode's recording, a Creator's portrait, a Video's
+ * master; content-kinds.ts). Each needs a current Rights Record of its own for the Revision to be
+ * public (#17, ADR-0007). Images from other sites are covered by the item's own Rights Record.
  */
 export function mediaAssetIdsIn(snapshot: ArticleSnapshot): string[] {
   const ids = new Set<string>();
@@ -18,10 +19,7 @@ export function mediaAssetIdsIn(snapshot: ArticleSnapshot): string[] {
     const id = match?.[1] ?? match?.[2];
     if (id) ids.add(id);
   });
-  if (snapshot.resource?.source.kind === "file") ids.add(snapshot.resource.source.assetId);
-  if (snapshot.episode) ids.add(episodeRecording(snapshot.episode).assetId);
-  if (snapshot.creator) ids.add(snapshot.creator.portraitAssetId);
-  if (snapshot.video) ids.add(snapshot.video.videoAssetId);
+  for (const id of contentKind(snapshot).media(snapshot)) ids.add(id);
   return [...ids];
 }
 

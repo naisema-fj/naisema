@@ -1,8 +1,9 @@
 import { and, count, eq, gte } from "drizzle-orm";
 import { contentItem, linkReport } from "~db/schema";
 import type { Database } from "./db.server";
-import { eligiblePublished, itemPath } from "./public.server";
+import { itemPath } from "./public.server";
 import { linkHost } from "./resource-fields";
+import { publicItem } from "./visibility.server";
 
 /**
  * Visitors' reports that a Resource's link is broken. Nothing personal is kept: the reporter is a
@@ -26,7 +27,7 @@ async function reporterKey(env: Env, request: Request, day: string) {
 /** Records a report against a published Resource's link. Returns its title and page, or null. */
 export async function reportBrokenLink(env: Env, db: Database, request: Request, itemId: string, now = new Date()) {
   const item = await db.select().from(contentItem).where(eq(contentItem.id, itemId)).get();
-  const published = item?.type === "resource" ? await eligiblePublished(db, item, now) : null;
+  const published = item?.type === "resource" ? await publicItem(db, item, now) : null;
   const source = published?.snapshot.resource?.source;
   if (!item || !published || source?.kind !== "link") return null;
   await db

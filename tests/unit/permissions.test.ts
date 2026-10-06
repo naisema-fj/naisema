@@ -353,6 +353,23 @@ const rows: [string, Actor | null, Check, boolean][] = [
     false,
   ],
 
+  // The audit log and bulk exports (CMS-05, VCMS-06)
+  ["administrator reads the audit log", administrator, { action: "audit.read" }, true],
+  ["an editor does not read the audit log", editor, { action: "audit.read" }, false],
+  ["a safeguarding lead does not read the audit log", safeguardingLead, { action: "audit.read" }, false],
+  ["administrator exports the audit log", administrator, { action: "export.run", kind: "audit" }, true],
+  ["an editor does not export the audit log", editor, { action: "export.run", kind: "audit" }, false],
+  ["editor exports content", editor, { action: "export.run", kind: "content" }, true],
+  ["editor exports Rights Records", editor, { action: "export.run", kind: "rights" }, true],
+  ["editor exports approvals", editor, { action: "export.run", kind: "approvals" }, true],
+  ["editor exports a Learning Layer", editor, { action: "export.run", kind: "learningLayer" }, true],
+  ["an educator does not export a Learning Layer", educator, { action: "export.run", kind: "learningLayer" }, false],
+  ["an administrator alone does not export content", administrator, { action: "export.run", kind: "content" }, false],
+  ["privacy contact exports contacts", privacyContact, { action: "export.run", kind: "contacts" }, true],
+  ["an editor does not export contacts", editor, { action: "export.run", kind: "contacts" }, false],
+  ["an administrator does not export contacts", administrator, { action: "export.run", kind: "contacts" }, false],
+  ["a learner exports nothing in bulk", learner("me"), { action: "export.run", kind: "content" }, false],
+
   // Learner and anonymous visitors
   [
     "learner reads their own records",
@@ -365,6 +382,18 @@ const rows: [string, Actor | null, Check, boolean][] = [
     learner("me"),
     { action: "learnerRecord.export", learnerRecord: { ownerId: "me" } },
     true,
+  ],
+  [
+    "learner changes their own records",
+    learner("me"),
+    { action: "learnerRecord.write", learnerRecord: { ownerId: "me" } },
+    true,
+  ],
+  [
+    "learner cannot change someone else's records",
+    learner("me"),
+    { action: "learnerRecord.write", learnerRecord: { ownerId: "someone-else" } },
+    false,
   ],
   [
     "learner cannot read someone else's records",

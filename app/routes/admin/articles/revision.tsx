@@ -2,17 +2,16 @@ import { data, redirect } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { ReviewPanel } from "~/components/review-panel";
 import { RevisionTypeDetails } from "~/components/revision-type-details";
-import type { ArticleSnapshot } from "~/lib/article-fields";
 import { embedsFor, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { episodeRecording } from "~/lib/episode-fields";
+import { mainMedia } from "~/lib/content-kinds";
 import { mediaName } from "~/lib/media.server";
-import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
+import { REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { publicItemChanged } from "~/lib/public-change.server";
-import { archive, eligibilityFor, publishRevision, withdraw } from "~/lib/publication.server";
+import { changePublication } from "~/lib/publication.server";
 import {
   assignReviewer,
-  decidableRequirement,
+  contentReviewAbilities,
   recordDecision,
   recordKnowledgeHolderApproval,
   reviewersFor,
@@ -20,6 +19,7 @@ import {
 } from "~/lib/review.server";
 import { requireRevision } from "~/lib/revision-access.server";
 import { topicNamer } from "~/lib/topics.server";
+import { forStaff, revisionEligibility } from "~/lib/visibility.server";
 import type { Route } from "./+types/revision";
 
 export const handle = { hydrate: false };
@@ -28,13 +28,6 @@ export function meta({ loaderData }: Route.MetaArgs) {
   return [{ title: loaderData ? `Revision ${loaderData.revision.number} · NAISEMA staff` : "NAISEMA staff" }];
 }
 
-/** The media library file a Resource offers or an Episode plays, if any. */
-const mediaAssetIdOf = (snapshot: ArticleSnapshot) =>
-  (snapshot.episode ? episodeRecording(snapshot.episode).assetId : null) ??
-  snapshot.creator?.portraitAssetId ??
-  snapshot.video?.videoAssetId ??
-  (snapshot.resource?.source.kind === "file" ? snapshot.resource.source.assetId : null);
-
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { db, actor, article, revision, review } = await requireRevision(
     request,
@@ -42,9 +35,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     params,
   );
   const topicNames = await topicNamer(db);
-  const isEditor = can(actor, { action: "content.edit" });
-  const isCurrent = review.contentItem.currentDraftRevisionId === review.revisionId;
-  const decideTypes = REVIEW_TYPES.filter((reviewType) => decidableRequirement(actor, review, reviewType) !== null);
+  const abilities = contentReviewAbilities(actor, review);
   const published =
     review.contentItem.currentPublishedRevisionId &&
     (await db.query.revision.findFirst({
@@ -57,7 +48,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     revision,
     topics: topicNames(revision.snapshot.topicIds),
     embeds: await embedsFor(db, revision.snapshot.body),
-    fileName: await mediaName(db, mediaAssetIdOf(revision.snapshot)),
+    fileName: await mediaName(db, mainMedia(revision.snapshot)),
     sampleTitle: revision.snapshot.creator
       ? ((await getArticle(db, revision.snapshot.creator.sampleItemId))?.currentRevision.snapshot.title ?? null)
       : null,
@@ -75,20 +66,9 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publicationState: review.contentItem.publicationState,
       publishedNumber: published ? published.number : null,
     },
-    eligibility: await eligibilityFor(db, review),
-    abilities: {
-      isEditor,
-      canSubmit: isEditor && isCurrent && !review.submitted,
-      decideTypes: isCurrent && review.submitted ? decideTypes : [],
-      canRecordKnowledgeHolder:
-        isCurrent &&
-        review.submitted &&
-        review.requirements.some((requirement) => requirement.knowledgeHolder) &&
-        can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } }),
-      canPublish: can(actor, { action: "revision.publish" }),
-      canWithdraw: can(actor, { action: "content.withdraw" }),
-    },
-    reviewerChoices: isEditor
+    eligibility: forStaff(await revisionEligibility(db, review)),
+    abilities,
+    reviewerChoices: abilities.isEditor
       ? Object.fromEntries(
           await Promise.all(
             [...new Set(review.requirements.map((requirement) => requirement.reviewType))].map(
@@ -148,20 +128,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
           notes: field("notes"),
         });
       case "publish":
-        return publishRevision(db, actor, review);
       case "withdraw":
-        return withdraw(db, actor, review);
       case "archive":
-        return archive(db, actor, review);
+        return changePublication(env, db, actor, review, intent, field("reason"));
       default:
         return { ok: false as const, error: "That action isn't available." };
     }
   })();
 
   if (!result.ok) return data({ error: result.error }, { status: 400 });
-  // Publishing, withdrawing and archiving change what is public, and so can a review decision
-  // recorded on the published Revision; purging after every action keeps that rule in one place.
-  await publicItemChanged(env, db, article.id);
+  // A review decision recorded on the published Revision can change what is public too (its Review
+  // Labels); publishing, withdrawing and archiving bring the public site up to date themselves.
+  if (!["publish", "withdraw", "archive"].includes(intent)) await publicItemChanged(env, db, article.id);
   throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
 }
 

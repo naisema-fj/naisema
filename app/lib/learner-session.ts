@@ -11,9 +11,10 @@ import { PLAYBACK_SPEEDS, type PlaybackSpeed } from "./player-rules";
 
 /**
  * What the immersion player keeps for a visitor without an account, in the tab's session storage,
- * so it lasts only while the tab is open and never leaves the device (§05A). Cross-device saving
- * needs a Learner Account (#33). Support preferences hold for every Learning Layer in the tab;
- * progress belongs to one published Revision (ADR-0006) and starts again when another is published.
+ * so it lasts only while the tab is open and never leaves the device (§05A; the tab store in
+ * app/lib/learner-store.ts). Cross-device saving needs a Learner Account (#33). Support preferences
+ * hold for every Learning Layer in the tab; progress belongs to one published Revision (ADR-0006)
+ * and starts again when another is published.
  */
 
 /** Support preferences, the same on every Learning Layer. */
@@ -46,29 +47,13 @@ export const newLayerSession = (revisionId: string): LayerSession => ({
   captions: {},
 });
 
-const PREFERENCES_KEY = "naisema:learner-support";
-const layerKey = (layerId: string) => `naisema:learning-layer:${layerId}`;
+/** What the tab keeps for one Learning Layer. */
+export type StoredLayer = Pick<LayerSession, "revisionId" | "progress" | "captions">;
+
 const pairs = (value: unknown) => (isRecord(value) ? Object.entries(value) : []);
 
-function read(key: string): unknown {
-  try {
-    return JSON.parse(window.sessionStorage.getItem(key) ?? "null");
-  } catch {
-    return null;
-  }
-}
-
-function write(key: string, value: unknown) {
-  try {
-    window.sessionStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // Storage can be full or turned off; the page keeps working, it just won't remember.
-  }
-}
-
-/** The support preferences kept in this tab, keeping only what is well formed. */
-export function loadPreferences(): SupportPreferences {
-  const stored = read(PREFERENCES_KEY);
+/** Support preferences as the tab kept them, keeping only what is well formed. */
+export function readPreferences(stored: unknown): SupportPreferences {
   if (!isRecord(stored)) return DEFAULT_PREFERENCES;
   return {
     speed: PLAYBACK_SPEEDS.find((speed) => speed === stored.speed) ?? 1,
@@ -77,15 +62,13 @@ export function loadPreferences(): SupportPreferences {
   };
 }
 
-export const savePreferences = (preferences: SupportPreferences) => write(PREFERENCES_KEY, preferences);
-
 /**
- * What is kept for a Learning Layer's published Revision, keeping only what is well formed. Progress
- * kept for another Revision is dropped, since its Activities and Completion Rule may differ.
+ * What the tab kept for a Learning Layer's published Revision, keeping only what is well formed.
+ * Progress kept for another Revision is dropped, since its Activities and Completion Rule may differ.
  */
-export function loadLayerSession(layerId: string, revisionId: string): LayerSession {
-  const stored = read(layerKey(layerId));
-  if (!isRecord(stored)) return newLayerSession(revisionId);
+export function readLayer(stored: unknown, revisionId: string): StoredLayer {
+  const fresh = { revisionId, progress: EMPTY_PROGRESS, captions: {} };
+  if (!isRecord(stored)) return fresh;
   const captions = Object.fromEntries(
     pairs(stored.captions).flatMap(([stage, value]) =>
       isStageId(stage) && isRecord(value)
@@ -102,7 +85,7 @@ export function loadLayerSession(layerId: string, revisionId: string): LayerSess
         : [],
     ),
   );
-  if (stored.revisionId !== revisionId) return { ...newLayerSession(revisionId), captions };
+  if (stored.revisionId !== revisionId) return { ...fresh, captions };
   const progress = isRecord(stored.progress) ? stored.progress : {};
   return {
     revisionId,
@@ -128,12 +111,9 @@ export function loadLayerSession(layerId: string, revisionId: string): LayerSess
         pairs(progress.realWorld).filter(([, choice]) => Object.hasOwn(REAL_WORLD_CHOICES, choice as string)),
       ) as LearnerProgress["realWorld"],
     },
-    completedSent: stored.completedSent === true,
     captions,
   };
 }
-
-export const saveLayerSession = (layerId: string, session: LayerSession) => write(layerKey(layerId), session);
 
 /**
  * The captions showing in a stage: the stage's own, except that "always show captions" never lets

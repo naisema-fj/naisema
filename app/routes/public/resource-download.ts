@@ -1,10 +1,8 @@
-import { eq } from "drizzle-orm";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { recordEvent } from "~/lib/events.server";
 import { fileDownload, readyDownload } from "~/lib/media-delivery.server";
-import { eligiblePublished } from "~/lib/public.server";
-import { contentItem } from "~db/schema";
+import { publicItem } from "~/lib/visibility.server";
 import type { Route } from "./+types/resource-download";
 
 /**
@@ -15,8 +13,9 @@ import type { Route } from "./+types/resource-download";
 export async function loader({ params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const db = getDb(env.DB);
-  const item = await db.select().from(contentItem).where(eq(contentItem.id, params.id)).get();
-  const published = item?.type === "resource" ? await eligiblePublished(db, item, new Date()) : null;
+  const found = await publicItem(db, params.id);
+  const published = found?.item.type === "resource" ? found : null;
+  const item = published?.item;
   const source = published?.snapshot.resource?.source;
   const asset = source?.kind === "file" ? await readyDownload(db, source.assetId) : undefined;
   const response = asset ? await fileDownload(env, asset, "no-store") : null;

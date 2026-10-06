@@ -1,54 +1,9 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import type { Staff } from "./support/articles";
-import { act, approvedLayer, layerRow, save } from "./support/layers";
-import { recordRights } from "./support/rights";
+import { act, approvedLayer, layerRow, publishedLayer, publishVideo, videoPath } from "./support/layers";
 
 const PUBLIC = "https://naisema.test";
 const visit = (path: string, init?: RequestInit) => SELF.fetch(`${PUBLIC}${path}`, { redirect: "manual", ...init });
-
-/** Publishes the Video's current draft, as an editor, from its revision page. */
-async function publishVideo(editor: Staff, videoId: string) {
-  const { number } = (await env.DB.prepare(
-    "SELECT r.number FROM content_item c JOIN revision r ON r.id = c.current_draft_revision_id WHERE c.id = ?1",
-  )
-    .bind(videoId)
-    .first<{ number: number }>()) as { number: number };
-  for (const intent of ["submit", "publish"]) {
-    const response = await editor.browser.fetch(`/admin/articles/${videoId}/revisions/${number}`, { form: { intent } });
-    expect(response.status, await response.clone().text()).toBe(302);
-  }
-}
-
-const videoPath = async (videoId: string) => {
-  const row = await env.DB.prepare("SELECT primary_area AS area, slug FROM content_item WHERE id = ?1")
-    .bind(videoId)
-    .first<{ area: string; slug: string }>();
-  return `/${row?.area}/${row?.slug}`;
-};
-
-/** A published Video with a published Learning Layer on it, and their public addresses. */
-async function publishedLayer(change: Record<string, string> = {}) {
-  const layer = await approvedLayer();
-  let { number } = layer;
-  if (Object.keys(change).length) {
-    // An Excerpt or other change before publishing: save, submit and approve again.
-    ({ number } = await save(layer.educator, layer.layerId, change));
-    if (change.clip === "excerpt") {
-      expect((await recordRights(layer.editor.browser, layer.videoId, { uses: ["excerpt"] })).status).toBe(302);
-    }
-    await act(layer.educator, layer.layerId, number, { intent: "submit" });
-    await act(layer.reviewer, layer.layerId, number, {
-      intent: "decide",
-      reviewType: "language",
-      decision: "approved",
-    });
-  }
-  expect((await act(layer.editor, layer.layerId, number, { intent: "publish" })).status).toBe(302);
-  await publishVideo(layer.editor, layer.videoId);
-  const story = await videoPath(layer.videoId);
-  return { ...layer, number, story, player: `${story}/language/${layer.layerId}` };
-}
 
 describe("a Video's public page", () => {
   it("plays the story, lists the Learning Layers that are public, and is never cached", async () => {

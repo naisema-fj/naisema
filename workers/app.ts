@@ -1,8 +1,9 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
-import { AUTH_BASE_PATH, createAuth } from "~/lib/auth.server";
+import { AUTH_BASE_PATH, createAuth, createLearnerAuth, LEARNER_AUTH_BASE_PATH } from "~/lib/auth.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { platformMetrics } from "~/lib/cloudflare-metrics.server";
 import { getDb } from "~/lib/db.server";
+import { handleInactiveLearners, tidyLearnerRecords } from "~/lib/learner-records.server";
 import { logError, logInfo } from "~/lib/log.server";
 import type { ScanMessage } from "~/lib/media.server";
 import { recordServerError, runJob, runMonitor } from "~/lib/monitor.server";
@@ -32,6 +33,9 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  * two-factor or guess codes without the staff gate's attempt limit (ADR-0013).
  */
 const PUBLIC_AUTH_ENDPOINTS = new Set([`GET ${AUTH_BASE_PATH}/magic-link/verify`]);
+
+/** Likewise for Learner Accounts on the public site: only the emailed link (app/lib/learners.server.ts). */
+const LEARNER_AUTH_LINK = `${LEARNER_AUTH_BASE_PATH}/magic-link/verify`;
 
 /**
  * The path as React Router will match it (percent-decoded, case-insensitive), so the host
@@ -101,6 +105,12 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
     }
   }
 
+  if (!onAdminHost && (path === LEARNER_AUTH_BASE_PATH || path.startsWith(`${LEARNER_AUTH_BASE_PATH}/`))) {
+    if (request.method !== "GET" || url.pathname !== LEARNER_AUTH_LINK)
+      return new Response("Not found", { status: 404 });
+    return createLearnerAuth(env, request).handler(request);
+  }
+
   const context = new RouterContextProvider();
   context.set(cloudflareContext, { env, ctx });
   if (onAdminHost) return requestHandler(request, context);
@@ -118,9 +128,10 @@ export default {
    * reindexing items whose rights expired in the last two days (overlapping, in case a run was
    * missed). Then the quarantine is tidied: old failures removed, abandoned uploads dropped and
    * lost scans queued again. Last, videos whose processing report never came are asked about, and
-   * masters never sent are sent. Then, as its own job so a problem reading Cloudflare's figures
-   * doesn't hide how the daily job went, the month's media usage is recorded (VAC-10). Awaited, so
-   * a failed run shows as failed.
+   * masters never sent are sent. Beside it, each as its own job so a problem in one doesn't hide
+   * how the others went: the month's media usage is recorded (VAC-10), and Learner Accounts' old
+   * event IDs and link counts are forgotten and inactive accounts warned or deleted
+   * (app/lib/learner-records.server.ts). Awaited, so a failed run shows as failed.
    */
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
@@ -135,7 +146,11 @@ export default {
         await refreshStalledVideos(db, videoProvider(env), now);
       });
       const usage = runJob(db, "usage", now, () => recordUsage(env, db, platformMetrics(env), now));
-      const failed = (await Promise.allSettled([daily, usage])).flatMap((result) =>
+      const learners = runJob(db, "learner-accounts", now, async () => {
+        await tidyLearnerRecords(db, now);
+        await handleInactiveLearners(env, db, now);
+      });
+      const failed = (await Promise.allSettled([daily, usage, learners])).flatMap((result) =>
         result.status === "rejected" ? [result.reason] : [],
       );
       if (failed.length) throw new AggregateError(failed, "The daily crons failed");

@@ -13,7 +13,7 @@
 export const HOUR_MS = 3_600_000;
 
 /** The scheduled jobs, by the name each records its runs under (job_run; workers/app.ts). */
-export type JobName = "daily" | "usage" | "monitor";
+export type JobName = "daily" | "usage" | "learner-accounts" | "monitor";
 
 export const MONITOR_THRESHOLDS = {
   /** Share of requests that failed since the last check, counted once there are `minErrors`. */
@@ -26,6 +26,7 @@ export const MONITOR_THRESHOLDS = {
   jobOverdueMs: {
     daily: 26 * HOUR_MS,
     usage: 26 * HOUR_MS,
+    "learner-accounts": 26 * HOUR_MS,
   } satisfies Partial<Record<JobName, number>>,
   /** How often an ongoing problem is mentioned again while it lasts. */
   remindAfterMs: 24 * HOUR_MS,
@@ -69,6 +70,7 @@ const RECOVERED: Record<Exclude<CheckId, "email" | "video">, string> = {
   figures: "Cloudflare's figures can be read again.",
   "job:daily": "The daily job is working again.",
   "job:usage": "The usage job is working again.",
+  "job:learner-accounts": "The learner-accounts job is working again.",
 };
 
 function errorRateProblem({ requests, serverErrors }: Readings): Problem | null {

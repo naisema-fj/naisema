@@ -1,7 +1,7 @@
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { publicLayerById } from "~/lib/public-video.server";
+import { publicLayer } from "~/lib/visibility.server";
 import { toWebVtt } from "~/lib/webvtt";
 import type { Route } from "./+types/layer-captions";
 
@@ -12,7 +12,7 @@ import type { Route } from "./+types/layer-captions";
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   if (params.language !== "fijian" && params.language !== "english") throw new Response("Not found", { status: 404 });
-  const found = await publicLayerById(getDb(context.get(cloudflareContext).env.DB), params.layerId);
+  const found = await publicLayer(getDb(context.get(cloudflareContext).env.DB), params.layerId);
   if (!found) throw new Response("Not found", { status: 404 });
   const { snapshot } = found;
   const vtt = toWebVtt(snapshot.segments, params.language, { offsetMs: snapshot.excerpt?.sourceStartMs ?? 0 });

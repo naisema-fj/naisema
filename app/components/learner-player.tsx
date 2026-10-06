@@ -15,16 +15,13 @@ import {
   stageNeighbours,
   stageText,
 } from "~/lib/immersion";
+import { LEARNER_PATHS, type LearnerLayerState } from "~/lib/learner-progress";
 import {
   captionsFor,
   DEFAULT_PREFERENCES,
   type LayerSession,
-  loadLayerSession,
-  loadPreferences,
   newLayerSession,
   type SupportPreferences,
-  saveLayerSession,
-  savePreferences,
 } from "~/lib/learner-session";
 import { type LearningEvent, type Support, sendLearningEvent } from "~/lib/learning-events";
 import {
@@ -38,6 +35,7 @@ import {
 } from "~/lib/player-rules";
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
 import { ActivityCard } from "./activity-card";
+import { SaveStatus, SaveToggle, useLearnerStore, useQueueStatus } from "./learner-account";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
 
 /**
@@ -49,8 +47,9 @@ import { type CaptionTrack, VideoPreview } from "./video-preview";
  * in the language taught and in English switched independently, a transcript that follows the
  * video and seeks from any line without taking focus, word and phrase meanings, replaying a line
  * once or on a loop, three speeds, and the Activities with feedback and retries. An Excerpt plays
- * only between its in and out times. Progress and support choices are kept in the tab's session
- * (app/lib/learner-session.ts); learning events carry IDs only.
+ * only between its in and out times. Progress and support choices are kept in a learner store
+ * (app/lib/learner-store.ts): the tab's for a visitor; for a signed-in learner, their account's,
+ * through the progress queue, which says when each change is saved. Learning events carry IDs only.
  */
 
 type Props = {
@@ -75,6 +74,10 @@ type Props = {
   view: LearnerView;
   /** The caption tracks; English only in stages that show it. */
   tracks: { taught: string; english: string | null };
+  /** The Video the Learning Layer is on, which a learner can save. */
+  contentItemId: string;
+  /** A signed-in learner's account state, or null for a visitor. */
+  learner: (LearnerLayerState & { userId: string }) | null;
 };
 
 const SPEED_NAMES: Record<PlaybackSpeed, string> = { 1: "Normal", 0.75: "Slower (0.75×)", 0.5: "Slowest (0.5×)" };
@@ -104,35 +107,83 @@ export function LearnerPlayer(props: Props) {
     [view.annotations, expressions],
   );
 
-  // What the learner has done and chosen, kept for this tab only. Read after hydration, so the
-  // server's page and the first render match.
+  // What the learner has done and chosen, from the learner store (app/lib/learner-store.ts): for a
+  // visitor, kept for this tab only; for a signed-in learner, what their account holds with anything
+  // still queued on top. Read after hydration, so the server's page and the first render match.
+  const { learner, contentItemId } = props;
+  const userId = learner?.userId ?? null;
   const [session, setSession] = useState<LayerSession>(() => newLayerSession(props.revisionId));
   const [support, setSupport] = useState<SupportPreferences>(DEFAULT_PREFERENCES);
+  const [saved, setSaved] = useState({ words: learner?.savedWords ?? [], video: learner?.videoSaved ?? false });
   const [loaded, setLoaded] = useState(false);
+  const store = useLearnerStore({ layerId, revisionId: props.revisionId, contentItemId }, learner, segments);
+  const record = store.record;
+  const queueStatus = useQueueStatus(userId);
+  // The place in the clip the learner was last at, kept so opening a stage doesn't lose it.
+  const place = useRef({ positionMs: learner?.resumeMs ?? 0, segmentId: null as string | null });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: read once per stage; the store comes with the page.
   useEffect(() => {
-    const stored = loadLayerSession(layerId, props.revisionId);
-    setSession({ ...stored, progress: recordVisit(stored.progress, stage) });
-    setSupport(loadPreferences());
-    setLoaded(true);
-  }, [layerId, props.revisionId, stage]);
-  useEffect(() => {
-    if (loaded) saveLayerSession(layerId, session);
-  }, [loaded, layerId, session]);
-  useEffect(() => {
-    if (loaded) savePreferences(support);
-  }, [loaded, support]);
+    let live = true;
+    store.load().then((start) => {
+      if (!live) return;
+      // Completing is announced once: not again for progress already complete.
+      const complete = progressSummary(view.required, start.progress).completion.complete;
+      setSession({
+        revisionId: props.revisionId,
+        progress: recordVisit(start.progress, stage),
+        completedSent: complete,
+        captions: start.captions,
+      });
+      setSupport(start.preferences);
+      setSaved({ words: start.savedWords, video: start.videoSaved });
+      setLoaded(true);
+      if (start.place) place.current = start.place;
+      record({ type: "position", layerId, revisionId: props.revisionId, stage, ...place.current });
+    });
+    return () => {
+      live = false;
+    };
+  }, [store, stage]);
   const send = useCallback((event: LearningEvent) => sendLearningEvent(layerId, event), [layerId]);
   const toggled = (name: Support) => send({ name: "support_toggled", support: name });
-  const updateSupport = (change: Partial<SupportPreferences>) => setSupport((current) => ({ ...current, ...change }));
+  const updateSupport = (change: Partial<SupportPreferences>) => {
+    const next = { ...support, ...change };
+    setSupport(next);
+    record({ type: "preferences", ...next });
+  };
+  const onLayer = { layerId, revisionId: props.revisionId };
+  // A save the server refuses (what it was about is no longer public) is undone on the page too.
+  const undoIfRefused = useRef(new Map<string, () => void>());
+  useEffect(() => {
+    for (const id of queueStatus.refused) {
+      undoIfRefused.current.get(id)?.();
+      undoIfRefused.current.delete(id);
+    }
+  }, [queueStatus.refused]);
+  const saveWords = (change: (words: string[]) => string[]) =>
+    setSaved((current) => ({ ...current, words: change(current.words) }));
+  const saveVideo = async (on: boolean) => {
+    setSaved((current) => ({ ...current, video: on }));
+    const id = await record({ type: on ? "save-video" : "unsave-video", contentItemId });
+    if (id && on) undoIfRefused.current.set(id, () => setSaved((current) => ({ ...current, video: false })));
+  };
+  const saveWord = async (expressionId: string, on: boolean) => {
+    const without = (words: string[]) => words.filter((word) => word !== expressionId);
+    saveWords((words) => (on ? [...without(words), expressionId] : without(words)));
+    const id = await record(
+      on ? { type: "save-word", ...onLayer, expressionId } : { type: "unsave-word", revisionId: null, expressionId },
+    );
+    if (id && on) undoIfRefused.current.set(id, () => saveWords(without));
+  };
 
   const captions = captionsFor(view.captions, session.captions[stage], support.alwaysCaptions);
   const taught = captions.taught;
   const english = Boolean(props.tracks.english) && captions.english;
-  const setCaptions = (change: Partial<typeof captions>) =>
-    setSession((current) => ({
-      ...current,
-      captions: { ...current.captions, [stage]: { ...captions, ...change, underAlways: support.alwaysCaptions } },
-    }));
+  const setCaptions = (change: Partial<typeof captions>) => {
+    const chosen = { ...captions, ...change, underAlways: support.alwaysCaptions };
+    setSession((current) => ({ ...current, captions: { ...current.captions, [stage]: chosen } }));
+    record({ type: "captions", ...onLayer, stage, ...chosen });
+  };
   const speed = support.speed;
 
   // The listening stages hide the transcript until the learner asks for it.
@@ -252,6 +303,37 @@ export function LearnerPlayer(props: Props) {
     return () => cancelAnimationFrame(frame);
   }, [span.startMs, span.endMs, clipLengthMs, segments]);
 
+  // A signed-in learner's place in the clip: sent when they pause, and every 15 seconds while playing.
+  useEffect(() => {
+    const element = video.current;
+    if (!element || !userId) return;
+    let lastSent = 0;
+    const note = (now: boolean) => {
+      const clip = Math.max(0, Math.min(clipLengthMs, Math.round(element.currentTime * 1000 - span.startMs)));
+      place.current = { positionMs: clip, segmentId: currentSegment(segments, clip)?.id ?? null };
+      if (!now && Date.now() - lastSent < 15_000) return;
+      lastSent = Date.now();
+      record({ type: "position", layerId, revisionId: props.revisionId, stage, ...place.current });
+    };
+    const playing = () => {
+      if (!element.paused) note(false);
+    };
+    const paused = () => note(true);
+    element.addEventListener("timeupdate", playing);
+    element.addEventListener("pause", paused);
+    return () => {
+      element.removeEventListener("timeupdate", playing);
+      element.removeEventListener("pause", paused);
+    };
+  }, [userId, record, layerId, props.revisionId, stage, span.startMs, clipLengthMs, segments]);
+
+  const carryOn = () => {
+    const element = video.current;
+    if (!element || !learner?.resumeMs) return;
+    element.currentTime = (span.startMs + learner.resumeMs) / 1000;
+    element.play().catch(() => setStatus("The video couldn't play. Press play on the video first."));
+  };
+
   const seek = (segment: Segment) => {
     if (video.current) video.current.currentTime = (span.startMs + segment.startMs) / 1000;
   };
@@ -322,6 +404,7 @@ export function LearnerPlayer(props: Props) {
   const answered = (activityId: string, correct: boolean | null) => {
     send({ name: "activity_attempted", activityId });
     send({ name: "feedback_viewed", activityId });
+    record({ type: "attempt", ...onLayer, activityId, correct });
     const progress = recordAnswer(session.progress, activityId, correct);
     const done = progressSummary(view.required, progress).completion.complete;
     if (done && !session.completedSent) send({ name: "learning_completed" });
@@ -350,6 +433,17 @@ export function LearnerPlayer(props: Props) {
         </Link>
       </p>
       <h1>{props.title}</h1>
+      {learner && (
+        <div className="account-bar">
+          <SaveToggle
+            saved={saved.video}
+            status={queueStatus}
+            onChange={saveVideo}
+            label={{ save: "Save this video", saving: "Saving this video…", saved: "Saved to your learning" }}
+          />
+          <SaveStatus status={queueStatus} />
+        </div>
+      )}
 
       <nav aria-label="Steps" className="stage-steps">
         <ol>
@@ -450,6 +544,13 @@ export function LearnerPlayer(props: Props) {
               </button>
             </p>
           )}
+          {learner?.resumeMs ? (
+            <p>
+              <button type="button" onClick={carryOn}>
+                Carry on from {formatTimecode(learner.resumeMs)}
+              </button>
+            </p>
+          ) : null}
           {status && <p role="status">{status}</p>}
 
           <div className="help-control">
@@ -558,12 +659,13 @@ export function LearnerPlayer(props: Props) {
                     onPlay={() => (segment ? startReplay(segment, false) : playClip())}
                     onAnswer={(correct) => answered(activity.id, correct)}
                     onRouteChange={() => toggled("text-route")}
-                    onReflect={(choice) =>
+                    onReflect={(choice) => {
+                      record({ type: "real-world", ...onLayer, activityId: activity.id, choice });
                       setSession((current) => ({
                         ...current,
                         progress: recordRealWorld(current.progress, activity.id, choice),
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </li>
               );
@@ -686,6 +788,18 @@ export function LearnerPlayer(props: Props) {
                   <dt>
                     <span lang={language.tag}>{expression.headword}</span>
                     {keyWord && <span className="key-word"> Key word</span>}
+                    {learner && (
+                      <>
+                        {" "}
+                        <SaveToggle
+                          saved={saved.words.includes(expressionId)}
+                          status={queueStatus}
+                          onChange={(on) => saveWord(expressionId, on)}
+                          label={{ save: "Save", saving: "Saving…", saved: "Saved" }}
+                          name={expression.headword}
+                        />
+                      </>
+                    )}
                   </dt>
                   <dd>
                     <p>Generally: {expression.generalMeaning}</p>
@@ -767,10 +881,32 @@ export function LearnerPlayer(props: Props) {
           Completing it means trying each needed Activity and seeing its feedback. Watching alone doesn't complete it,
           and right answers aren't needed.
         </p>
-        <p className="meta">
-          Your progress is kept only on this device, until you close this tab. Keeping it across devices needs an
-          optional Learner Account.
-        </p>
+        {learner ? (
+          <>
+            {learner.completedEarlier && <p>You completed an earlier version of this. It has changed since.</p>}
+            {learner.earlier.length > 0 && (
+              <p>
+                You answered {learner.earlier.length === 1 ? "an Activity" : `${learner.earlier.length} Activities`} on
+                an earlier version. {learner.earlier.length === 1 ? "It has" : "They have"} changed since, so{" "}
+                {learner.earlier.length === 1 ? "it isn't" : "they aren't"} counted here.
+              </p>
+            )}
+            <p className="meta">
+              Your progress goes to your account as you learn, so you can carry on from any device.{" "}
+              <Link to={LEARNER_PATHS.home} reloadDocument>
+                Your learning
+              </Link>
+            </p>
+          </>
+        ) : (
+          <p className="meta">
+            Your progress is kept only on this device, until you close this tab.{" "}
+            <Link to={LEARNER_PATHS.signIn} reloadDocument>
+              Save your learning with an optional account
+            </Link>{" "}
+            to keep it across devices, with the videos and words you save.
+          </p>
+        )}
         <fieldset className="learner-settings">
           <legend>Your settings</legend>
           <label className="checkbox">

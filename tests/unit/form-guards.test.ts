@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { hashToken, randomToken, signToken, verifyToken } from "~/lib/signed-tokens.server";
+import { signToken, verifyToken } from "~/lib/signed-tokens.server";
 import { TURNSTILE_TEST_KEYS } from "~/lib/turnstile";
 import { verifyTurnstile } from "~/lib/turnstile.server";
 
@@ -60,14 +60,5 @@ describe("signed tokens", () => {
     expect(await verifyToken("secret", "consent-withdrawal", token.replace("record-1", "record-2"))).toBeNull();
     expect(await verifyToken("secret", "consent-withdrawal", "record-1")).toBeNull();
     expect(await verifyToken("secret", "consent-withdrawal", `${token}x`)).toBeNull();
-  });
-
-  it("random tokens are URL-safe, different each time, and stored as a hash", async () => {
-    const one = randomToken();
-
-    expect(one).toMatch(/^[A-Za-z0-9_-]{43}$/);
-    expect(randomToken()).not.toBe(one);
-    expect(await hashToken(one)).toBe(await hashToken(one));
-    expect(await hashToken(one)).not.toContain(one);
   });
 });

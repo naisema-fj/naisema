@@ -7,8 +7,9 @@ import type { Database } from "./db.server";
 import { formatDuration } from "./episode-fields";
 import { FORMAT_NAMES, isContentFormat } from "./formats";
 import { itemsMentioning } from "./mentions.server";
-import { eligiblePublished, itemPath } from "./public.server";
+import { itemPath } from "./public.server";
 import { matchExpression, type SearchFilters } from "./search-query";
+import { publicItem } from "./visibility.server";
 
 /**
  * The public index (PUB-03, ADR-0007): search, area listings and the sitemap all read it. It holds
@@ -25,7 +26,7 @@ export const SEARCH_PAGE_SIZE = 20;
 /** Brings an item's search entry in line with what is public now: indexed if eligible, removed if not. */
 export async function indexItem(db: Database, contentItemId: string, now = new Date()) {
   const item = await db.select().from(contentItem).where(eq(contentItem.id, contentItemId)).get();
-  const published = item ? await eligiblePublished(db, item, now) : null;
+  const published = item ? await publicItem(db, item, now) : null;
   const removal = [
     db.delete(searchEntryTopic).where(eq(searchEntryTopic.contentItemId, contentItemId)),
     db.delete(searchEntry).where(eq(searchEntry.contentItemId, contentItemId)),
@@ -156,7 +157,7 @@ async function recheckHits(
 ): Promise<SearchResult[]> {
   const checked = await Promise.all(
     rows.map(async ({ item, format }) => {
-      const published = await eligiblePublished(db, item, now);
+      const published = await publicItem(db, item, now);
       if (!published) {
         await indexItem(db, item.id, now);
         return null;
@@ -256,7 +257,7 @@ export async function listCreators(db: Database, mediaType: MediaType | null, no
     .limit(CREATOR_LIST_LIMIT);
   const checked = await Promise.all(
     rows.map(async ({ item }) => {
-      const published = await eligiblePublished(db, item, now);
+      const published = await publicItem(db, item, now);
       const creator = published?.snapshot.creator;
       if (!published || !creator) {
         await indexItem(db, item.id, now);

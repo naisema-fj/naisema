@@ -35,7 +35,12 @@ export async function action({ request, context }: Route.ActionArgs) {
   const form = await request.formData();
 
   if (form.get("intent") === "revoke") {
-    const result = await revokeRole(db, actor.userId, String(form.get("assignmentId") ?? ""));
+    const result = await revokeRole(
+      db,
+      actor.userId,
+      String(form.get("assignmentId") ?? ""),
+      String(form.get("reason") ?? ""),
+    );
     if (!result.ok) return data({ error: result.error }, { status: 400 });
     throw redirect("/admin/staff");
   }
@@ -82,6 +87,8 @@ export default function Staff({ loaderData, actionData }: Route.ComponentProps) 
                 <Form method="post">
                   <input type="hidden" name="intent" value="revoke" />
                   <input type="hidden" name="assignmentId" value={row.assignmentId} />
+                  <label htmlFor={`reason-${row.assignmentId}`}>Why (optional, kept in the audit log)</label>
+                  <input id={`reason-${row.assignmentId}`} name="reason" maxLength={500} />
                   <button type="submit" aria-label={`Revoke ${ROLE_NAMES[row.assignment.role]} from ${row.email}`}>
                     Revoke
                   </button>

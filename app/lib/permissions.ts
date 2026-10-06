@@ -32,6 +32,13 @@ export type Actor = { userId: string; roles: RoleAssignment[] };
 
 export type CaseKind = "report" | "rights_concern" | "data_request";
 
+/**
+ * What can be exported in bulk (CMS-05, VCMS-06): everything editorial, the audit log, and the
+ * contact details people sent through the public forms.
+ */
+export const EXPORT_KINDS = ["content", "rights", "approvals", "learningLayer", "audit", "contacts"] as const;
+export type ExportKind = (typeof EXPORT_KINDS)[number];
+
 type RevisionUnderReview = {
   authorIds: string[];
   assignedReviewerIds: string[];
@@ -55,6 +62,13 @@ export type Check =
   | { action: "content.withdraw" }
   /** Recording and withdrawing Rights Records, and reading the private evidence behind them. */
   | { action: "rights.manage" | "rightsEvidence.read" }
+  /**
+   * Reading the audit log (CMS-05). It holds who did what to which object, never Case contents or
+   * evidence, so administrators can read it whole.
+   */
+  | { action: "audit.read" }
+  /** Running one kind of bulk export; each is audited, and contacts need a stated purpose. */
+  | { action: "export.run"; kind: ExportKind }
   /** Reading the private evidence behind a Knowledge Holder Approval. */
   | { action: "approvalEvidence.read" }
   /**
@@ -91,7 +105,7 @@ export type Check =
   | { action: "case.read" | "case.act"; case: { kind: CaseKind } }
   | { action: "case.decideAppeal"; case: { kind: CaseKind; decidedBy: string } }
   | {
-      action: "learnerRecord.read" | "learnerRecord.export" | "learnerRecord.delete";
+      action: "learnerRecord.read" | "learnerRecord.write" | "learnerRecord.export" | "learnerRecord.delete";
       learnerRecord: { ownerId: string };
     }
   | { action: "learnerData.process"; learnerRecord: { ownerId: string } };
@@ -101,6 +115,16 @@ export const CASE_HANDLER: Record<CaseKind, StaffRole> = {
   report: "safeguarding_lead",
   rights_concern: "safeguarding_lead",
   data_request: "privacy_contact",
+};
+
+/** Who exports each kind: editors their own work, administrators the audit log, the privacy contact contacts. */
+const EXPORTED_BY: Record<ExportKind, StaffRole> = {
+  content: "editor",
+  rights: "editor",
+  approvals: "editor",
+  learningLayer: "editor",
+  audit: "administrator",
+  contacts: "privacy_contact",
 };
 
 export function can(actor: Actor | null, check: Check): boolean {
@@ -115,7 +139,11 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "role.assign":
     case "settings.edit":
     case "usage.read":
+    case "audit.read":
       return hasRole("administrator");
+
+    case "export.run":
+      return hasRole(EXPORTED_BY[check.kind]);
 
     case "twoFactor.reset":
       return hasRole("administrator") && check.staffMember.userId !== actor.userId;
@@ -190,6 +218,7 @@ export function can(actor: Actor | null, check: Check): boolean {
       return check.case.decidedBy !== actor.userId && hasRole(CASE_HANDLER[check.case.kind]);
 
     case "learnerRecord.read":
+    case "learnerRecord.write":
     case "learnerRecord.export":
     case "learnerRecord.delete":
       return check.learnerRecord.ownerId === actor.userId;

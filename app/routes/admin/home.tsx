@@ -1,7 +1,7 @@
 import { Form } from "react-router";
 import { readableKinds } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { can } from "~/lib/permissions";
+import { can, EXPORT_KINDS } from "~/lib/permissions";
 import { describeRoleAssignment } from "~/lib/role-names";
 import { requireStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/home";
@@ -18,6 +18,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
     canReadUsage: can(actor, { action: "usage.read" }),
+    canReadAudit: can(actor, { action: "audit.read" }),
+    canExport: EXPORT_KINDS.some((kind) => can(actor, { action: "export.run", kind })),
     canEditContent: can(actor, { action: "content.edit" }),
     canUpload: can(actor, { action: "media.upload" }),
     worksOnLearningLayers:
@@ -113,6 +115,16 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
       {loaderData.canReadUsage && (
         <p>
           <a href="/admin/usage">Usage and costs</a>
+        </p>
+      )}
+      {loaderData.canExport && (
+        <p>
+          <a href="/admin/exports">Exports</a>
+        </p>
+      )}
+      {loaderData.canReadAudit && (
+        <p>
+          <a href="/admin/audit">Audit log</a>
         </p>
       )}
       <Form method="post" action="/admin/sign-out">

@@ -4,8 +4,9 @@ import { getDb } from "~/lib/db.server";
 import { loadLayerReview } from "~/lib/layer-review.server";
 import { rangedResponse, type StoredFile } from "~/lib/media-delivery.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { reviewLinkForPlayback, reviewPlaybackAllowed } from "~/lib/review-links.server";
+import { reviewLinkForPlayback } from "~/lib/review-links.server";
 import { videoItem } from "~/lib/video-items.server";
+import { reviewLinkMayPlay } from "~/lib/visibility.server";
 import { mediaAsset } from "~db/schema";
 import type { Route } from "./+types/review-link-video";
 
@@ -29,7 +30,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   if (!link) throw new Response("This Review Link no longer opens.", { status: 403 });
   const review = await loadLayerReview(db, link.revisionId);
   const video = review && (await videoItem(db, review.layer.contentItemId));
-  if (!video || !(await reviewPlaybackAllowed(db, video))) throw new Response("Not found", { status: 404 });
+  if (!video || !(await reviewLinkMayPlay(db, video))) throw new Response("Not found", { status: 404 });
   const asset = await db.select().from(mediaAsset).where(eq(mediaAsset.id, video.video.id)).get();
   const response =
     video.video.state === "ready" && asset

@@ -1,9 +1,7 @@
-import { eq } from "drizzle-orm";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { recordEvent } from "~/lib/events.server";
-import { eligiblePublished } from "~/lib/public.server";
-import { contentItem } from "~db/schema";
+import { publicItem } from "~/lib/visibility.server";
 import type { Route } from "./+types/opened";
 
 /**
@@ -14,7 +12,7 @@ import type { Route } from "./+types/opened";
 export async function loader({ params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const db = getDb(env.DB);
-  const item = await db.select().from(contentItem).where(eq(contentItem.id, params.id)).get();
-  if (item && (await eligiblePublished(db, item, new Date()))) recordEvent(env, "content_opened", [item.id]);
+  const published = await publicItem(db, params.id);
+  if (published) recordEvent(env, "content_opened", [published.item.id]);
   return new Response(null, { status: 204, headers: { "Cache-Control": "no-store" } });
 }

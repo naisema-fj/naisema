@@ -4,19 +4,15 @@ import { ReviewPanel } from "~/components/review-panel";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
 import {
-  archiveLayer,
-  assignLayerReviewer,
-  layerEligibility,
-  publishLayerRevision,
-  recordLayerDecision,
+  layerReviewAbilities,
   recordLayerKnowledgeHolderApproval,
   submitLayerRevision,
-  withdrawLayer,
 } from "~/lib/layer-review.server";
 import { requireLayerRevision } from "~/lib/layer-revision-access.server";
-import { can, REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
+import { REVIEW_TYPES, type ReviewType } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
-import { decidableRequirement, reviewersFor } from "~/lib/review.server";
+import { changeLayerPublication } from "~/lib/publication.server";
+import { assignReviewer, recordDecision, reviewersFor } from "~/lib/review.server";
 import {
   issueReviewLink,
   reviewLinkPath,
@@ -25,6 +21,7 @@ import {
   videoHasPublishRights,
 } from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
+import { forStaff, layerRevisionEligibility } from "~/lib/visibility.server";
 import type { Route } from "./+types/revision";
 
 export const handle = { hydrate: false };
@@ -47,26 +44,16 @@ const LINK_STATES = { active: "Active", expired: "Expired", revoked: "Revoked" }
  * Knowledge Holder Approvals, and publishing or withdrawing the Learning Layer on its own.
  */
 export async function loader({ request, params, context }: Route.LoaderArgs) {
-  const { db, actor, review, educatorIds } = await requireLayerRevision(
-    request,
-    context.get(cloudflareContext).env,
-    params,
-  );
-  const isEditor = can(actor, { action: "content.edit" });
+  const { db, actor, review } = await requireLayerRevision(request, context.get(cloudflareContext).env, params);
+  const { canShareLinks, canReadEvidence, ...abilities } = layerReviewAbilities(actor, review);
   const isCurrent = review.layer.currentDraftRevisionId === review.revisionId;
-  const canSubmit =
-    isCurrent &&
-    !review.submitted &&
-    (isEditor || can(actor, { action: "learningLayer.submit", learningLayer: { assignedEducatorIds: educatorIds } }));
-  const decideTypes = REVIEW_TYPES.filter((type) => decidableRequirement(actor, review, type) !== null);
-  const links = can(actor, { action: "reviewLink.issue" }) ? await reviewLinksFor(db, review.revisionId) : null;
+  const links = canShareLinks ? await reviewLinksFor(db, review.revisionId) : null;
   const published = review.layer.currentPublishedRevisionId
     ? await db.query.learningLayerRevision.findFirst({
         columns: { number: true },
         where: (row, { eq }) => eq(row.id, review.layer.currentPublishedRevisionId as string),
       })
     : undefined;
-  const canReadEvidence = can(actor, { action: "approvalEvidence.read" });
   return {
     layerId: review.layer.id,
     number: review.number,
@@ -92,20 +79,9 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       publicationState: review.layer.publicationState,
       publishedNumber: published?.number ?? null,
     },
-    eligibility: await layerEligibility(db, review),
-    abilities: {
-      isEditor,
-      canSubmit,
-      decideTypes: isCurrent && review.submitted ? decideTypes : [],
-      canRecordKnowledgeHolder:
-        isCurrent &&
-        review.submitted &&
-        review.requirements.some((requirement) => requirement.knowledgeHolder) &&
-        can(actor, { action: "knowledgeHolderApproval.record", revision: { authorIds: review.authorIds } }),
-      canPublish: can(actor, { action: "revision.publish" }),
-      canWithdraw: can(actor, { action: "content.withdraw" }),
-    },
-    reviewerChoices: isEditor
+    eligibility: forStaff(await layerRevisionEligibility(db, review)),
+    abilities,
+    reviewerChoices: abilities.isEditor
       ? Object.fromEntries(
           await Promise.all(
             [...new Set(review.requirements.map((requirement) => requirement.reviewType))].map(
@@ -136,7 +112,7 @@ type ActionData = { error: string } | { issued: { url: string; recipient: string
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, actor, review, educatorIds } = await requireLayerRevision(request, env, params);
+  const { db, actor, review } = await requireLayerRevision(request, env, params);
   const form = await request.formData();
   const field = (name: string) => {
     const value = form.get(name);
@@ -157,16 +133,16 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   const result = await (async () => {
     switch (intent) {
       case "submit":
-        return submitLayerRevision(db, actor, review, educatorIds);
+        return submitLayerRevision(db, actor, review);
       case "assign":
         if (!validType) return { ok: false as const, error: "Choose a Review Type." };
-        return assignLayerReviewer(db, actor, review, reviewType, field("reviewerId"));
+        return assignReviewer(db, actor, review, reviewType, field("reviewerId"));
       case "decide": {
         const decision = field("decision");
         if (!validType || (decision !== "approved" && decision !== "rejected")) {
           return { ok: false as const, error: "Choose approve or reject." };
         }
-        return recordLayerDecision(db, actor, review, {
+        return recordDecision(db, actor, review, {
           reviewType,
           decision,
           scope: field("scope"),
@@ -191,11 +167,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       case "revokeLink":
         return revokeReviewLink(db, actor, review, field("linkId"));
       case "publish":
-        return publishLayerRevision(db, actor, review);
       case "withdraw":
-        return withdrawLayer(db, actor, review);
       case "archive":
-        return archiveLayer(db, actor, review);
+        return changeLayerPublication(env, db, actor, review, intent, field("reason"));
       default:
         return { ok: false as const, error: "That action isn't available." };
     }

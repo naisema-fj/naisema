@@ -2,8 +2,9 @@ import { data, redirect } from "react-router";
 import { OfferingForm } from "~/components/listing-forms";
 import { embeddableArticles } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { requireProvider } from "~/lib/content.server";
 import { formValues, listingErrors, readListingFlags, readOfferingFields } from "~/lib/listing-fields";
-import { createOffering, providerChanged, requireProvider } from "~/lib/providers.server";
+import { createOffering, providerChanged } from "~/lib/providers.server";
 import type { Route } from "./+types/offering-new";
 
 export const handle = { hydrate: false };

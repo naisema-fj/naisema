@@ -90,8 +90,16 @@ export async function grantRole(db: Database, grantedBy: string, grant: GrantReq
 
 export type RevokeResult = { ok: true } | { ok: false; error: string };
 
-/** Revokes an active role assignment. The last active administrator can never be revoked. */
-export async function revokeRole(db: Database, revokedBy: string, assignmentId: string): Promise<RevokeResult> {
+/**
+ * Revokes an active role assignment, with why if the administrator says. The last active
+ * administrator can never be revoked.
+ */
+export async function revokeRole(
+  db: Database,
+  revokedBy: string,
+  assignmentId: string,
+  reason = "",
+): Promise<RevokeResult> {
   const assignment = await db
     .select()
     .from(roleAssignment)
@@ -120,7 +128,11 @@ export async function revokeRole(db: Database, revokedBy: string, assignmentId: 
     action: "role.revoked",
     objectType: "role_assignment",
     objectId: assignmentId,
-    details: { userId: assignment.userId, role: assignment.role },
+    details: {
+      userId: assignment.userId,
+      role: assignment.role,
+      ...(reason.trim() ? { reason: reason.trim().slice(0, 500) } : {}),
+    },
   });
   return { ok: true };
 }

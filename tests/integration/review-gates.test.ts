@@ -417,3 +417,16 @@ describe("review gates", () => {
     expect(cultural.userId).toBeTruthy();
   });
 });
+
+describe("one review module for Content Items and Learning Layers", () => {
+  it("audits a refused attempt to open a Content Item's revisions, as for a Learning Layer's", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const article = await createArticle(editor);
+    const outsider = await staff("reviewer", { role: "reviewer", reviewType: "cultural" });
+
+    const refused = await outsider.browser.fetch(`/admin/articles/${article.id}/revisions/1`);
+
+    expect(refused.status).toBe(403);
+    expect(await auditActions(outsider.userId)).toContain("revision.view_refused");
+  });
+});

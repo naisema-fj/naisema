@@ -3,7 +3,7 @@ import { getDb } from "~/lib/db.server";
 import { recordEvent } from "~/lib/events.server";
 import { eventDetail, readLearningEvent } from "~/lib/learning-events";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { publicLayerById } from "~/lib/public-video.server";
+import { publicLayer } from "~/lib/visibility.server";
 import type { Route } from "./+types/layer-events";
 
 /** Longer, in characters, than any event the player sends. */
@@ -20,7 +20,7 @@ const reply = (status: number, headers: Record<string, string> = {}) =>
 export async function action({ params, request, context }: Route.ActionArgs) {
   if (request.method !== "POST") return reply(405, { Allow: "POST" });
   const { env } = context.get(cloudflareContext);
-  const layer = await publicLayerById(getDb(env.DB), params.layerId);
+  const layer = await publicLayer(getDb(env.DB), params.layerId);
   if (!layer) return reply(404);
   const body = await request.text();
   if (body.length > MAX_LENGTH) return reply(413);

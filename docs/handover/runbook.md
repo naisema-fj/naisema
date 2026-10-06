@@ -146,11 +146,22 @@ A published Video's page plays its footage and lists, under **Explore the langua
 - Replay of a Segment once or on a loop, with a Stop button.
 - Three speeds: normal, 0.75× and 0.5×.
 
-The player guides learners through the eight Stages of the Immersion Route (`app/lib/immersion.ts`, decision log 1a-16), one page each at `?stage=`. Each Stage is sent only what it shows, so a line's English is fetched from `/language/<id>/english/<segment id>` only when a learner asks for it in a Stage without it. Activities are done in their Stage, and progress and support choices are kept in the browser tab's session only. Learning events (`segment_replayed`, `support_toggled`, `activity_attempted`, `feedback_viewed`, `learning_completed`) go to `/language/<id>/events` and into the `EVENTS` Analytics Engine dataset, with the Learning Layer's IDs only.
+The player guides learners through the eight Stages of the Immersion Route (`app/lib/immersion.ts`, decision log 1a-16), one page each at `?stage=`. Each Stage is sent only what it shows, so a line's English is fetched from `/language/<id>/english/<segment id>` only when a learner asks for it in a Stage without it. Activities are done in their Stage. For a visitor, progress and support choices are kept in the browser tab's session only; for a signed-in learner they are saved to their Learner Account (below). Learning events (`segment_replayed`, `support_toggled`, `activity_attempted`, `feedback_viewed`, `learning_completed`) go to `/language/<id>/events` and into the `EVENTS` Analytics Engine dataset, with the Learning Layer's IDs only.
 
 An Excerpt's Learning Layer plays only between its in and out times. Players ask `/videos/<item id>/playback` for a new signed address when theirs runs out. Locally, videos play from `/videos/<item id>/stream`. The e2e suite puts a short real clip (`e2e/fixtures/market.mp4`) into local R2 when it starts, so its journey plays real footage.
 
 A Voices Episode can use a video in place of audio (**Recording: Video** on its form). It then plays like a Video, with its transcript, and needs the video to have finished processing and the file its own Rights Record.
+
+## Learner Accounts
+
+Learner Accounts are optional and for adults only (decision log 1a-17). On the public site, `/account/sign-in` takes an email address and an "I am 18 or older" box, and emails a sign-in link; the first link used makes the account. The account holds the email address and nothing else about the person. It is a separate Better Auth setup from staff sign-in (`createLearnerAuth` in `app/lib/auth.server.ts`), with its own cookie and base path, and only its emailed link (`/account/auth/magic-link/verify`) is reachable. An address with a staff role, now or in the past, can't hold a Learner Account: it is emailed to use another address.
+
+- **The learning page** is `/account`: carry on learning, saved videos and words, a JSON download (`/account/export`), clear history, delete the account and sign out. It is never cached or indexed.
+- **Saving progress.** The player puts every change into a queue in the browser's IndexedDB and sends it to `/account/events` in batches (`app/lib/progress-queue.ts`, with its IndexedDB and fetch adapters in `app/lib/progress-queue.client.ts`). The player reaches it through the account store (`app/lib/learner-store.ts`); a visitor's tab store keeps the same changes in `sessionStorage` instead. Until the server acknowledges a change, the player says "Not yet saved". A change sent twice is applied once (`learner_event`).
+- **Deleting.** An account deleted by its owner, or for being inactive, is removed at once from every table, and a SHA-256 hash of its user ID is added to `deletion_ledger`, which refuses changes. Restoring a backup must replay that ledger before the site serves traffic (ADR-0009, #34).
+- **Inactive accounts.** The daily `learner-accounts` job emails a warning to accounts unused for 700 days, and deletes them 30 days later unless they were used in between. Any visit while signed in counts as use.
+
+If a learner says sign-in emails don't arrive, check `email_failure` for failed sends ("Your NAISEMA sign-in link"), and remember the limit of three links per address every 15 minutes. Locally, read the link from `email_outbox` as for staff, and open it on `http://localhost:5173`.
 
 ## Public search
 
@@ -231,7 +242,12 @@ A report, rights concern or data request becomes a restricted Case (`app/lib/cas
   - Only someone else can decide the appeal, which closes the Case. The person is told whether the decision stands.
   - With one safeguarding lead, appeals wait for the backup (launch blocker #5).
 - **Restricted evidence:** the case team can add a PDF or image of at most 10 MB. It is quarantined and scanned like any upload, kept in `EVIDENCE`, and downloaded as a sandboxed attachment, by the case team only.
-- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Self-service export and the deletion ledger come with #32 and #34.
+- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Learners with an account download and delete their own data on the learning page (#33). The contacts export (Exports, below) gives the privacy contact every Submission and Consent Record at once, for a stated purpose. Replaying the deletion ledger after a restore comes with #34.
+
+## The audit log and exports
+
+- **Audit log:** every elevated action is recorded in `audit_event` (`app/lib/audit.server.ts`), with who, what, which object, when and, where there is one, why (`details.reason`). This covers publishing, reviews, roles and staff accounts, rights, Learner Account deletions (by the deletion ledger's hash) and moderation. Withdrawing, archiving and revoking a role ask for an optional reason, and a rejection's notes are its reason. It is append-only: triggers refuse updates and deletions (migration 0020), so pruning old events needs a migration of its own. Administrators read it at `/admin/audit`, filtered by object ID, person (email or user ID) and the start of an action name (for example `role.` or `content_item.`).
+- **Exports:** run from `/admin/exports`. Editors export content, Rights Records, approvals and single Learning Layers. Administrators export the audit log. The privacy contact exports contacts, after saying what they are for. Each export is audited as `export.downloaded`. Formats, and how to import a Learning Layer into another environment (`pnpm learning-layer:import`), are in `docs/handover/exports.md`.
 
 ## Upload safety
 
@@ -299,7 +315,7 @@ Educators see only the Learning Layers they are assigned to, under **Learning La
 
 ### Reviewing and publishing a Learning Layer
 
-The code is in `app/lib/layer-review.server.ts`, `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
+The code is in `app/lib/review.server.ts` (review, shared with Content Items), `layer-review.server.ts` (what is Learning Layers' own), `publication.server.ts`, `visibility.server.ts` (eligibility and what is public), `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
 
 1. **Flag:** tick **Culturally sensitive** in the editor when a Knowledge Holder must approve it. A Learning Layer on a Video flagged culturally sensitive starts ticked and can't be published unticked. Language review in Standard Fijian is always required.
 2. **Submit:** an editor or an assigned Educator submits the current revision. Editors then assign a language reviewer.
@@ -398,6 +414,7 @@ Alerts come as one email per hourly run, subject `NAISEMA <env>: N problems`. An
 - **"N Video Assets failed processing"**: Stream refused a master, or it failed processing. The reason is on the Video Asset's page in the media library; most are a bad or over-long file, which the uploader fixes. If every video fails, check the Stream secrets (Video, above).
 - **"The daily job failed …" / "hasn't run since …"**: the daily cron threw, or hasn't run for 26 hours. The reason (redacted) is in the email and in the logs. Each step runs in turn, so later steps (quarantine tidy-up, video refresh) didn't run either. Fix and wait for the next run, or trigger it in the dashboard (Worker › Settings › Triggers).
 - **"The usage job failed …"**: reading media usage from Cloudflare failed (usually the token or an API change, as for the figures alert below). It runs beside the daily job, so the daily job's own steps aren't affected.
+- **"The learner-accounts job failed …"**: tidying Learner Accounts' records, or warning or deleting an inactive account, failed (an email that couldn't be sent, usually). The reason is in the email and the logs; other accounts were still handled. It runs beside the daily job.
 - **"Cloudflare's figures couldn't be read"**: `MONITORING_API_TOKEN` is unset, expired or lacks a permission, or Cloudflare's API changed. Until fixed, the error rate falls back to a plain count, and usage isn't recorded.
 - **"Media costs on course for 50% / 80% of the monthly ceiling"**: check `/admin/usage` to see which line is growing. Delivery growing faster than expected usually means a video is popular or embedded elsewhere.
 

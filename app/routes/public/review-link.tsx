@@ -5,11 +5,12 @@ import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { loadLayerReview } from "~/lib/layer-review.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
-import { openReviewLink, reviewPlaybackAllowed } from "~/lib/review-links.server";
+import { openReviewLink } from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
 import { formatTimecode } from "~/lib/segment-rules";
 import { videoItem } from "~/lib/video-items.server";
 import { ProviderError, videoProvider } from "~/lib/video-provider.server";
+import { reviewLinkMayPlay } from "~/lib/visibility.server";
 import type { Route } from "./+types/review-link";
 
 // Plays the video, and is never indexed, whatever the environment.
@@ -43,7 +44,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (!review || !video) return data({ open: false as const, ...CLOSED.unknown }, { status: 404 });
   // Footage whose rights were withdrawn, or on a Video hidden pending a Case, never plays here.
   let playback: { src: string; hls: boolean } | null = null;
-  if (video.video.state === "ready" && video.video.providerId && (await reviewPlaybackAllowed(db, video))) {
+  if (video.video.state === "ready" && video.video.providerId && (await reviewLinkMayPlay(db, video))) {
     if (env.VIDEO_PROVIDER === "local") {
       playback = { src: `/review/${params.token}/video`, hls: false };
     } else {

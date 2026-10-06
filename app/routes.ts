@@ -21,6 +21,9 @@ export default [
     route("report", "routes/public/report.tsx"),
     route("privacy/request", "routes/public/data-request.tsx"),
     route("cases/appeal/:token", "routes/public/case-appeal.tsx"),
+    // Learner Accounts (#33): private, never cached (app/lib/learners.server.ts).
+    route("account", "routes/public/account/index.tsx"),
+    route("account/sign-in", "routes/public/account/sign-in.tsx"),
     route("connect/providers", "routes/public/connect/providers.tsx"),
     route("connect/providers/:slug", "routes/public/connect/provider.tsx"),
     route("connect/offerings", "routes/public/connect/offerings.tsx"),
@@ -48,6 +51,9 @@ export default [
   route("language/:layerId/captions/:language", "routes/public/layer-captions.ts"),
   route("language/:layerId/english/:segmentId", "routes/public/layer-english.ts"),
   route("language/:layerId/events", "routes/public/layer-events.ts"),
+  route("account/events", "routes/public/account/events.ts"),
+  route("account/export", "routes/public/account/export.ts"),
+  route("account/sign-out", "routes/public/account/sign-out.ts"),
   route("e/opened/:id", "routes/public/opened.ts"),
   // Cloudflare Stream's signed processing reports (app/lib/video-assets.server.ts).
   route("webhooks/stream", "routes/public/stream-webhook.ts"),
@@ -103,6 +109,10 @@ export default [
     route("staff", "routes/admin/staff.tsx"),
     // Media usage and cost (VAC-10) and the monitor's current problems (app/lib/usage.server.ts).
     route("usage", "routes/admin/usage.tsx"),
+    // The audit log and bulk exports (CMS-05, VCMS-06; app/lib/exports.server.ts).
+    route("audit", "routes/admin/audit.tsx"),
+    route("exports", "routes/admin/exports/index.tsx"),
+    route("exports/download", "routes/admin/exports/download.ts"),
     route("topics", "routes/admin/topics.tsx"),
     route("two-factor", "routes/admin/two-factor.tsx"),
     route("two-factor/setup", "routes/admin/two-factor-setup.tsx"),

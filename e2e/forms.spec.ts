@@ -1,30 +1,12 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   confirmTwoFactorCode,
   expectNoAxeViolations,
   followSignInLink,
   latestEmailText,
   startTwoFactorSetup,
+  stubTurnstile,
 } from "./support";
-
-/**
- * Turnstile's script comes from Cloudflare, which the test machine may not reach. This stands in
- * for its test site key's widget: it adds the always-passing token to the form, as the real one
- * would (app/lib/turnstile.ts).
- */
-const TURNSTILE_STUB = `for (const widget of document.querySelectorAll(".cf-turnstile")) {
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "cf-turnstile-response";
-  input.value = "XXXX.DUMMY.TOKEN.XXXX";
-  widget.append(input);
-}`;
-
-async function stubTurnstile(page: Page) {
-  await page.route("https://challenges.cloudflare.com/turnstile/v0/api.js", (route) =>
-    route.fulfill({ contentType: "text/javascript", body: TURNSTILE_STUB }),
-  );
-}
 
 /** A PDF small enough to send in one part. */
 const PDF = Buffer.from("%PDF-1.7\nA story from Lakeba.\n");
