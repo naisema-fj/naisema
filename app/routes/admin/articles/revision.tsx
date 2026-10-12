@@ -64,13 +64,16 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         status,
         decisionId: decision?.id ?? null,
       })),
-      approvals: review.approvals.map((approval) => ({
-        ...approval,
-        evidence:
-          approval.evidenceName && canReadEvidence
-            ? { name: approval.evidenceName, href: `/admin/articles/approvals/${approval.id}/evidence` }
-            : null,
-      })),
+      // The evidence's key and name are for editors only, like the file itself.
+      approvals: review.approvals.map(
+        ({ evidenceAssetId: _asset, evidenceKey: _key, evidenceName, evidenceType: _type, ...approval }) => ({
+          ...approval,
+          evidence:
+            evidenceName && canReadEvidence
+              ? { name: evidenceName, href: `/admin/articles/approvals/${approval.id}/evidence` }
+              : null,
+        }),
+      ),
       assignments: review.assignments,
       publicationState: review.contentItem.publicationState,
       publishedNumber: published ? published.number : null,

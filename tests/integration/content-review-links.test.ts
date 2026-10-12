@@ -184,6 +184,41 @@ describe("audio and video on a Review Link", () => {
   });
 });
 
+describe("an item on hold", () => {
+  /** A Case about the item hides it pending review (app/lib/cases.server.ts): a hold, as the Case page places one. */
+  async function placeHold(itemId: string) {
+    const caseId = crypto.randomUUID();
+    await env.DB.batch([
+      env.DB.prepare(
+        "INSERT INTO case_record (id, kind, reason, details, received_at, updated_at) VALUES (?1, 'report', 'x', 'x', 0, 0)",
+      ).bind(caseId),
+      env.DB.prepare(
+        "INSERT INTO content_hold (id, content_item_id, case_id, placed_by, placed_at) VALUES (?1, ?2, ?3, 'x', 0)",
+      ).bind(crypto.randomUUID(), itemId, caseId),
+    ]);
+  }
+
+  it("stops an Episode's audio and a Video's footage on its Review Link", async () => {
+    const editor = await staff("editor", { role: "editor" });
+    const episode = await createEpisode(editor);
+    const { id: videoId } = await video(editor);
+    const paths: Record<string, string> = {};
+    for (const id of [episode, videoId]) {
+      expect((await act(editor, id, 1, { intent: "submit" })).status).toBe(302);
+      paths[id] = await issue(editor, id);
+    }
+    expect((await SELF.fetch(`${PUBLIC}${paths[episode]}/audio`)).status).toBe(200);
+    expect((await SELF.fetch(`${PUBLIC}${paths[videoId]}/video`)).status).toBe(200);
+
+    await placeHold(episode);
+    await placeHold(videoId);
+
+    expect((await SELF.fetch(`${PUBLIC}${paths[episode]}/audio`)).status).toBe(404);
+    expect((await SELF.fetch(`${PUBLIC}${paths[videoId]}/video`)).status).toBe(404);
+    expect(await (await SELF.fetch(`${PUBLIC}${paths[episode]}`)).text()).toContain("can&#x27;t be played right now");
+  });
+});
+
 describe("Knowledge Holder Approvals through a Review Link", () => {
   const evidenceForm = (fields: Record<string, string>, evidence = true) => {
     const form = new FormData();
@@ -254,6 +289,11 @@ describe("Knowledge Holder Approvals through a Review Link", () => {
     expect(await downloaded.text()).toContain("signed note");
     const reviewer = await staff("reviewer", { role: "reviewer", reviewType: "cultural" });
     expect((await reviewer.browser.fetch(evidenceUrl)).status).toBe(404);
+    // A reviewer assigned to the item sees the approval, but neither the evidence's name nor its link.
+    await act(editor, article.id, 1, { intent: "assign", reviewType: "cultural", reviewerId: reviewer.userId });
+    const seen = await (await reviewer.browser.fetch(`/admin/articles/${article.id}/revisions/1`)).text();
+    expect(seen).not.toContain("approval.pdf");
+    expect(seen).not.toContain(evidenceUrl);
     const reads = await env.DB.prepare(
       "SELECT COUNT(*) AS n FROM audit_event WHERE action = 'approval_evidence.read' AND object_id = ?1",
     )

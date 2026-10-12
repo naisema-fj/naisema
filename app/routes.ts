@@ -33,7 +33,7 @@ export default [
     route(":area/:slug", "routes/public/article.tsx"),
     route(":area/:slug/language/:layerId", "routes/public/learning-layer.tsx"),
   ]),
-  // Review Links: one exact Learning Layer Revision for a Knowledge Holder, never cached or indexed.
+  // Review Links: one exact Revision, of a Learning Layer or a Content Item, for a Knowledge Holder, never cached or indexed.
   route("review/:token", "routes/public/review-link.tsx"),
   route("review/:token/video", "routes/public/review-link-video.ts"),
   route("review/:token/audio", "routes/public/review-link-audio.ts"),
