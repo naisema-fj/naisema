@@ -52,7 +52,7 @@ describe("the staff dashboard", () => {
     await failedVideoAsset(editorView.userId);
     const after = await home(editorView);
 
-    const label = "Content Items submitted and still waiting on a review";
+    const label = "Content Items submitted and not yet approved";
     expect(count(after, label)).toBe(count(before, label) + 1);
     expect(count(after, "Content Items ready to publish")).toBe(count(before, "Content Items ready to publish") + 1);
     expect(count(after, "Videos that failed processing")).toBe(count(before, "Videos that failed processing") + 1);
@@ -138,5 +138,21 @@ describe("the staff dashboard", () => {
     expect(second).toContain("Needs attention.");
     expect(await home(editor)).not.toContain("12 of 40 requests failed.");
     expect(await home(editor)).not.toContain("backup");
+  });
+
+  it("still shows everything else when one section can't be read", async () => {
+    const administrator = await staff("admin", { role: "administrator" });
+    await env.DB.prepare("ALTER TABLE monitor_alert RENAME TO monitor_alert_away").run();
+    try {
+      const response = await administrator.browser.fetch("/admin");
+      const html = await response.text();
+
+      expect(response.status).toBe(200);
+      expect(html).toContain("Monitoring");
+      expect(html).toContain("This couldn&#x27;t be checked just now.");
+      expect(html).toContain("Backups");
+    } finally {
+      await env.DB.prepare("ALTER TABLE monitor_alert_away RENAME TO monitor_alert").run();
+    }
   });
 });

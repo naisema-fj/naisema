@@ -14,14 +14,23 @@ export function waitedText(since: Date, now: Date) {
   return days === 0 ? "waiting since today" : `waiting ${plural(days, "day", "days")}`;
 }
 
-/** Due dates (YYYY-MM-DD) already past, and those falling today or in the next two days. */
-export function dueCounts(dueDates: string[], today: Date) {
-  const day = (offset: number) => new Date(today.getTime() + offset * DAY_MS).toISOString().slice(0, 10);
-  const [now, soonest] = [day(0), day(2)];
+/**
+ * Due dates (YYYY-MM-DD) already past, and those falling today or in the next two days. Days are
+ * Fiji's, as Submissions' due dates are set (app/lib/calendar.ts): `today` is Fiji's today.
+ */
+export function dueCounts(dueDates: string[], today: string) {
+  const soonest = new Date(Date.parse(`${today}T00:00:00Z`) + 2 * DAY_MS).toISOString().slice(0, 10);
   return {
-    overdue: dueDates.filter((due) => due < now).length,
-    soon: dueDates.filter((due) => due >= now && due <= soonest).length,
+    overdue: dueDates.filter((due) => due < today).length,
+    soon: dueDates.filter((due) => due >= today && due <= soonest).length,
   };
+}
+
+/** "The longest has been waiting 3 days.", for the oldest of some moments; null if there are none. */
+export function longestWaitText(times: Date[], now: Date) {
+  if (!times.length) return null;
+  const oldest = new Date(Math.min(...times.map((time) => time.getTime())));
+  return `The longest has been ${waitedText(oldest, now)}.`;
 }
 
 /** A backup that succeeded this long ago is overdue: the nightly one is late (the monitor allows 26 hours). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { backupLine, dueCounts, waitedText } from "~/lib/staff-dashboard";
+import { backupLine, dueCounts, longestWaitText, waitedText } from "~/lib/staff-dashboard";
 
 const now = new Date("2026-10-12T10:00:00Z");
 const ago = (ms: number) => new Date(now.getTime() - ms);
@@ -20,15 +20,24 @@ describe("how long something has waited", () => {
 
 describe("what is due", () => {
   it("counts due dates that have passed and those in the next two days, and ignores the rest", () => {
-    const today = new Date("2026-10-12T22:00:00Z");
-
     expect(
-      dueCounts(["2026-10-10", "2026-10-11", "2026-10-12", "2026-10-14", "2026-10-15", "2026-11-01"], today),
+      dueCounts(["2026-10-10", "2026-10-11", "2026-10-12", "2026-10-14", "2026-10-15", "2026-11-01"], "2026-10-12"),
     ).toEqual({
       overdue: 2,
       soon: 2,
     });
-    expect(dueCounts([], today)).toEqual({ overdue: 0, soon: 0 });
+    expect(dueCounts([], "2026-10-12")).toEqual({ overdue: 0, soon: 0 });
+  });
+
+  it("reaches over a month's end", () => {
+    expect(dueCounts(["2026-11-01", "2026-11-02"], "2026-10-31")).toEqual({ overdue: 0, soon: 2 });
+  });
+});
+
+describe("the longest wait", () => {
+  it("names the oldest of several, and nothing for none", () => {
+    expect(longestWaitText([ago(DAY), ago(4 * DAY), ago(HOUR)], now)).toBe("The longest has been waiting 4 days.");
+    expect(longestWaitText([], now)).toBeNull();
   });
 });
 
