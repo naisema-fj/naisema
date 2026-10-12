@@ -22,15 +22,18 @@ test("a staff member signs in with an email link and an authenticator code", asy
   await expectNoAxeViolations(page);
 
   // The shell's navigation is a sidebar on a wide screen and a Menu on a narrow one.
+  // (Decided by the window's width, not by asking whether the Menu is visible, which would race
+  // the stylesheet.) The sidebar appears from 56rem, which is 896 px.
   const menu = page.locator("summary", { hasText: "Menu" });
-  if (await menu.isVisible()) await menu.click();
+  const narrow = (page.viewportSize()?.width ?? 0) < 896;
+  if (narrow) await menu.click();
   const nav = page.getByRole("navigation", { name: /^Staff( menu)?$/ });
   await expect(nav.getByRole("link", { name: "Staff and roles" })).toBeVisible();
   await expectNoAxeViolations(page);
 
   await nav.getByRole("link", { name: "Staff and roles" }).click();
   await expect(page.getByRole("heading", { name: "Staff and roles" })).toBeVisible();
-  if (await menu.isVisible()) await menu.click();
+  if (narrow) await menu.click();
   await expect(nav.getByRole("link", { name: "Staff and roles" })).toHaveAttribute("aria-current", "page");
   await expectNoAxeViolations(page);
 
