@@ -1,4 +1,5 @@
-import { type Actor, can, EXPORT_KINDS } from "./permissions";
+import { CASE_KINDS } from "./case-rules";
+import { type Actor, type CaseKind, can, EXPORT_KINDS } from "./permissions";
 
 /**
  * The staff site's navigation: which pages each person is offered, from the same `can()` rules the
@@ -8,14 +9,14 @@ import { type Actor, can, EXPORT_KINDS } from "./permissions";
 export type NavItem = { label: string; href: string };
 export type NavGroup = { name: string; items: NavItem[] };
 
-const CASE_KINDS = ["report", "rights_concern", "data_request"] as const;
-
 /** The pages an actor is offered, in groups; a group with nothing in it for them is left out. */
 export function staffNav(actor: Actor): NavGroup[] {
   const allowed = (check: Parameters<typeof can>[1]) => can(actor, check);
   const editsContent = allowed({ action: "content.edit" });
   const isEducator = actor.roles.some((role) => role.role === "educator");
-  const handlesCases = CASE_KINDS.some((kind) => allowed({ action: "case.read", case: { kind } }));
+  const handlesCases = (Object.keys(CASE_KINDS) as CaseKind[]).some((kind) =>
+    allowed({ action: "case.read", case: { kind } }),
+  );
 
   const groups: { name: string; items: (NavItem | false)[] }[] = [
     {
