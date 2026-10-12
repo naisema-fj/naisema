@@ -1,0 +1,472 @@
+/*
+ * The staff site: one shell and one set of base styles for every staff page (docs: #55). The brand
+ * is the public site's (Ink, Kesa, Shell, Bricolage Grotesque and Jost), set plainly: staff work
+ * here, so it is quiet, dense enough for tables and forms, and readable on a phone. Loaded only by
+ * the staff layout. Rules use :where() so a page's own class rules (the editors', the timeline) win;
+ * there are no inline styles anywhere (the CSP allows none).
+ */
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/jost";
+
+.staff {
+  /* The brand palette (DESIGN.md): no colour here that the brand boards don't have. */
+  --ink: #0f2b35;
+  --ink-2: #1b3f4c;
+  --kesa-deep: #a9472a;
+  --voivoi: #e9be5b;
+  --shell: #f6f5f2;
+  --sand: #e8e5de;
+  --paper: #ffffff;
+  --line: #d6d2c8;
+  --muted: #56686e;
+  --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
+  --font-text: "Jost Variable", system-ui, sans-serif;
+
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--shell);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  line-height: 1.55;
+}
+
+/* --- Page content --- */
+.staff .page {
+  max-width: 62rem;
+  margin: 0;
+  padding: 1.5rem 0 3rem;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.staff .page-wide {
+  max-width: none;
+}
+
+.staff-body:not(.staff-body-nav) .page {
+  margin: 0 auto;
+  padding-inline: 1rem;
+  max-width: 40rem;
+}
+
+:where(.staff) :is(h1, h2, h3, h4) {
+  font-family: var(--font-display);
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+:where(.staff) h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: clamp(1.7rem, 1.4rem + 1.2vw, 2.3rem);
+}
+
+:where(.staff) h2 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.4rem;
+}
+
+:where(.staff) h3 {
+  margin: 1.5rem 0 0.4rem;
+  font-size: 1.15rem;
+}
+
+:where(.staff) :is(p, li, dd) {
+  max-width: 70ch;
+}
+
+:where(.staff) a {
+  color: var(--ink-2);
+  text-underline-offset: 0.15em;
+}
+
+.staff :focus-visible {
+  outline: 3px solid var(--kesa-deep);
+  outline-offset: 2px;
+}
+
+.staff-header :focus-visible {
+  outline-color: var(--voivoi);
+}
+
+/* --- Tables: the same everywhere, and scrollable sideways inside themselves on a phone. --- */
+:where(.staff) table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: 0.98rem;
+  /* Stays a real table on screens wide enough for it; long words break to fit. */
+  overflow-wrap: anywhere;
+}
+
+/*
+ * On a phone a wide table scrolls inside itself instead of the page. A table made a block can lose
+ * its semantics in some screen readers, so this is only where a table can't fit; a wrapper element
+ * around each table (#61) is the fuller answer.
+ */
+@media (max-width: 40rem) {
+  :where(.staff) table {
+    position: relative;
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+:where(.staff) caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+}
+
+:where(.staff) table :is(input:not([type="checkbox"], [type="radio"]), select) {
+  width: 100%;
+  min-width: 0;
+}
+
+:where(.staff) :is(th, td) {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+:where(.staff) thead th {
+  background: rgb(15 43 53 / 0.06);
+  border-bottom: 2px solid var(--line);
+  white-space: nowrap;
+}
+
+:where(.staff) tbody th {
+  font-weight: 600;
+}
+
+/* --- Forms and buttons --- */
+:where(.staff) :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  background: var(--paper);
+  color: inherit;
+  font: inherit;
+}
+
+:where(.staff) input[type="file"] {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.4rem 0;
+}
+
+:where(.staff) :is(input[type="checkbox"], input[type="radio"]) {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+:where(.staff) label {
+  font-weight: 600;
+}
+
+:where(.staff) fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+:where(.staff) legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+}
+
+:where(.staff main) button {
+  min-height: 2.75rem;
+  padding: 0.3rem 0.9rem;
+  font: inherit;
+}
+
+:where(.staff main) button[type="submit"],
+:where(.staff main) .button {
+  min-height: 2.75rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--shell);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where(.staff main) button[type="submit"]:hover {
+  background: var(--ink-2);
+}
+
+:where(.staff main) button[type="submit"]:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Inline forms (revoke, withdraw…) are quieter than the page's main action. */
+:where(.staff main) .inline-form button {
+  background: transparent;
+  color: var(--ink);
+}
+
+:where(.staff main) .inline-form button:hover {
+  background: rgb(15 43 53 / 0.08);
+}
+
+.staff .inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+/* --- Messages: status and errors read as boxes, never by colour alone. --- */
+:where(.staff main) [role="status"] {
+  margin: 1rem 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  background: var(--sand);
+  box-shadow: inset 4px 0 0 var(--ink);
+}
+
+:where(.staff main) [role="alert"] {
+  margin: 1rem 0;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--kesa-deep);
+}
+
+:where(.staff main) [role="alert"]::before {
+  content: "Problem: ";
+  font-weight: 700;
+}
+
+.staff .field-error {
+  color: var(--kesa-deep);
+}
+
+/* --- Shell --- */
+.staff-header {
+  background: var(--ink);
+  color: var(--shell);
+}
+
+.staff-header-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0.6rem 1rem;
+}
+
+.staff-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: auto;
+  color: inherit;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.staff-wordmark svg {
+  width: 1.9rem;
+  height: 1.9rem;
+}
+
+.staff-wordmark span {
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.staff-header a,
+.staff-header summary,
+.staff-header button {
+  min-height: 2.75rem;
+}
+
+.staff-signout {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.staff-user {
+  display: none;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.staff-header button,
+.staff-menu summary {
+  box-sizing: border-box;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid rgb(246 245 242 / 0.55);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--shell);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.staff-header button:hover,
+.staff-menu summary:hover {
+  background: var(--ink-2);
+}
+
+.staff-menu {
+  position: relative;
+}
+
+.staff-menu summary {
+  list-style: none;
+}
+
+.staff-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.staff-menu .staff-nav {
+  position: absolute;
+  right: 0;
+  z-index: 10;
+  width: min(20rem, calc(100vw - 2rem));
+  max-height: 70vh;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  padding: 0.75rem 1rem;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgb(15 43 53 / 0.18);
+}
+
+.staff-body {
+  flex: 1;
+  width: 100%;
+  max-width: 80rem;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.staff-body > .staff-nav {
+  display: none;
+}
+
+/* A sidebar on wide screens; the Menu disclosure on narrow ones. */
+@media (min-width: 56rem) {
+  .staff-body-nav {
+    display: grid;
+    grid-template-columns: 14.5rem minmax(0, 1fr);
+    gap: 0 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .staff-body > .staff-nav {
+    display: block;
+    padding: 1.5rem 0;
+    align-self: start;
+    position: sticky;
+    top: 0;
+  }
+
+  .staff-menu {
+    display: none;
+  }
+
+  .staff-user {
+    display: inline;
+  }
+}
+
+.staff-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.staff-nav a {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.6rem;
+  min-height: 2.75rem;
+  border-radius: 8px;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+
+.staff-nav a:hover {
+  background: rgb(15 43 53 / 0.07);
+  text-decoration: underline;
+}
+
+.staff-nav a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--shell);
+  font-weight: 600;
+}
+
+.staff-nav-group {
+  margin: 1rem 0 0.2rem;
+  padding: 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* --- Footer-free pages keep their breathing room on phones --- */
+@media (max-width: 55.99rem) {
+  .staff-body-nav .page {
+    padding-inline: 1rem;
+  }
+}
+
+/* Home: where-to-go groups */
+.staff-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0 2rem;
+}
+
+.staff-links h3 {
+  margin-top: 1rem;
+}
+
+.staff-links ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+/* --- Footer --- */
+.staff-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.staff-footer p {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 1rem;
+}

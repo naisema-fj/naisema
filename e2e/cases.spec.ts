@@ -31,7 +31,7 @@ test("a visitor reports an article and the safeguarding lead triages and decides
 
   await followSignInLink(page, `e2e-lead-${testInfo.project.name}@naisema.test`);
   await confirmTwoFactorCode(page, await startTwoFactorSetup(page));
-  await page.getByRole("link", { name: "Cases" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Cases", exact: true }).click();
   await expectNoAxeViolations(page);
   await page.getByRole("link", { name: reference as string }).click();
   await expect(page.getByText(details)).toBeVisible();

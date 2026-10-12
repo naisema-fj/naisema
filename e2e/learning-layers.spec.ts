@@ -18,7 +18,7 @@ test("an Educator builds Segments and Activities in the timeline editor: checked
   const project = testInfo.project.name.split("-")[0];
   await followSignInLink(page, `e2e-author-${testInfo.project.name}@naisema.test`);
   await confirmTwoFactorCode(page, await startTwoFactorSetup(page));
-  await page.getByRole("link", { name: "Learning Layers" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Learning Layers", exact: true }).click();
   await page.getByRole("link", { name: `Greetings ${project}` }).click();
   await expect(page.getByRole("heading", { name: `Greetings ${project}`, level: 1 })).toBeVisible();
   await expect(page.getByRole("listitem", { name: "Segment 1" })).toBeVisible();
