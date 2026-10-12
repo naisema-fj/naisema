@@ -69,7 +69,7 @@ export function sqlLiteral(value: unknown): string {
   throw new Error(`Can't write a ${typeof value} as SQL`);
 }
 
-const quoted = (name: string) => `"${name.replaceAll('"', '""')}"`;
+export const quoted = (name: string) => `"${name.replaceAll('"', '""')}"`;
 
 /**
  * A row as a statement. `INSERT OR REPLACE`, because the database a backup is loaded into was just

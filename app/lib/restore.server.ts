@@ -15,7 +15,7 @@ import { logError, logInfo } from "./log.server";
  * not carried out is finished.
  */
 
-const LOCK_KEY = "state/restore-lock";
+export const LOCK_KEY = "state/restore-lock";
 /**
  * How long a Worker remembers that the lock is off, so the check costs one R2 read in ten seconds.
  * A Worker never remembers that it is on: while the site is closed, every request looks again, so

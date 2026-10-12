@@ -141,7 +141,11 @@ describe("the nightly backup", () => {
     expect((await env.IMPORT_DB.prepare("PRAGMA foreign_key_check").all()).results).toEqual([]);
     const copied = async (db: D1Database, table: string) =>
       (await db.prepare(`SELECT count(*) AS n FROM ${table}`).first<{ n: number }>())?.n;
-    for (const table of ["user", "content_item", "revision", "rights_record", "audit_event", "search_entry"]) {
+    // Every table that is backed up, so a row lost to a REPLACE or a cascade shows.
+    const { results: all } = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all<{
+      name: string;
+    }>();
+    for (const { name: table } of all.filter((row) => isBackedUp(row.name))) {
       expect(await copied(env.IMPORT_DB, table), table).toBe(await copied(env.DB, table));
     }
     const title = await env.IMPORT_DB.prepare("SELECT title FROM search_entry WHERE content_item_id = ?1")

@@ -1,6 +1,7 @@
 import { importBackupKey, keyLabel, sealChunks } from "./backup-crypto";
-import { BACKUP_PREFIX, backupKey, expiredBackups, insertStatement, isBackedUp } from "./backup-rules";
+import { BACKUP_PREFIX, backupKey, expiredBackups, insertStatement, isBackedUp, quoted } from "./backup-rules";
 import { logInfo } from "./log.server";
+import { listAll } from "./r2-list.server";
 import { optionalSecret } from "./secrets.server";
 
 /**
@@ -48,9 +49,7 @@ export async function* dumpDatabase(d1: D1Database, now: Date, environment: stri
     let after = 0;
     for (;;) {
       const { results } = await d1
-        .prepare(
-          `SELECT rowid AS __rowid, * FROM "${table.replaceAll('"', '""')}" WHERE rowid > ?1 ORDER BY rowid LIMIT ${PAGE_ROWS}`,
-        )
+        .prepare(`SELECT rowid AS __rowid, * FROM ${quoted(table)} WHERE rowid > ?1 ORDER BY rowid LIMIT ${PAGE_ROWS}`)
         .bind(after)
         .all<Record<string, unknown>>();
       if (results.length === 0) break;
@@ -105,26 +104,16 @@ export async function runBackup(env: Env, now: Date) {
 
 /** Deletes backups older than 35 days, never the newest. */
 export async function pruneBackups(bucket: R2Bucket, now: Date) {
-  const keys: string[] = [];
-  let cursor: string | undefined;
-  do {
-    const page = await bucket.list({ prefix: BACKUP_PREFIX, cursor });
-    keys.push(...page.objects.map((object) => object.key));
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
-  const expired = expiredBackups(keys, now);
+  const expired = expiredBackups(
+    (await listAll(bucket, BACKUP_PREFIX)).map((object) => object.key),
+    now,
+  );
   if (expired.length) await bucket.delete(expired);
   return expired;
 }
 
 /** The backups held, newest first, for the staff restore page. */
 export async function listBackups(bucket: R2Bucket) {
-  const found: { key: string; size: number; uploaded: Date }[] = [];
-  let cursor: string | undefined;
-  do {
-    const page = await bucket.list({ prefix: BACKUP_PREFIX, cursor });
-    found.push(...page.objects.map(({ key, size, uploaded }) => ({ key, size, uploaded })));
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
+  const found = (await listAll(bucket, BACKUP_PREFIX)).map(({ key, size, uploaded }) => ({ key, size, uploaded }));
   return found.sort((a, b) => b.key.localeCompare(a.key));
 }

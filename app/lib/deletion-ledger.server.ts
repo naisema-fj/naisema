@@ -11,6 +11,8 @@
  * Replaying the ledger is app/lib/restore.server.ts.
  */
 
+import { listAll } from "./r2-list.server";
+
 export const LEARNER_PREFIX = "learner/";
 export const OBJECT_PREFIX = "object/";
 
@@ -45,16 +47,8 @@ export async function recordObjectDeletion(ledger: R2Bucket, type: string, id: s
   await addOnce(ledger, `${OBJECT_PREFIX}${type}/${id}`, { reason: "object.deleted", deletedAt: at.toISOString() });
 }
 
-async function keysUnder(ledger: R2Bucket, prefix: string) {
-  const keys: string[] = [];
-  let cursor: string | undefined;
-  do {
-    const page = await ledger.list({ prefix, cursor });
-    keys.push(...page.objects.map((object) => object.key.slice(prefix.length)));
-    cursor = page.truncated ? page.cursor : undefined;
-  } while (cursor);
-  return keys;
-}
+const keysUnder = async (ledger: R2Bucket, prefix: string) =>
+  (await listAll(ledger, prefix)).map((object) => object.key.slice(prefix.length));
 
 /** Everything the ledger holds. Entries that don't look like entries are ignored. */
 export async function readLedger(ledger: R2Bucket) {
