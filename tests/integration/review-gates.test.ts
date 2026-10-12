@@ -1,4 +1,4 @@
-import { env } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import {
   act,
@@ -161,11 +161,22 @@ describe("review gates", () => {
   it("takes a Knowledge Holder Approval, recorded by an editor who didn't write the revision", async () => {
     const { editor, article } = await submittedArticle(["sensitiveCultural"]);
     const otherEditor = await staff("other-editor", { role: "editor" });
+    // They saw the revision through a Review Link (#44), which must have been opened.
+    const issued = await act(editor, article.id, 1, { intent: "issueLink", recipient: "Ratu Epeli" });
+    const path = new URL((await issued.text()).match(/https?:\/\/[^"<\s]+\/review\/[A-Za-z0-9_-]+/)?.[0] as string)
+      .pathname;
+    await SELF.fetch(`https://naisema.test${path}`);
+    const link = await env.DB.prepare(
+      "SELECT id FROM review_link WHERE content_revision_id = (SELECT id FROM revision WHERE content_item_id = ?1 AND number = 1)",
+    )
+      .bind(article.id)
+      .first<{ id: string }>();
     const approval = {
       intent: "knowledgeHolder",
       knowledgeHolderName: "Ratu Epeli",
       method: "In person at the village",
       conditions: "Do not show the ceremony's closing words",
+      reviewLinkId: link?.id as string,
     };
 
     const byAuthor = await act(editor, article.id, 1, approval);

@@ -51,6 +51,8 @@ export type Check =
   | { action: "account.manage" | "role.assign" | "settings.edit" }
   /** The media usage and cost report, and what the monitor is currently alerting on (VAC-10). */
   | { action: "usage.read" }
+  /** The backups held, and finishing a restore: replaying the deletion ledger and reopening the site (ADR-0009). */
+  | { action: "restore.run" }
   /** Signed-in administrators still hold a working authenticator, so nobody resets their own. */
   | { action: "twoFactor.reset"; staffMember: { userId: string } }
   /**
@@ -139,6 +141,7 @@ export function can(actor: Actor | null, check: Check): boolean {
     case "role.assign":
     case "settings.edit":
     case "usage.read":
+    case "restore.run":
     case "audit.read":
       return hasRole("administrator");
 

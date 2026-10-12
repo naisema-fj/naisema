@@ -1,74 +1,13 @@
 import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
-import { getDb } from "~/lib/db.server";
-import { type Scanner, scanUpload } from "~/lib/scan.server";
 import { act, approve, articleForm, currentRevision, post, type Staff, staff, topic } from "./support/articles";
-import { completeUpload, sendPart, startUpload } from "./support/media";
+import { createEpisode, episodeFields, libraryMp3, SOUND, scanEvidence } from "./support/episodes";
 import { recordMediaRights, recordRights } from "./support/rights";
 import { readyVideoAsset } from "./support/video";
 
 const PUBLIC = "https://naisema.test";
 const visit = (path: string, init: RequestInit = {}) => SELF.fetch(`${PUBLIC}${path}`, { redirect: "manual", ...init });
 const read = async (path: string) => (await visit(path)).text();
-
-const clean: Scanner = async ({ body }) => {
-  await body.cancel();
-  return { verdict: "clean" };
-};
-
-/** An MP3 in the media library: a frame header, then the "sound" the tests read back by range. */
-const SOUND = "0123456789abcdefghijklmnopqrstuvwxyz";
-async function libraryMp3(editor: Staff, { scan = true } = {}) {
-  const bytes = new Uint8Array([0xff, 0xfb, 0x90, 0x64, ...new TextEncoder().encode(SOUND)]);
-  const { id } = (await (
-    await startUpload(editor.browser, { name: "talanoa.mp3", type: "audio/mpeg", size: bytes.length, head: bytes })
-  ).json()) as { id: string };
-  await sendPart(editor.browser, id, 1, bytes);
-  await completeUpload(editor.browser, id);
-  if (scan) {
-    await scanUpload(env, getDb(env.DB), id, clean);
-    expect((await recordMediaRights(editor.browser, id)).status).toBe(302);
-  }
-  return id;
-}
-
-async function scanEvidence(itemId: string) {
-  const { results } = await env.DB.prepare(
-    "SELECT evidence_asset_id AS assetId FROM rights_record WHERE subject_id = ?1 AND evidence_asset_id IS NOT NULL",
-  )
-    .bind(itemId)
-    .all<{ assetId: string }>();
-  for (const { assetId } of results) await scanUpload(env, getDb(env.DB), assetId, clean);
-}
-
-const episodeFields = (audioId: string, fields: Record<string, string | string[]> = {}) => ({
-  flag: [],
-  languageVariety: "",
-  title: "Talanoa with Ratu Joni",
-  summary: "Growing up in Levuka and leaving for Auckland.",
-  credit: "Produced by NAISEMA Voices",
-  episodeAudioAssetId: audioId,
-  episodeHost: "Mere Vula",
-  episodeGuests: "Ratu Joni",
-  episodeRecordedOn: "2026-09-12",
-  episodeDuration: "32:10",
-  episodeTranscript: "Mere: Bula vinaka, Ratu.\n\nRatu Joni: Bula, Mere. [laughs]",
-  episodeLinkLabel: ["Spotify", ""],
-  episodeLinkUrl: ["https://open.spotify.com/episode/abc", ""],
-  ...fields,
-});
-
-async function createEpisode(editor: Staff, fields: Record<string, string | string[]> = {}) {
-  const audioId = await libraryMp3(editor);
-  const response = await post(
-    editor,
-    "/admin/articles/new?type=episode",
-    articleForm(await topic(editor), episodeFields(audioId, fields)),
-  );
-  const id = response.headers.get("Location")?.split("/").at(-1);
-  if (!id) throw new Error(`Not created (${response.status}): ${await response.text()}`);
-  return id;
-}
 
 /** Records rights, submits, has the transcript reviewed for accessibility, and publishes revision 1. */
 async function publishEpisode(editor: Staff, id: string) {

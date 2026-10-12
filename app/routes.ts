@@ -33,9 +33,10 @@ export default [
     route(":area/:slug", "routes/public/article.tsx"),
     route(":area/:slug/language/:layerId", "routes/public/learning-layer.tsx"),
   ]),
-  // Review Links: one exact Learning Layer Revision for a Knowledge Holder, never cached or indexed.
+  // Review Links: one exact Revision, of a Learning Layer or a Content Item, for a Knowledge Holder, never cached or indexed.
   route("review/:token", "routes/public/review-link.tsx"),
   route("review/:token/video", "routes/public/review-link-video.ts"),
+  route("review/:token/audio", "routes/public/review-link-audio.ts"),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
   // For the external uptime monitor (ADR-0012): never cached, reads D1.
@@ -70,6 +71,7 @@ export default [
     route("articles/:id/history", "routes/admin/articles/history.tsx"),
     route("articles/:id/revisions/:number", "routes/admin/articles/revision.tsx"),
     route("articles/:id/revisions/:number/audio", "routes/admin/articles/revision-audio.ts"),
+    route("articles/approvals/:approvalId/evidence", "routes/admin/articles/approval-evidence.tsx"),
     route("articles/:id/compare", "routes/admin/articles/compare.tsx"),
     route("articles/:id/rights", "routes/admin/articles/rights.tsx"),
     route("contributors", "routes/admin/contributors.tsx"),
@@ -109,6 +111,8 @@ export default [
     route("staff", "routes/admin/staff.tsx"),
     // Media usage and cost (VAC-10) and the monitor's current problems (app/lib/usage.server.ts).
     route("usage", "routes/admin/usage.tsx"),
+    // Backups held, and finishing a restore (ADR-0009; app/lib/restore.server.ts).
+    route("restore", "routes/admin/restore.tsx"),
     // The audit log and bulk exports (CMS-05, VCMS-06; app/lib/exports.server.ts).
     route("audit", "routes/admin/audit.tsx"),
     route("exports", "routes/admin/exports/index.tsx"),

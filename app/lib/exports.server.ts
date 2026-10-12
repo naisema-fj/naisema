@@ -1,4 +1,4 @@
-import { asc, eq, notInArray } from "drizzle-orm";
+import { asc, eq, isNotNull, notInArray } from "drizzle-orm";
 import {
   auditEvent,
   consentRecord,
@@ -217,24 +217,34 @@ async function approvalsExport(db: Database): Promise<Contents> {
         submissions: await db.select().from(revisionSubmission).all(),
         assignments: await db.select().from(reviewAssignment).all(),
         approvals: contentApprovals,
+        reviewLinks: await reviewLinksWithoutTokens(db, "contentItem"),
+        reviewLinkOpenings: await openingsOf(db, "contentItem"),
       },
       learningLayers: {
         submissions: await db.select().from(learningLayerSubmission).all(),
         assignments: await db.select().from(learningLayerReviewAssignment).all(),
         approvals: layerApprovals,
-        reviewLinks: await reviewLinksWithoutTokens(db),
-        reviewLinkOpenings: await db.select().from(reviewLinkAccess).orderBy(asc(reviewLinkAccess.accessedAt)).all(),
+        reviewLinks: await reviewLinksWithoutTokens(db, "learningLayer"),
+        reviewLinkOpenings: await openingsOf(db, "learningLayer"),
       },
     },
   };
 }
 
+/** Which Review Links: those to Learning Layer Revisions, or to Content Item Revisions. */
+type LinkKind = "learningLayer" | "contentItem";
+
+const linksOfKind = (kind: LinkKind) =>
+  kind === "learningLayer" ? isNotNull(reviewLink.revisionId) : isNotNull(reviewLink.contentRevisionId);
+
 /** Review Links as exported: everything but the hash of their token. */
-const reviewLinksWithoutTokens = (db: Database) =>
+const reviewLinksWithoutTokens = (db: Database, kind: LinkKind) =>
   db
     .select({
       id: reviewLink.id,
-      revisionId: reviewLink.revisionId,
+      ...(kind === "learningLayer"
+        ? { revisionId: reviewLink.revisionId }
+        : { revisionId: reviewLink.contentRevisionId }),
       recipient: reviewLink.recipient,
       createdBy: reviewLink.createdBy,
       createdAt: reviewLink.createdAt,
@@ -243,7 +253,23 @@ const reviewLinksWithoutTokens = (db: Database) =>
       revokedBy: reviewLink.revokedBy,
     })
     .from(reviewLink)
+    .where(linksOfKind(kind))
     .orderBy(asc(reviewLink.createdAt))
+    .all();
+
+/** Every opening of the Review Links of one kind, oldest first. */
+const openingsOf = (db: Database, kind: LinkKind) =>
+  db
+    .select({
+      id: reviewLinkAccess.id,
+      reviewLinkId: reviewLinkAccess.reviewLinkId,
+      outcome: reviewLinkAccess.outcome,
+      accessedAt: reviewLinkAccess.accessedAt,
+    })
+    .from(reviewLinkAccess)
+    .innerJoin(reviewLink, eq(reviewLink.id, reviewLinkAccess.reviewLinkId))
+    .where(linksOfKind(kind))
+    .orderBy(asc(reviewLinkAccess.accessedAt))
     .all();
 
 /** The whole audit log, oldest first. */

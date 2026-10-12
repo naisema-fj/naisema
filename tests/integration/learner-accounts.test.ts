@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import { getDb } from "~/lib/db.server";
-import { handleInactiveLearners } from "~/lib/learner-records.server";
+import { handleInactiveLearners, sha256Hex } from "~/lib/learner-records.server";
 import {
   approvedLayer,
   layerRow,
@@ -600,10 +600,10 @@ describe("a learner's data", () => {
     ).toBeNull();
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(learner.userId));
     const hash = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-    const ledger = await env.DB.prepare("SELECT reason FROM deletion_ledger WHERE subject_hash = ?1")
-      .bind(hash)
-      .first();
-    expect(ledger).toEqual({ reason: "learner.deleted" });
+    // The deletion ledger is in its own bucket, away from the database, and holds only the hash.
+    const entry = await (await env.LEDGER.get(`learner/${hash}`))?.text();
+    expect(JSON.parse(entry as string)).toMatchObject({ reason: "learner.deleted" });
+    expect(entry).not.toContain(learner.userId);
     // The audit log records the deletion by the same hash, never the account's ID or address.
     const audited = await env.DB.prepare(
       "SELECT actor_id AS actorId, object_type AS type, details FROM audit_event WHERE action = 'learner_account.deleted' AND object_id = ?1",
@@ -611,8 +611,6 @@ describe("a learner's data", () => {
       .bind(hash)
       .first();
     expect(audited).toEqual({ actorId: null, type: "learner_account", details: '{"reason":"Deleted by the learner"}' });
-    await expect(env.DB.prepare("UPDATE deletion_ledger SET reason = 'x'").run()).rejects.toThrow();
-    await expect(env.DB.prepare("DELETE FROM deletion_ledger").run()).rejects.toThrow();
     expect((await learner.browser.fetch(`${PUBLIC}/account`)).headers.get("Location")).toBe("/account/sign-in");
   }, 20_000);
 });
@@ -641,9 +639,8 @@ describe("inactive Learner Accounts", () => {
 
     expect(await env.DB.prepare("SELECT id FROM user WHERE id = ?1").bind(idle.userId).first()).toBeNull();
     expect(await count("learner_account", returning.userId)).toBe(1);
-    const ledger = await env.DB.prepare("SELECT count(*) AS n FROM deletion_ledger WHERE reason = 'learner.inactive'")
-      .bind()
-      .first<{ n: number }>();
-    expect(ledger?.n).toBeGreaterThan(0);
+    const idleHash = await sha256Hex(idle.userId);
+    expect(await (await env.LEDGER.get(`learner/${idleHash}`))?.json()).toMatchObject({ reason: "learner.inactive" });
+    expect(await env.LEDGER.head(`learner/${await sha256Hex(returning.userId)}`)).toBeNull();
   });
 });

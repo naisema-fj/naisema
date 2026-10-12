@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   type AnySQLiteColumn,
+  check,
   index,
   integer,
   primaryKey,
@@ -320,6 +321,16 @@ export const reviewApproval = sqliteTable(
     /** How the Knowledge Holder gave their approval (in person, by phone…). */
     knowledgeHolderMethod: text("knowledge_holder_method"),
     conditions: text("conditions"),
+    /**
+     * A Knowledge Holder Approval: the Review Link they saw this Revision through, and any private
+     * evidence of their approval (the same columns a Learning Layer's approvals have). Approvals
+     * recorded before Review Links covered Content Items have neither.
+     */
+    reviewLinkId: text("review_link_id").references((): AnySQLiteColumn => reviewLink.id),
+    evidenceAssetId: text("evidence_asset_id").references((): AnySQLiteColumn => mediaAsset.id),
+    evidenceKey: text("evidence_key"),
+    evidenceName: text("evidence_name"),
+    evidenceType: text("evidence_type"),
     carriedForwardFromId: text("carried_forward_from_id").references((): AnySQLiteColumn => reviewApproval.id),
     decidedAt: integer("decided_at", { mode: "timestamp_ms" }).notNull(),
   },
@@ -965,9 +976,10 @@ export const reviewLink = sqliteTable(
   "review_link",
   {
     id: text("id").primaryKey(),
-    revisionId: text("revision_id")
-      .notNull()
-      .references(() => learningLayerRevision.id),
+    /** The Learning Layer Revision it shows. Exactly one of this and `contentRevisionId` is set. */
+    revisionId: text("revision_id").references(() => learningLayerRevision.id),
+    /** The Content Item Revision (an article, Episode, Video…) it shows. */
+    contentRevisionId: text("content_revision_id").references((): AnySQLiteColumn => revision.id),
     tokenHash: text("token_hash").notNull(),
     /** Who it was made for, in the editor's words. */
     recipient: text("recipient").notNull(),
@@ -980,6 +992,8 @@ export const reviewLink = sqliteTable(
   (table) => [
     uniqueIndex("review_link_token_idx").on(table.tokenHash),
     index("review_link_revision_idx").on(table.revisionId),
+    index("review_link_content_revision_idx").on(table.contentRevisionId),
+    check("review_link_one_revision", sql`(${table.revisionId} IS NULL) != (${table.contentRevisionId} IS NULL)`),
   ],
 );
 
@@ -1223,19 +1237,6 @@ export const learnerSignInLink = sqliteTable(
   },
   (table) => [index("learner_sign_in_link_email_idx").on(table.emailHash, table.sentAt)],
 );
-
-/**
- * The deletion ledger (ADR-0009): who was deleted, as a hash of their user ID, so a restored backup
- * can delete them again. Only added to; a trigger refuses changes. Replaying it is #34's.
- */
-export const deletionLedger = sqliteTable("deletion_ledger", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  /** SHA-256 of the user ID. */
-  subjectHash: text("subject_hash").notNull(),
-  /** Why: "learner.deleted" (they asked) or "learner.inactive". */
-  reason: text("reason").notNull(),
-  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }).notNull(),
-});
 
 // --- Monitoring (docs/handover/runbook.md, monitoring and alerts) ---
 

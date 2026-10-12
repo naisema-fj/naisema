@@ -158,7 +158,7 @@ Learner Accounts are optional and for adults only (decision log 1a-17). On the p
 
 - **The learning page** is `/account`: carry on learning, saved videos and words, a JSON download (`/account/export`), clear history, delete the account and sign out. It is never cached or indexed.
 - **Saving progress.** The player puts every change into a queue in the browser's IndexedDB and sends it to `/account/events` in batches (`app/lib/progress-queue.ts`, with its IndexedDB and fetch adapters in `app/lib/progress-queue.client.ts`). The player reaches it through the account store (`app/lib/learner-store.ts`); a visitor's tab store keeps the same changes in `sessionStorage` instead. Until the server acknowledges a change, the player says "Not yet saved". A change sent twice is applied once (`learner_event`).
-- **Deleting.** An account deleted by its owner, or for being inactive, is removed at once from every table, and a SHA-256 hash of its user ID is added to `deletion_ledger`, which refuses changes. Restoring a backup must replay that ledger before the site serves traffic (ADR-0009, #34).
+- **Deleting.** An account deleted by its owner, or for being inactive, is removed at once from every table, and a SHA-256 hash of its user ID is added to the deletion ledger, which is kept in its own bucket (Backups and restoring, below). Restoring a backup replays that ledger before the site serves traffic (ADR-0009).
 - **Inactive accounts.** The daily `learner-accounts` job emails a warning to accounts unused for 700 days, and deletes them 30 days later unless they were used in between. Any visit while signed in counts as use.
 
 If a learner says sign-in emails don't arrive, check `email_failure` for failed sends ("Your NAISEMA sign-in link"), and remember the limit of three links per address every 15 minutes. Locally, read the link from `email_outbox` as for staff, and open it on `http://localhost:5173`.
@@ -242,7 +242,7 @@ A report, rights concern or data request becomes a restricted Case (`app/lib/cas
   - Only someone else can decide the appeal, which closes the Case. The person is told whether the decision stands.
   - With one safeguarding lead, appeals wait for the backup (launch blocker #5).
 - **Restricted evidence:** the case team can add a PDF or image of at most 10 MB. It is quarantined and scanned like any upload, kept in `EVIDENCE`, and downloaded as a sandboxed attachment, by the case team only.
-- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Learners with an account download and delete their own data on the learning page (#33). The contacts export (Exports, below) gives the privacy contact every Submission and Consent Record at once, for a stated purpose. Replaying the deletion ledger after a restore comes with #34.
+- **Data requests in 1a:** the privacy contact sees the Submissions and Consent Records held for the requester's address on the Case. They export or delete by hand and record what they did. Learners with an account download and delete their own data on the learning page (#33). The contacts export (Exports, below) gives the privacy contact every Submission and Consent Record at once, for a stated purpose. Anything deleted by hand for a data request is added to the deletion ledger too (Backups and restoring, below), so a restore doesn't bring it back.
 
 ## The audit log and exports
 
@@ -313,6 +313,10 @@ The Expression library is at `/admin/expressions`, linked from **Learning Layers
 
 Educators see only the Learning Layers they are assigned to, under **Learning Layers** on the staff home page.
 
+### Review Links for articles, Episodes, Videos and other Content Items
+
+An editor can share an exact Content Item Revision with a Knowledge Holder the same way. On the Revision's page (`/admin/articles/<id>/revisions/<n>`), once it is submitted, **Review Links** issues a link for a named person; the page shows the Revision as the staff page does, plays an Episode's audio or a Video's footage while the link is active and the item's Publish right stands, and is watermarked, uncached and unindexed. A Knowledge Holder Approval on a flagged Revision then needs the link they saw it through (it must have been opened) and may carry evidence (PDF or image, scanned, kept privately for editors). Everything else is as for Learning Layers, below. The code is in `review-links.server.ts`, `review-link-content.server.ts` and `review.server.ts`.
+
 ### Reviewing and publishing a Learning Layer
 
 The code is in `app/lib/review.server.ts` (review, shared with Content Items), `layer-review.server.ts` (what is Learning Layers' own), `publication.server.ts`, `visibility.server.ts` (eligibility and what is public), `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.
@@ -360,10 +364,78 @@ Each deploy builds with `CLOUDFLARE_ENV=<env>`, applies pending D1 migrations wi
 
 To preview a deploy locally without publishing: `CLOUDFLARE_ENV=staging pnpm build && pnpm wrangler deploy --dry-run`.
 
+## Backups and restoring
+
+Three layers protect the database (TECH-04, ADR-0009). Owner: the technical owner, and their backup once named (#6).
+
+| Layer | What it is | Kept | Use it for |
+| --- | --- | --- | --- |
+| D1 Time Travel | Point-in-time recovery, always on | 30 days | The usual restore: undo a bad migration or a bad day, to the minute |
+| Nightly backup | The database's data as SQL, encrypted, in the private `naisema-<env>-backups` R2 bucket (`d1/<date>T<time>Z.sql.enc`) | 35 days | A copy that doesn't depend on D1: Time Travel gone or the database lost |
+| Deletion ledger | Hashes of deleted learners' user IDs, and the IDs of other deleted records, in the private `naisema-<env>-ledger` R2 bucket | For ever | Deleting again whoever a restore brings back |
+
+A restore always ends with the ledger replayed. Original video files are not in the database or its backups; see "Source masters" below.
+
+### Setting it up, once per environment
+
+1. **Buckets.** `pnpm wrangler r2 bucket create naisema-<env>-backups --location oc` and the same for `naisema-<env>-ledger` (a deploy fails until both exist).
+2. **Lock the ledger.** The app never deletes ledger entries; a lock rule stops anyone else doing it by mistake: `pnpm wrangler r2 bucket lock add naisema-<env>-ledger --name keep-entries --prefix learner/ --retention-indefinite` and again with `--prefix object/`. (Run `pnpm wrangler r2 bucket lock add --help` if the options have moved.) The `state/` prefix is left unlocked: the restore lock lives there.
+3. **Encryption key.** `openssl rand -base64 32`, then `pnpm wrangler secret put BACKUP_ENCRYPTION_KEY --env <env>`. **Keep a copy of the key in the NAISEMA password manager, apart from Cloudflare**: a backup is unreadable without it, and the key is not recoverable from Cloudflare. Rotating it (as in "Rotating a secret") means backups made before the change still need the old key, so keep old keys until those backups expire (35 days). The label of the key that sealed each backup is in its object metadata (`keyLabel`).
+4. **Alerts.** Nothing more: the hourly monitor watches the `backup` job like the others, and emails `ALERT_EMAILS` if the last backup failed or none has run for 26 hours (Monitoring and alerts).
+5. **First backup.** The backup runs at 14:20 UTC (02:20 in Fiji). To check it sooner, trigger the cron from the Cloudflare dashboard (Workers › naisema-<env> › Settings › Triggers), then look at `/admin/restore`.
+
+### What the nightly backup holds
+
+- Every table's data, as `INSERT OR REPLACE` statements, in one file named for the minute it started. It does not hold the schema: that comes from the migrations. The file's first lines say which migration it was taken at.
+- Not held: sessions and unused sign-in links (a restore signs everyone out), the migration bookkeeping table, and the full-text search index (D1's own export refuses a database with a full-text table, which is why the Worker writes the dump itself). The index refills as the search entries load.
+- The site stays live while it is written, so the file is not one instant. Time Travel is the exact copy. If a table changed while the dump ran, loading it can fail on a foreign key; take Time Travel or the next night's backup instead.
+- Each backup is cut into 5 MiB chunks, each sealed with AES-256-GCM (`app/lib/backup-crypto.ts`). One that is changed or cut short won't decrypt.
+- Cost: backups are small; R2 storage for 35 of them is cents a month.
+
+### Restoring
+
+Use Time Travel unless it can't help (it holds 30 days and only the database that is still there). Either way:
+
+1. **Close the public site.** `pnpm restore:lock --env <env>`. Visitors get "back shortly" (503) and the scheduled jobs wait. It takes up to ten seconds to reach every Worker. The staff site stays up for step 4.
+2. **Restore the database.**
+   - *Time Travel:* `pnpm wrangler d1 time-travel info naisema-<env>` to see the available points, then `pnpm wrangler d1 time-travel restore naisema-<env> --timestamp <ISO time>`. Time Travel restores the schema and data together; skip to step 4.
+   - *From a nightly backup, into the same database or a new one:*
+     1. Download the file: `pnpm wrangler r2 object get naisema-<env>-backups/d1/<name>.sql.enc --file backup.sql.enc --remote`.
+     2. Decrypt it: `BACKUP_ENCRYPTION_KEY=<key> pnpm backup:decrypt backup.sql.enc backup.sql`. A "wouldn't decrypt" error means the wrong key or a damaged file.
+     3. Read the first lines of `backup.sql`: they say which migration it was taken at. The database must be empty and migrated to that point (a new database: `pnpm wrangler d1 create`, put its ID in `wrangler.jsonc`, then `pnpm wrangler d1 migrations apply DB --remote --env <env>`). To empty the existing database instead, create a fresh one: don't drop tables by hand.
+     4. Load it: `pnpm wrangler d1 execute DB --remote --env <env> --file backup.sql`. Rows the migrations seeded (such as the consent notices) are replaced by the backup's.
+     5. If the restore moved to a new database, deploy so the Worker uses it (`wrangler.jsonc`, `d1_databases`).
+     6. Delete `backup.sql` and `backup.sql.enc` from your computer.
+3. **Run the migrations the code expects**, if the backup is older than the deployed code: `pnpm wrangler d1 migrations apply DB --remote --env <env>`.
+4. **Replay the deletion ledger and reopen.** Sign in to the staff site as an administrator, open **Backups and restoring** (`/admin/restore`) and press the button. It deletes again every learner and record in the ledger that the restore brought back, writes the result to the audit log, and reopens the public site. If the ledger names a kind of record the replay can't delete, the site stays closed and the page says which: delete those records by hand, then press the button again. (Locked out of the staff site: `pnpm wrangler r2 object delete naisema-<env>-ledger/state/restore-lock --remote` reopens the site, but the ledger has not been replayed, so replay it as soon as you can sign in.)
+5. **Check.** Open the public site and search; sign in to the staff site; a learner who deleted their account can't sign back in to their old data; `/admin/audit` shows `restore.replayed`.
+6. **Search.** The full-text index refills as the backup loads. If search results look wrong, republish nothing: the next change to an item reindexes it, and the daily job reindexes items whose rights expired.
+
+The ledger is also replayed every day by the learner-accounts job, so a deletion that was recorded but not carried out (the ledger is written first) is finished the next morning.
+
+### Recording a deletion made by hand
+
+Learners delete themselves and the ledger records it. For a record deleted by a person (for example a Consent Record, on a data request), add its entry before restoring anything, so no restore brings it back:
+
+```sh
+echo '{"reason":"object.deleted"}' > entry.json
+pnpm wrangler r2 object put naisema-<env>-ledger/object/consent_record/<record id> --file entry.json --remote
+```
+
+The replay knows `consent_record` (`REPLAYABLE_OBJECTS` in `app/lib/restore.server.ts`); add a table there, with a test, before recording another kind. Record IDs are random, never names or addresses.
+
+### Source masters
+
+Original video files are in the `naisema-<env>-video-masters` bucket (ADR-0008) and are in neither Time Travel nor the nightly backup, which hold the database only. The bucket keeps no second copy. Recovery therefore means asking whoever supplied the original for it again, and uploading it again; Stream's processed copy keeps playing meanwhile. Rights Records and the Videos' details are in the database and come back with it. Whether to keep a second copy of masters (for example a periodic copy to storage outside Cloudflare) is for the founder to decide before launch; it is not built.
+
+### Drills and targets
+
+The targets are RPO ≤ 24 hours (the nightly backup; Time Travel is finer) and RTO ≤ 8 hours, as amended in the decision log (#9). `docs/handover/restore-drill.md` is the checklist for the drill on staging, with a table for the timings. Repeat the drill after any change to the backup, and once a year.
+
 ## Roll back
 
 - **Code:** `pnpm wrangler rollback --env <env>` returns the Worker to its previous version (or pick one with `pnpm wrangler deployments list --env <env>`). Run it with the environment's scoped token.
-- **Data:** D1 migrations are not rolled back automatically. Use D1 Time Travel (`pnpm wrangler d1 time-travel restore naisema-<env> --timestamp <ISO time>`) to restore the database to a point before the problem, then replay the deletion ledger once it exists (ADR-0009, issue #34).
+- **Data:** D1 migrations are not rolled back automatically. Use D1 Time Travel (`pnpm wrangler d1 time-travel restore naisema-<env> --timestamp <ISO time>`) to restore the database to a point before the problem, then replay the deletion ledger (Backups and restoring, below; ADR-0009).
 
 ## Secrets
 
@@ -384,7 +456,7 @@ Owner: the technical owner, and their backup once named (#6). What watches what:
 | What | How | Who hears |
 | --- | --- | --- |
 | Uptime | An external uptime monitor requests public URLs only (ADR-0012) | Technical owner, from the monitor service |
-| Error rate, failed email sends, Video Assets that failed Stream processing, failed or stalled scheduled jobs | The hourly monitor (`app/lib/monitor.server.ts`, cron `5 * * * *`) | `ALERT_EMAILS` |
+| Error rate, failed email sends, Video Assets that failed Stream processing, failed or stalled scheduled jobs (the daily jobs and the nightly backup) | The hourly monitor (`app/lib/monitor.server.ts`, cron `5 * * * *`) | `ALERT_EMAILS` |
 | Monthly media cost | The daily usage job records it; `/admin/usage` shows it; an email when the month is on course for 50% and then 80% of the AUD 100 ceiling | `ALERT_EMAILS` and every administrator |
 | Logs | Workers Observability, redacted by the app before logging | Read in the Cloudflare dashboard |
 

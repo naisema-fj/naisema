@@ -148,6 +148,20 @@
       "when": 1791260867057,
       "tag": "0020_audit_log_append_only",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1791836136634,
+      "tag": "0021_deletion_ledger_moves_to_r2",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "6",
+      "when": 1791839439701,
+      "tag": "0022_review_links_for_content_items",
+      "breakpoints": true
     }
   ]
 }

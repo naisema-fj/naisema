@@ -1,6 +1,7 @@
-import { env } from "cloudflare:test";
+import { env, SELF } from "cloudflare:test";
 import { describe, expect, it } from "vitest";
 import {
+  act,
   approve,
   body,
   languageReviewerRole,
@@ -77,6 +78,30 @@ describe("the Rights Record and approvals exports", () => {
       approvals.contentItems as { approvals: { reviewType: string; decision: string; reviewerId: string }[] }
     ).approvals.filter((approval) => approval.reviewerId === reviewer.userId);
     expect(decided).toEqual([expect.objectContaining({ reviewType: "language", decision: "approved" })]);
+  });
+});
+
+describe("the approvals export and Review Links", () => {
+  it("lists a Content Item's Review Links and openings, never their tokens", async () => {
+    const { editor, article } = await submittedArticle(["sensitiveCultural"]);
+    const issued = await act(editor, article.id, 1, { intent: "issueLink", recipient: "Ratu Joni" });
+    const path = new URL((await issued.text()).match(/https?:\/\/[^"<\s]+\/review\/[A-Za-z0-9_-]+/)?.[0] as string)
+      .pathname;
+    await SELF.fetch(`https://naisema.test${path}`);
+
+    const approvals = await exported(editor, { kind: "approvals" });
+    const { reviewLinks, reviewLinkOpenings } = approvals.contentItems as {
+      reviewLinks: { id: string; revisionId: string; recipient: string }[];
+      reviewLinkOpenings: { reviewLinkId: string; outcome: string }[];
+    };
+
+    const revision = await env.DB.prepare("SELECT id FROM revision WHERE content_item_id = ?1 AND number = 1")
+      .bind(article.id)
+      .first<{ id: string }>();
+    const link = reviewLinks.find((candidate) => candidate.revisionId === revision?.id);
+    expect(link).toMatchObject({ recipient: "Ratu Joni" });
+    expect(link).not.toHaveProperty("tokenHash");
+    expect(reviewLinkOpenings).toContainEqual(expect.objectContaining({ reviewLinkId: link?.id, outcome: "viewed" }));
   });
 });
 

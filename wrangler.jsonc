@@ -15,7 +15,8 @@
   "observability": { "enabled": true, "redact_query_string": true, "logs": { "invocation_logs": false } },
   // Daily at 19:45 UTC (07:45 in Fiji): the daily job (workers/app.ts), from Rights Record expiry
   // warnings to the media usage report. Hourly at five past: the monitor (app/lib/monitor.server.ts).
-  "triggers": { "crons": ["45 19 * * *", "5 * * * *"] },
+  // Daily at 14:20 UTC (02:20 in Fiji, when the site is quietest): the backup (app/lib/backup.server.ts).
+  "triggers": { "crons": ["45 19 * * *", "5 * * * *", "20 14 * * *"] },
   "upload_source_maps": true,
   // Local development and tests: the staff admin site answers on admin.localhost, and email is
   // written to the email_outbox table instead of being sent.
@@ -87,7 +88,11 @@
     // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
     { "binding": "QUARANTINE", "bucket_name": "naisema-dev-quarantine" },
     // Video masters, NAISEMA's originals, private; Stream copies each from a pre-signed address (ADR-0008).
-    { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-dev-video-masters" }
+    { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-dev-video-masters" },
+    // Nightly D1 backups, encrypted, kept 35 days (app/lib/backup.server.ts).
+    { "binding": "BACKUPS", "bucket_name": "naisema-dev-backups" },
+    // The deletion ledger (ADR-0009): kept apart from the database it governs, never expired.
+    { "binding": "LEDGER", "bucket_name": "naisema-dev-ledger" }
   ],
   "env": {
     "staging": {
@@ -115,7 +120,9 @@
         "VIDEO_MASTERS_BUCKET": "naisema-staging-video-masters"
       },
       "send_email": [{ "name": "EMAIL" }],
-      "secrets": { "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY"] },
+      "secrets": {
+        "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "BACKUP_ENCRYPTION_KEY"]
+      },
       "d1_databases": [
         {
           "binding": "DB",
@@ -153,7 +160,11 @@
         // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
         { "binding": "QUARANTINE", "bucket_name": "naisema-staging-quarantine" },
         // Video masters, NAISEMA's originals, private; Stream copies each from a pre-signed address (ADR-0008).
-        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-staging-video-masters" }
+        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-staging-video-masters" },
+        // Nightly D1 backups, encrypted, kept 35 days (app/lib/backup.server.ts).
+        { "binding": "BACKUPS", "bucket_name": "naisema-staging-backups" },
+        // The deletion ledger (ADR-0009): kept apart from the database it governs, never expired.
+        { "binding": "LEDGER", "bucket_name": "naisema-staging-ledger" }
       ]
     },
     "production": {
@@ -172,7 +183,13 @@
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": {
-        "required": ["BETTER_AUTH_SECRET", "TURNSTILE_SITE_KEY", "TURNSTILE_SECRET_KEY", "BUTTONDOWN_API_KEY"]
+        "required": [
+          "BETTER_AUTH_SECRET",
+          "TURNSTILE_SITE_KEY",
+          "TURNSTILE_SECRET_KEY",
+          "BUTTONDOWN_API_KEY",
+          "BACKUP_ENCRYPTION_KEY"
+        ]
       },
       "d1_databases": [
         {
@@ -211,7 +228,11 @@
         // Every upload lands here first, private, until ClamAV passes it (ADR-0010).
         { "binding": "QUARANTINE", "bucket_name": "naisema-production-quarantine" },
         // Video masters, NAISEMA's originals, private; Stream copies each from a pre-signed address (ADR-0008).
-        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-production-video-masters" }
+        { "binding": "VIDEO_MASTERS", "bucket_name": "naisema-production-video-masters" },
+        // Nightly D1 backups, encrypted, kept 35 days (app/lib/backup.server.ts).
+        { "binding": "BACKUPS", "bucket_name": "naisema-production-backups" },
+        // The deletion ledger (ADR-0009): kept apart from the database it governs, never expired.
+        { "binding": "LEDGER", "bucket_name": "naisema-production-ledger" }
       ]
     }
   }

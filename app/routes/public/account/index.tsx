@@ -72,7 +72,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
       requireOwnRecords(learner, "learnerRecord.delete");
       const headers = await signOutLearner(env, request);
-      await deleteLearnerAccount(learner.db, learner.userId, "learner.deleted");
+      await deleteLearnerAccount(env, learner.db, learner.userId, "learner.deleted");
       throw redirect(`${LEARNER_PATHS.signIn}?deleted`, { headers });
     }
   }

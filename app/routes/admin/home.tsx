@@ -18,6 +18,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     email: user.email,
     canManageStaff: can(actor, { action: "role.assign" }),
     canReadUsage: can(actor, { action: "usage.read" }),
+    canRestore: can(actor, { action: "restore.run" }),
     canReadAudit: can(actor, { action: "audit.read" }),
     canExport: EXPORT_KINDS.some((kind) => can(actor, { action: "export.run", kind })),
     canEditContent: can(actor, { action: "content.edit" }),
@@ -115,6 +116,11 @@ export default function AdminHome({ loaderData }: Route.ComponentProps) {
       {loaderData.canReadUsage && (
         <p>
           <a href="/admin/usage">Usage and costs</a>
+        </p>
+      )}
+      {loaderData.canRestore && (
+        <p>
+          <a href="/admin/restore">Backups and restoring</a>
         </p>
       )}
       {loaderData.canExport && (

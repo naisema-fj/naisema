@@ -1,5 +1,6 @@
 import { createRequestHandler, RouterContextProvider } from "react-router";
 import { AUTH_BASE_PATH, createAuth, createLearnerAuth, LEARNER_AUTH_BASE_PATH } from "~/lib/auth.server";
+import { runBackup } from "~/lib/backup.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { platformMetrics } from "~/lib/cloudflare-metrics.server";
 import { getDb } from "~/lib/db.server";
@@ -8,6 +9,7 @@ import { logError, logInfo } from "~/lib/log.server";
 import type { ScanMessage } from "~/lib/media.server";
 import { recordServerError, runJob, runMonitor } from "~/lib/monitor.server";
 import { servePublic } from "~/lib/public-cache.server";
+import { replayDeletionLedger, restoreInProgress } from "~/lib/restore.server";
 import { sendExpiryWarnings } from "~/lib/rights-expiry.server";
 import { DAY_MS } from "~/lib/rights-rules";
 import { containerScanner, handleScanBatch, tidyQuarantine } from "~/lib/scan.server";
@@ -23,6 +25,7 @@ const requestHandler = createRequestHandler(() => import("virtual:react-router/s
 /** The crons, as wrangler.jsonc `triggers` lists them. */
 const DAILY_CRON = "45 19 * * *";
 const MONITOR_CRON = "5 * * * *";
+const BACKUP_CRON = "20 14 * * *";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
@@ -90,6 +93,15 @@ async function route(request: Request, env: Env, ctx: ExecutionContext): Promise
   if (isAdminPath(path) && !onAdminHost) {
     return new Response("Not found", { status: 404 });
   }
+  // A restore is under way: the public site waits, so no one sees people the ledger deletes
+  // (ADR-0009). Staff reach the restore page on the admin host to finish it.
+  if (!onAdminHost && (await restoreInProgress(env))) {
+    return new Response("NAISEMA is being restored from a backup and will be back shortly.", {
+      status: 503,
+      headers: { "Retry-After": "300", "Cache-Control": "no-store" },
+    });
+  }
+
   if (onAdminHost) {
     if (!SAFE_METHODS.has(request.method) && request.headers.get("Origin") !== url.origin) {
       return new Response("Cross-site request refused", { status: 403 });
@@ -131,13 +143,22 @@ export default {
    * masters never sent are sent. Beside it, each as its own job so a problem in one doesn't hide
    * how the others went: the month's media usage is recorded (VAC-10), and Learner Accounts' old
    * event IDs and link counts are forgotten and inactive accounts warned or deleted
-   * (app/lib/learner-records.server.ts). Awaited, so a failed run shows as failed.
+   * (app/lib/learner-records.server.ts), and the deletion ledger is applied again in case a
+   * deletion was recorded but not carried out (app/lib/restore.server.ts). Awaited, so a failed
+   * run shows as failed. Nightly: the backup (app/lib/backup.server.ts). Nothing but the monitor
+   * runs while a restore is under way.
    */
   async scheduled(controller, env) {
     const now = new Date(controller.scheduledTime);
     const db = getDb(env.DB);
     if (controller.cron === MONITOR_CRON) {
       await runMonitor(env, now);
+    } else if (await restoreInProgress(env, Date.now())) {
+      return;
+    } else if (controller.cron === BACKUP_CRON) {
+      await runJob(db, "backup", now, async () => {
+        await runBackup(env, now);
+      });
     } else if (controller.cron === DAILY_CRON) {
       const daily = runJob(db, "daily", now, async () => {
         await sendExpiryWarnings(env, now);
@@ -149,6 +170,7 @@ export default {
       const learners = runJob(db, "learner-accounts", now, async () => {
         await tidyLearnerRecords(db, now);
         await handleInactiveLearners(env, db, now);
+        await replayDeletionLedger(env, db);
       });
       const failed = (await Promise.allSettled([daily, usage, learners])).flatMap((result) =>
         result.status === "rejected" ? [result.reason] : [],

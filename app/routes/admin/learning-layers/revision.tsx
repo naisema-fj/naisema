@@ -1,5 +1,6 @@
-import { data, Form, redirect } from "react-router";
+import { data, redirect } from "react-router";
 import { LayerRevisionView } from "~/components/layer-revision-view";
+import { ReviewLinksSection } from "~/components/review-links-section";
 import { ReviewPanel } from "~/components/review-panel";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
@@ -36,8 +37,6 @@ export function meta({ loaderData }: Route.MetaArgs) {
   ];
 }
 
-const LINK_STATES = { active: "Active", expired: "Expired", revoked: "Revoked" } as const;
-
 /**
  * GET /admin/learning-layers/:id/revisions/:number — one Learning Layer Revision, exactly as saved,
  * with its review and publishing: submitting, assigning reviewers, decisions, Review Links,
@@ -68,13 +67,16 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
         status,
         decisionId: decision?.id ?? null,
       })),
-      approvals: review.approvals.map((approval) => ({
-        ...approval,
-        evidence:
-          approval.evidenceName && canReadEvidence
-            ? { name: approval.evidenceName, href: `/admin/learning-layers/approvals/${approval.id}/evidence` }
-            : null,
-      })),
+      // The evidence's key and name are for editors only, like the file itself.
+      approvals: review.approvals.map(
+        ({ evidenceAssetId: _asset, evidenceKey: _key, evidenceName, evidenceType: _type, ...approval }) => ({
+          ...approval,
+          evidence:
+            evidenceName && canReadEvidence
+              ? { name: evidenceName, href: `/admin/learning-layers/approvals/${approval.id}/evidence` }
+              : null,
+        }),
+      ),
       assignments: review.assignments,
       publicationState: review.layer.publicationState,
       publishedNumber: published?.number ?? null,
@@ -214,88 +216,17 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
       />
 
       {links && (
-        <section aria-labelledby="links-heading">
-          <h2 id="links-heading">Review Links</h2>
-          <p>
-            A Review Link shows revision {number} exactly as it is, to someone without a staff account, such as a
-            Knowledge Holder. It needs no sign-in, can't change anything, lasts 14 days and is logged each time it is
-            opened.
-          </p>
-          {issued && (
-            <div role="status" className="issued-link">
-              <p>Review Link for {issued.recipient}. Copy it now: it won't be shown again.</p>
-              <p>
-                <code>{issued.url}</code>
-              </p>
-            </div>
-          )}
-          {links.length > 0 && (
-            <table>
-              <caption className="visually-hidden">Review Links to revision {number}</caption>
-              <thead>
-                <tr>
-                  <th scope="col">For</th>
-                  <th scope="col">Issued</th>
-                  <th scope="col">State</th>
-                  <th scope="col">Opened</th>
-                  <th scope="col">
-                    <span className="visually-hidden">Actions</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {links.map((link) => (
-                  <tr key={link.id}>
-                    <td>{link.recipient}</td>
-                    <td>
-                      {formatDay(link.createdAt)} by {link.issuedBy}
-                    </td>
-                    <td>
-                      {LINK_STATES[link.state]}
-                      {link.state === "active" && `, until ${formatDay(link.expiresAt)}`}
-                    </td>
-                    <td>
-                      {link.views === 0
-                        ? "Not yet"
-                        : `${link.views === 1 ? "Once" : `${link.views} times`}, last ${formatDay(link.lastViewedAt ?? link.createdAt)}`}
-                    </td>
-                    <td>
-                      {link.state === "active" && (
-                        <Form method="post" className="inline-form">
-                          <input type="hidden" name="intent" value="revokeLink" />
-                          <input type="hidden" name="linkId" value={link.id} />
-                          <button type="submit">
-                            Revoke<span className="visually-hidden"> the Review Link for {link.recipient}</span>
-                          </button>
-                        </Form>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          {loaderData.canIssueLinks && !loaderData.videoHasRights && (
-            <p className="field-error" id="link-rights-warning">
-              This Video has no Rights Record granting Publish yet. Share it only with people the rights holder has
-              agreed can see it.
-            </p>
-          )}
-          {loaderData.canIssueLinks ? (
-            <Form
-              method="post"
-              className="inline-form"
-              aria-describedby={loaderData.videoHasRights ? undefined : "link-rights-warning"}
-            >
-              <input type="hidden" name="intent" value="issueLink" />
-              <label htmlFor="link-recipient">Who it is for</label>
-              <input id="link-recipient" name="recipient" required maxLength={200} />
-              <button type="submit">Issue a Review Link</button>
-            </Form>
-          ) : (
-            <p>Submit revision {number} for review before sharing it.</p>
-          )}
-        </section>
+        <ReviewLinksSection
+          number={number}
+          links={links}
+          issued={issued}
+          canIssue={loaderData.canIssueLinks}
+          rightsWarning={
+            loaderData.videoHasRights
+              ? null
+              : "This Video has no Rights Record granting Publish yet. Share it only with people the rights holder has agreed can see it."
+          }
+        />
       )}
     </main>
   );
