@@ -80,8 +80,11 @@ export async function saveNewRevision(editor: Staff, article: { id: string; topi
   return currentRevision(article.id);
 }
 
-export function act(who: Staff, articleId: string, number: number, fields: Record<string, string>) {
-  return who.browser.fetch(`/admin/articles/${articleId}/revisions/${number}`, { form: fields });
+export function act(who: Staff, articleId: string, number: number, fields: Record<string, string> | FormData) {
+  return who.browser.fetch(
+    `/admin/articles/${articleId}/revisions/${number}`,
+    fields instanceof FormData ? { multipart: fields } : { form: fields },
+  );
 }
 
 export async function publication(articleId: string) {

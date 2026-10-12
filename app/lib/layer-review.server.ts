@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import {
   contentItem,
   learningLayer,
@@ -6,23 +6,21 @@ import {
   learningLayerEducator,
   learningLayerRevision,
   learningLayerSubmission,
+  reviewApproval,
   reviewLink,
-  reviewLinkAccess,
   revision,
 } from "~db/schema";
 import { recordAudit } from "./audit.server";
 import type { Database } from "./db.server";
-import { discardEvidence, scannedEvidence, storeEvidence } from "./evidence.server";
-import type { EvidenceFile } from "./evidence-file";
+import { scannedEvidence } from "./evidence.server";
 import { layerFlags } from "./layer-review-rules";
 import { type LearningLayerSnapshot, withDefaults } from "./learning-layer-fields";
 import { type Actor, can } from "./permissions";
 import {
-  type KnowledgeHolderDetails,
-  knowledgeHolderInserts,
-  knowledgeHolderRefusal,
+  type KnowledgeHolderApproval,
   LEARNING_LAYER_REVIEW,
   type ReviewActionResult,
+  recordKnowledgeHolderApproval,
   refuse,
   reviewAbilities,
   reviewCore,
@@ -175,68 +173,36 @@ export async function layersUsingVideoAsset(db: Database, videoAssetId: string) 
   }));
 }
 
-export type KnowledgeHolderApproval = KnowledgeHolderDetails & {
-  reviewLinkId: string;
-  evidence: EvidenceFile | null;
-};
-
-/**
- * An editor who didn't write or edit the Revision records a Knowledge Holder's approval of it: who
- * gave it, how, the Review Link they saw this exact Revision through (which must have been opened),
- * any conditions, and optional private evidence, which is quarantined and scanned like every upload
- * and refused if the approval can't be written.
- */
-export async function recordLayerKnowledgeHolderApproval(
+/** An editor records a Knowledge Holder's approval of this exact Learning Layer Revision (app/lib/review.server.ts). */
+export const recordLayerKnowledgeHolderApproval = (
   env: Env,
   db: Database,
   actor: Actor,
   review: LayerReview,
   approval: KnowledgeHolderApproval,
-): Promise<ReviewActionResult> {
-  const refused = await knowledgeHolderRefusal(db, actor, review, approval);
-  if (refused) return refused;
-  const link = await db.select().from(reviewLink).where(eq(reviewLink.id, approval.reviewLinkId)).get();
-  if (link?.revisionId !== review.revisionId) {
-    return refuse(`Choose the Review Link they saw revision ${review.number} through.`);
-  }
-  const opened = await db
-    .select({ id: reviewLinkAccess.id })
-    .from(reviewLinkAccess)
-    .where(and(eq(reviewLinkAccess.reviewLinkId, link.id), eq(reviewLinkAccess.outcome, "viewed")))
-    .get();
-  if (!opened) return refuse("That Review Link has never been opened, so it can't be how they saw this revision.");
-  const evidence = approval.evidence ? await storeEvidence(env, db, actor.userId, approval.evidence) : null;
-  try {
-    await db.batch([
-      ...knowledgeHolderInserts(db, actor, review, approval, {
-        values: {
-          reviewLinkId: link.id,
-          evidenceAssetId: evidence?.id ?? null,
-          evidenceKey: evidence?.destinationKey ?? null,
-          evidenceName: approval.evidence?.name ?? null,
-          evidenceType: approval.evidence?.type ?? null,
-        },
-        details: { reviewLinkId: link.id, evidence: evidence !== null },
-      }),
-    ]);
-  } catch (error) {
-    if (evidence) await discardEvidence(env, db, actor.userId, evidence, "Its Knowledge Holder Approval wasn't saved.");
-    throw error;
-  }
-  return { ok: true };
-}
+) => recordKnowledgeHolderApproval(env, db, actor, review, approval, "revisionId");
 
-/** A Knowledge Holder Approval's private evidence, for an editor, once its scan has passed. Each read is audited. */
-export async function readApprovalEvidence(env: Env, db: Database, actor: Actor, approvalId: string) {
+/**
+ * A Knowledge Holder Approval's private evidence, for an editor, once its scan has passed. Each read
+ * is audited. `kind` says whose approval it is: a Learning Layer's or a Content Item's.
+ */
+export async function readApprovalEvidence(
+  env: Env,
+  db: Database,
+  actor: Actor,
+  approvalId: string,
+  kind: "learningLayer" | "contentItem" = "learningLayer",
+) {
   if (!can(actor, { action: "approvalEvidence.read" })) return null;
-  const approval = await db.select().from(learningLayerApproval).where(eq(learningLayerApproval.id, approvalId)).get();
+  const table = kind === "learningLayer" ? learningLayerApproval : reviewApproval;
+  const approval = await db.select().from(table).where(eq(table.id, approvalId)).get();
   if (!approval?.evidenceKey) return null;
   const evidence = await scannedEvidence(env, db, approval.evidenceAssetId, approval.evidenceKey);
   if (!evidence || "unavailable" in evidence) return evidence;
   await recordAudit(db, {
     actorId: actor.userId,
     action: "approval_evidence.read",
-    objectType: "learning_layer_approval",
+    objectType: kind === "learningLayer" ? "learning_layer_approval" : "review_approval",
     objectId: approvalId,
   });
   return {

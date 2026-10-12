@@ -1,5 +1,5 @@
 import { applyD1Migrations, env, SELF } from "cloudflare:test";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { pruneBackups, runBackup } from "~/lib/backup.server";
 import { importBackupKey, openChunks } from "~/lib/backup-crypto";
 import { backupKey, isBackedUp } from "~/lib/backup-rules";

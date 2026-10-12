@@ -158,7 +158,18 @@ export async function learningLayerBundle(
     revision: revisions,
     revision_submission: await rowsWhereIn("revision_submission", "revision_id", revisionIds),
     review_assignment: await rowsOf("SELECT * FROM review_assignment WHERE content_item_id = ?1", videoId),
-    review_approval: await rowsWhereIn("review_approval", "revision_id", revisionIds, "decided_at"),
+    // The Video's own approvals are shared with a Video already there, and the Review Links they
+    // were seen through are not exported with them: they stay behind, as does their private evidence.
+    review_approval: (await rowsWhereIn("review_approval", "revision_id", revisionIds, "decided_at")).map(
+      (row): Row => ({
+        ...row,
+        review_link_id: null,
+        evidence_asset_id: null,
+        evidence_key: null,
+        evidence_name: null,
+        evidence_type: null,
+      }),
+    ),
     rights_record: rights,
     rights_record_contributor: rightsContributors,
     video_educator: videoEducators,

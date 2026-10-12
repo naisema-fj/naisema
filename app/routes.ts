@@ -36,6 +36,7 @@ export default [
   // Review Links: one exact Learning Layer Revision for a Knowledge Holder, never cached or indexed.
   route("review/:token", "routes/public/review-link.tsx"),
   route("review/:token/video", "routes/public/review-link-video.ts"),
+  route("review/:token/audio", "routes/public/review-link-audio.ts"),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
   // For the external uptime monitor (ADR-0012): never cached, reads D1.
@@ -70,6 +71,7 @@ export default [
     route("articles/:id/history", "routes/admin/articles/history.tsx"),
     route("articles/:id/revisions/:number", "routes/admin/articles/revision.tsx"),
     route("articles/:id/revisions/:number/audio", "routes/admin/articles/revision-audio.ts"),
+    route("articles/approvals/:approvalId/evidence", "routes/admin/articles/approval-evidence.tsx"),
     route("articles/:id/compare", "routes/admin/articles/compare.tsx"),
     route("articles/:id/rights", "routes/admin/articles/rights.tsx"),
     route("contributors", "routes/admin/contributors.tsx"),

@@ -10,6 +10,8 @@ import {
   learningLayerSubmission,
   reviewApproval,
   reviewAssignment,
+  reviewLink,
+  reviewLinkAccess,
   revision,
   revisionSubmission,
   roleAssignment,
@@ -20,6 +22,8 @@ import { auditInsert, recordAudit } from "./audit.server";
 import type { ContentType } from "./content-types";
 import type { Database } from "./db.server";
 import type { EpisodeDetails } from "./episode-fields";
+import { discardEvidence, storeEvidence } from "./evidence.server";
+import type { EvidenceFile } from "./evidence-file";
 import { mediaAssetIdsIn } from "./media-in-use";
 import { type Actor, can, REVIEW_TYPES, type ReviewType } from "./permissions";
 import { type PublicationState, REVIEW_NAMES } from "./review-names";
@@ -345,8 +349,25 @@ export async function loadReview(db: Database, revisionId: string) {
     facts,
     contentFacts,
   );
+  // A Knowledge Holder Approval also names the Review Link they saw the Revision through.
+  const linkIds = core.approvals.flatMap((approval) =>
+    (approval as ApprovalLink).reviewLinkId ? [(approval as ApprovalLink).reviewLinkId as string] : [],
+  );
+  const links = linkIds.length
+    ? await db
+        .select({ id: reviewLink.id, recipient: reviewLink.recipient })
+        .from(reviewLink)
+        .where(inArray(reviewLink.id, linkIds))
+    : [];
   return {
     ...core,
+    approvals: core.approvals.map((approval) => {
+      const stored = approval as typeof approval & ApprovalLink;
+      return {
+        ...stored,
+        reviewLinkRecipient: links.find((link) => link.id === stored.reviewLinkId)?.recipient ?? null,
+      };
+    }),
     contentItem: {
       id: row.item.id,
       type: row.item.type as ContentType,
@@ -362,6 +383,12 @@ export async function loadReview(db: Database, revisionId: string) {
     mediaAssetIds: mediaAssetIdsIn(content),
   };
 }
+
+/** The columns a Knowledge Holder Approval has for the Review Link it was seen through, and its evidence. */
+type ApprovalLink = Pick<
+  typeof reviewApproval.$inferSelect,
+  "reviewLinkId" | "evidenceAssetId" | "evidenceKey" | "evidenceName" | "evidenceType"
+>;
 
 export type Review = NonNullable<Awaited<ReturnType<typeof loadReview>>>;
 
@@ -733,16 +760,56 @@ export function knowledgeHolderInserts(
   ] as const;
 }
 
-/** An editor records a Knowledge Holder Approval on a Content Item Revision. */
+export type KnowledgeHolderApproval = KnowledgeHolderDetails & {
+  reviewLinkId: string;
+  evidence: EvidenceFile | null;
+};
+
+/**
+ * An editor who didn't write or edit the Revision records a Knowledge Holder's approval of it: who
+ * gave it, how, the Review Link they saw this exact Revision through (which must have been opened),
+ * any conditions, and optional private evidence, which is quarantined and scanned like every upload
+ * and refused if the approval can't be written. `seenThrough` names the Review Link column that
+ * holds this kind of Revision (a Learning Layer Revision's or a Content Item Revision's).
+ */
 export async function recordKnowledgeHolderApproval(
+  env: Env,
   db: Database,
   actor: Actor,
   review: ReviewCore,
-  approval: KnowledgeHolderDetails,
+  approval: KnowledgeHolderApproval,
+  seenThrough: "revisionId" | "contentRevisionId",
 ): Promise<ReviewActionResult> {
   const refused = await knowledgeHolderRefusal(db, actor, review, approval);
   if (refused) return refused;
-  await db.batch([...knowledgeHolderInserts(db, actor, review, approval)]);
+  const link = await db.select().from(reviewLink).where(eq(reviewLink.id, approval.reviewLinkId)).get();
+  if (link?.[seenThrough] !== review.revisionId) {
+    return refuse(`Choose the Review Link they saw revision ${review.number} through.`);
+  }
+  const opened = await db
+    .select({ id: reviewLinkAccess.id })
+    .from(reviewLinkAccess)
+    .where(and(eq(reviewLinkAccess.reviewLinkId, link.id), eq(reviewLinkAccess.outcome, "viewed")))
+    .get();
+  if (!opened) return refuse("That Review Link has never been opened, so it can't be how they saw this revision.");
+  const evidence = approval.evidence ? await storeEvidence(env, db, actor.userId, approval.evidence) : null;
+  try {
+    await db.batch([
+      ...knowledgeHolderInserts(db, actor, review, approval, {
+        values: {
+          reviewLinkId: link.id,
+          evidenceAssetId: evidence?.id ?? null,
+          evidenceKey: evidence?.destinationKey ?? null,
+          evidenceName: approval.evidence?.name ?? null,
+          evidenceType: approval.evidence?.type ?? null,
+        },
+        details: { reviewLinkId: link.id, evidence: evidence !== null },
+      }),
+    ]);
+  } catch (error) {
+    if (evidence) await discardEvidence(env, db, actor.userId, evidence, "Its Knowledge Holder Approval wasn't saved.");
+    throw error;
+  }
   return { ok: true };
 }
 
@@ -785,8 +852,20 @@ export function reviewAbilities(actor: Actor, review: ReviewCore, maySubmit: boo
 }
 
 /** What this person may do on a Content Item Revision's review. */
-export const contentReviewAbilities = (actor: Actor, review: Review) =>
-  reviewAbilities(actor, review, maySubmitContent(actor));
+export const contentReviewAbilities = (actor: Actor, review: Review) => ({
+  ...reviewAbilities(actor, review, maySubmitContent(actor)),
+  canShareLinks: can(actor, { action: "reviewLink.issue" }),
+  canReadEvidence: can(actor, { action: "approvalEvidence.read" }),
+});
+
+/** An editor records a Knowledge Holder's approval of this exact Content Item Revision. */
+export const recordContentKnowledgeHolderApproval = (
+  env: Env,
+  db: Database,
+  actor: Actor,
+  review: Review,
+  approval: KnowledgeHolderApproval,
+) => recordKnowledgeHolderApproval(env, db, actor, review, approval, "contentRevisionId");
 
 // --- Reviewers' queues ---
 

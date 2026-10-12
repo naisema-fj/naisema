@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ArticleSnapshot } from "~/lib/article-fields";
 import { MEDIA_TYPES } from "~/lib/creator-fields";
 import { distributionText, episodeSpeakers, formatDuration, transcriptParagraphs } from "~/lib/episode-fields";
@@ -15,12 +16,20 @@ export function RevisionTypeDetails({
   fileName,
   audioPath,
   sampleTitle = null,
+  player,
 }: {
   snapshot: ArticleSnapshot;
   fileName: string | null;
-  audioPath: string;
+  /** Where an audio Episode's recording plays from; null where it may not be played. */
+  audioPath: string | null;
   /** A Creator Profile's free sample, by its current title. */
   sampleTitle?: string | null;
+  /**
+   * The video player for a Video or a video Episode, where the page plays footage itself (a Review
+   * Link): the element to show, or null where the footage may not be played. Left out on the staff
+   * page, which has the media library's video page instead.
+   */
+  player?: ReactNode | null;
 }) {
   const { resource, episode, creator, video } = snapshot;
   if (video) {
@@ -31,6 +40,8 @@ export function RevisionTypeDetails({
           <dt>Footage</dt>
           <dd>{fileName ?? MISSING_FILE}</dd>
         </dl>
+        {player !== undefined &&
+          (player ?? <p>The video can't be played right now. Everything else here is as it will be reviewed.</p>)}
       </section>
     );
   }
@@ -90,13 +101,19 @@ export function RevisionTypeDetails({
     <section aria-labelledby="type-details-heading">
       <h2 id="type-details-heading">Episode</h2>
       {episode.videoAssetId ? (
-        <p>
-          A video Episode: <a href={`/admin/media/${episode.videoAssetId}/video`}>watch its video</a> in the media
-          library.
-        </p>
-      ) : (
+        player !== undefined ? (
+          (player ?? <p>The video can't be played right now. The transcript below is as it will be reviewed.</p>)
+        ) : (
+          <p>
+            A video Episode: <a href={`/admin/media/${episode.videoAssetId}/video`}>watch its video</a> in the media
+            library.
+          </p>
+        )
+      ) : audioPath ? (
         // biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the transcript below (WCAG 1.2.1).
         <audio controls preload="none" src={audioPath} aria-label="Audio of this revision" />
+      ) : (
+        <p>The recording can't be played right now. The transcript below is as it will be reviewed.</p>
       )}
       <dl>
         <dt>{episode.videoAssetId ? "Video file" : "Audio file"}</dt>

@@ -313,6 +313,10 @@ The Expression library is at `/admin/expressions`, linked from **Learning Layers
 
 Educators see only the Learning Layers they are assigned to, under **Learning Layers** on the staff home page.
 
+### Review Links for articles, Episodes, Videos and other Content Items
+
+An editor can share an exact Content Item Revision with a Knowledge Holder the same way. On the Revision's page (`/admin/articles/<id>/revisions/<n>`), once it is submitted, **Review Links** issues a link for a named person; the page shows the Revision as the staff page does, plays an Episode's audio or a Video's footage while the link is active and the item's Publish right stands, and is watermarked, uncached and unindexed. A Knowledge Holder Approval on a flagged Revision then needs the link they saw it through (it must have been opened) and may carry evidence (PDF or image, scanned, kept privately for editors). Everything else is as for Learning Layers, below. The code is in `review-links.server.ts`, `review-link-content.server.ts` and `review.server.ts`.
+
 ### Reviewing and publishing a Learning Layer
 
 The code is in `app/lib/review.server.ts` (review, shared with Content Items), `layer-review.server.ts` (what is Learning Layers' own), `publication.server.ts`, `visibility.server.ts` (eligibility and what is public), `layer-review-rules.ts` and `review-links.server.ts`. **Review and publishing** on the Learning Layer's page opens `/admin/learning-layers/<id>/revisions/<n>`, which shows that exact Revision.

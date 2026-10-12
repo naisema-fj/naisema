@@ -1,15 +1,17 @@
 import { data } from "react-router";
+import { ContentRevisionView } from "~/components/content-revision-view";
 import { LayerRevisionView } from "~/components/layer-revision-view";
 import { VideoPreview } from "~/components/video-preview";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { loadLayerReview } from "~/lib/layer-review.server";
 import { PRIVATE_NO_STORE } from "~/lib/public-cache.server";
+import { contentLinkPage } from "~/lib/review-link-content.server";
+import { reviewLinkPlayback } from "~/lib/review-link-playback.server";
 import { openReviewLink } from "~/lib/review-links.server";
 import { formatDay } from "~/lib/rights-rules";
 import { formatTimecode } from "~/lib/segment-rules";
 import { videoItem } from "~/lib/video-items.server";
-import { ProviderError, videoProvider } from "~/lib/video-provider.server";
 import { reviewLinkMayPlay } from "~/lib/visibility.server";
 import type { Route } from "./+types/review-link";
 
@@ -29,9 +31,9 @@ const CLOSED = {
 } as const;
 
 /**
- * GET /review/:token — one exact Learning Layer Revision, view-only and watermarked "Draft for
- * review", for someone without a staff account, such as a Knowledge Holder. Every opening is
- * logged, including those of expired and revoked links.
+ * GET /review/:token — one exact Revision, of a Learning Layer or of a Content Item, view-only and
+ * watermarked "Draft for review", for someone without a staff account, such as a Knowledge Holder.
+ * Every opening is logged, including those of expired and revoked links.
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
@@ -39,26 +41,19 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const opened = await openReviewLink(db, params.token);
   if (!opened.ok)
     return data({ open: false as const, ...CLOSED[opened.reason] }, { status: CLOSED[opened.reason].status });
-  const review = await loadLayerReview(db, opened.link.revisionId);
-  const video = review && (await videoItem(db, review.layer.contentItemId));
-  if (!review || !video) return data({ open: false as const, ...CLOSED.unknown }, { status: 404 });
-  // Footage whose rights were withdrawn, or on a Video hidden pending a Case, never plays here.
-  let playback: { src: string; hls: boolean } | null = null;
-  if (video.video.state === "ready" && video.video.providerId && (await reviewLinkMayPlay(db, video))) {
-    if (env.VIDEO_PROVIDER === "local") {
-      playback = { src: `/review/${params.token}/video`, hls: false };
-    } else {
-      try {
-        const signed = await videoProvider(env).playback(
-          { id: video.video.id, providerId: video.video.providerId },
-          new Date(),
-        );
-        playback = { src: signed.url, hls: signed.hls };
-      } catch (error) {
-        if (!(error instanceof ProviderError)) throw error;
-      }
-    }
+  const missing = () => data({ open: false as const, ...CLOSED.unknown }, { status: 404 });
+
+  if (opened.link.contentRevisionId) {
+    const page = await contentLinkPage(env, db, params.token, opened.link.contentRevisionId);
+    if (!page) return missing();
+    return { open: true as const, kind: "content" as const, expiresAt: opened.link.expiresAt, ...page };
   }
+
+  const review = opened.link.revisionId ? await loadLayerReview(db, opened.link.revisionId) : null;
+  const video = review && (await videoItem(db, review.layer.contentItemId));
+  if (!review || !video) return missing();
+  // Footage whose rights were withdrawn, or on a Video hidden pending a Case, never plays here.
+  let playback = (await reviewLinkMayPlay(db, video)) ? await reviewLinkPlayback(env, params.token, video.video) : null;
   // An Excerpt plays from its in time to its out time where the browser plays the file itself.
   const { excerpt } = review.snapshot;
   if (playback && excerpt && !playback.hls) {
@@ -66,6 +61,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   }
   return {
     open: true as const,
+    kind: "layer" as const,
     videoTitle: video.title,
     number: review.number,
     snapshot: review.snapshot,
@@ -84,6 +80,7 @@ export default function ReviewLink({ loaderData }: Route.ComponentProps) {
       </main>
     );
   }
+  if (loaderData.kind === "content") return <ContentLink page={loaderData} />;
   const { snapshot, playback } = loaderData;
   return (
     <main id="main" className="page review-link-page">
@@ -114,6 +111,49 @@ export default function ReviewLink({ loaderData }: Route.ComponentProps) {
         <p>The video can't be played right now. The words and Activities below are as they will be reviewed.</p>
       )}
       <LayerRevisionView snapshot={snapshot} languageVariety={loaderData.languageVariety} />
+      <p className="draft-watermark" role="note">
+        Draft for review
+      </p>
+    </main>
+  );
+}
+
+type ContentPage = Extract<Awaited<ReturnType<typeof loader>>, { open: true; kind: "content" }>;
+
+/** A Content Item Revision, as its staff page shows it, with its recording or video where they may play. */
+function ContentLink({ page }: { page: ContentPage }) {
+  const { snapshot, display, playback, audio } = page;
+  const player = page.hasFootage
+    ? playback && (
+        <VideoPreview
+          src={playback.src}
+          hls={playback.hls}
+          label={`The video: ${snapshot.title}`}
+          className="draft-video"
+        >
+          <span className="draft-watermark-overlay" aria-hidden="true">
+            Draft for review
+          </span>
+        </VideoPreview>
+      )
+    : undefined;
+  return (
+    <main id="main" className="page review-link-page">
+      <p className="draft-watermark" role="note">
+        Draft for review. Not published. Please don't share this link.
+      </p>
+      <p>
+        {`You're seeing revision ${page.number}, exactly as it will be reviewed. You can't change anything here. This link works until ${formatDay(page.expiresAt)}.`}
+      </p>
+      <ContentRevisionView
+        snapshot={snapshot}
+        topics={display.topics}
+        embeds={display.embeds}
+        fileName={display.fileName}
+        sampleTitle={display.sampleTitle}
+        audioPath={audio?.src ?? null}
+        player={player}
+      />
       <p className="draft-watermark" role="note">
         Draft for review
       </p>

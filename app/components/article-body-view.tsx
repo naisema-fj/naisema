@@ -8,8 +8,8 @@ import {
   type Mark,
 } from "~/lib/article-body";
 
-/** What an embedded Content Item shows as: its title and where it lives. */
-export type EmbeddedItem = { title: string; href: string };
+/** What an embedded Content Item shows as: its title and, where there is somewhere to go, where it lives. */
+export type EmbeddedItem = { title: string; href?: string };
 
 /**
  * The allowlist renderer for Article bodies (docs/phase-1a-defaults.md §7). It builds React
@@ -47,7 +47,15 @@ function renderBlocks(blocks: readonly Block[] | undefined, embeds: Record<strin
         const item = embeds[node.attrs.id];
         return (
           <aside key={key} className="embedded-item">
-            {item ? <a href={item.href}>{item.title}</a> : <p>An item that is no longer available.</p>}
+            {item ? (
+              item.href ? (
+                <a href={item.href}>{item.title}</a>
+              ) : (
+                <p>{item.title}</p>
+              )
+            ) : (
+              <p>An item that is no longer available.</p>
+            )}
           </aside>
         );
       }

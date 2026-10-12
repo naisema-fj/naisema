@@ -93,10 +93,10 @@ There are two halves: `contentItems` and `learningLayers`. Their tables are kept
   - `submissions`: `revisionId`, `submittedBy` and `submittedAt`.
   - `assignments`: who was asked to review which item or Learning Layer, for which Review Type.
   - `approvals`: every decision on an exact Revision. Each has `reviewType`, `languageVariety`, `decision` (approved or rejected), `reviewerId`, `scope`, `notes`, the Knowledge Holder's name and how they gave their approval, `conditions`, `carriedForwardFromId` and `decidedAt`. For a Knowledge Holder Approval, `reviewerId` is the editor who recorded it.
-- **Learning Layer approvals only:** these also have `reviewLinkId` and the evidence's `evidenceKey` and `evidenceName`.
-- **`learningLayers` only:**
-  - `reviewLinks`: who each link was for, and when it was made, expires and was revoked. Never its token.
-  - `reviewLinkOpenings`: every opening, with its outcome (viewed, expired or revoked).
+- **Knowledge Holder Approvals** on either kind also have `reviewLinkId` (the Review Link they saw the Revision through) and the evidence's `evidenceKey` and `evidenceName`. A Content Item approval recorded before Review Links covered Content Items has none.
+- **Both halves also have:**
+  - `reviewLinks`: who each link was for, and when it was made, expires and was revoked, with `revisionId` naming the Revision it shows (a Content Item's under `contentItems`, a Learning Layer's under `learningLayers`). Never its token.
+  - `reviewLinkOpenings`: every opening, with its outcome (viewed, played, expired or revoked).
 
 ## `naisema.audit`
 
@@ -139,6 +139,7 @@ The tables, in order:
    - `learning_layer_educator`, `learning_layer_submission` and `learning_layer_review_assignment`.
    - `review_link`, with `token_hash` replaced by `exported:<id>`, so no imported link can be opened.
    - `review_link_access` and `learning_layer_approval`.
+   - The Video's own `review_approval` rows are exported without their Review Link or evidence: those Review Links (to the Video's Revisions) and their evidence files stay behind.
 
 ### Importing a Learning Layer
 
