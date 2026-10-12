@@ -20,7 +20,7 @@ test("an editor shares a Learning Layer through a Review Link and records the Kn
   await confirmTwoFactorCode(page, await startTwoFactorSetup(page));
 
   // The editors' queue lists what is waiting for review.
-  await page.getByRole("link", { name: "Learning Layers" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Learning Layers", exact: true }).click();
   const waiting = page.getByRole("region", { name: "Waiting for review" });
   await expect(waiting).toContainText("still needs Language review (standard-fijian), Knowledge Holder Approval");
   await waiting.getByRole("link", { name: `Review ${project}, revision 1` }).click();

@@ -53,9 +53,11 @@ describe("the audit log", () => {
     const administrator = await staff("admin", { role: "administrator" });
     const other = await staff("editor", { role: "editor" });
     await recordAudit(getDb(env.DB), { actorId: other.userId, action: "topic.created", objectType: "topic" });
-    const html = await text(
+    // The staff shell shows who is signed in; the log itself is what's filtered.
+    const page = await text(
       await administrator.browser.fetch(`/admin/audit?actor=${encodeURIComponent(other.email)}&action=session.`),
     );
+    const html = page.slice(page.indexOf('<main id="main"'));
     expect(html).toContain("session.created");
     expect(html).toContain(other.email);
     expect(html).not.toContain(administrator.email);

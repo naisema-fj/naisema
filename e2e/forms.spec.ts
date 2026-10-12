@@ -49,7 +49,7 @@ test("a contributor is sent an upload link and sends their file into quarantine"
 
   await followSignInLink(page, `e2e-intake-${testInfo.project.name}@naisema.test`);
   await confirmTwoFactorCode(page, await startTwoFactorSetup(page));
-  await page.getByRole("link", { name: "Submissions" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Submissions", exact: true }).click();
   await expectNoAxeViolations(page);
   await page.getByRole("link", { name }).click();
   await expect(page.getByText("My grandmother's meke, recorded in 1998.")).toBeVisible();

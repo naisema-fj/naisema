@@ -21,7 +21,28 @@ test("a staff member signs in with an email link and an authenticator code", asy
   await expect(page.getByText("Administrator")).toBeVisible();
   await expectNoAxeViolations(page);
 
-  await page.getByRole("link", { name: "Manage staff and roles" }).click();
-  await expect(page.getByRole("heading", { name: "Staff and roles" })).toBeVisible();
+  // The shell's navigation is a sidebar on a wide screen and a Menu on a narrow one.
+  const menu = page.locator("summary", { hasText: "Menu" });
+  if (await menu.isVisible()) await menu.click();
+  const nav = page.getByRole("navigation", { name: /^Staff( menu)?$/ });
+  await expect(nav.getByRole("link", { name: "Staff and roles" })).toBeVisible();
   await expectNoAxeViolations(page);
+
+  await nav.getByRole("link", { name: "Staff and roles" }).click();
+  await expect(page.getByRole("heading", { name: "Staff and roles" })).toBeVisible();
+  if (await menu.isVisible()) await menu.click();
+  await expect(nav.getByRole("link", { name: "Staff and roles" })).toHaveAttribute("aria-current", "page");
+  await expectNoAxeViolations(page);
+
+  // The shell and the pages in it reflow at 320 px and at 200% zoom (640 px of a 1280 px window).
+  for (const width of [320, 640]) {
+    await page.setViewportSize({ width, height: 800 });
+    for (const path of ["/admin", "/admin/staff", "/admin/audit", "/admin/exports", "/admin/usage"]) {
+      await page.goto(`${ADMIN}${path}`);
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      );
+      expect(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(0);
+    }
+  }
 });

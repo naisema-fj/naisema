@@ -12,7 +12,7 @@ test("an Educator uploads to the media library: refused files never start, other
 }, testInfo) => {
   await followSignInLink(page, `e2e-educator-${testInfo.project.name}@naisema.test`);
   await confirmTwoFactorCode(page, await startTwoFactorSetup(page));
-  await page.getByRole("link", { name: "Media library" }).click();
+  await page.getByRole("main").getByRole("link", { name: "Media library", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Media library" })).toBeVisible();
   await expectNoAxeViolations(page);
 
