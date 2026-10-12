@@ -24,6 +24,8 @@ export default defineConfig({
           TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
           // Signs the Stream webhook deliveries tests send (app/routes/public/stream-webhook.ts).
           STREAM_WEBHOOK_SECRET: "test-stream-webhook-secret",
+          // Encrypts the backups tests take (app/lib/backup-crypto.ts): 32 bytes of 7, base64.
+          BACKUP_ENCRYPTION_KEY: "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
         },
       },
     })),

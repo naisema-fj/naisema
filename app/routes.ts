@@ -109,6 +109,8 @@ export default [
     route("staff", "routes/admin/staff.tsx"),
     // Media usage and cost (VAC-10) and the monitor's current problems (app/lib/usage.server.ts).
     route("usage", "routes/admin/usage.tsx"),
+    // Backups held, and finishing a restore (ADR-0009; app/lib/restore.server.ts).
+    route("restore", "routes/admin/restore.tsx"),
     // The audit log and bulk exports (CMS-05, VCMS-06; app/lib/exports.server.ts).
     route("audit", "routes/admin/audit.tsx"),
     route("exports", "routes/admin/exports/index.tsx"),

@@ -2,7 +2,6 @@ import { and, eq, like, lt, sql } from "drizzle-orm";
 import {
   activityAttempt,
   bookmark,
-  deletionLedger,
   learnerAccount,
   learnerEvent,
   learnerSignInLink,
@@ -15,6 +14,7 @@ import {
 } from "~db/schema";
 import { auditInsert } from "./audit.server";
 import type { Database } from "./db.server";
+import { recordLearnerDeletion } from "./deletion-ledger.server";
 import { letterText, sendEmail } from "./email.server";
 import { INACTIVE_DAYS, INACTIVITY_WARNING_DAYS, inactivityStep, LEARNER_PATHS } from "./learner-progress";
 import { logError } from "./log.server";
@@ -56,24 +56,16 @@ export async function clearHistory(db: Database, userId: string) {
 const DELETION_REASONS = {
   "learner.deleted": "Deleted by the learner",
   "learner.inactive": "Unused for two years",
+  "learner.restored": "Deleted again after a restore",
 } as const;
 
 /**
- * Deletes a Learner Account and everything it holds, at once, and adds it to the deletion ledger so
- * a restored backup deletes it again (ADR-0009). Backups older than this keep it for at most 35
- * days. Only ever called for a Learner Account, never a staff account.
+ * The statements that remove a Learner Account and everything it holds, and record it in the audit
+ * log under the ledger's hash: the audit log outlives the account and must not name it (CMS-05).
  */
-export async function deleteLearnerAccount(
-  db: Database,
-  userId: string,
-  reason: "learner.deleted" | "learner.inactive",
-) {
-  const deletedAt = new Date();
-  const subjectHash = await sha256Hex(userId);
+async function removal(db: Database, userId: string, subjectHash: string, reason: keyof typeof DELETION_REASONS) {
   const person = await db.select({ email: userTable.email }).from(userTable).where(eq(userTable.id, userId)).get();
-  await db.batch([
-    db.insert(deletionLedger).values({ subjectHash, reason, deletedAt }),
-    // Audited by the ledger's hash: the audit log outlives the account and must not name it (CMS-05).
+  return [
     auditInsert(db, {
       actorId: null,
       action: "learner_account.deleted",
@@ -96,7 +88,29 @@ export async function deleteLearnerAccount(
     db.delete(sessionTable).where(eq(sessionTable.userId, userId)),
     db.delete(learnerAccount).where(eq(learnerAccount.userId, userId)),
     db.delete(userTable).where(eq(userTable.id, userId)),
-  ]);
+  ] as const;
+}
+
+/**
+ * Deletes a Learner Account and everything it holds, at once, after adding it to the deletion
+ * ledger so a restored backup deletes it again (ADR-0009). The ledger comes first: if it can't be
+ * written, nothing is deleted. Backups older than this keep the account for at most 35 days. Only
+ * ever called for a Learner Account, never a staff account.
+ */
+export async function deleteLearnerAccount(
+  env: Env,
+  db: Database,
+  userId: string,
+  reason: "learner.deleted" | "learner.inactive",
+) {
+  const subjectHash = await sha256Hex(userId);
+  await recordLearnerDeletion(env.LEDGER, subjectHash, reason, new Date());
+  await db.batch([...(await removal(db, userId, subjectHash, reason))]);
+}
+
+/** Deletes a Learner Account the ledger already lists, found again in a restored backup. */
+export async function deleteLearnerAgain(db: Database, userId: string, subjectHash: string) {
+  await db.batch([...(await removal(db, userId, subjectHash, "learner.restored"))]);
 }
 
 /** Forgets event IDs and sign-in link counts kept longer than any retry or throttle needs them. */
@@ -132,7 +146,7 @@ export async function handleInactiveLearners(env: Env, db: Database, now: Date) 
       const step = inactivityStep(account, now);
       if (step === "delete") {
         if (!(await hasStaffRole(db, account.userId)))
-          await deleteLearnerAccount(db, account.userId, "learner.inactive");
+          await deleteLearnerAccount(env, db, account.userId, "learner.inactive");
       } else if (step === "warn") {
         await sendEmail(env, {
           to: account.email,

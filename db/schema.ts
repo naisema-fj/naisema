@@ -1224,19 +1224,6 @@ export const learnerSignInLink = sqliteTable(
   (table) => [index("learner_sign_in_link_email_idx").on(table.emailHash, table.sentAt)],
 );
 
-/**
- * The deletion ledger (ADR-0009): who was deleted, as a hash of their user ID, so a restored backup
- * can delete them again. Only added to; a trigger refuses changes. Replaying it is #34's.
- */
-export const deletionLedger = sqliteTable("deletion_ledger", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  /** SHA-256 of the user ID. */
-  subjectHash: text("subject_hash").notNull(),
-  /** Why: "learner.deleted" (they asked) or "learner.inactive". */
-  reason: text("reason").notNull(),
-  deletedAt: integer("deleted_at", { mode: "timestamp_ms" }).notNull(),
-});
-
 // --- Monitoring (docs/handover/runbook.md, monitoring and alerts) ---
 
 /**
