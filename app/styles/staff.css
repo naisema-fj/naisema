@@ -470,3 +470,17 @@
   margin: 0 auto;
   padding: 1rem;
 }
+
+/* Home: what needs attention */
+.staff-attention {
+  padding-left: 1.1rem;
+}
+
+.staff-attention li {
+  margin: 0.4rem 0;
+}
+
+.staff-attention strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+}
