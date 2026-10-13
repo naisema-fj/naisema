@@ -10,7 +10,6 @@ import {
 } from "~/lib/staff-schedule";
 
 const TODAY = "2026-10-12";
-const NOW = new Date("2026-10-12T02:00:00Z");
 
 const dated = (key: string, date: string, title = key): ScheduleEntry => ({
   key,
@@ -82,7 +81,6 @@ describe("arrangeSchedule", () => {
       ],
       TODAY,
       30,
-      NOW,
     );
 
     expect(overdue.map((entry) => entry.key)).toEqual(["a", "b"]);
@@ -94,7 +92,6 @@ describe("arrangeSchedule", () => {
       [dated("in", "2026-10-18"), dated("edge", "2026-10-19"), dated("out", "2026-10-20")],
       TODAY,
       7,
-      NOW,
     );
 
     expect(upcoming.map((entry) => entry.key)).toEqual(["in", "edge"]);
@@ -109,7 +106,6 @@ describe("arrangeSchedule", () => {
       ],
       TODAY,
       7,
-      NOW,
     );
 
     expect(list.map((entry) => entry.key)).toEqual(["oldest", "mid", "recent"]);
@@ -120,7 +116,6 @@ describe("arrangeSchedule", () => {
       [dated("z", "2026-10-14", "Zebra"), dated("a", "2026-10-14", "Apple")],
       TODAY,
       30,
-      NOW,
     );
 
     expect(upcoming.map((entry) => entry.title)).toEqual(["Apple", "Zebra"]);

@@ -1,17 +1,16 @@
 import { and, eq, gte, inArray, isNull, lte, ne } from "drizzle-orm";
 import { caseRecord, contentItem, mediaAsset, revision, rightsRecord, submission } from "~db/schema";
-import { fijiToday } from "./calendar";
+import { fijiDayEnd, fijiDayStart, fijiToday } from "./calendar";
 import { CASE_KINDS } from "./case-rules";
 import { readableKinds } from "./cases.server";
 import type { Database } from "./db.server";
 import { layerReviewQueue } from "./layer-review.server";
 import { logError } from "./log.server";
-import type { Actor } from "./permissions";
-import { can } from "./permissions";
+import { type Actor, can, type ReviewType } from "./permissions";
 import { layerQueues } from "./publication.server";
 import { contentReviewQueue } from "./review.server";
 import { REVIEW_NAMES } from "./review-names";
-import { DAY_MS, formatDay, type RightsSubject, rightsPagePath } from "./rights-rules";
+import { formatDay, type RightsSubject, rightsPagePath } from "./rights-rules";
 import { contentQueues, submittedAt } from "./staff-dashboard.server";
 import { arrangeSchedule, lastDayOf, type ScheduleEntry } from "./staff-schedule";
 import { SUBMISSION_TYPES } from "./submission-fields";
@@ -20,17 +19,20 @@ import { SUBMISSION_TYPES } from "./submission-fields";
  * "What's coming up" (#59): what is due, soonest first, and what has been waiting longest, for the
  * roles a person holds. Each kind is read under the permission of the page that deals with it, and
  * each on its own, so one failing is reported as unavailable without hiding the rest. Entries name
- * the kind of thing and its day or wait, never what a Case or Submission says or who sent it.
+ * the kind of thing and its day or wait, never what a Case or Submission says or who sent it. A
+ * Rights Record names its rights holder, as the page that renews it does for the same people.
  */
 
 /** How long after a Rights Record expired it is still listed as overdue. */
 const EXPIRED_LISTED_DAYS = 30;
 
-type Source = { name: string; entries: ScheduleEntry[] };
+type Source = { name: string; entries: ScheduleEntry[]; limited?: boolean };
 
 async function rightsExpiries(db: Database, now: Date, days: number): Promise<ScheduleEntry[]> {
-  // The range ends at the end of its last Fiji day, which is 12 hours before UTC's midnight.
-  const end = new Date(Date.parse(`${lastDayOf(fijiToday(now), days)}T24:00:00Z`) - 12 * 3_600_000);
+  const today = fijiToday(now);
+  const end = fijiDayEnd(lastDayOf(today, days));
+  // A Rights Record that lapsed longer ago than this is no longer a reminder, so it is left off.
+  const earliest = fijiDayStart(lastDayOf(today, -EXPIRED_LISTED_DAYS));
   const rows = await db
     .select({ record: rightsRecord, snapshot: revision.snapshot, fileName: mediaAsset.name })
     .from(rightsRecord)
@@ -41,11 +43,7 @@ async function rightsExpiries(db: Database, now: Date, days: number): Promise<Sc
     .leftJoin(revision, eq(revision.id, contentItem.currentDraftRevisionId))
     .leftJoin(mediaAsset, and(eq(rightsRecord.subjectType, "media_asset"), eq(mediaAsset.id, rightsRecord.subjectId)))
     .where(
-      and(
-        isNull(rightsRecord.withdrawnAt),
-        gte(rightsRecord.expiresAt, new Date(now.getTime() - EXPIRED_LISTED_DAYS * DAY_MS)),
-        lte(rightsRecord.expiresAt, end),
-      ),
+      and(isNull(rightsRecord.withdrawnAt), gte(rightsRecord.expiresAt, earliest), lte(rightsRecord.expiresAt, end)),
     );
   return rows.map(({ record, snapshot, fileName }) => {
     const expires = record.expiresAt as Date;
@@ -111,40 +109,59 @@ async function casesWaiting(db: Database, actor: Actor): Promise<ScheduleEntry[]
 }
 
 /**
- * Revisions waiting on reviews: for an editor, every submitted revision not yet approved; for a
- * reviewer, those waiting on them, marked as theirs.
+ * Revisions waiting on reviews: for an editor, every submitted revision not yet approved (the
+ * longest-waiting few, as for the dashboard); for a reviewer, those waiting on them, marked as
+ * theirs. A person who is both gets one line, with both wordings.
  */
-async function reviewsWaiting(db: Database, actor: Actor, now: Date): Promise<ScheduleEntry[]> {
+async function reviewsWaiting(db: Database, actor: Actor, now: Date) {
   const entries = new Map<string, ScheduleEntry>();
-  const itemHref = (id: string, number: number) => `/admin/articles/${id}/revisions/${number}`;
-  const layerHref = (id: string, number: number) => `/admin/learning-layers/${id}/revisions/${number}`;
+  let limited = false;
+  const add = (entry: {
+    prefix: "content" | "layer";
+    id: string;
+    number: number;
+    title: string;
+    detail: string;
+    since: Date;
+  }) => {
+    const key = `${entry.prefix}-${entry.id}-${entry.number}`;
+    const held = entries.get(key);
+    entries.set(key, {
+      key,
+      kind: "review",
+      title: `${entry.title}, revision ${entry.number}${entry.prefix === "layer" ? " (Learning Layer)" : ""}`,
+      detail: held ? `${entry.detail}. ${held.detail}` : entry.detail,
+      date: null,
+      since: entry.since,
+      href:
+        entry.prefix === "content"
+          ? `/admin/articles/${entry.id}/revisions/${entry.number}`
+          : `/admin/learning-layers/${entry.id}/revisions/${entry.number}`,
+    });
+  };
 
   if (can(actor, { action: "content.edit" })) {
     const [content, layers] = await Promise.all([contentQueues(db, now), layerQueues(db, now)]);
+    limited = content.capped;
     for (const entry of content.notApproved) {
-      entries.set(`content-${entry.id}-${entry.number}`, {
-        key: `content-${entry.id}-${entry.number}`,
-        kind: "review",
-        title: `${entry.title}, revision ${entry.number}`,
-        detail: `Waiting on ${entry.waitingFor.join(", ")}`,
-        date: null,
-        since: entry.since,
-        href: itemHref(entry.id, entry.number),
-      });
+      add({ prefix: "content", ...entry, detail: `Waiting on ${entry.waitingFor.join(", ")}` });
     }
-    for (const entry of layers.missingReview) {
-      const since = await submittedAt(db, "learningLayer", entry.learningLayerId, entry.number);
-      if (!since) continue;
-      entries.set(`layer-${entry.learningLayerId}-${entry.number}`, {
-        key: `layer-${entry.learningLayerId}-${entry.number}`,
-        kind: "review",
-        title: `${entry.title}, revision ${entry.number} (Learning Layer)`,
-        detail: `Waiting on ${entry.waitingFor.join(", ")}`,
-        date: null,
-        since,
-        href: layerHref(entry.learningLayerId, entry.number),
-      });
-    }
+    const times = await Promise.all(
+      layers.missingReview.map((entry) => submittedAt(db, "learningLayer", entry.learningLayerId, entry.number)),
+    );
+    layers.missingReview.forEach((entry, index) => {
+      const since = times[index];
+      if (since) {
+        add({
+          prefix: "layer",
+          id: entry.learningLayerId,
+          number: entry.number,
+          title: entry.title,
+          detail: `Waiting on ${entry.waitingFor.join(", ")}`,
+          since,
+        });
+      }
+    });
   }
 
   if (can(actor, { action: "reviewQueue.view" })) {
@@ -153,46 +170,40 @@ async function reviewsWaiting(db: Database, actor: Actor, now: Date): Promise<Sc
       layerReviewQueue(db, actor.userId),
     ]);
     const yours = (types: string[]) =>
-      `Waiting for your ${types.map((type) => REVIEW_NAMES[type as keyof typeof REVIEW_NAMES].toLowerCase()).join(", ")}`;
-    for (const entry of items) {
-      const since = await submittedAt(db, "contentItem", entry.id, entry.number);
-      if (!since) continue;
-      entries.set(`content-${entry.id}-${entry.number}`, {
-        key: `content-${entry.id}-${entry.number}`,
-        kind: "review",
-        title: `${entry.title}, revision ${entry.number}`,
-        detail: yours(entry.reviewTypes),
-        date: null,
-        since,
-        href: itemHref(entry.id, entry.number),
-      });
-    }
-    for (const entry of layers) {
-      const since = await submittedAt(db, "learningLayer", entry.id, entry.number);
-      if (!since) continue;
-      entries.set(`layer-${entry.id}-${entry.number}`, {
-        key: `layer-${entry.id}-${entry.number}`,
-        kind: "review",
-        title: `${entry.title}, revision ${entry.number} (Learning Layer)`,
-        detail: yours(entry.reviewTypes),
-        date: null,
-        since,
-        href: layerHref(entry.id, entry.number),
-      });
-    }
+      `Waiting for your ${types.map((type) => REVIEW_NAMES[type as ReviewType].toLowerCase()).join(", ")}`;
+    const [itemTimes, layerTimes] = await Promise.all([
+      Promise.all(items.map((entry) => submittedAt(db, "contentItem", entry.id, entry.number))),
+      Promise.all(layers.map((entry) => submittedAt(db, "learningLayer", entry.id, entry.number))),
+    ]);
+    items.forEach((entry, index) => {
+      const since = itemTimes[index];
+      if (since) add({ prefix: "content", ...entry, detail: yours(entry.reviewTypes), since });
+    });
+    layers.forEach((entry, index) => {
+      const since = layerTimes[index];
+      if (since) add({ prefix: "layer", ...entry, detail: yours(entry.reviewTypes), since });
+    });
   }
-  return [...entries.values()];
+  return { entries: [...entries.values()], limited };
 }
 
 export async function staffSchedule(db: Database, actor: Actor, now: Date, days: number) {
-  const sources: [boolean, string, () => Promise<ScheduleEntry[]>][] = [
-    [can(actor, { action: "rights.manage" }), "Rights Records", () => rightsExpiries(db, now, days)],
-    [can(actor, { action: "submission.manage" }), "Submissions", () => submissionsDue(db, now, days)],
-    [readableKinds(actor).length > 0, "Cases", () => casesWaiting(db, actor)],
+  const sources: [boolean, string, () => Promise<Omit<Source, "name">>][] = [
+    [
+      can(actor, { action: "rights.manage" }),
+      "Rights Records",
+      async () => ({ entries: await rightsExpiries(db, now, days) }),
+    ],
+    [
+      can(actor, { action: "submission.manage" }),
+      "Submissions",
+      async () => ({ entries: await submissionsDue(db, now, days) }),
+    ],
+    [readableKinds(actor).length > 0, "Cases", async () => ({ entries: await casesWaiting(db, actor) })],
     [
       can(actor, { action: "content.edit" }) || can(actor, { action: "reviewQueue.view" }),
       "Reviews",
-      () => reviewsWaiting(db, actor, now),
+      async () => reviewsWaiting(db, actor, now).then(({ entries, limited }) => ({ entries, limited })),
     ],
   ];
   const read: (Source & { failed: boolean })[] = await Promise.all(
@@ -200,7 +211,7 @@ export async function staffSchedule(db: Database, actor: Actor, now: Date, days:
       .filter(([shown]) => shown)
       .map(async ([, name, load]) => {
         try {
-          return { name, entries: await load(), failed: false };
+          return { name, ...(await load()), failed: false };
         } catch (error) {
           logError("A schedule source failed", { source: name, error });
           return { name, entries: [], failed: true };
@@ -214,8 +225,8 @@ export async function staffSchedule(db: Database, actor: Actor, now: Date, days:
       read.flatMap((source) => source.entries),
       today,
       days,
-      now,
     ),
     unavailable: read.filter((source) => source.failed).map((source) => source.name),
+    limited: read.some((source) => source.limited),
   };
 }

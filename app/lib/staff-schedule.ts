@@ -1,5 +1,6 @@
 import { CASE_KINDS } from "./case-rules";
 import { type Actor, type CaseKind, can } from "./permissions";
+import { DAY_MS } from "./rights-rules";
 import { waitedText } from "./staff-dashboard";
 
 /**
@@ -10,8 +11,6 @@ import { waitedText } from "./staff-dashboard";
 
 export const RANGES = [7, 30, 90] as const;
 export const DEFAULT_DAYS = 30;
-
-const DAY_MS = 86_400_000;
 
 /** The range asked for, if it is one that is offered; otherwise the default. */
 export function rangeDays(raw: string | null) {
@@ -66,7 +65,7 @@ const byTitle = (a: ScheduleEntry, b: ScheduleEntry) => a.title.localeCompare(b.
  * Dated entries split into overdue and coming up within the range, each soonest first; entries
  * that are only waiting, longest-waiting first. A wait is as of now, so the range does not limit it.
  */
-export function arrangeSchedule(entries: ScheduleEntry[], today: string, days: number, _now: Date) {
+export function arrangeSchedule(entries: ScheduleEntry[], today: string, days: number) {
   const last = lastDayOf(today, days);
   const dated = entries.filter((entry): entry is ScheduleEntry & { date: string } => entry.date !== null);
   const byDay = (a: ScheduleEntry & { date: string }, b: ScheduleEntry & { date: string }) =>

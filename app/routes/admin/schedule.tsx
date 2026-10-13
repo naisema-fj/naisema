@@ -27,6 +27,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     days,
     kinds: scheduleKinds(actor),
     unavailable: schedule.unavailable,
+    limited: schedule.limited,
     overdue: schedule.overdue.map(wrap),
     upcoming: schedule.upcoming.map(wrap),
     waiting: schedule.waiting.map(wrap),
@@ -62,7 +63,7 @@ function EntryTable({ caption, whenHeading, rows }: { caption: string; whenHeadi
 }
 
 export default function Schedule({ loaderData }: Route.ComponentProps) {
-  const { days, kinds, unavailable, overdue, upcoming, waiting } = loaderData;
+  const { days, kinds, unavailable, limited, overdue, upcoming, waiting } = loaderData;
   const nothing = overdue.length + upcoming.length + waiting.length === 0;
   return (
     <main id="main" className="page">
@@ -87,6 +88,12 @@ export default function Schedule({ loaderData }: Route.ComponentProps) {
 
       {unavailable.length > 0 && (
         <p role="alert">{unavailable.join(" and ")} couldn't be checked just now. The rest is shown below.</p>
+      )}
+
+      {limited && (
+        <p role="status">
+          Only the 60 longest-waiting Content Items are checked for reviews, so some newer ones may not be listed.
+        </p>
       )}
 
       {nothing && kinds.length > 0 && unavailable.length === 0 && (

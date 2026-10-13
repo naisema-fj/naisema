@@ -163,6 +163,16 @@ describe("what's coming up: reviews", () => {
     expect(editorsRow?.detail).toBe("Waiting on Language review (standard-fijian)");
   });
 
+  it("gives a person who is both an editor and the reviewer one line with both wordings", async () => {
+    const both = await staff("both", { role: "editor" }, languageReviewerRole);
+    const { article } = await submittedArticle(["languageInstruction"], [{ reviewType: "language", reviewer: both }]);
+
+    const entry = rows(await schedule(both)).filter((row) => row.href === `/admin/articles/${article.id}/revisions/1`);
+
+    expect(entry).toHaveLength(1);
+    expect(entry[0].detail).toBe("Waiting for your language review. Waiting on Language review (standard-fijian)");
+  });
+
   it("says plainly that nothing is on the schedule, with a way to look further ahead", async () => {
     const reviewer = await staff("lang-reviewer", languageReviewerRole);
 
