@@ -61,9 +61,11 @@ export type Eligibility = { eligible: true } | { eligible: false; reasons: Reaso
 export const reasonTexts = (eligibility: Eligibility) =>
   eligibility.eligible ? [] : eligibility.reasons.map((reason) => reason.text);
 
-/** An answer as a staff page shows it: eligible, or why not, in words. */
+/** An answer as a staff page shows it: eligible, or why not, in words, each with the kind of thing it is. */
 export const forStaff = (eligibility: Eligibility) =>
-  eligibility.eligible ? { eligible: true as const } : { eligible: false as const, reasons: reasonTexts(eligibility) };
+  eligibility.eligible
+    ? { eligible: true as const }
+    : { eligible: false as const, reasons: eligibility.reasons.map(({ kind, text }) => ({ kind, text })) };
 
 const decided = (reasons: Reason[]): Eligibility =>
   reasons.length ? { eligible: false, reasons } : { eligible: true };

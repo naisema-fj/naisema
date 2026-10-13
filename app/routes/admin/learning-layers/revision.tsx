@@ -1,7 +1,7 @@
 import { data, redirect } from "react-router";
 import { LayerRevisionView } from "~/components/layer-revision-view";
 import { ReviewLinksSection } from "~/components/review-links-section";
-import { ReviewPanel } from "~/components/review-panel";
+import { PANEL_INTENTS, ReviewPanel } from "~/components/review-panel";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
 import {
@@ -110,7 +110,9 @@ const DONE_MESSAGES: Record<string, string> = {
   revokeLink: "Review Link revoked. It no longer opens.",
 };
 
-type ActionData = { error: string } | { issued: { url: string; recipient: string } };
+type ActionData =
+  | { error: string; intent: string; reviewType: string }
+  | { issued: { url: string; recipient: string } };
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
@@ -126,7 +128,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
   if (intent === "issueLink") {
     const issued = await issueReviewLink(db, actor, review, field("recipient"));
-    if (!issued.ok) return data<ActionData>({ error: issued.error }, { status: 400 });
+    if (!issued.ok) return data<ActionData>({ error: issued.error, intent, reviewType }, { status: 400 });
     // The address is shown once: only a hash of its token is kept.
     const url = new URL(reviewLinkPath(issued.token), primaryPublicOrigin(env) || request.url).toString();
     return data<ActionData>({ issued: { url, recipient: issued.recipient } });
@@ -176,13 +178,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         return { ok: false as const, error: "That action isn't available." };
     }
   })();
-  if (!result.ok) return data<ActionData>({ error: result.error }, { status: 400 });
-  throw redirect(`/admin/learning-layers/${params.id}/revisions/${params.number}?done=${intent}`);
+  if (!result.ok) return data<ActionData>({ error: result.error, intent, reviewType }, { status: 400 });
+  throw redirect(`/admin/learning-layers/${params.id}/revisions/${params.number}?done=${intent}#outcome`);
 }
 
 export default function LayerRevision({ loaderData, actionData }: Route.ComponentProps) {
   const { layerId, number, snapshot, review, abilities, links, done } = loaderData;
-  const error = actionData && "error" in actionData ? actionData.error : null;
+  const failure = actionData && "error" in actionData ? actionData : null;
+  const panelError =
+    failure && PANEL_INTENTS.includes(failure.intent)
+      ? { intent: failure.intent, reviewType: failure.reviewType || undefined, message: failure.error }
+      : null;
+  const linkError = failure && !panelError ? failure.error : null;
   const issued = actionData && "issued" in actionData ? actionData.issued : null;
   return (
     <main id="main" className="page">
@@ -195,8 +202,11 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
         Revision {number}
         {!loaderData.isCurrent && " (a newer revision exists)"}
       </p>
-      {done && DONE_MESSAGES[done] && !actionData && <p role="status">{DONE_MESSAGES[done]}</p>}
-      {error && <p role="alert">{error}</p>}
+      {done && DONE_MESSAGES[done] && !actionData && (
+        <p role="status" id="outcome" tabIndex={-1}>
+          {DONE_MESSAGES[done]}
+        </p>
+      )}
       <h1>{snapshot.title}</h1>
       <LayerRevisionView snapshot={snapshot} languageVariety={review.languageVariety} />
 
@@ -211,6 +221,7 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
           }))}
         review={review}
         eligibility={loaderData.eligibility}
+        error={panelError}
         abilities={abilities}
         reviewerChoices={loaderData.reviewerChoices}
       />
@@ -221,6 +232,7 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
           links={links}
           issued={issued}
           canIssue={loaderData.canIssueLinks}
+          error={linkError}
           rightsWarning={
             loaderData.videoHasRights
               ? null

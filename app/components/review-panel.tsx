@@ -52,7 +52,7 @@ type Props = {
     publicationState: PublicationState;
     publishedNumber: number | null;
   };
-  eligibility: { eligible: true } | { eligible: false; reasons: string[] };
+  eligibility: { eligible: true } | { eligible: false; reasons: { kind: string; text: string }[] };
   abilities: {
     isEditor: boolean;
     canSubmit: boolean;
@@ -62,7 +62,57 @@ type Props = {
     canWithdraw: boolean;
   };
   reviewerChoices: Partial<Record<string, { id: string; email: string }[]>>;
+  /** What went wrong with the last attempt, shown inside the form it came from. */
+  error?: PanelError | null;
 };
+
+/** A refused action, and which of the panel's forms it came from. */
+export type PanelError = { intent: string; reviewType?: string; message: string };
+
+/** The actions the panel's forms post; any other refusal belongs to another part of the page. */
+export const PANEL_INTENTS = ["submit", "assign", "decide", "knowledgeHolder", "publish", "withdraw", "archive"];
+
+const STATUS_SYMBOLS = { approved: "✓", rejected: "✕", awaiting: "…" } as const;
+const STATUS_WORDS = { approved: "Approved", rejected: "Rejected", awaiting: "Waiting for review" } as const;
+
+/** A status in words and a symbol, so it never depends on colour alone. */
+function Status({ status }: { status: keyof typeof STATUS_WORDS }) {
+  return (
+    <span className={`status status-${status}`}>
+      <span aria-hidden="true">{STATUS_SYMBOLS[status]}</span> {STATUS_WORDS[status]}
+    </span>
+  );
+}
+
+/** A refusal inside its form, announced and focused so the person lands on what to fix. */
+function FormError({
+  id,
+  error,
+  intent,
+  reviewType,
+}: {
+  id: string;
+  error?: PanelError | null;
+  intent: string;
+  reviewType?: string;
+}) {
+  if (!error || error.intent !== intent || (error.reviewType ?? undefined) !== reviewType) return null;
+  return (
+    <p
+      role="alert"
+      id={id}
+      tabIndex={-1} /* biome-ignore lint/a11y/noAutofocus: lands on the refusal after a full-page post */
+      autoFocus
+    >
+      {error.message}
+    </p>
+  );
+}
+
+const errorId = (error: PanelError | null | undefined, intent: string, reviewType?: string) =>
+  error && error.intent === intent && (error.reviewType ?? undefined) === reviewType
+    ? `error-${intent}${reviewType ? `-${reviewType}` : ""}`
+    : undefined;
 
 const formatDate = (date: Date | string) =>
   new Date(date).toLocaleDateString("en-AU", { dateStyle: "medium", timeZone: "UTC" });
@@ -77,6 +127,75 @@ function describeApproval(approval: Approval) {
   return `${verb} ${who} on ${formatDate(approval.decidedAt)}${seen}${carried}`;
 }
 
+/** Where a person goes to do something about a thing still missing, if they can. */
+type MissingItem = { key: string; text: string; action: { href: string; label: string } | null };
+
+function missingBeforePublishing(
+  { review, eligibility, abilities }: Pick<Props, "review" | "eligibility" | "abilities">,
+  revisionNumber: number,
+): MissingItem[] {
+  if (eligibility.eligible) return [];
+  const items: MissingItem[] = [];
+  for (const reason of eligibility.reasons) {
+    if (reason.kind === "review") continue;
+    items.push({
+      key: reason.text,
+      text: reason.text,
+      action:
+        reason.kind === "unsubmitted" && abilities.canSubmit
+          ? { href: "#submit-revision", label: `Submit revision ${revisionNumber} for review` }
+          : null,
+    });
+  }
+  // Reviews come from the progress rows, which know which form answers each one.
+  const reviews = review.progress.flatMap(({ requirement, status }): MissingItem[] => {
+    if (status === "approved") return [];
+    const name = requirementName(requirement);
+    const assigned = review.assignments.some((row) => row.reviewType === requirement.reviewType);
+    let action: MissingItem["action"] = null;
+    if (requirement.knowledgeHolder) {
+      if (abilities.canRecordKnowledgeHolder) action = { href: "#kh-form", label: "Record the approval" };
+    } else if (abilities.decideTypes.includes(requirement.reviewType)) {
+      action = { href: `#decide-${requirement.reviewType}`, label: "Record your decision" };
+    } else if (abilities.isEditor && !assigned) {
+      action = { href: `#assign-form-${requirement.reviewType}`, label: "Assign a reviewer" };
+    }
+    return [
+      {
+        key: `review-${name}`,
+        text: status === "rejected" ? `${name} was rejected.` : `${name} is still needed.`,
+        action,
+      },
+    ];
+  });
+  return [...items.filter((item) => item.action), ...reviews, ...items.filter((item) => !item.action)];
+}
+
+/** Whether the panel shows the form an error came from; if not, the error is shown above the panel instead. */
+function hasFormFor(error: PanelError, { review, abilities }: Pick<Props, "review" | "abilities">) {
+  switch (error.intent) {
+    case "submit":
+      return abilities.canSubmit;
+    case "assign":
+      return (
+        abilities.isEditor &&
+        review.progress.some(
+          ({ requirement }) => !requirement.knowledgeHolder && requirement.reviewType === error.reviewType,
+        )
+      );
+    case "decide":
+      return abilities.decideTypes.some((type) => type === error.reviewType);
+    case "knowledgeHolder":
+      return abilities.canRecordKnowledgeHolder;
+    case "publish":
+      return abilities.canPublish && review.publicationState !== "archived";
+    case "withdraw":
+      return abilities.canWithdraw && review.publicationState === "published";
+    default:
+      return abilities.canWithdraw && ["unpublished", "withdrawn"].includes(review.publicationState);
+  }
+}
+
 /** Review and publication for one Revision: what it needs, what is decided, and what you can do. */
 export function ReviewPanel({
   revisionNumber,
@@ -86,13 +205,18 @@ export function ReviewPanel({
   eligibility,
   abilities,
   reviewerChoices,
+  error,
 }: Props) {
   const approvals = new Map(review.approvals.map((approval) => [approval.id, approval]));
+  const missing = missingBeforePublishing({ review, eligibility, abilities }, revisionNumber);
+  const stray = error && !hasFormFor(error, { review, abilities }) ? error : null;
+  const live = review.publicationState === "published" && review.publishedNumber === revisionNumber;
 
   return (
     <section aria-labelledby="review-heading" className="review-panel">
       <h2 id="review-heading">Review and publishing</h2>
-      <dl>
+      {stray && <FormError id="error-stray" error={stray} intent={stray.intent} reviewType={stray.reviewType} />}
+      <dl className="review-status">
         <dt>This revision</dt>
         <dd>{STATE_NAMES[review.state]}</dd>
         <dt>{subject === "article" ? "Article" : subject}</dt>
@@ -104,7 +228,40 @@ export function ReviewPanel({
         </dd>
         <dt>Content Flags</dt>
         <dd>{review.flags.length ? review.flags.map((flag) => FLAG_NAMES[flag]).join(", ") : "None"}</dd>
+        {review.publicationState !== "archived" && (
+          <>
+            <dt>Publishing</dt>
+            <dd>
+              {live ? (
+                "This revision is the one published."
+              ) : eligibility.eligible ? (
+                <strong>Ready to publish</strong>
+              ) : (
+                <strong>Not ready to publish</strong>
+              )}
+            </dd>
+          </>
+        )}
       </dl>
+
+      {abilities.canPublish && missing.length > 0 && (
+        <div className="missing">
+          <h3 id="missing-heading">Before revision {revisionNumber} can be published</h3>
+          <ul>
+            {missing.map((item) => (
+              <li key={item.key}>
+                {item.text}
+                {item.action && (
+                  <>
+                    {" "}
+                    <a href={item.action.href}>{item.action.label}</a>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <h3>Required reviews</h3>
       {review.progress.length === 0 ? (
@@ -120,17 +277,20 @@ export function ReviewPanel({
             </tr>
           </thead>
           <tbody>
-            {review.progress.map(({ requirement, decisionId }) => {
+            {review.progress.map(({ requirement, status, decisionId }) => {
               const decision = decisionId ? approvals.get(decisionId) : undefined;
               const assigned = review.assignments.filter((row) => row.reviewType === requirement.reviewType);
               return (
                 <tr key={requirementName(requirement)}>
-                  <td>
+                  <th scope="row">
                     {requirementName(requirement)}
                     {requirement.flagRemovedAfter &&
                       `: still needed because revision ${requirement.flagRemovedAfter} had its flag`}
+                  </th>
+                  <td>
+                    <Status status={status} />
+                    {decision && <span className="status-detail">{describeApproval(decision)}</span>}
                   </td>
-                  <td>{decision ? describeApproval(decision) : "Waiting for review"}</td>
                   <td>
                     {requirement.knowledgeHolder
                       ? "Recorded by an editor"
@@ -144,9 +304,12 @@ export function ReviewPanel({
       )}
 
       {abilities.canSubmit && (
-        <Form method="post">
+        <Form method="post" id="submit-revision">
+          <FormError id="error-submit" error={error} intent="submit" />
           <input type="hidden" name="intent" value="submit" />
-          <button type="submit">Submit revision {revisionNumber} for review</button>
+          <button type="submit" aria-describedby={errorId(error, "submit")}>
+            Submit revision {revisionNumber} for review
+          </button>
         </Form>
       )}
 
@@ -156,8 +319,15 @@ export function ReviewPanel({
           .map(({ requirement }) => {
             const choices = reviewerChoices[requirement.reviewType] ?? [];
             const id = `assign-${requirement.reviewType}`;
+            const failed = errorId(error, "assign", requirement.reviewType);
             return (
-              <Form method="post" key={id} className="inline-form">
+              <Form method="post" key={id} id={`assign-form-${requirement.reviewType}`} className="inline-form">
+                <FormError
+                  id={`error-assign-${requirement.reviewType}`}
+                  error={error}
+                  intent="assign"
+                  reviewType={requirement.reviewType}
+                />
                 <input type="hidden" name="intent" value="assign" />
                 <input type="hidden" name="reviewType" value={requirement.reviewType} />
                 {choices.length ? (
@@ -165,7 +335,7 @@ export function ReviewPanel({
                     <label htmlFor={id}>
                       Assign a reviewer for {REVIEW_NAMES[requirement.reviewType].toLowerCase()}
                     </label>
-                    <select id={id} name="reviewerId" required>
+                    <select id={id} name="reviewerId" required aria-describedby={failed}>
                       {choices.map((choice) => (
                         <option key={choice.id} value={choice.id}>
                           {choice.email}
@@ -184,41 +354,56 @@ export function ReviewPanel({
             );
           })}
 
-      {abilities.decideTypes.map((reviewType) => (
-        <Form method="post" key={`decide-${reviewType}`} className="decision-form">
-          <h3>Your {REVIEW_NAMES[reviewType].toLowerCase()}</h3>
-          <input type="hidden" name="intent" value="decide" />
-          <input type="hidden" name="reviewType" value={reviewType} />
-          <fieldset>
-            <legend>Decision on revision {revisionNumber}</legend>
-            <div className="choice">
-              <input type="radio" id={`${reviewType}-approve`} name="decision" value="approved" required />
-              <label htmlFor={`${reviewType}-approve`}>Approve</label>
-            </div>
-            <div className="choice">
-              <input type="radio" id={`${reviewType}-reject`} name="decision" value="rejected" />
-              <label htmlFor={`${reviewType}-reject`}>Reject</label>
-            </div>
-          </fieldset>
-          <label htmlFor={`${reviewType}-scope`}>What you reviewed</label>
-          <input id={`${reviewType}-scope`} name="scope" />
-          <label htmlFor={`${reviewType}-notes`}>Notes</label>
-          <p id={`${reviewType}-notes-hint`}>Required when rejecting: say what needs to change.</p>
-          <textarea id={`${reviewType}-notes`} name="notes" rows={3} aria-describedby={`${reviewType}-notes-hint`} />
-          <button type="submit">Record decision</button>
-        </Form>
-      ))}
+      {abilities.decideTypes.map((reviewType) => {
+        const failed = errorId(error, "decide", reviewType);
+        return (
+          <Form method="post" key={`decide-${reviewType}`} id={`decide-${reviewType}`} className="decision-form">
+            <h3>Your {REVIEW_NAMES[reviewType].toLowerCase()}</h3>
+            <FormError id={`error-decide-${reviewType}`} error={error} intent="decide" reviewType={reviewType} />
+            <input type="hidden" name="intent" value="decide" />
+            <input type="hidden" name="reviewType" value={reviewType} />
+            <fieldset aria-describedby={failed}>
+              <legend>Decision on revision {revisionNumber}</legend>
+              <div className="choice">
+                <input type="radio" id={`${reviewType}-approve`} name="decision" value="approved" required />
+                <label htmlFor={`${reviewType}-approve`}>Approve</label>
+              </div>
+              <div className="choice">
+                <input type="radio" id={`${reviewType}-reject`} name="decision" value="rejected" />
+                <label htmlFor={`${reviewType}-reject`}>Reject</label>
+              </div>
+            </fieldset>
+            <label htmlFor={`${reviewType}-scope`}>What you reviewed</label>
+            <input id={`${reviewType}-scope`} name="scope" />
+            <label htmlFor={`${reviewType}-notes`}>Notes</label>
+            <p id={`${reviewType}-notes-hint`}>Required when rejecting: say what needs to change.</p>
+            <textarea
+              id={`${reviewType}-notes`}
+              name="notes"
+              rows={3}
+              aria-describedby={[`${reviewType}-notes-hint`, failed].filter(Boolean).join(" ")}
+            />
+            <button type="submit">Record decision</button>
+          </Form>
+        );
+      })}
 
       {abilities.canRecordKnowledgeHolder && (
-        <Form method="post" className="decision-form" encType={reviewLinks ? "multipart/form-data" : undefined}>
+        <Form
+          method="post"
+          id="kh-form"
+          className="decision-form"
+          encType={reviewLinks ? "multipart/form-data" : undefined}
+        >
           <h3>Record a Knowledge Holder Approval</h3>
           <p>Record it only for revision {revisionNumber}, the exact revision the Knowledge Holder saw.</p>
+          <FormError id="error-knowledgeHolder" error={error} intent="knowledgeHolder" />
           <input type="hidden" name="intent" value="knowledgeHolder" />
           {reviewLinks &&
             (reviewLinks.length ? (
               <>
                 <label htmlFor="kh-link">The Review Link they saw it through</label>
-                <select id="kh-link" name="reviewLinkId" required>
+                <select id="kh-link" name="reviewLinkId" required aria-describedby={errorId(error, "knowledgeHolder")}>
                   {reviewLinks.map((link) => (
                     <option key={link.id} value={link.id}>
                       {link.label}
@@ -232,7 +417,12 @@ export function ReviewPanel({
               </p>
             ))}
           <label htmlFor="kh-name">Knowledge Holder</label>
-          <input id="kh-name" name="knowledgeHolderName" required />
+          <input
+            id="kh-name"
+            name="knowledgeHolderName"
+            required
+            aria-describedby={errorId(error, "knowledgeHolder")}
+          />
           <label htmlFor="kh-method">How they gave approval</label>
           <p id="kh-method-hint">For example in person, by phone or in writing.</p>
           <input id="kh-method" name="method" required aria-describedby="kh-method-hint" />
@@ -259,39 +449,32 @@ export function ReviewPanel({
         </Form>
       )}
 
-      {abilities.canPublish && (
+      {abilities.canPublish && review.publicationState !== "archived" && (
         <>
-          <h3>Publishing</h3>
-          {!eligibility.eligible && (
-            <>
-              <p>Revision {revisionNumber} can't be published yet:</p>
-              <ul>
-                {eligibility.reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
-                ))}
-              </ul>
-            </>
-          )}
-          {review.publicationState !== "archived" && (
-            <Form method="post" className="inline-form">
-              <input type="hidden" name="intent" value="publish" />
-              <button type="submit">Publish revision {revisionNumber}</button>
-            </Form>
-          )}
+          <h3 id="publishing">Publishing</h3>
+          <Form method="post" className="inline-form">
+            <FormError id="error-publish" error={error} intent="publish" />
+            <input type="hidden" name="intent" value="publish" />
+            <button type="submit" aria-describedby={errorId(error, "publish")}>
+              Publish revision {revisionNumber}
+            </button>
+          </Form>
         </>
       )}
       {abilities.canWithdraw && review.publicationState === "published" && (
         <Form method="post" className="inline-form">
+          <FormError id="error-withdraw" error={error} intent="withdraw" />
           <input type="hidden" name="intent" value="withdraw" />
-          <ReasonField id="withdraw-reason" />
+          <ReasonField id="withdraw-reason" describedBy={errorId(error, "withdraw")} />
           <button type="submit">Withdraw the {subject}</button>
         </Form>
       )}
       {abilities.canWithdraw &&
         (review.publicationState === "unpublished" || review.publicationState === "withdrawn") && (
           <Form method="post" className="inline-form">
+            <FormError id="error-archive" error={error} intent="archive" />
             <input type="hidden" name="intent" value="archive" />
-            <ReasonField id="archive-reason" />
+            <ReasonField id="archive-reason" describedBy={errorId(error, "archive")} />
             <button type="submit">Archive the {subject}</button>
           </Form>
         )}
@@ -321,11 +504,11 @@ export function ReviewPanel({
 }
 
 /** Why the editor is taking an item down or retiring it, for the audit log; optional. */
-function ReasonField({ id }: { id: string }) {
+function ReasonField({ id, describedBy }: { id: string; describedBy?: string }) {
   return (
     <>
       <label htmlFor={id}>Why (optional, kept in the audit log)</label>
-      <input id={id} name="reason" maxLength={500} />
+      <input id={id} name="reason" maxLength={500} aria-describedby={describedBy} />
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { data, redirect } from "react-router";
 import { ContentRevisionView } from "~/components/content-revision-view";
 import { ReviewLinksSection } from "~/components/review-links-section";
-import { ReviewPanel } from "~/components/review-panel";
+import { PANEL_INTENTS, ReviewPanel } from "~/components/review-panel";
 import { footageOf } from "~/lib/article-fields";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
@@ -111,7 +111,9 @@ const DONE_MESSAGES: Record<string, string> = {
   revokeLink: "Review Link revoked. It no longer opens.",
 };
 
-type ActionData = { error: string } | { issued: { url: string; recipient: string } };
+type ActionData =
+  | { error: string; intent: string; reviewType: string }
+  | { issued: { url: string; recipient: string } };
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
@@ -124,7 +126,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
   if (intent === "issueLink") {
     const issued = await issueContentReviewLink(db, actor, review, field("recipient"));
-    if (!issued.ok) return data<ActionData>({ error: issued.error }, { status: 400 });
+    if (!issued.ok) return data<ActionData>({ error: issued.error, intent, reviewType }, { status: 400 });
     // The address is shown once: only a hash of its token is kept.
     const url = new URL(reviewLinkPath(issued.token), primaryPublicOrigin(env) || request.url).toString();
     return data<ActionData>({ issued: { url, recipient: issued.recipient } });
@@ -175,16 +177,21 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     }
   })();
 
-  if (!result.ok) return data<ActionData>({ error: result.error }, { status: 400 });
+  if (!result.ok) return data<ActionData>({ error: result.error, intent, reviewType }, { status: 400 });
   // A review decision recorded on the published Revision can change what is public too (its Review
   // Labels); publishing, withdrawing and archiving bring the public site up to date themselves.
   if (!["publish", "withdraw", "archive"].includes(intent)) await publicItemChanged(env, db, article.id);
-  throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}`);
+  throw redirect(`/admin/articles/${params.id}/revisions/${params.number}?done=${intent}#outcome`);
 }
 
 export default function Revision({ loaderData, actionData }: Route.ComponentProps) {
   const { article, revision, review, abilities, links, done } = loaderData;
-  const error = actionData && "error" in actionData ? actionData.error : null;
+  const failure = actionData && "error" in actionData ? actionData : null;
+  const panelError =
+    failure && PANEL_INTENTS.includes(failure.intent)
+      ? { intent: failure.intent, reviewType: failure.reviewType || undefined, message: failure.error }
+      : null;
+  const linkError = failure && !panelError ? failure.error : null;
   const issued = actionData && "issued" in actionData ? actionData.issued : null;
   return (
     <main id="main" className="page">
@@ -198,8 +205,11 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
       <p>
         Revision {revision.number} of {article.title}
       </p>
-      {done && DONE_MESSAGES[done] && !actionData && <p role="status">{DONE_MESSAGES[done]}</p>}
-      {error && <p role="alert">{error}</p>}
+      {done && DONE_MESSAGES[done] && !actionData && (
+        <p role="status" id="outcome" tabIndex={-1}>
+          {DONE_MESSAGES[done]}
+        </p>
+      )}
       <ContentRevisionView
         snapshot={revision.snapshot}
         topics={loaderData.topics}
@@ -218,6 +228,7 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
           }))}
         review={review}
         eligibility={loaderData.eligibility}
+        error={panelError}
         abilities={abilities}
         reviewerChoices={loaderData.reviewerChoices}
       />
@@ -227,6 +238,7 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
           links={links}
           issued={issued}
           canIssue={loaderData.canIssueLinks}
+          error={linkError}
           rightsWarning={
             loaderData.rightsWarning
               ? "This has no Rights Record granting Publish yet. Share its footage or recording only with people the rights holder has agreed can see it."
