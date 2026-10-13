@@ -1,7 +1,7 @@
 import { data, redirect } from "react-router";
 import { ContentRevisionView } from "~/components/content-revision-view";
 import { ReviewLinksSection } from "~/components/review-links-section";
-import { PANEL_INTENTS, ReviewPanel } from "~/components/review-panel";
+import { ReviewPanel, splitFailure } from "~/components/review-panel";
 import { footageOf } from "~/lib/article-fields";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
@@ -186,12 +186,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
 export default function Revision({ loaderData, actionData }: Route.ComponentProps) {
   const { article, revision, review, abilities, links, done } = loaderData;
-  const failure = actionData && "error" in actionData ? actionData : null;
-  const panelError =
-    failure && PANEL_INTENTS.includes(failure.intent)
-      ? { intent: failure.intent, reviewType: failure.reviewType || undefined, message: failure.error }
-      : null;
-  const linkError = failure && !panelError ? failure.error : null;
+  const { panelError, otherError } = splitFailure(actionData);
   const issued = actionData && "issued" in actionData ? actionData.issued : null;
   return (
     <main id="main" className="page">
@@ -205,6 +200,7 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
       <p>
         Revision {revision.number} of {article.title}
       </p>
+      {otherError && !links && <p role="alert">{otherError}</p>}
       {done && DONE_MESSAGES[done] && !actionData && (
         <p role="status" id="outcome" tabIndex={-1}>
           {DONE_MESSAGES[done]}
@@ -238,7 +234,7 @@ export default function Revision({ loaderData, actionData }: Route.ComponentProp
           links={links}
           issued={issued}
           canIssue={loaderData.canIssueLinks}
-          error={linkError}
+          error={otherError}
           rightsWarning={
             loaderData.rightsWarning
               ? "This has no Rights Record granting Publish yet. Share its footage or recording only with people the rights holder has agreed can see it."

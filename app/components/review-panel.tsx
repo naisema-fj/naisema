@@ -72,6 +72,22 @@ export type PanelError = { intent: string; reviewType?: string; message: string 
 /** The actions the panel's forms post; any other refusal belongs to another part of the page. */
 export const PANEL_INTENTS = ["submit", "assign", "decide", "knowledgeHolder", "publish", "withdraw", "archive"];
 
+/** Splits a refused action into the panel's own form errors and the rest, which the page shows elsewhere. */
+export function splitFailure(
+  actionData: { error: string; intent: string; reviewType: string } | { issued: unknown } | undefined,
+): { panelError: PanelError | null; otherError: string | null } {
+  if (!actionData || !("error" in actionData)) return { panelError: null, otherError: null };
+  if (!PANEL_INTENTS.includes(actionData.intent)) return { panelError: null, otherError: actionData.error };
+  return {
+    panelError: {
+      intent: actionData.intent,
+      reviewType: actionData.reviewType || undefined,
+      message: actionData.error,
+    },
+    otherError: null,
+  };
+}
+
 const STATUS_SYMBOLS = { approved: "✓", rejected: "✕", awaiting: "…" } as const;
 const STATUS_WORDS = { approved: "Approved", rejected: "Rejected", awaiting: "Waiting for review" } as const;
 

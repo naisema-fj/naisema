@@ -91,6 +91,10 @@ test("an editor writes an article, revises it, compares revisions and restores o
   );
   expect(overflow).toBeLessThanOrEqual(0);
   await expectNoAxeViolations(page);
+  // A refusal appears inside the form it came from, and takes the focus.
+  await page.getByRole("button", { name: "Publish revision 3" }).click();
+  await expect(page.getByRole("alert")).toBeFocused();
+  await expect(page.getByRole("alert")).toContainText("hasn't been submitted for review");
   await page.getByRole("button", { name: "Submit revision 3 for review" }).click();
   await expect(page.getByRole("status")).toHaveText("Submitted for review.");
   await page.getByRole("button", { name: "Publish revision 3" }).click();

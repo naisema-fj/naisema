@@ -1,7 +1,7 @@
 import { data, redirect } from "react-router";
 import { LayerRevisionView } from "~/components/layer-revision-view";
 import { ReviewLinksSection } from "~/components/review-links-section";
-import { PANEL_INTENTS, ReviewPanel } from "~/components/review-panel";
+import { ReviewPanel, splitFailure } from "~/components/review-panel";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { readEvidenceFile } from "~/lib/evidence-file";
 import {
@@ -184,12 +184,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
 
 export default function LayerRevision({ loaderData, actionData }: Route.ComponentProps) {
   const { layerId, number, snapshot, review, abilities, links, done } = loaderData;
-  const failure = actionData && "error" in actionData ? actionData : null;
-  const panelError =
-    failure && PANEL_INTENTS.includes(failure.intent)
-      ? { intent: failure.intent, reviewType: failure.reviewType || undefined, message: failure.error }
-      : null;
-  const linkError = failure && !panelError ? failure.error : null;
+  const { panelError, otherError } = splitFailure(actionData);
   const issued = actionData && "issued" in actionData ? actionData.issued : null;
   return (
     <main id="main" className="page">
@@ -202,6 +197,7 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
         Revision {number}
         {!loaderData.isCurrent && " (a newer revision exists)"}
       </p>
+      {otherError && !links && <p role="alert">{otherError}</p>}
       {done && DONE_MESSAGES[done] && !actionData && (
         <p role="status" id="outcome" tabIndex={-1}>
           {DONE_MESSAGES[done]}
@@ -232,7 +228,7 @@ export default function LayerRevision({ loaderData, actionData }: Route.Componen
           links={links}
           issued={issued}
           canIssue={loaderData.canIssueLinks}
-          error={linkError}
+          error={otherError}
           rightsWarning={
             loaderData.videoHasRights
               ? null

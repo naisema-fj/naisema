@@ -54,7 +54,14 @@ export function ReviewLinksSection({
         </p>
       )}
       {issued && (
-        <div role="status" className="issued-link" id="outcome" tabIndex={-1}>
+        <div
+          role="status"
+          className="issued-link"
+          id="outcome"
+          tabIndex={-1}
+          /* biome-ignore lint/a11y/noAutofocus: lands on the new link, which is shown only once */
+          autoFocus
+        >
           <p>Review Link for {issued.recipient}. Copy it now: it won't be shown again.</p>
           <p>
             <code>{issued.url}</code>
