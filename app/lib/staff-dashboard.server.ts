@@ -19,6 +19,7 @@ import { logError } from "./log.server";
 import { type Actor, can } from "./permissions";
 import { layerQueues } from "./publication.server";
 import { contentReviewQueue, loadReview } from "./review.server";
+import { requirementName } from "./review-names";
 import { backupLine, dueCounts, longestWaitText } from "./staff-dashboard";
 import { revisionEligibility } from "./visibility.server";
 
@@ -40,6 +41,9 @@ const item = (found: Omit<AttentionItem, "detail"> & { detail?: string | null })
   ...found,
 });
 
+/** A submitted revision still waiting on reviews, and since when. */
+export type WaitingRevision = { id: string; number: number; title: string; since: Date; waitingFor: string[] };
+
 /** The most Content Items whose publishing state is worked out for the dashboard; the oldest first. */
 const CONTENT_LIMIT = 60;
 
@@ -47,31 +51,61 @@ const CONTENT_LIMIT = 60;
  * Submitted drafts of Content Items that are not yet approved (waiting on a review, or sent back by
  * one), and those ready to publish. Oldest first, so a long list drops the newest, not the longest-waiting.
  */
-async function contentQueues(db: Database, now: Date) {
+export async function contentQueues(db: Database, now: Date) {
   const rows = await db
     .select({
+      id: contentItem.id,
       revisionId: contentItem.currentDraftRevisionId,
+      number: revision.number,
+      snapshot: revision.snapshot,
       state: contentItem.publicationState,
       publishedId: contentItem.currentPublishedRevisionId,
       submittedAt: revisionSubmission.submittedAt,
     })
     .from(contentItem)
     .innerJoin(revisionSubmission, eq(revisionSubmission.revisionId, contentItem.currentDraftRevisionId))
+    .innerJoin(revision, eq(revision.id, contentItem.currentDraftRevisionId))
     .where(ne(contentItem.publicationState, "archived"))
     .orderBy(asc(revisionSubmission.submittedAt))
     .limit(CONTENT_LIMIT + 1);
-  const notApproved: Date[] = [];
+  const notApproved: WaitingRevision[] = [];
   let readyToPublish = 0;
   for (const row of rows.slice(0, CONTENT_LIMIT)) {
     const review = row.revisionId ? await loadReview(db, row.revisionId) : null;
     if (!review) continue;
-    if (review.progress.some((entry) => entry.status !== "approved")) {
-      notApproved.push(row.submittedAt);
+    const missing = review.progress.filter((entry) => entry.status !== "approved");
+    if (missing.length) {
+      notApproved.push({
+        id: row.id,
+        number: row.number,
+        title: (row.snapshot as { title?: string }).title ?? "Untitled",
+        since: row.submittedAt,
+        waitingFor: missing.map((entry) => requirementName(entry.requirement)),
+      });
     } else if (!(row.state === "published" && row.publishedId === row.revisionId)) {
       if ((await revisionEligibility(db, review, now)).eligible) readyToPublish++;
     }
   }
   return { notApproved, readyToPublish, capped: rows.length > CONTENT_LIMIT };
+}
+
+/** When one Content Item or Learning Layer revision was submitted; null if it never was. */
+export async function submittedAt(db: Database, kind: "contentItem" | "learningLayer", id: string, number: number) {
+  const found =
+    kind === "contentItem"
+      ? await db
+          .select({ at: revisionSubmission.submittedAt })
+          .from(revisionSubmission)
+          .innerJoin(revision, eq(revision.id, revisionSubmission.revisionId))
+          .where(and(eq(revision.contentItemId, id), eq(revision.number, number)))
+          .get()
+      : await db
+          .select({ at: learningLayerSubmission.submittedAt })
+          .from(learningLayerSubmission)
+          .innerJoin(learningLayerRevision, eq(learningLayerRevision.id, learningLayerSubmission.revisionId))
+          .where(and(eq(learningLayerRevision.learningLayerId, id), eq(learningLayerRevision.number, number)))
+          .get();
+  return found?.at ?? null;
 }
 
 /** When each queued Content Item or Learning Layer revision was submitted. */
@@ -80,27 +114,8 @@ async function submittedTimes(
   entries: { id: string; number: number }[],
   kind: "contentItem" | "learningLayer",
 ) {
-  const times: Date[] = [];
-  for (const entry of entries) {
-    const found =
-      kind === "contentItem"
-        ? await db
-            .select({ at: revisionSubmission.submittedAt })
-            .from(revisionSubmission)
-            .innerJoin(revision, eq(revision.id, revisionSubmission.revisionId))
-            .where(and(eq(revision.contentItemId, entry.id), eq(revision.number, entry.number)))
-            .get()
-        : await db
-            .select({ at: learningLayerSubmission.submittedAt })
-            .from(learningLayerSubmission)
-            .innerJoin(learningLayerRevision, eq(learningLayerRevision.id, learningLayerSubmission.revisionId))
-            .where(
-              and(eq(learningLayerRevision.learningLayerId, entry.id), eq(learningLayerRevision.number, entry.number)),
-            )
-            .get();
-    if (found) times.push(found.at);
-  }
-  return times;
+  const times = await Promise.all(entries.map((entry) => submittedAt(db, kind, entry.id, entry.number)));
+  return times.filter((time): time is Date => time !== null);
 }
 
 async function myReviews(db: Database, actor: Actor, now: Date): Promise<Section> {
@@ -131,7 +146,13 @@ async function editorQueues(db: Database, now: Date): Promise<Section> {
         key: "content-not-approved",
         count: content.notApproved.length,
         label: "Content Items submitted and not yet approved",
-        detail: `${longestWaitText(content.notApproved, now) ?? ""}${more}`.trim() || null,
+        detail:
+          `${
+            longestWaitText(
+              content.notApproved.map((entry) => entry.since),
+              now,
+            ) ?? ""
+          }${more}`.trim() || null,
         href: "/admin/articles",
       }),
       item({

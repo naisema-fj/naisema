@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import { ADMIN, confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
 
 test("an editor writes an article, revises it, compares revisions and restores one", async ({ page }, testInfo) => {
   const title = `Sevusevu ${testInfo.project.name} ${Date.now()}`;
@@ -124,4 +124,18 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await page.goBack();
   await found.click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+
+  // What's coming up lays out dates and waits, and passes axe in its empty and its full state.
+  await page.goto(`${ADMIN}/admin/schedule`);
+  await expect(page.getByRole("heading", { name: "What's coming up", level: 1 })).toBeVisible();
+  await expectNoAxeViolations(page);
+  await page.getByLabel("Show what is due in the next").selectOption("90");
+  await page.getByRole("button", { name: "Show" }).click();
+  await expect(page).toHaveURL(/days=90/);
+  await expect(page.getByLabel("Show what is due in the next")).toHaveValue("90");
+  const scheduleOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(scheduleOverflow).toBeLessThanOrEqual(0);
+  await expectNoAxeViolations(page);
 });
