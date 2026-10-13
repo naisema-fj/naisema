@@ -79,6 +79,22 @@ test("an editor writes an article, revises it, compares revisions and restores o
 
   await page.getByRole("link", { name: "Review and publish revision 3" }).click();
   await expectNoAxeViolations(page);
+
+  // What is missing before publishing is a short list near the top, with the action beside each item.
+  const missing = page.getByRole("heading", { name: "Before revision 3 can be published" });
+  await expect(missing).toBeVisible();
+  await expect(page.getByRole("link", { name: "Submit revision 3 for review", exact: true })).toBeVisible();
+  // It stays readable at 320 px, with nothing pushing the page sideways.
+  await page.setViewportSize({ width: 320, height: 800 });
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+  await expectNoAxeViolations(page);
+  // A refusal appears inside the form it came from, and takes the focus.
+  await page.getByRole("button", { name: "Publish revision 3" }).click();
+  await expect(page.getByRole("alert")).toBeFocused();
+  await expect(page.getByRole("alert")).toContainText("hasn't been submitted for review");
   await page.getByRole("button", { name: "Submit revision 3 for review" }).click();
   await expect(page.getByRole("status")).toHaveText("Submitted for review.");
   await page.getByRole("button", { name: "Publish revision 3" }).click();

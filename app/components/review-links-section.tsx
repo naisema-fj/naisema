@@ -25,6 +25,7 @@ export function ReviewLinksSection({
   issued,
   canIssue,
   rightsWarning,
+  error,
 }: {
   number: number;
   links: ReviewLinkRow[];
@@ -32,6 +33,8 @@ export function ReviewLinksSection({
   canIssue: boolean;
   /** What to say when the footage or recording it plays has no Rights Record granting Publish yet; null if nothing to say. */
   rightsWarning: string | null;
+  /** Why issuing or revoking a link was refused. */
+  error: string | null;
 }) {
   return (
     <section aria-labelledby="links-heading">
@@ -40,8 +43,25 @@ export function ReviewLinksSection({
         A Review Link shows revision {number} exactly as it is, to someone without a staff account, such as a Knowledge
         Holder. It needs no sign-in, can't change anything, lasts 14 days and is logged each time it is opened.
       </p>
+      {error && (
+        <p
+          role="alert"
+          id="link-error"
+          tabIndex={-1} /* biome-ignore lint/a11y/noAutofocus: lands on the refusal after a full-page post */
+          autoFocus
+        >
+          {error}
+        </p>
+      )}
       {issued && (
-        <div role="status" className="issued-link">
+        <div
+          role="status"
+          className="issued-link"
+          id="outcome"
+          tabIndex={-1}
+          /* biome-ignore lint/a11y/noAutofocus: lands on the new link, which is shown only once */
+          autoFocus
+        >
           <p>Review Link for {issued.recipient}. Copy it now: it won't be shown again.</p>
           <p>
             <code>{issued.url}</code>
@@ -65,7 +85,7 @@ export function ReviewLinksSection({
           <tbody>
             {links.map((link) => (
               <tr key={link.id}>
-                <td>{link.recipient}</td>
+                <th scope="row">{link.recipient}</th>
                 <td>
                   {formatDay(link.createdAt)} by {link.issuedBy}
                 </td>
@@ -107,7 +127,13 @@ export function ReviewLinksSection({
         >
           <input type="hidden" name="intent" value="issueLink" />
           <label htmlFor="link-recipient">Who it is for</label>
-          <input id="link-recipient" name="recipient" required maxLength={200} />
+          <input
+            id="link-recipient"
+            name="recipient"
+            required
+            maxLength={200}
+            aria-describedby={error ? "link-error" : undefined}
+          />
           <button type="submit">Issue a Review Link</button>
         </Form>
       ) : (
