@@ -116,6 +116,12 @@ test("an editor writes an article, revises it, compares revisions and restores o
   );
   expect(searchOverflow).toBeLessThanOrEqual(0);
   await expectNoAxeViolations(page);
+  // Nothing found says so, and still passes axe.
+  await page.getByRole("searchbox", { name: "Search content, media and directories" }).fill("zzzz-nothing-here");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Nothing found for")).toBeVisible();
+  await expectNoAxeViolations(page);
+  await page.goBack();
   await found.click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
 });

@@ -12,7 +12,8 @@ import { MEDIA_STATUS_NAMES } from "./upload-rules";
 /** The most results shown for one kind; the page says when there are more. */
 export const PER_KIND = 15;
 
-export type SearchResult = { id: string; title: string; detail: string; state: string; href: string };
+/** `state` is the item's publication or processing state; null for a kind with none, such as a Contributor. */
+export type SearchResult = { id: string; title: string; detail: string; state: string | null; href: string };
 export type SearchGroup = { kind: string; results: SearchResult[]; more: number };
 
 /**
@@ -107,7 +108,7 @@ export async function staffSearch(db: Database, actor: Actor, query: string): Pr
       (row) => ({
         title: row.name,
         detail: "Contributor",
-        state: "Contributor",
+        state: null,
         href: `/admin/contributors#contributor-${row.id}`,
       }),
     ),

@@ -75,6 +75,7 @@ describe("staff search", () => {
     expect(providers).toContain("Listed on the public site");
 
     // An ID finds each kind too.
+    expect(main(await search(editor, layerId.slice(0, 8)))).toContain(`/admin/learning-layers/${layerId}`);
     expect(main(await search(editor, assetId.slice(0, 8)))).toContain(`#asset-${assetId}`);
     expect(main(await search(editor, providerId.slice(0, 8)))).toContain(`/admin/providers/${providerId}`);
     expect(main(await search(editor, contributorId.slice(0, 8)))).toContain(`#contributor-${contributorId}`);

@@ -47,7 +47,7 @@ export default function Search({ loaderData }: Route.ComponentProps) {
                   <li key={result.id}>
                     <a href={result.href}>{result.title}</a>
                     <span className="search-detail">
-                      {result.detail}. {result.state}.
+                      {result.detail}.{result.state ? ` ${result.state}.` : ""}
                     </span>
                   </li>
                 ))}

@@ -3,6 +3,7 @@ import { WovenMark } from "~/components/public/woven-mark";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { isCurrentNavItem, type NavGroup } from "~/lib/staff-nav";
 import { staffShellFor } from "~/lib/staff-nav.server";
+import { MAX_QUERY } from "~/lib/staff-search";
 import type { Route } from "./+types/layout";
 import "~/styles/staff.css";
 
@@ -63,7 +64,7 @@ function StaffSearch() {
           name="q"
           defaultValue={asked}
           placeholder="Search"
-          maxLength={100}
+          maxLength={MAX_QUERY}
           autoComplete="off"
         />
         <button type="submit">Search</button>
