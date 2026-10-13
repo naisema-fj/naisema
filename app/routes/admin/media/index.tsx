@@ -8,7 +8,7 @@ import { can } from "~/lib/permissions";
 import { primaryPublicOrigin } from "~/lib/public-cache.server";
 import { mediaRightsFacts } from "~/lib/rights.server";
 import { isPublishable, rightsPagePath } from "~/lib/rights-rules";
-import { formatBytes, type MediaStatus, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
+import { formatBytes, MEDIA_STATUS_NAMES, UPLOAD_TYPE_NAMES } from "~/lib/upload-rules";
 import { videoStates } from "~/lib/video-assets.server";
 import { VIDEO_STATE_NAMES } from "~/lib/video-rules";
 import type { Route } from "./+types/index";
@@ -19,15 +19,6 @@ export const handle = { video: true };
 export function meta() {
   return [{ title: "Media library · NAISEMA staff" }];
 }
-
-const STATUS_NAMES: Record<MediaStatus, string> = {
-  uploading: "Upload not finished",
-  scanning: "Being scanned for viruses",
-  ready: "Ready",
-  infected: "Blocked: a virus was found",
-  failed: "Refused",
-  removed: "Removed after 30 days in quarantine",
-};
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
@@ -52,7 +43,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         name: asset.name,
         typeName: UPLOAD_TYPE_NAMES[asset.type] ?? asset.type,
         size: formatBytes(asset.size),
-        status: STATUS_NAMES[asset.status] ?? asset.status,
+        status: MEDIA_STATUS_NAMES[asset.status] ?? asset.status,
         reason: asset.statusReason,
         // A video master's processing, and its page with a preview once it's ready.
         video: videoState ? { state: VIDEO_STATE_NAMES[videoState], href: `/admin/media/${asset.id}/video` } : null,
@@ -126,7 +117,7 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
             </thead>
             <tbody>
               {loaderData.assets.map((asset) => (
-                <tr key={asset.id}>
+                <tr key={asset.id} id={`asset-${asset.id}`}>
                   <td>{asset.link ? <a href={asset.link}>{asset.name}</a> : asset.name}</td>
                   <td>{asset.typeName}</td>
                   <td>{asset.size}</td>

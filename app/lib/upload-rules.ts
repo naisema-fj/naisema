@@ -28,6 +28,16 @@ export type UploadPurpose = "media" | "evidence" | "submission";
  */
 export type MediaStatus = "uploading" | "scanning" | "ready" | "infected" | "failed" | "removed";
 
+/** A media file's status as staff pages name it. */
+export const MEDIA_STATUS_NAMES: Record<MediaStatus, string> = {
+  uploading: "Upload not finished",
+  scanning: "Being scanned for viruses",
+  ready: "Ready",
+  infected: "Blocked: a virus was found",
+  failed: "Refused",
+  removed: "Removed after 30 days in quarantine",
+};
+
 const MB = 1024 * 1024;
 
 /** Per-kind size limits; video follows the 2 GB source-master limit (docs/decision-log.md). */

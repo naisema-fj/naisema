@@ -357,6 +357,7 @@ async function summaries(db: Database, where: SQL | undefined) {
     return {
       id: layer.id,
       contentItemId: layer.contentItemId,
+      publicationState: layer.publicationState,
       title,
       level,
       excerpt,

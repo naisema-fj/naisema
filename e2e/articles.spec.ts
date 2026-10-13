@@ -100,4 +100,28 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await page.getByRole("button", { name: "Publish revision 3" }).click();
   await expect(page.getByRole("status")).toHaveText("Published.");
   await expectNoAxeViolations(page);
+
+  // The search box in every page's header takes the person to what they typed, and keeps it.
+  await page.getByRole("searchbox", { name: "Search content, media and directories" }).fill(title.toLowerCase());
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/admin\/search\?q=/);
+  await expect(page.getByRole("heading", { name: "Content Items", level: 2 })).toBeVisible();
+  await expect(page.getByRole("searchbox", { name: "Search content, media and directories" })).toHaveValue(
+    title.toLowerCase(),
+  );
+  const found = page.getByRole("link", { name: title });
+  await expect(found).toBeVisible();
+  const searchOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(searchOverflow).toBeLessThanOrEqual(0);
+  await expectNoAxeViolations(page);
+  // Nothing found says so, and still passes axe.
+  await page.getByRole("searchbox", { name: "Search content, media and directories" }).fill("zzzz-nothing-here");
+  await page.keyboard.press("Enter");
+  await expect(page.getByText("Nothing found for")).toBeVisible();
+  await expectNoAxeViolations(page);
+  await page.goBack();
+  await found.click();
+  await expect(page.getByRole("heading", { name: title })).toBeVisible();
 });

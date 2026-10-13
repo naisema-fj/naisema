@@ -544,3 +544,56 @@
   font-family: var(--font-display);
   font-size: 1.15rem;
 }
+
+/* --- Search: one box in the header of every staff page, and its results. --- */
+.staff-search {
+  display: block;
+  flex: 0 1 22rem;
+  min-width: 0;
+}
+
+.staff-search form {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.staff-search input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 2.75rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--shell);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+@media (max-width: 40rem) {
+  .staff-search {
+    flex: 1 1 100%;
+    order: 3;
+  }
+}
+
+.search-results {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.search-results li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.search-results a {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}

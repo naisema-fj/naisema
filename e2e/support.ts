@@ -73,6 +73,9 @@ export async function stubTurnstile(page: Page) {
 }
 
 export async function expectNoAxeViolations(page: Page) {
+  // A click that navigates returns once the new page has committed, which can be before its
+  // stylesheets have loaded; axe would then measure unstyled links and fail on target size.
+  await page.waitForLoadState("load");
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();

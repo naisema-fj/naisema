@@ -101,6 +101,7 @@ export default [
       route("sign-in", "routes/admin/sign-in.tsx"),
       route("sign-out", "routes/admin/sign-out.tsx"),
       route("reviews", "routes/admin/reviews.tsx"),
+      route("search", "routes/admin/search.tsx"),
       route("submissions", "routes/admin/submissions/index.tsx"),
       route("submissions/:id", "routes/admin/submissions/submission.tsx"),
       route("submissions/:id/files/:assetId", "routes/admin/submissions/file.ts"),
