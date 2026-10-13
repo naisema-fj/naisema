@@ -47,6 +47,31 @@ function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
 
 type Shell = Route.ComponentProps["loaderData"];
 
+/** One search box on every staff page; on the search page it keeps what was asked. */
+function StaffSearch() {
+  const { pathname, search } = useLocation();
+  const asked = pathname === "/admin/search" ? (new URLSearchParams(search).get("q") ?? "") : "";
+  return (
+    <search className="staff-search">
+      <form method="get" action="/admin/search">
+        <label htmlFor="staff-search-q" className="visually-hidden">
+          Search content, media and directories
+        </label>
+        <input
+          id="staff-search-q"
+          type="search"
+          name="q"
+          defaultValue={asked}
+          placeholder="Search"
+          maxLength={100}
+          autoComplete="off"
+        />
+        <button type="submit">Search</button>
+      </form>
+    </search>
+  );
+}
+
 function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNode }) {
   return (
     <div className="staff">
@@ -56,6 +81,7 @@ function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNo
             <WovenMark />
             NAISEMA <span>staff</span>
           </a>
+          {shell?.search && <StaffSearch />}
           {shell && (
             <>
               {/* A native disclosure, so the menu works on phones without any JavaScript. */}

@@ -1,6 +1,7 @@
 import { can } from "./permissions";
 import { activeRoles, getSignedIn, staffStep } from "./staff.server";
 import { staffNav } from "./staff-nav";
+import { canSearch } from "./staff-search.server";
 
 /**
  * What the staff shell shows around a page: the signed-in person and the pages their roles allow.
@@ -12,5 +13,5 @@ export async function staffShellFor(env: Env, request: Request) {
   if (!signedIn || staffStep(signedIn) !== "done") return null;
   const actor = { userId: signedIn.user.id, roles: await activeRoles(signedIn.db, signedIn.user.id) };
   if (!can(actor, { action: "staffArea.enter" })) return null;
-  return { email: signedIn.user.email, groups: staffNav(actor) };
+  return { email: signedIn.user.email, groups: staffNav(actor), search: canSearch(actor) };
 }

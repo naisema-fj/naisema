@@ -42,7 +42,7 @@ export default function Contributors({ loaderData, actionData }: Route.Component
       {loaderData.contributors.length ? (
         <ul>
           {loaderData.contributors.map((person) => (
-            <li key={person.id}>
+            <li key={person.id} id={`contributor-${person.id}`}>
               {person.name}
               {person.notes && `: ${person.notes}`}
             </li>

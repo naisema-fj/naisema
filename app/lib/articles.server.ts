@@ -222,6 +222,7 @@ export async function listArticles(db: Database) {
   const rows = await db
     .select({
       id: contentItem.id,
+      slug: contentItem.slug,
       type: contentItem.type,
       primaryArea: contentItem.primaryArea,
       publicationState: contentItem.publicationState,
