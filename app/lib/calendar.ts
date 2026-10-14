@@ -16,3 +16,9 @@ export const fijiDateText = (date: Date) =>
   new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "long", year: "numeric", timeZone: "Pacific/Fiji" }).format(
     date,
   );
+
+/** The first moment of a Fiji day (YYYY-MM-DD): midnight in Fiji, which is noon the day before in UTC. */
+export const fijiDayStart = (day: string) => new Date(Date.parse(`${day}T00:00:00Z`) - 12 * 3_600_000);
+
+/** The last moment of a Fiji day (YYYY-MM-DD). */
+export const fijiDayEnd = (day: string) => new Date(Date.parse(`${day}T24:00:00Z`) - 12 * 3_600_000 - 1);

@@ -1,5 +1,6 @@
 import { CASE_KINDS } from "./case-rules";
 import { type Actor, type CaseKind, can, EXPORT_KINDS } from "./permissions";
+import { scheduleKinds } from "./staff-schedule";
 
 /**
  * The staff site's navigation: which pages each person is offered, from the same `can()` rules the
@@ -19,6 +20,10 @@ export function staffNav(actor: Actor): NavGroup[] {
   );
 
   const groups: { name: string; items: (NavItem | false)[] }[] = [
+    {
+      name: "Overview",
+      items: [scheduleKinds(actor).length > 0 && { label: "What's coming up", href: "/admin/schedule" }],
+    },
     {
       name: "Content",
       items: [
