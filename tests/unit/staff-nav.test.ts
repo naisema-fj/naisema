@@ -46,8 +46,16 @@ describe("the staff navigation", () => {
 
   it("shows a reviewer their reviews and nothing to edit or administer", () => {
     expect(labels(staff({ role: "reviewer", reviewType: "language", languageVariety: "standard-fijian" }))).toEqual([
+      "What's coming up",
       "Your reviews",
     ]);
+  });
+
+  it("offers What's coming up to the roles that have something on it, and not to an Educator", () => {
+    for (const role of ["editor", "safeguarding_lead", "privacy_contact"] as const) {
+      expect(labels(staff({ role }))).toContain("What's coming up");
+    }
+    expect(labels(staff({ role: "educator" }))).not.toContain("What's coming up");
   });
 
   it("shows the safeguarding lead Cases, and the privacy contact Cases, Consent Records and notices", () => {
@@ -70,7 +78,12 @@ describe("the staff navigation", () => {
       expect(staffNav(actor).every((group) => group.items.length > 0)).toBe(true);
     }
     expect(staffNav(staff())).toEqual([]);
-    expect(groupNames(staff({ role: "editor" }))).toEqual(["Content", "People and privacy", "Administration"]);
+    expect(groupNames(staff({ role: "editor" }))).toEqual([
+      "Overview",
+      "Content",
+      "People and privacy",
+      "Administration",
+    ]);
   });
 });
 

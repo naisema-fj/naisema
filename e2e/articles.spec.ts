@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import { ADMIN, confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
 
 test("an editor writes an article, revises it, compares revisions and restores one", async ({ page }, testInfo) => {
   const title = `Sevusevu ${testInfo.project.name} ${Date.now()}`;
@@ -66,6 +66,7 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await page.getByRole("link", { name: "Rights Records" }).click();
   await page.getByLabel("Rights holder").fill("E2E Storyteller");
   await page.getByLabel("Publish", { exact: true }).check();
+  await page.getByLabel(/^Expires on/).fill(new Date(Date.now() + 10 * 86_400_000).toISOString().slice(0, 10));
   await page.getByLabel("Evidence (PDF, JPEG, PNG or WebP, up to 10 MB)").setInputFiles({
     name: "permission.pdf",
     mimeType: "application/pdf",
@@ -124,4 +125,19 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await page.goBack();
   await found.click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+
+  // What's coming up lays out dates and waits, and passes axe with an entry on it (the Rights Record just recorded, expiring in ten days).
+  await page.goto(`${ADMIN}/admin/schedule`);
+  await expect(page.getByRole("heading", { name: "What's coming up", level: 1 })).toBeVisible();
+  await expect(page.getByRole("table", { name: /due in the next 30 days/ })).toContainText("E2E Storyteller");
+  await expectNoAxeViolations(page);
+  await page.getByLabel("Show what is due in the next").selectOption("90");
+  await page.getByRole("button", { name: "Show" }).click();
+  await expect(page).toHaveURL(/days=90/);
+  await expect(page.getByLabel("Show what is due in the next")).toHaveValue("90");
+  const scheduleOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(scheduleOverflow).toBeLessThanOrEqual(0);
+  await expectNoAxeViolations(page);
 });
