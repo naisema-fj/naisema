@@ -170,6 +170,20 @@
   font-weight: 600;
 }
 
+/* A checkbox that chooses an item for a bulk action: the whole 44px square is its target. */
+:where(.staff) .bulk-choice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+:where(.staff) .bulk-actions .hint {
+  color: var(--muted);
+}
+
 :where(.staff) fieldset {
   border: 1px solid var(--line);
   border-radius: 8px;

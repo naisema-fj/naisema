@@ -24,7 +24,7 @@ export const BULK_KIND_NAMES: Record<BulkKind, { one: string; many: string }> = 
   layer: { one: "Learning Layer", many: "Learning Layers" },
 };
 
-const isKind = (value: string): value is BulkKind => value === "content" || value === "layer";
+export const isKind = (value: string): value is BulkKind => value === "content" || value === "layer";
 
 const refusal = (error: string): BulkRead => ({ ok: false, error });
 

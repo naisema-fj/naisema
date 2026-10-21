@@ -65,7 +65,7 @@ export default function Articles({ loaderData }: Route.ComponentProps) {
               {loaderData.articles.map((article) => (
                 <tr key={article.id}>
                   <td>
-                    <BulkChoice prefix="pick" id={article.id} title={article.title} />
+                    <BulkChoice id={article.id} title={article.title} />
                   </td>
                   <td>
                     <a href={`/admin/articles/${article.id}`}>{article.title}</a>

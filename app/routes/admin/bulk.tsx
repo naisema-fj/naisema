@@ -1,5 +1,5 @@
 import { data } from "react-router";
-import { BULK_KIND_NAMES, type BulkKind, type BulkOutcome, readBulkForm, summarise } from "~/lib/bulk-actions";
+import { BULK_KIND_NAMES, type BulkKind, type BulkOutcome, isKind, readBulkForm, summarise } from "~/lib/bulk-actions";
 import { runBulk } from "~/lib/bulk-actions.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
@@ -32,7 +32,8 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { db, actor } = await requireEditor(env, request);
   const form = await request.formData();
   const read = readBulkForm(form);
-  const kind = form.get("kind") === "layer" ? "layer" : "content";
+  const asked = String(form.get("kind"));
+  const kind = isKind(asked) ? asked : "content";
   if (!read.ok) return data({ error: read.error, back: BACK[kind] }, { status: 400 });
   const { request: bulk } = read;
   const outcomes = await runBulk(env, db, actor, bulk);
@@ -94,7 +95,7 @@ export default function Bulk({ actionData }: Route.ComponentProps) {
           <li key={outcome.id}>
             <strong>{outcome.title}</strong>
             <span className="meta">
-              <span aria-hidden="true">{outcome.ok ? "✓" : "✕"}</span> {outcome.ok ? "Done" : "Skipped"}: {outcome.text}
+              {outcome.ok ? "Done" : "Skipped"}: {outcome.text}
             </span>
           </li>
         ))}

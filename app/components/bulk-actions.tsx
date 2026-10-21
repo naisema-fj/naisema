@@ -2,15 +2,12 @@ import { BULK_KIND_NAMES, BULK_REASON_LIMIT, type BulkKind } from "~/lib/bulk-ac
 import type { ReviewerChoices } from "~/lib/bulk-actions.server";
 
 /** The checkbox that chooses one item for a bulk action; its label names the item. */
-export function BulkChoice({ prefix, id, title }: { prefix: string; id: string; title: string }) {
-  const inputId = `${prefix}-${id}`;
+export function BulkChoice({ id, title }: { id: string; title: string }) {
   return (
-    <>
-      <input type="checkbox" name="id" value={id} id={inputId} />
-      <label htmlFor={inputId} className="visually-hidden">
-        Choose {title}
-      </label>
-    </>
+    <label className="bulk-choice">
+      <input type="checkbox" name="id" value={id} />
+      <span className="visually-hidden">Choose {title}</span>
+    </label>
   );
 }
 

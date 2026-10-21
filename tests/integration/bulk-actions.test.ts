@@ -295,14 +295,29 @@ describe("bulk actions on Learning Layers", () => {
 });
 
 describe("choosing items on the lists", () => {
+  it("offers a labelled checkbox for every Learning Layer, in the queues and the full list, with unique ids", async () => {
+    const layer = await approvedLayer();
+
+    const page = main(await (await layer.editor.browser.fetch("/admin/learning-layers")).text());
+
+    // Ready to publish and the full list both show it; each choice is labelled and the action form posts for layers.
+    expect(page.match(new RegExp(`value="${layer.layerId}"`, "g"))?.length).toBeGreaterThanOrEqual(2);
+    expect(page).toMatch(
+      /<label class="bulk-choice"><input type="checkbox" name="id"[^>]*><span class="visually-hidden">Choose Greetings/,
+    );
+    expect(page).toContain('name="kind" value="layer"');
+    expect(page).not.toContain('value="publish"');
+    expect(page).not.toMatch(/\sid="[^"]*\s[^"]*"/);
+  }, 60_000);
+
   it("offers a labelled checkbox for every item on the content list, and the three actions", async () => {
     const editor = await staff("editor", { role: "editor" });
     const id = await article(editor, `Listed ${unique("t")}`);
 
     const page = main(await (await editor.browser.fetch("/admin/articles")).text());
 
-    expect(page).toContain(`name="id" value="${id}"`);
-    expect(page).toMatch(/<label[^>]*>Choose Listed/);
+    expect(page).toContain(`value="${id}"`);
+    expect(page).toMatch(/<label class="bulk-choice"><input[^>]*><span class="visually-hidden">Choose Listed/);
     expect(page).toContain('action="/admin/bulk"');
     expect(page).toContain('value="withdraw"');
     expect(page).toContain('value="archive"');

@@ -105,7 +105,7 @@ export default function LearningLayers({ loaderData }: Route.ComponentProps) {
           <ul className="item-list">
             {loaderData.layers.map((layer) => (
               <li key={layer.id}>
-                {isEditor && <BulkChoice prefix="pick-layer" id={layer.id} title={layer.title} />}
+                {isEditor && <BulkChoice id={layer.id} title={layer.title} />}
                 <a href={`/admin/learning-layers/${layer.id}`}>{layer.title}</a>
                 <span className="meta">
                   {[
@@ -171,11 +171,7 @@ function Queue({
           {entries.map((entry) => (
             <li key={entry.learningLayerId}>
               {selectable && (
-                <BulkChoice
-                  prefix={`pick-${heading}`}
-                  id={entry.learningLayerId}
-                  title={`${entry.title}, revision ${entry.number}`}
-                />
+                <BulkChoice id={entry.learningLayerId} title={`${entry.title}, revision ${entry.number}`} />
               )}
               <a href={`/admin/learning-layers/${entry.learningLayerId}/revisions/${entry.number}`}>
                 {`${entry.title}, revision ${entry.number}`}
