@@ -104,6 +104,7 @@ export default [
       // Assign a reviewer to, withdraw or archive several chosen items at once (BO-07).
       route("bulk", "routes/admin/bulk.tsx"),
       route("search", "routes/admin/search.tsx"),
+      route("schedule", "routes/admin/schedule.tsx"),
       route("submissions", "routes/admin/submissions/index.tsx"),
       route("submissions/:id", "routes/admin/submissions/submission.tsx"),
       route("submissions/:id/files/:assetId", "routes/admin/submissions/file.ts"),
