@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import { BulkActions, BulkChoice } from "~/components/bulk-actions";
+import { bulkReviewerChoices } from "~/lib/bulk-actions.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { LAYER_LEVELS, layerSpan } from "~/lib/learning-layer-fields";
 import { layersFor, requireLayerStaff, videosFor } from "~/lib/learning-layers.server";
@@ -15,15 +18,17 @@ export function meta() {
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { db, actor, isEditor } = await requireLayerStaff(context.get(cloudflareContext).env, request);
-  const [layers, videos, queues] = await Promise.all([
+  const [layers, videos, queues, reviewers] = await Promise.all([
     layersFor(db, actor),
     videosFor(db, actor),
     isEditor ? layerQueues(db) : null,
+    isEditor ? bulkReviewerChoices(db) : [],
   ]);
   const videoTitles = new Map(videos.map((video) => [video.id, video.title]));
   return {
     isEditor,
     queues,
+    reviewers,
     videos,
     layers: layers.map((layer) => ({
       ...layer,
@@ -34,7 +39,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   };
 }
 
+/** Editors choose Learning Layers in the lists for a bulk action (BO-07); everyone else sees the plain page. */
+function MaybeBulkForm({ editor, children }: { editor: boolean; children: ReactNode }) {
+  return editor ? (
+    <form method="post" action="/admin/bulk">
+      {children}
+    </form>
+  ) : (
+    children
+  );
+}
+
 export default function LearningLayers({ loaderData }: Route.ComponentProps) {
+  const { isEditor } = loaderData;
   return (
     <main id="main" className="page page-wide">
       <p>
@@ -44,62 +61,78 @@ export default function LearningLayers({ loaderData }: Route.ComponentProps) {
       <p>
         <a href="/admin/expressions">Expressions</a>: the words and phrases Annotations link to.
       </p>
-      {loaderData.queues && (
-        <>
-          <Queue
-            heading="Waiting for review"
-            empty="Nothing submitted is waiting for a review."
-            entries={loaderData.queues.missingReview}
-            detail={(entry) => [`still needs ${entry.waitingFor.join(", ")}.`, ...entry.blockers].join(" ")}
-          />
-          <Queue
-            heading="Approved but held up"
-            empty="Nothing approved is held up."
-            entries={loaderData.queues.heldUp}
-            detail={(entry) => entry.blockers.join(" ")}
-          />
-          <Queue
-            heading="Ready to publish"
-            empty="Nothing is ready to publish."
-            entries={loaderData.queues.readyToPublish}
-            detail={() => "every review and right is in place"}
-          />
-          <Queue
-            heading="Video failed processing"
-            empty="No Learning Layer is held up by its video."
-            entries={loaderData.queues.failedProcessing}
-            detail={(entry) => entry.reason ?? "processing failed"}
-          />
-        </>
-      )}
-      <h2>{loaderData.isEditor ? "Every Learning Layer" : "Learning Layers assigned to you"}</h2>
-      {loaderData.layers.length ? (
-        <ul className="item-list">
-          {loaderData.layers.map((layer) => (
-            <li key={layer.id}>
-              <a href={`/admin/learning-layers/${layer.id}`}>{layer.title}</a>
-              <span className="meta">
-                {[
-                  layer.videoTitle,
-                  layer.level,
-                  layer.clip,
-                  `${layer.segmentCount} ${layer.segmentCount === 1 ? "Segment" : "Segments"}`,
-                  layer.draftCount ? `${layer.draftCount} unreviewed` : null,
-                  `revision ${layer.revisionNumber}`,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>
-          {loaderData.isEditor
-            ? "No Learning Layers yet."
-            : "None yet. An editor assigns you to a Video or a Learning Layer."}
+      {isEditor && (
+        <p className="hint">
+          Choose Learning Layers in the lists below to assign a reviewer to, withdraw or archive several at once. The
+          actions are <a href="#layers-actions">under the list of every Learning Layer</a>.
         </p>
       )}
+      <MaybeBulkForm editor={isEditor}>
+        {loaderData.queues && (
+          <>
+            <Queue
+              selectable={isEditor}
+              heading="Waiting for review"
+              empty="Nothing submitted is waiting for a review."
+              entries={loaderData.queues.missingReview}
+              detail={(entry) => [`still needs ${entry.waitingFor.join(", ")}.`, ...entry.blockers].join(" ")}
+            />
+            <Queue
+              selectable={isEditor}
+              heading="Approved but held up"
+              empty="Nothing approved is held up."
+              entries={loaderData.queues.heldUp}
+              detail={(entry) => entry.blockers.join(" ")}
+            />
+            <Queue
+              selectable={isEditor}
+              heading="Ready to publish"
+              empty="Nothing is ready to publish."
+              entries={loaderData.queues.readyToPublish}
+              detail={() => "every review and right is in place"}
+            />
+            <Queue
+              selectable={isEditor}
+              heading="Video failed processing"
+              empty="No Learning Layer is held up by its video."
+              entries={loaderData.queues.failedProcessing}
+              detail={(entry) => entry.reason ?? "processing failed"}
+            />
+          </>
+        )}
+        <h2>{isEditor ? "Every Learning Layer" : "Learning Layers assigned to you"}</h2>
+        {loaderData.layers.length ? (
+          <ul className="item-list">
+            {loaderData.layers.map((layer) => (
+              <li key={layer.id}>
+                {isEditor && <BulkChoice prefix="pick-layer" id={layer.id} title={layer.title} />}
+                <a href={`/admin/learning-layers/${layer.id}`}>{layer.title}</a>
+                <span className="meta">
+                  {[
+                    layer.videoTitle,
+                    layer.level,
+                    layer.clip,
+                    `${layer.segmentCount} ${layer.segmentCount === 1 ? "Segment" : "Segments"}`,
+                    layer.draftCount ? `${layer.draftCount} unreviewed` : null,
+                    `revision ${layer.revisionNumber}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>
+            {loaderData.isEditor
+              ? "No Learning Layers yet."
+              : "None yet. An editor assigns you to a Video or a Learning Layer."}
+          </p>
+        )}
+        {isEditor && loaderData.layers.length > 0 && (
+          <BulkActions kind="layer" prefix="layers" reviewers={loaderData.reviewers} />
+        )}
+      </MaybeBulkForm>
       <h2>{loaderData.isEditor ? "Videos" : "Videos you can add Learning Layers to"}</h2>
       {loaderData.videos.length ? (
         <ul className="item-list">
@@ -122,7 +155,9 @@ function Queue({
   empty,
   entries,
   detail,
+  selectable,
 }: {
+  selectable: boolean;
   heading: string;
   empty: string;
   entries: QueueEntry[];
@@ -135,6 +170,13 @@ function Queue({
         <ul className="item-list">
           {entries.map((entry) => (
             <li key={entry.learningLayerId}>
+              {selectable && (
+                <BulkChoice
+                  prefix={`pick-${heading}`}
+                  id={entry.learningLayerId}
+                  title={`${entry.title}, revision ${entry.number}`}
+                />
+              )}
               <a href={`/admin/learning-layers/${entry.learningLayerId}/revisions/${entry.number}`}>
                 {`${entry.title}, revision ${entry.number}`}
               </a>

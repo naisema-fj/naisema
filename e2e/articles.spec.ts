@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import { ADMIN, confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
 
 test("an editor writes an article, revises it, compares revisions and restores one", async ({ page }, testInfo) => {
   const title = `Sevusevu ${testInfo.project.name} ${Date.now()}`;
@@ -124,4 +124,28 @@ test("an editor writes an article, revises it, compares revisions and restores o
   await page.goBack();
   await found.click();
   await expect(page.getByRole("heading", { name: title })).toBeVisible();
+
+  // Several items can be chosen on the content list and withdrawn with one reason; the result says what happened.
+  await page.goto(`${ADMIN}/admin/articles`);
+  await page.getByLabel(`Choose ${title}`).check();
+  await expectNoAxeViolations(page);
+  await page.getByLabel("Why (required, kept in the audit log for each one)").fill("Retired by the E2E suite");
+  await page.getByRole("button", { name: "Withdraw the Content Items I chose" }).click();
+  await expect(page.getByRole("status")).toHaveText("Withdrew 1 of 1 Content Item.");
+  await expect(
+    page.getByRole("listitem").filter({ hasText: title }).filter({ hasText: "Done: Withdrawn." }),
+  ).toBeVisible();
+  const bulkOverflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(bulkOverflow).toBeLessThanOrEqual(0);
+  await expectNoAxeViolations(page);
+  // Nothing chosen is refused in words, and still passes axe.
+  await page.goBack();
+  // The browser may bring the earlier choice back with the page.
+  await page.getByLabel(`Choose ${title}`).uncheck();
+  await page.getByLabel("Why (required, kept in the audit log for each one)").fill("Nothing chosen");
+  await page.getByRole("button", { name: "Archive the Content Items I chose" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Choose at least one item.");
+  await expectNoAxeViolations(page);
 });
