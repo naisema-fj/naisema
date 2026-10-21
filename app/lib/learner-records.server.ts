@@ -1,4 +1,4 @@
-import { and, eq, like, lt, sql } from "drizzle-orm";
+import { and, eq, like, lt, or, sql } from "drizzle-orm";
 import {
   activityAttempt,
   bookmark,
@@ -74,12 +74,13 @@ async function removal(db: Database, userId: string, subjectHash: string, reason
       details: { reason: DELETION_REASONS[reason] },
     }),
     ...historyDeletes(db, userId),
-    // Sign-in links not yet used, which name the address.
+    // Sign-in links not yet used, which name the address. Better Auth 1.7.10 and later store them as
+    // "magic-link:learner:<hash>"; links made before that are "learner:<hash>".
     db
       .delete(verification)
       .where(
         and(
-          like(verification.identifier, "learner:%"),
+          or(like(verification.identifier, "learner:%"), like(verification.identifier, "magic-link:learner:%")),
           sql`json_valid(${verification.value}) AND json_extract(${verification.value}, '$.email') = ${person?.email ?? ""}`,
         ),
       ),
