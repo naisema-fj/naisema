@@ -1,4 +1,6 @@
+import { BulkActions, BulkChoice } from "~/components/bulk-actions";
 import { listArticles } from "~/lib/articles.server";
+import { bulkReviewerChoices } from "~/lib/bulk-actions.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireEditor } from "~/lib/content.server";
 import { PUBLICATION_NAMES, type PublicationState } from "~/lib/review-names";
@@ -12,7 +14,8 @@ export function meta() {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { db } = await requireEditor(context.get(cloudflareContext).env, request);
-  return { articles: await listArticles(db) };
+  const [articles, reviewers] = await Promise.all([listArticles(db), bulkReviewerChoices(db)]);
+  return { articles, reviewers };
 }
 
 export default function Articles({ loaderData }: Route.ComponentProps) {
@@ -40,31 +43,43 @@ export default function Articles({ loaderData }: Route.ComponentProps) {
         </li>
       </ul>
       {loaderData.articles.length ? (
-        <table>
-          <caption className="visually-hidden">Content, most recently saved first</caption>
-          <thead>
-            <tr>
-              <th scope="col">Title</th>
-              <th scope="col">Type</th>
-              <th scope="col">Area</th>
-              <th scope="col">Latest revision</th>
-              <th scope="col">Publication</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loaderData.articles.map((article) => (
-              <tr key={article.id}>
-                <td>
-                  <a href={`/admin/articles/${article.id}`}>{article.title}</a>
-                </td>
-                <td>{article.typeName}</td>
-                <td>{article.areaName}</td>
-                <td>{article.number}</td>
-                <td>{PUBLICATION_NAMES[article.publicationState as PublicationState]}</td>
+        <form method="post" action="/admin/bulk">
+          <p className="hint">
+            Choose items to assign a reviewer to, withdraw or archive several at once. The actions are under the list.
+          </p>
+          <table>
+            <caption className="visually-hidden">Content, most recently saved first</caption>
+            <thead>
+              <tr>
+                <th scope="col">
+                  <span className="visually-hidden">Choose</span>
+                </th>
+                <th scope="col">Title</th>
+                <th scope="col">Type</th>
+                <th scope="col">Area</th>
+                <th scope="col">Latest revision</th>
+                <th scope="col">Publication</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loaderData.articles.map((article) => (
+                <tr key={article.id}>
+                  <td>
+                    <BulkChoice id={article.id} title={article.title} />
+                  </td>
+                  <td>
+                    <a href={`/admin/articles/${article.id}`}>{article.title}</a>
+                  </td>
+                  <td>{article.typeName}</td>
+                  <td>{article.areaName}</td>
+                  <td>{article.number}</td>
+                  <td>{PUBLICATION_NAMES[article.publicationState as PublicationState]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <BulkActions kind="content" prefix="bulk" reviewers={loaderData.reviewers} />
+        </form>
       ) : (
         <p>No content yet.</p>
       )}
