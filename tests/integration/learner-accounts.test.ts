@@ -615,6 +615,45 @@ describe("a learner's data", () => {
   }, 20_000);
 });
 
+describe("unused sign-in links when an account is deleted", () => {
+  it.each([
+    ["learner:"],
+    // Better Auth 1.7.10 and later store them under this prefix.
+    ["magic-link:learner:"],
+  ])(
+    "removes one stored as %s<hash>, and leaves another person's",
+    async (prefix) => {
+      const learner = await signUp();
+      const other = await signUp();
+      const now = Date.now();
+      const link = (email: string) => ({
+        id: crypto.randomUUID(),
+        identifier: `${prefix}${crypto.randomUUID().replaceAll("-", "")}`,
+        value: JSON.stringify({ type: "magic-link", email }),
+        expiresAt: now + DAY,
+      });
+      const rows = [link(learner.email), link(other.email)];
+      for (const row of rows) {
+        await env.DB.prepare(
+          "INSERT INTO verification (id, identifier, value, expires_at, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?5)",
+        )
+          .bind(row.id, row.identifier, row.value, row.expiresAt, now)
+          .run();
+      }
+
+      const deleted = await learner.browser.fetch(`${PUBLIC}/account`, {
+        form: { intent: "delete-account", confirm: "yes" },
+      });
+
+      expect(deleted.status).toBe(302);
+      const left = async (id: string) => env.DB.prepare("SELECT id FROM verification WHERE id = ?1").bind(id).first();
+      expect(await left(rows[0].id)).toBeNull();
+      expect(await left(rows[1].id)).not.toBeNull();
+    },
+    20_000,
+  );
+});
+
 describe("inactive Learner Accounts", () => {
   it("are warned 30 days before two years without use, and deleted 30 days later unless used", async () => {
     const idle = await signUp(unique("idle"));
