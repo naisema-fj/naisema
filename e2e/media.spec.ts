@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import {
+  confirmTwoFactorCode,
+  expectNoAxeViolations,
+  expectReflow,
+  followSignInLink,
+  startTwoFactorSetup,
+} from "./support";
 
 /** A 1×1 PNG. */
 const PNG = Buffer.from(
@@ -38,6 +44,7 @@ test("an Educator uploads to the media library: refused files never start, other
   await expect(page.getByRole("status").first()).toContainText("The file was not recognized as a video.");
   await expect(page.getByText("720 × 1280 (Vertical)")).toBeVisible();
   await expectNoAxeViolations(page);
+  await expectReflow(page);
   // Here the local stand-in processes it at once; the preview plays through a short-lived link.
   await page.getByRole("button", { name: "Try processing again" }).click();
   await expect(page.getByRole("status").first()).toContainText("Ready to play");

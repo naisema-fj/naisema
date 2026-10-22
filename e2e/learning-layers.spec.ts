@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import {
+  confirmTwoFactorCode,
+  expectNoAxeViolations,
+  expectReflow,
+  followSignInLink,
+  startTwoFactorSetup,
+} from "./support";
 
 // Its own client address per project, so this journey's sign-in doesn't use up the sign-in limit
 // (5 email links a minute from one address) the other journeys share.
@@ -23,6 +29,7 @@ test("an Educator builds Segments and Activities in the timeline editor: checked
   await expect(page.getByRole("heading", { name: `Greetings ${project}`, level: 1 })).toBeVisible();
   await expect(page.getByRole("listitem", { name: "Segment 1" })).toBeVisible();
   await expectNoAxeViolations(page);
+  await expectReflow(page);
 
   // A new Segment needs its Fijian text, and the editor says so for that exact Segment.
   await page.getByRole("button", { name: "Add a Segment" }).click();

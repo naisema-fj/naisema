@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN, confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import {
+  ADMIN,
+  confirmTwoFactorCode,
+  expectNoAxeViolations,
+  expectReflow,
+  followSignInLink,
+  startTwoFactorSetup,
+} from "./support";
 
 test("an editor writes an article, revises it, compares revisions and restores one", async ({ page }, testInfo) => {
   const title = `Sevusevu ${testInfo.project.name} ${Date.now()}`;
@@ -73,6 +80,7 @@ test("an editor writes an article, revises it, compares revisions and restores o
     buffer: Buffer.from("%PDF-1.7\n% signed permission\n"),
   });
   await expectNoAxeViolations(page);
+  await expectReflow(page);
   await page.getByRole("button", { name: "Record Rights Record" }).click();
   await expect(page.getByRole("status")).toHaveText("Rights Record recorded.");
   await expect(page.getByRole("heading", { name: "E2E Storyteller: Current" })).toBeVisible();
