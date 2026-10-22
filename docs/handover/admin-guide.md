@@ -77,6 +77,8 @@ To narrow it, fill in any of **Object ID**, **Who acted** or **Action starts wit
 
 The runbook is the file `docs/handover/runbook.md` in the project on GitHub (`naisema-fj/naisema`). It is the technical owner's manual for deploying, restoring from backup, monitoring and handling incidents. Pages on the staff site point to it where it matters, for example **Usage and costs** and **Backups and restoring**. Share this link with whoever will help you run the platform.
 
+Educators have their own guide, `docs/handover/educator-guide.md`, which shows how a Video becomes a Learning Layer and what reviewers will check. It is useful when you assign Educators or review their work.
+
 Other pages worth knowing:
 
 - **Usage and costs**: this month's video and storage use, and the estimated bill against the monthly ceiling.
