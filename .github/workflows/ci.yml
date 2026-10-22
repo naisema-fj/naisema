@@ -26,6 +26,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - name: Data dictionary is current
+        run: pnpm docs:data-dictionary --check
       - run: pnpm typecheck
       - name: Integration tests (built Worker, local D1)
         run: pnpm test

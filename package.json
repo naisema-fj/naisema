@@ -23,7 +23,8 @@
     "learning-layer:import": "node scripts/import-learning-layer.mjs",
     "search:load-test": "node scripts/search-load-test.mjs",
     "backup:decrypt": "node scripts/decrypt-backup.mjs",
-    "restore:lock": "node scripts/restore-lock.mjs"
+    "restore:lock": "node scripts/restore-lock.mjs",
+    "docs:data-dictionary": "node scripts/data-dictionary.mjs"
   },
   "dependencies": {
     "@cloudflare/containers": "^0.3.7",
