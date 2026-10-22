@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 import {
   confirmTwoFactorCode,
   expectNoAxeViolations,
+  expectReflow,
   followSignInLink,
   latestEmailText,
   startTwoFactorSetup,
@@ -54,6 +55,7 @@ test("a contributor is sent an upload link and sends their file into quarantine"
   await page.getByRole("link", { name }).click();
   await expect(page.getByText("My grandmother's meke, recorded in 1998.")).toBeVisible();
   await expectNoAxeViolations(page);
+  await expectReflow(page);
   await page.getByRole("button", { name: "Send an upload link" }).click();
   await expect(page.getByRole("status")).toContainText("An upload link has been emailed to them.");
 

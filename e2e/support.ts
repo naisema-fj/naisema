@@ -82,6 +82,23 @@ export async function expectNoAxeViolations(page: Page) {
   expect(results.violations).toEqual([]);
 }
 
+/**
+ * The page reflows at 320 px and at 200% zoom (640 px of a 1280 px window): nothing scrolls
+ * sideways and axe still passes. Restores the window afterwards so the journey carries on.
+ */
+export async function expectReflow(page: Page) {
+  const original = page.viewportSize();
+  for (const width of [320, 640]) {
+    await page.setViewportSize({ width, height: 800 });
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow, `${page.url()} at ${width}px`).toBeLessThanOrEqual(0);
+    await expectNoAxeViolations(page);
+  }
+  if (original) await page.setViewportSize(original);
+}
+
 /** Opens the emailed sign-in link for a seeded staff account. */
 export async function followSignInLink(page: Page, email: string) {
   await page.goto(`${ADMIN}/admin/sign-in`);

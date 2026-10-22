@@ -1,5 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { confirmTwoFactorCode, expectNoAxeViolations, followSignInLink, startTwoFactorSetup } from "./support";
+import {
+  confirmTwoFactorCode,
+  expectNoAxeViolations,
+  expectReflow,
+  followSignInLink,
+  startTwoFactorSetup,
+} from "./support";
 
 const ARTICLE = "/ezine/e2e-letter-from-home";
 
@@ -37,6 +43,7 @@ test("a visitor reports an article and the safeguarding lead triages and decides
   await expect(page.getByText(details)).toBeVisible();
   await expect(page.getByText("Anonymous: they can't be told the outcome")).toBeVisible();
   await expectNoAxeViolations(page);
+  await expectReflow(page);
 
   await page.getByLabel("How serious is it?").selectOption("high");
   await page.getByLabel("Owner").selectOption({ label: `e2e-lead-${testInfo.project.name}@naisema.test` });
