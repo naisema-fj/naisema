@@ -1,6 +1,6 @@
 # Runbook
 
-How to run, provision, deploy and roll back NAISEMA. Kept current with every change that affects operations (OWN-03).
+How to run, provision, deploy and roll back NAISEMA. Kept current with every change that affects operations (OWN-03). The founder's step-by-step guide to the staff site is `docs/handover/admin-guide.md`.
 
 ## Stack at a glance
 
