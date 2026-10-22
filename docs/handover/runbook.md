@@ -1,6 +1,6 @@
 # Runbook
 
-How to run, provision, deploy and roll back NAISEMA. Kept current with every change that affects operations (OWN-03). The founder's step-by-step guide to the staff site is `docs/handover/admin-guide.md`. Every table and column is in `docs/handover/data-dictionary.md` (generated from the schema: run `pnpm docs:data-dictionary` after changing `db/schema.ts`), and every outside service and who holds its account is in `docs/handover/vendors-and-accounts.md`.
+How to run, provision, deploy and roll back NAISEMA. Kept current with every change that affects operations (OWN-03). The founder's step-by-step guide to the staff site is `docs/handover/admin-guide.md`. The Educators' guide to building a Learning Layer is `docs/handover/educator-guide.md`. Every table and column is in `docs/handover/data-dictionary.md` (generated from the schema: run `pnpm docs:data-dictionary` after changing `db/schema.ts`), and every outside service and who holds its account is in `docs/handover/vendors-and-accounts.md`.
 
 ## Stack at a glance
 
