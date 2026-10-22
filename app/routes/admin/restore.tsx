@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { listBackups } from "~/lib/backup.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { formatMoment } from "~/lib/monitor-rules";
@@ -88,25 +89,27 @@ export default function Restore({ loaderData, actionData }: Route.ComponentProps
 
       <h2>Backups held</h2>
       {backups.length ? (
-        <table>
-          <caption className="visually-hidden">Nightly database backups</caption>
-          <thead>
-            <tr>
-              <th scope="col">Backup</th>
-              <th scope="col">Stored</th>
-              <th scope="col">Size</th>
-            </tr>
-          </thead>
-          <tbody>
-            {backups.map((backup) => (
-              <tr key={backup.key}>
-                <th scope="row">{backup.key}</th>
-                <td>{backup.taken}</td>
-                <td>{backup.size}</td>
+        <TableScroll label="Nightly database backups">
+          <table>
+            <caption className="visually-hidden">Nightly database backups</caption>
+            <thead>
+              <tr>
+                <th scope="col">Backup</th>
+                <th scope="col">Stored</th>
+                <th scope="col">Size</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {backups.map((backup) => (
+                <tr key={backup.key}>
+                  <th scope="row">{backup.key}</th>
+                  <td>{backup.taken}</td>
+                  <td>{backup.size}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       ) : (
         <p>No backup has been taken yet.</p>
       )}

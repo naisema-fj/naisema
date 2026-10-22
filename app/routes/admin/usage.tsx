@@ -1,3 +1,4 @@
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { currentProblems } from "~/lib/monitor.server";
 import { formatMoment } from "~/lib/monitor-rules";
@@ -61,48 +62,50 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
             </strong>
             .
           </p>
-          <table>
-            <caption className="visually-hidden">This month's usage and projected cost</caption>
-            <thead>
-              <tr>
-                <th scope="col">What</th>
-                <th scope="col">Usage</th>
-                <th scope="col">Projected cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">Workers Paid plan</th>
-                <td>Monthly charge</td>
-                <td>{usd(current.estimate.usd.workers)}</td>
-              </tr>
-              <tr>
-                <th scope="row">Stream, minutes stored</th>
-                <td>{minutes(current.storedMinutes)}</td>
-                <td>{usd(current.estimate.usd.streamStored)}</td>
-              </tr>
-              <tr>
-                <th scope="row">Stream, minutes delivered</th>
-                <td>
-                  {minutes(current.deliveredMinutes)} so far, about{" "}
-                  {minutes(current.estimate.deliveredMinutesProjected)} by the month's end
-                </td>
-                <td>{usd(current.estimate.usd.streamDelivered)}</td>
-              </tr>
-              <tr>
-                <th scope="row">R2 storage</th>
-                <td>{formatGigabytes(current.r2Bytes)}</td>
-                <td>{usd(current.estimate.usd.r2)}</td>
-              </tr>
-              <tr>
-                <th scope="row">Total</th>
-                <td />
-                <td>
-                  {usd(current.estimate.usd.total)}, about {formatAud(current.estimate.aud)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <TableScroll label="This month's usage and projected cost">
+            <table>
+              <caption className="visually-hidden">This month's usage and projected cost</caption>
+              <thead>
+                <tr>
+                  <th scope="col">What</th>
+                  <th scope="col">Usage</th>
+                  <th scope="col">Projected cost</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Workers Paid plan</th>
+                  <td>Monthly charge</td>
+                  <td>{usd(current.estimate.usd.workers)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Stream, minutes stored</th>
+                  <td>{minutes(current.storedMinutes)}</td>
+                  <td>{usd(current.estimate.usd.streamStored)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Stream, minutes delivered</th>
+                  <td>
+                    {minutes(current.deliveredMinutes)} so far, about{" "}
+                    {minutes(current.estimate.deliveredMinutesProjected)} by the month's end
+                  </td>
+                  <td>{usd(current.estimate.usd.streamDelivered)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">R2 storage</th>
+                  <td>{formatGigabytes(current.r2Bytes)}</td>
+                  <td>{usd(current.estimate.usd.r2)}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Total</th>
+                  <td />
+                  <td>
+                    {usd(current.estimate.usd.total)}, about {formatAud(current.estimate.aud)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </TableScroll>
         </>
       ) : (
         <p>No usage has been recorded yet.</p>
@@ -111,29 +114,31 @@ export default function Usage({ loaderData }: Route.ComponentProps) {
       {earlier.length > 0 && (
         <>
           <h2>Earlier months</h2>
-          <table>
-            <caption className="visually-hidden">Usage and estimated cost in earlier months</caption>
-            <thead>
-              <tr>
-                <th scope="col">Month</th>
-                <th scope="col">Minutes stored</th>
-                <th scope="col">Minutes delivered</th>
-                <th scope="col">R2 storage</th>
-                <th scope="col">Estimated cost</th>
-              </tr>
-            </thead>
-            <tbody>
-              {earlier.map((month) => (
-                <tr key={month.month}>
-                  <th scope="row">{month.month}</th>
-                  <td>{minutes(month.storedMinutes)}</td>
-                  <td>{minutes(month.deliveredMinutes)}</td>
-                  <td>{formatGigabytes(month.r2Bytes)}</td>
-                  <td>{formatAud(month.estimate.aud)}</td>
+          <TableScroll label="Usage and estimated cost in earlier months">
+            <table>
+              <caption className="visually-hidden">Usage and estimated cost in earlier months</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Month</th>
+                  <th scope="col">Minutes stored</th>
+                  <th scope="col">Minutes delivered</th>
+                  <th scope="col">R2 storage</th>
+                  <th scope="col">Estimated cost</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {earlier.map((month) => (
+                  <tr key={month.month}>
+                    <th scope="row">{month.month}</th>
+                    <td>{minutes(month.storedMinutes)}</td>
+                    <td>{minutes(month.deliveredMinutes)}</td>
+                    <td>{formatGigabytes(month.r2Bytes)}</td>
+                    <td>{formatAud(month.estimate.aud)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScroll>
         </>
       )}
 

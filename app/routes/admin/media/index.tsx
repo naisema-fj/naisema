@@ -1,5 +1,6 @@
 import { data, Form } from "react-router";
 import { MediaUploader } from "~/components/media-uploader";
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { listMedia, setAltText } from "~/lib/media.server";
 import { requireUploader } from "~/lib/media-access.server";
@@ -100,11 +101,9 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
       {actionData?.error && <p role="alert">{actionData.error}</p>}
       <h2>Files</h2>
       {loaderData.assets.length ? (
-        // A labelled, focusable region, so the table can be scrolled by keyboard on a narrow screen.
-        // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be reachable by keyboard.
-        <section className="table-scroll" aria-labelledby="files-caption" tabIndex={0}>
+        <TableScroll label="Every upload, newest first, with its scan state">
           <table className="media-table">
-            <caption id="files-caption">Every upload, newest first, with its scan state</caption>
+            <caption>Every upload, newest first, with its scan state</caption>
             <thead>
               <tr>
                 <th scope="col">File</th>
@@ -174,7 +173,7 @@ export default function MediaLibrary({ loaderData, actionData }: Route.Component
               ))}
             </tbody>
           </table>
-        </section>
+        </TableScroll>
       ) : (
         <p>Nothing has been uploaded yet.</p>
       )}

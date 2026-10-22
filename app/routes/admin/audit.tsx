@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { auditLog, cursorText, readCursor } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can } from "~/lib/permissions";
@@ -65,32 +66,35 @@ export default function AuditLog({ loaderData }: Route.ComponentProps) {
         <button type="submit">Show</button>
       </Form>
       {events.length ? (
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">When (UTC)</th>
-              <th scope="col">Who</th>
-              <th scope="col">Action</th>
-              <th scope="col">Object</th>
-              <th scope="col">Reason</th>
-              <th scope="col">Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            {events.map((event) => (
-              <tr key={event.id}>
-                <td>{event.at}</td>
-                <td>{event.who}</td>
-                <td>{event.action}</td>
-                <td>{event.object}</td>
-                <td>{event.reason ?? ""}</td>
-                <td>
-                  <code>{event.details}</code>
-                </td>
+        <TableScroll label="Audit events, newest first">
+          <table>
+            <caption className="visually-hidden">Audit events, newest first</caption>
+            <thead>
+              <tr>
+                <th scope="col">When (UTC)</th>
+                <th scope="col">Who</th>
+                <th scope="col">Action</th>
+                <th scope="col">Object</th>
+                <th scope="col">Reason</th>
+                <th scope="col">Details</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {events.map((event) => (
+                <tr key={event.id}>
+                  <td>{event.at}</td>
+                  <td>{event.who}</td>
+                  <td>{event.action}</td>
+                  <td>{event.object}</td>
+                  <td>{event.reason ?? ""}</td>
+                  <td>
+                    <code>{event.details}</code>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       ) : (
         <p>No events match.</p>
       )}

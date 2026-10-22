@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { requireStaff } from "~/lib/staff.server";
 import { dayText, dueText, RANGES, rangeDays, type ScheduleEntry, scheduleKinds, waitText } from "~/lib/staff-schedule";
@@ -38,27 +39,29 @@ type Row = Route.ComponentProps["loaderData"]["overdue"][number];
 
 function EntryTable({ caption, whenHeading, rows }: { caption: string; whenHeading: string; rows: Row[] }) {
   return (
-    <table>
-      <caption className="visually-hidden">{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">Item</th>
-          <th scope="col">What it is</th>
-          <th scope="col">{whenHeading}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => (
-          <tr key={row.key}>
-            <th scope="row">
-              <a href={row.href}>{row.title}</a>
-            </th>
-            <td>{row.detail}</td>
-            <td>{row.when}</td>
+    <TableScroll label={caption}>
+      <table>
+        <caption className="visually-hidden">{caption}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col">What it is</th>
+            <th scope="col">{whenHeading}</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.key}>
+              <th scope="row">
+                <a href={row.href}>{row.title}</a>
+              </th>
+              <td>{row.detail}</td>
+              <td>{row.when}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </TableScroll>
   );
 }
 

@@ -40,12 +40,24 @@ test("a staff member signs in with an email link and an authenticator code", asy
   // The shell and the pages in it reflow at 320 px and at 200% zoom (640 px of a 1280 px window).
   for (const width of [320, 640]) {
     await page.setViewportSize({ width, height: 800 });
-    for (const path of ["/admin", "/admin/staff", "/admin/audit", "/admin/exports", "/admin/usage"]) {
+    for (const path of [
+      "/admin",
+      "/admin/staff",
+      "/admin/audit",
+      "/admin/exports",
+      "/admin/usage",
+      "/admin/restore",
+      "/admin/consents",
+      "/admin/submissions",
+      "/admin/cases",
+      "/admin/media",
+    ]) {
       await page.goto(`${ADMIN}${path}`);
       const overflow = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       );
       expect(overflow, `${path} at ${width}px`).toBeLessThanOrEqual(0);
+      await expectNoAxeViolations(page);
     }
   }
 });

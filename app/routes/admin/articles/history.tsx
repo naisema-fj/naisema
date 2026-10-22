@@ -1,4 +1,5 @@
 import { data, Form, redirect } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import type { ArticleSnapshot } from "~/lib/article-fields";
 import { articleFingerprints, getArticle } from "~/lib/articles.server";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -75,43 +76,45 @@ export default function History({ loaderData, actionData }: Route.ComponentProps
       </Form>
 
       <h2>All revisions</h2>
-      <table>
-        <caption className="visually-hidden">Revisions, newest first</caption>
-        <thead>
-          <tr>
-            <th scope="col">Revision</th>
-            <th scope="col">Saved (UTC)</th>
-            <th scope="col">By</th>
-            <th scope="col">
-              <span className="visually-hidden">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {revisions.map((revision) => (
-            <tr key={revision.id}>
-              <td>
-                <a href={`/admin/articles/${article.id}/revisions/${revision.number}`}>{revision.number}</a>
-                {revision.id === article.currentRevision.id && " (current)"}
-                {revision.restoredFromNumber && ` — restored from ${revision.restoredFromNumber}`}
-              </td>
-              <td>{formatTime(revision.createdAt)}</td>
-              <td>{revision.savedBy}</td>
-              <td>
-                {revision.id !== article.currentRevision.id && (
-                  <Form method="post">
-                    <input type="hidden" name="baseRevisionId" value={article.currentRevision.id} />
-                    <input type="hidden" name="revisionId" value={revision.id} />
-                    <button type="submit" aria-label={`Restore revision ${revision.number}`}>
-                      Restore
-                    </button>
-                  </Form>
-                )}
-              </td>
+      <TableScroll label="Revisions, newest first">
+        <table>
+          <caption className="visually-hidden">Revisions, newest first</caption>
+          <thead>
+            <tr>
+              <th scope="col">Revision</th>
+              <th scope="col">Saved (UTC)</th>
+              <th scope="col">By</th>
+              <th scope="col">
+                <span className="visually-hidden">Actions</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {revisions.map((revision) => (
+              <tr key={revision.id}>
+                <td>
+                  <a href={`/admin/articles/${article.id}/revisions/${revision.number}`}>{revision.number}</a>
+                  {revision.id === article.currentRevision.id && " (current)"}
+                  {revision.restoredFromNumber && ` — restored from ${revision.restoredFromNumber}`}
+                </td>
+                <td>{formatTime(revision.createdAt)}</td>
+                <td>{revision.savedBy}</td>
+                <td>
+                  {revision.id !== article.currentRevision.id && (
+                    <Form method="post">
+                      <input type="hidden" name="baseRevisionId" value={article.currentRevision.id} />
+                      <input type="hidden" name="revisionId" value={revision.id} />
+                      <button type="submit" aria-label={`Restore revision ${revision.number}`}>
+                        Restore
+                      </button>
+                    </Form>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
     </main>
   );
 }

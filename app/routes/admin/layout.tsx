@@ -131,6 +131,8 @@ export function ErrorBoundary() {
         : "Something went wrong on our side.";
   return (
     <StaffFrame shell={shell ?? null}>
+      <title>{`${heading} · NAISEMA staff`}</title>
+      <meta name="robots" content="noindex" />
       <main id="main" className="page">
         <h1>{heading}</h1>
         <p>{message}</p>

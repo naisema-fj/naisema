@@ -1,4 +1,5 @@
 import { BulkActions, BulkChoice } from "~/components/bulk-actions";
+import { TableScroll } from "~/components/table-scroll";
 import { listArticles } from "~/lib/articles.server";
 import { bulkReviewerChoices } from "~/lib/bulk-actions.server";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -47,37 +48,39 @@ export default function Articles({ loaderData }: Route.ComponentProps) {
           <p className="hint">
             Choose items to assign a reviewer to, withdraw or archive several at once. The actions are under the list.
           </p>
-          <table>
-            <caption className="visually-hidden">Content, most recently saved first</caption>
-            <thead>
-              <tr>
-                <th scope="col">
-                  <span className="visually-hidden">Choose</span>
-                </th>
-                <th scope="col">Title</th>
-                <th scope="col">Type</th>
-                <th scope="col">Area</th>
-                <th scope="col">Latest revision</th>
-                <th scope="col">Publication</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loaderData.articles.map((article) => (
-                <tr key={article.id}>
-                  <td>
-                    <BulkChoice id={article.id} title={article.title} />
-                  </td>
-                  <td>
-                    <a href={`/admin/articles/${article.id}`}>{article.title}</a>
-                  </td>
-                  <td>{article.typeName}</td>
-                  <td>{article.areaName}</td>
-                  <td>{article.number}</td>
-                  <td>{PUBLICATION_NAMES[article.publicationState as PublicationState]}</td>
+          <TableScroll label="Content, most recently saved first">
+            <table>
+              <caption className="visually-hidden">Content, most recently saved first</caption>
+              <thead>
+                <tr>
+                  <th scope="col">
+                    <span className="visually-hidden">Choose</span>
+                  </th>
+                  <th scope="col">Title</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Area</th>
+                  <th scope="col">Latest revision</th>
+                  <th scope="col">Publication</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {loaderData.articles.map((article) => (
+                  <tr key={article.id}>
+                    <td>
+                      <BulkChoice id={article.id} title={article.title} />
+                    </td>
+                    <td>
+                      <a href={`/admin/articles/${article.id}`}>{article.title}</a>
+                    </td>
+                    <td>{article.typeName}</td>
+                    <td>{article.areaName}</td>
+                    <td>{article.number}</td>
+                    <td>{PUBLICATION_NAMES[article.publicationState as PublicationState]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScroll>
           <BulkActions kind="content" prefix="bulk" reviewers={loaderData.reviewers} />
         </form>
       ) : (
