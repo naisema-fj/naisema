@@ -1,3 +1,4 @@
+import { TableScroll } from "~/components/table-scroll";
 import { CASE_KINDS, CASE_STATES, SEVERITIES } from "~/lib/case-rules";
 import { caseQueue, caseReference, requireCaseTeam } from "~/lib/cases.server";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -52,32 +53,35 @@ export default function Cases({ loaderData }: Route.ComponentProps) {
         )}
       </p>
       {cases.length ? (
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">Case</th>
-              <th scope="col">Kind</th>
-              <th scope="col">State</th>
-              <th scope="col">Severity</th>
-              <th scope="col">Owner</th>
-              <th scope="col">Received</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cases.map((row) => (
-              <tr key={row.id}>
-                <td>
-                  <a href={`/admin/cases/${row.id}`}>{row.reference}</a>
-                </td>
-                <td>{row.kind}</td>
-                <td>{row.state}</td>
-                <td>{row.severity}</td>
-                <td>{row.ownerName}</td>
-                <td>{row.receivedOn}</td>
+        <TableScroll label="Cases, with state and severity">
+          <table>
+            <caption className="visually-hidden">Cases, with state and severity</caption>
+            <thead>
+              <tr>
+                <th scope="col">Case</th>
+                <th scope="col">Kind</th>
+                <th scope="col">State</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Received</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {cases.map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <a href={`/admin/cases/${row.id}`}>{row.reference}</a>
+                  </td>
+                  <td>{row.kind}</td>
+                  <td>{row.state}</td>
+                  <td>{row.severity}</td>
+                  <td>{row.ownerName}</td>
+                  <td>{row.receivedOn}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       ) : (
         <p>{show === "open" ? "No open Cases." : "No closed Cases yet."}</p>
       )}

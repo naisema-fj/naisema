@@ -100,17 +100,19 @@
   overflow-wrap: anywhere;
 }
 
-/*
- * On a phone a wide table scrolls inside itself instead of the page. A table made a block can lose
- * its semantics in some screen readers, so this is only where a table can't fit; a wrapper element
- * around each table (#61) is the fuller answer.
- */
-@media (max-width: 40rem) {
-  :where(.staff) table {
-    position: relative;
-    display: block;
-    overflow-x: auto;
-  }
+/* A wide table scrolls inside its box (TableScroll), never the page; the table itself stays a table. */
+:where(.staff) .table-scroll {
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+:where(.staff) .table-scroll table {
+  margin: 0;
+}
+
+:where(.staff) .table-scroll:focus-visible {
+  outline: 3px solid var(--ink-2);
+  outline-offset: 2px;
 }
 
 :where(.staff) caption {

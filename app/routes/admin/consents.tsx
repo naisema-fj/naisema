@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { consentsOf, requireConsentStaff, withdrawConsent } from "~/lib/consent.server";
 import { can } from "~/lib/permissions";
@@ -56,37 +57,40 @@ export default function Consents({ loaderData, actionData }: Route.ComponentProp
       {actionData?.withdrawn && <p role="status">Withdrawn.</p>}
       {email &&
         (records.length ? (
-          <table>
-            <thead>
-              <tr>
-                <th scope="col">Agreed to</th>
-                <th scope="col">Notice</th>
-                <th scope="col">On</th>
-                <th scope="col">Form</th>
-                <th scope="col">Withdrawn</th>
-              </tr>
-            </thead>
-            <tbody>
-              {records.map(({ record, notice }) => (
-                <tr key={record.id}>
-                  <td>{CONSENT_PURPOSES[record.purpose]}</td>
-                  <td>Version {notice.version}</td>
-                  <td>{record.givenAt.toISOString().slice(0, 10)}</td>
-                  <td>{record.sourceForm}</td>
-                  <td>
-                    {record.withdrawnAt ? (
-                      `${record.withdrawnAt.toISOString().slice(0, 10)} (${record.withdrawnVia})`
-                    ) : (
-                      <Form method="post">
-                        <input type="hidden" name="recordId" value={record.id} />
-                        <button type="submit">Withdraw at their request</button>
-                      </Form>
-                    )}
-                  </td>
+          <TableScroll label="Consents recorded">
+            <table>
+              <caption className="visually-hidden">Consents recorded</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Agreed to</th>
+                  <th scope="col">Notice</th>
+                  <th scope="col">On</th>
+                  <th scope="col">Form</th>
+                  <th scope="col">Withdrawn</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {records.map(({ record, notice }) => (
+                  <tr key={record.id}>
+                    <td>{CONSENT_PURPOSES[record.purpose]}</td>
+                    <td>Version {notice.version}</td>
+                    <td>{record.givenAt.toISOString().slice(0, 10)}</td>
+                    <td>{record.sourceForm}</td>
+                    <td>
+                      {record.withdrawnAt ? (
+                        `${record.withdrawnAt.toISOString().slice(0, 10)} (${record.withdrawnVia})`
+                      ) : (
+                        <Form method="post">
+                          <input type="hidden" name="recordId" value={record.id} />
+                          <button type="submit">Withdraw at their request</button>
+                        </Form>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScroll>
         ) : (
           <p>No Consent Records for {email}.</p>
         ))}

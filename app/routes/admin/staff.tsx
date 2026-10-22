@@ -1,4 +1,5 @@
 import { data, Form, redirect } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can, REVIEW_TYPES, STAFF_ROLES } from "~/lib/permissions";
 import { describeRoleAssignment, ROLE_NAMES } from "~/lib/role-names";
@@ -67,74 +68,78 @@ export default function Staff({ loaderData, actionData }: Route.ComponentProps) 
       {actionData?.error && <p role="alert">{actionData.error}</p>}
 
       <h2>Current roles</h2>
-      <table>
-        <caption className="visually-hidden">Active staff role assignments</caption>
-        <thead>
-          <tr>
-            <th scope="col">Email</th>
-            <th scope="col">Role</th>
-            <th scope="col">
-              <span className="visually-hidden">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {loaderData.staff.map((row) => (
-            <tr key={row.assignmentId}>
-              <td>{row.email}</td>
-              <td>{describeRoleAssignment(row.assignment)}</td>
-              <td>
-                <Form method="post">
-                  <input type="hidden" name="intent" value="revoke" />
-                  <input type="hidden" name="assignmentId" value={row.assignmentId} />
-                  <label htmlFor={`reason-${row.assignmentId}`}>Why (optional, kept in the audit log)</label>
-                  <input id={`reason-${row.assignmentId}`} name="reason" maxLength={500} />
-                  <button type="submit" aria-label={`Revoke ${ROLE_NAMES[row.assignment.role]} from ${row.email}`}>
-                    Revoke
-                  </button>
-                </Form>
-              </td>
+      <TableScroll label="Active staff role assignments">
+        <table>
+          <caption className="visually-hidden">Active staff role assignments</caption>
+          <thead>
+            <tr>
+              <th scope="col">Email</th>
+              <th scope="col">Role</th>
+              <th scope="col">
+                <span className="visually-hidden">Actions</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {loaderData.staff.map((row) => (
+              <tr key={row.assignmentId}>
+                <td>{row.email}</td>
+                <td>{describeRoleAssignment(row.assignment)}</td>
+                <td>
+                  <Form method="post">
+                    <input type="hidden" name="intent" value="revoke" />
+                    <input type="hidden" name="assignmentId" value={row.assignmentId} />
+                    <label htmlFor={`reason-${row.assignmentId}`}>Why (optional, kept in the audit log)</label>
+                    <input id={`reason-${row.assignmentId}`} name="reason" maxLength={500} />
+                    <button type="submit" aria-label={`Revoke ${ROLE_NAMES[row.assignment.role]} from ${row.email}`}>
+                      Revoke
+                    </button>
+                  </Form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
 
       <h2>Two-factor</h2>
       <p>
         If someone loses the phone with their authenticator app, reset their two-factor. They are signed out everywhere
         and set up a new authenticator app the next time they sign in.
       </p>
-      <table>
-        <caption className="visually-hidden">Two-factor status of each staff member</caption>
-        <thead>
-          <tr>
-            <th scope="col">Email</th>
-            <th scope="col">Two-factor</th>
-            <th scope="col">
-              <span className="visually-hidden">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {loaderData.twoFactor.map((member) => (
-            <tr key={member.userId}>
-              <td>{member.email}</td>
-              <td>{member.enrolled ? "Set up" : "Not set up yet"}</td>
-              <td>
-                {member.canReset && (
-                  <Form method="post">
-                    <input type="hidden" name="intent" value="resetTwoFactor" />
-                    <input type="hidden" name="userId" value={member.userId} />
-                    <button type="submit" aria-label={`Reset two-factor for ${member.email}`}>
-                      Reset two-factor
-                    </button>
-                  </Form>
-                )}
-              </td>
+      <TableScroll label="Two-factor status of each staff member">
+        <table>
+          <caption className="visually-hidden">Two-factor status of each staff member</caption>
+          <thead>
+            <tr>
+              <th scope="col">Email</th>
+              <th scope="col">Two-factor</th>
+              <th scope="col">
+                <span className="visually-hidden">Actions</span>
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {loaderData.twoFactor.map((member) => (
+              <tr key={member.userId}>
+                <td>{member.email}</td>
+                <td>{member.enrolled ? "Set up" : "Not set up yet"}</td>
+                <td>
+                  {member.canReset && (
+                    <Form method="post">
+                      <input type="hidden" name="intent" value="resetTwoFactor" />
+                      <input type="hidden" name="userId" value={member.userId} />
+                      <button type="submit" aria-label={`Reset two-factor for ${member.email}`}>
+                        Reset two-factor
+                      </button>
+                    </Form>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableScroll>
 
       <h2>Grant a role</h2>
       <p>New staff get an account when first granted a role; they then sign in by email link.</p>

@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { formatDay } from "~/lib/rights-rules";
 
 const LINK_STATES = { active: "Active", expired: "Expired", revoked: "Revoked" } as const;
@@ -69,50 +70,52 @@ export function ReviewLinksSection({
         </div>
       )}
       {links.length > 0 && (
-        <table>
-          <caption className="visually-hidden">Review Links to revision {number}</caption>
-          <thead>
-            <tr>
-              <th scope="col">For</th>
-              <th scope="col">Issued</th>
-              <th scope="col">State</th>
-              <th scope="col">Opened</th>
-              <th scope="col">
-                <span className="visually-hidden">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {links.map((link) => (
-              <tr key={link.id}>
-                <th scope="row">{link.recipient}</th>
-                <td>
-                  {formatDay(link.createdAt)} by {link.issuedBy}
-                </td>
-                <td>
-                  {LINK_STATES[link.state]}
-                  {link.state === "active" && `, until ${formatDay(link.expiresAt)}`}
-                </td>
-                <td>
-                  {link.views === 0
-                    ? "Not yet"
-                    : `${link.views === 1 ? "Once" : `${link.views} times`}, last ${formatDay(link.lastViewedAt ?? link.createdAt)}`}
-                </td>
-                <td>
-                  {link.state === "active" && (
-                    <Form method="post" className="inline-form">
-                      <input type="hidden" name="intent" value="revokeLink" />
-                      <input type="hidden" name="linkId" value={link.id} />
-                      <button type="submit">
-                        Revoke<span className="visually-hidden"> the Review Link for {link.recipient}</span>
-                      </button>
-                    </Form>
-                  )}
-                </td>
+        <TableScroll label={`Review Links to revision ${number}`}>
+          <table>
+            <caption className="visually-hidden">Review Links to revision {number}</caption>
+            <thead>
+              <tr>
+                <th scope="col">For</th>
+                <th scope="col">Issued</th>
+                <th scope="col">State</th>
+                <th scope="col">Opened</th>
+                <th scope="col">
+                  <span className="visually-hidden">Actions</span>
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {links.map((link) => (
+                <tr key={link.id}>
+                  <th scope="row">{link.recipient}</th>
+                  <td>
+                    {formatDay(link.createdAt)} by {link.issuedBy}
+                  </td>
+                  <td>
+                    {LINK_STATES[link.state]}
+                    {link.state === "active" && `, until ${formatDay(link.expiresAt)}`}
+                  </td>
+                  <td>
+                    {link.views === 0
+                      ? "Not yet"
+                      : `${link.views === 1 ? "Once" : `${link.views} times`}, last ${formatDay(link.lastViewedAt ?? link.createdAt)}`}
+                  </td>
+                  <td>
+                    {link.state === "active" && (
+                      <Form method="post" className="inline-form">
+                        <input type="hidden" name="intent" value="revokeLink" />
+                        <input type="hidden" name="linkId" value={link.id} />
+                        <button type="submit">
+                          Revoke<span className="visually-hidden"> the Review Link for {link.recipient}</span>
+                        </button>
+                      </Form>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       )}
       {canIssue && rightsWarning && (
         <p className="field-error" id="link-rights-warning">

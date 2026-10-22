@@ -1,3 +1,4 @@
+import { TableScroll } from "~/components/table-scroll";
 import { fijiToday } from "~/lib/calendar";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { SUBMISSION_STATUSES, SUBMISSION_TYPES } from "~/lib/submission-fields";
@@ -40,35 +41,38 @@ export default function Submissions({ loaderData }: Route.ComponentProps) {
         )}
       </p>
       {submissions.length ? (
-        <table>
-          <thead>
-            <tr>
-              <th scope="col">From</th>
-              <th scope="col">Kind</th>
-              <th scope="col">Received</th>
-              <th scope="col">Due</th>
-              <th scope="col">Owner</th>
-              <th scope="col">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {submissions.map((row) => (
-              <tr key={row.id}>
-                <td>
-                  <a href={`/admin/submissions/${row.id}`}>{row.name}</a>
-                </td>
-                <td>{SUBMISSION_TYPES[row.type].name}</td>
-                <td>{row.receivedAt.toISOString().slice(0, 10)}</td>
-                <td>
-                  {row.dueOn}
-                  {show === "open" && row.dueOn < today && <strong> (overdue)</strong>}
-                </td>
-                <td>{row.ownerName ?? "Nobody yet"}</td>
-                <td>{SUBMISSION_STATUSES[row.status]}</td>
+        <TableScroll label="Submissions waiting to be looked at">
+          <table>
+            <caption className="visually-hidden">Submissions waiting to be looked at</caption>
+            <thead>
+              <tr>
+                <th scope="col">From</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Received</th>
+                <th scope="col">Due</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {submissions.map((row) => (
+                <tr key={row.id}>
+                  <td>
+                    <a href={`/admin/submissions/${row.id}`}>{row.name}</a>
+                  </td>
+                  <td>{SUBMISSION_TYPES[row.type].name}</td>
+                  <td>{row.receivedAt.toISOString().slice(0, 10)}</td>
+                  <td>
+                    {row.dueOn}
+                    {show === "open" && row.dueOn < today && <strong> (overdue)</strong>}
+                  </td>
+                  <td>{row.ownerName ?? "Nobody yet"}</td>
+                  <td>{SUBMISSION_STATUSES[row.status]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </TableScroll>
       ) : (
         <p>{show === "open" ? "Nothing is waiting." : "Nothing has been closed yet."}</p>
       )}

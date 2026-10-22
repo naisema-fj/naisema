@@ -1,4 +1,5 @@
 import { Form } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import type { ReviewType } from "~/lib/permissions";
 import {
   FLAG_NAMES,
@@ -283,40 +284,42 @@ export function ReviewPanel({
       {review.progress.length === 0 ? (
         <p>These Content Flags need no review. Submitting the revision makes it approved.</p>
       ) : (
-        <table>
-          <caption className="visually-hidden">Reviews this revision needs and where each stands</caption>
-          <thead>
-            <tr>
-              <th scope="col">Review</th>
-              <th scope="col">Status</th>
-              <th scope="col">Assigned</th>
-            </tr>
-          </thead>
-          <tbody>
-            {review.progress.map(({ requirement, status, decisionId }) => {
-              const decision = decisionId ? approvals.get(decisionId) : undefined;
-              const assigned = review.assignments.filter((row) => row.reviewType === requirement.reviewType);
-              return (
-                <tr key={requirementName(requirement)}>
-                  <th scope="row">
-                    {requirementName(requirement)}
-                    {requirement.flagRemovedAfter &&
-                      `: still needed because revision ${requirement.flagRemovedAfter} had its flag`}
-                  </th>
-                  <td>
-                    <Status status={status} />
-                    {decision && <span className="status-detail">{describeApproval(decision)}</span>}
-                  </td>
-                  <td>
-                    {requirement.knowledgeHolder
-                      ? "Recorded by an editor"
-                      : assigned.map((row) => row.email ?? "a former staff member").join(", ") || "Nobody yet"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <TableScroll label="Reviews this revision needs and where each stands">
+          <table>
+            <caption className="visually-hidden">Reviews this revision needs and where each stands</caption>
+            <thead>
+              <tr>
+                <th scope="col">Review</th>
+                <th scope="col">Status</th>
+                <th scope="col">Assigned</th>
+              </tr>
+            </thead>
+            <tbody>
+              {review.progress.map(({ requirement, status, decisionId }) => {
+                const decision = decisionId ? approvals.get(decisionId) : undefined;
+                const assigned = review.assignments.filter((row) => row.reviewType === requirement.reviewType);
+                return (
+                  <tr key={requirementName(requirement)}>
+                    <th scope="row">
+                      {requirementName(requirement)}
+                      {requirement.flagRemovedAfter &&
+                        `: still needed because revision ${requirement.flagRemovedAfter} had its flag`}
+                    </th>
+                    <td>
+                      <Status status={status} />
+                      {decision && <span className="status-detail">{describeApproval(decision)}</span>}
+                    </td>
+                    <td>
+                      {requirement.knowledgeHolder
+                        ? "Recorded by an editor"
+                        : assigned.map((row) => row.email ?? "a former staff member").join(", ") || "Nobody yet"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </TableScroll>
       )}
 
       {abilities.canSubmit && (

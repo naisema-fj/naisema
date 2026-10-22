@@ -1,3 +1,4 @@
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { layerReviewQueue } from "~/lib/layer-review.server";
 import { can, type ReviewType } from "~/lib/permissions";
@@ -50,29 +51,31 @@ export default function Reviews({ loaderData }: Route.ComponentProps) {
               ? "One revision is waiting for your review."
               : `${loaderData.queue.length} revisions are waiting for your review.`}
           </p>
-          <table>
-            <caption className="visually-hidden">Revisions waiting for your review</caption>
-            <thead>
-              <tr>
-                <th scope="col">Item</th>
-                <th scope="col">Kind</th>
-                <th scope="col">Revision</th>
-                <th scope="col">Your review</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loaderData.queue.map((entry) => (
-                <tr key={`${entry.key}-${entry.number}`}>
-                  <th scope="row">
-                    <a href={entry.href}>{entry.title}</a>
-                  </th>
-                  <td>{entry.kind}</td>
-                  <td>Revision {entry.number}</td>
-                  <td>{entry.reviewTypes.map((type) => REVIEW_NAMES[type as ReviewType]).join(", ")}</td>
+          <TableScroll label="Revisions waiting for your review">
+            <table>
+              <caption className="visually-hidden">Revisions waiting for your review</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Item</th>
+                  <th scope="col">Kind</th>
+                  <th scope="col">Revision</th>
+                  <th scope="col">Your review</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {loaderData.queue.map((entry) => (
+                  <tr key={`${entry.key}-${entry.number}`}>
+                    <th scope="row">
+                      <a href={entry.href}>{entry.title}</a>
+                    </th>
+                    <td>{entry.kind}</td>
+                    <td>Revision {entry.number}</td>
+                    <td>{entry.reviewTypes.map((type) => REVIEW_NAMES[type as ReviewType]).join(", ")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </TableScroll>
         </>
       ) : (
         <p>Nothing is waiting for your review.</p>
