@@ -169,6 +169,30 @@ Administrators may grant roles to themselves (decided 29 September 2026). With o
 
 - **Second copy of video masters (#64, decided 9 November 2026):** yes. NAISEMA keeps a periodic copy of the `naisema-production-video-masters` bucket in storage outside Cloudflare, so losing the Cloudflare account does not lose originals. **Not built yet.** The destination (provider, account holder, cost) is still to be chosen and recorded in `docs/handover/vendors-and-accounts.md`, and the copy and its restore must be rehearsed before launch.
 
+## v1 launch rewrite (9 November 2026)
+
+The founder decided to launch now, with video Learn, on a rewrite to the simplest app that keeps exact-Revision review and rights (ADR-0015). Everything above this section describes Phase 1a as built, which is kept at the git tag `v0-full`. Where it conflicts with this section, this section wins for v1.
+
+- **Blockers moved to after launch (founder, 9 November 2026):** #5 (backup Safeguarding Lead and appeal reviewer), #6 (backup technical owner for alerts), #9 (post-launch support agreement and the MOU amendments below), and #3 (component approvals). Until #5 is done, an appeal waits for the backup to be named. Until #6 is done, the uptime monitor alerts one person.
+- **Component approvals shrink (#3):** v1 drops ClamAV, Containers, Queues, Stream and hls.js. What remains to approve is React Router, Drizzle ORM, Tiptap core (MIT), and the Cloudflare Workers paid plan with D1, R2, Images, Email Service, Turnstile and Access.
+- **Still needed before Learn opens (#7, #8):** one person authors the Learning Layers and a different person reviews their language, and three clips have Rights Records. These are content, not code, so no rewrite removes them.
+- **Privacy (#10) shrinks:** with no Learner Accounts, the personal data held is staff email addresses and what people send through the forms. The adviser's sign-off on the one-page notice is still recommended. Whether to wait for it is the founder's call.
+- **Dropped for v1** (restorable from `v0-full`):
+  - Learner Accounts and server-side learner progress
+  - Stream and hls.js
+  - the ClamAV scan, its Queue and Container
+  - contributor upload links
+  - the Case workflow screens (reports now arrive as Submissions and are emailed to the safeguarding contact)
+  - Consent Record tables (each Submission keeps the version of the notice it was sent under)
+  - the Buttondown API (the newsletter uses Buttondown's own form)
+  - the encrypted backup, the deletion ledger and the restore lock
+  - the in-app monitor and the cost report
+  - the exports screens, bulk actions, the schedule page and staff search
+  - several Learning Layers per Video, Excerpts, and fingerprint carry-forward
+  - Analytics Engine events
+  - the Vosa dictionary pages
+- **Second copy of video masters (#64):** with clips of two minutes or less, the founder keeps the original files outside Cloudflare (the NAISEMA Drive) as part of uploading them. That settles #64 by process.
+
 ## Agreed amendments to the Founding Developer Agreement / MOU
 
 1. **§3 scope:** "NAISEMA Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.
