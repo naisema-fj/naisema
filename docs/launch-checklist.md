@@ -4,6 +4,8 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 
 ## 1. Accounts (technical owner and founder)
 
+`bash scripts/setup-environment.sh staging`, then `production`, does most of this section and opens a pull request with the settings (runbook, "One-time provisioning").
+
 - [ ] Cloudflare Workers paid plan active; account holder recorded in `docs/handover/vendors-and-accounts.md`.
 - [ ] D1 databases `naisema-v1-staging` and `naisema-v1-production` created fresh (the v1 schema starts again at migration 0000), with their IDs set in `wrangler.jsonc`.
 - [ ] R2 buckets `naisema-staging-media` and `naisema-production-media` created.

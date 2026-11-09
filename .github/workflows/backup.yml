@@ -24,13 +24,28 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      # Until production is set up for v1, there's no database to export: skip with a warning.
+      - name: Check production is set up in wrangler.jsonc
+        id: config
+        run: |
+          if grep -q "REPLACE_WITH_PRODUCTION" wrangler.jsonc; then
+            echo "::warning::Production isn't set up for v1 yet, so there's nothing to export."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.config.outputs.ready == 'true'
+        uses: pnpm/action-setup@v6
+      - if: steps.config.outputs.ready == 'true'
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - if: steps.config.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
       - name: Export the production database
+        if: steps.config.outputs.ready == 'true'
         run: pnpm db:export production export.sql
       - name: Keep it in the production media bucket
+        if: steps.config.outputs.ready == 'true'
         run: pnpm wrangler r2 object put "naisema-production-media/backups/$(date -u +%F).sql" --remote --file export.sql --content-type application/sql
