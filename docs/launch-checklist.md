@@ -59,7 +59,7 @@ Fill in the "Who holds the account" column of `docs/handover/vendors-and-account
 ## 7. Go-live
 
 - [ ] `main` is green in CI and staging has deployed from it.
-- [ ] Open pull requests decided: **#88** (ADR-0014 and the public dictionary; lessons need their own written change note before they are built) and **#85** (21 dependency updates; merge only after CI and an e2e run pass).
+- [ ] Open pull requests decided: **#88** (ADR-0014 and the public dictionary; lessons need the written change note `docs/change-notes/0001-lessons.md` signed before they are built) and **#85** (21 dependency updates; merge only after CI and an e2e run pass).
 - [ ] Tag the release: `git tag v0.1.0 && git push origin v0.1.0`, then approve the `production` deployment.
 - [ ] Production indexing on (`ALLOW_INDEXING = "true"` is already set for production); `curl -i https://naisema.com/health` answers `200 ok`.
 - [ ] Production smoke test: staff sign-in with two-factor, one form submission, one video playing, one learner account created and deleted.
