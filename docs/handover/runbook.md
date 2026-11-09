@@ -426,7 +426,7 @@ The replay knows `consent_record` (`REPLAYABLE_OBJECTS` in `app/lib/restore.serv
 
 ### Source masters
 
-Original video files are in the `naisema-<env>-video-masters` bucket (ADR-0008) and are in neither Time Travel nor the nightly backup, which hold the database only. The bucket keeps no second copy. Recovery therefore means asking whoever supplied the original for it again, and uploading it again; Stream's processed copy keeps playing meanwhile. Rights Records and the Videos' details are in the database and come back with it. Whether to keep a second copy of masters (for example a periodic copy to storage outside Cloudflare) is for the founder to decide before launch; it is not built.
+Original video files are in the `naisema-<env>-video-masters` bucket (ADR-0008) and are in neither Time Travel nor the nightly backup, which hold the database only. The bucket keeps no second copy. Recovery therefore means asking whoever supplied the original for it again, and uploading it again; Stream's processed copy keeps playing meanwhile. Rights Records and the Videos' details are in the database and come back with it. The founder decided on 9 November 2026 (`docs/decision-log.md`) to keep a periodic second copy in storage outside Cloudflare. **It is not built yet**: until the destination is chosen and the copy has run once and been restored from, the line above about asking suppliers again is still the real recovery path.
 
 ### Drills and targets
 
