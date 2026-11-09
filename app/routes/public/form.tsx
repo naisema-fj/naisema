@@ -17,11 +17,13 @@ import {
   EDUCATOR_CATEGORIES,
   FORM_CONSENTS,
   formValues,
+  ICAVUTI_LEVELS,
   readSubmission,
   SUBMISSION_LIMITS,
   SUBMISSION_TYPES,
   type SubmissionType,
   submissionTypeAt,
+  TRANSLATION_APPROACHES,
 } from "~/lib/submission-fields";
 import { alreadyReceived, newFormKey, type Received, receiveSubmission } from "~/lib/submissions.server";
 import type { Route } from "./+types/form";
@@ -171,6 +173,14 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
 
 function TypeFields({ type, values, errors }: { type: SubmissionType; values: Values; errors: Errors }) {
   const long = { values, errors, long: true, maxLength: SUBMISSION_LIMITS.text };
+  const short = { values, errors, maxLength: SUBMISSION_LIMITS.short };
+  const sourceField = {
+    ...long,
+    name: "source",
+    label: "Where have you seen or heard it?",
+    hint: "A book, a place, a person you learned it from. Name a person only if they're happy to be named.",
+    optional: true,
+  };
   switch (type) {
     case "enquiry":
       return <TextField name="message" label="Your message" {...long} />;
@@ -231,6 +241,73 @@ function TypeFields({ type, values, errors }: { type: SubmissionType; values: Va
             maxLength={SUBMISSION_LIMITS.short}
           />
           <TextField name="topics" label="What you'd like to be asked about" optional {...long} />
+        </>
+      );
+    case "word_suggestion":
+      return (
+        <>
+          <TextField {...short} name="word" label="Fijian word or phrase" />
+          <TextField name="meaning" label="What it means in English" {...long} />
+          <TextField
+            name="example"
+            label="A Fijian sentence that uses it"
+            hint="With its English meaning, if you can."
+            optional
+            {...long}
+          />
+          <TextField {...sourceField} />
+        </>
+      );
+    case "entry_correction":
+      return (
+        <>
+          <TextField {...short} name="word" label="The word whose entry is wrong" />
+          <TextField
+            name="correction"
+            label="What the entry should say"
+            hint="The corrected English meaning, spelling or example, and what is wrong now."
+            {...long}
+          />
+          <TextField {...sourceField} />
+        </>
+      );
+    case "icavuti_suggestion":
+      return (
+        <>
+          <ChoiceField
+            name="level"
+            legend="What does this title belong to?"
+            options={ICAVUTI_LEVELS}
+            values={values}
+            errors={errors}
+          />
+          <TextField {...short} name="province" label="Yasana (province)" />
+          <TextField
+            {...short}
+            name="district"
+            label="Tikina (district)"
+            hint="Needed for a tikina or koro title."
+            optional
+          />
+          <TextField {...short} name="village" label="Koro (village)" hint="Needed for a koro title." optional />
+          <TextField {...short} name="title" label="Icavuti" hint="The title only, never a chief's personal name." />
+          <TextField {...sourceField} label="How do you know this?" />
+        </>
+      );
+    case "translation_proposal":
+      return (
+        <>
+          <TextField {...short} name="term" label="The idea or English term" hint="For example: evaporation." />
+          <TextField {...short} name="expression" label="Your Fijian expression" />
+          <ChoiceField
+            name="approach"
+            legend="How did you make it?"
+            options={TRANSLATION_APPROACHES}
+            values={values}
+            errors={errors}
+          />
+          <TextField name="reasoning" label="Why this wording?" optional {...long} />
+          <TextField {...sourceField} />
         </>
       );
   }

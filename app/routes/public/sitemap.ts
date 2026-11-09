@@ -22,6 +22,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const urls = [
     { loc: `${origin}/` },
     ...PRIMARY_AREAS.map((area) => ({ loc: `${origin}/${area}` })),
+    { loc: `${origin}/apps` },
     ...["/connect/offerings", "/connect/providers", "/connect/creators"].map((path) => ({ loc: `${origin}${path}` })),
     ...providers.map((row) => ({
       loc: `${origin}${providerPath(row.slug)}`,

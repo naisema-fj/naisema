@@ -82,6 +82,15 @@ export default function Area({ loaderData }: Route.ComponentProps) {
             <span className="from-label">Not open yet</span> {info.notYetOpen}
           </p>
         )}
+        {area === "learn" && (
+          <nav aria-label="Learn sections" className="area-sections">
+            <ul>
+              <li>
+                <Link to="/apps">Fijian apps: the dictionary, lessons and community translation</Link>
+              </li>
+            </ul>
+          </nav>
+        )}
         {featured && <ConnectListings featured={featured} />}
         {featured && items.length > 0 && <h2>Newest in {AREA_NAMES[area]}</h2>}
         {items.length ? (
