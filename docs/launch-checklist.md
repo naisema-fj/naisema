@@ -22,6 +22,8 @@ Source of truth for each item is the linked issue, `docs/decision-log.md` and `d
 
 ## 3. Accounts and production setup
 
+`scripts/launch-wizard.sh staging` (then `production`) walks through the Cloudflare, GitHub, Turnstile, Buttondown, monitoring and Stream steps below, sets each secret straight on the Worker, and is safe to re-run. Run it from the repository root with `pnpm`, `openssl`, `curl`, `node` and the GitHub CLI installed.
+
 Fill in the "Who holds the account" column of `docs/handover/vendors-and-accounts.md` as you go. Never record a secret there.
 
 - [ ] Cloudflare account holder recorded; Workers paid plan active.
