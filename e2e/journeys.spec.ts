@@ -4,6 +4,8 @@ import { ADMIN, EDITOR, expectNoAxeViolations, expectReflow, STAFF_HEADER, stubT
 test("a visitor finds a Video and learns from its Learning Layer through all eight steps (VAC-02)", async ({
   page,
 }) => {
+  // A long journey: eight steps, each checked by axe, and reflow at two widths. 30 s is too tight on a busy runner.
+  test.setTimeout(90_000);
   await page.goto("/learn");
   await expectNoAxeViolations(page);
   await page.getByRole("link", { name: "Talanoa at the market" }).click();
@@ -64,6 +66,9 @@ test("someone sends a message through a public form", async ({ page }) => {
   await page.getByLabel("Your email address").fill("mere@example.org");
   await page.getByLabel("Your message").fill("Bula! When do the first lessons open?");
   await page.getByLabel("I've read how NAISEMA keeps what I send").check();
+  // Turnstile's script loads after the page and then adds its token; a person waits for the check
+  // to finish before sending, so the test does too, or the form is rightly refused.
+  await expect(page.locator('input[name="cf-turnstile-response"]')).toBeAttached();
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByRole("heading", { name: "Thank you, it's been sent" })).toBeVisible();
 });
