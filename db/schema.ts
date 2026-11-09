@@ -1087,6 +1087,13 @@ export const dictionarySource = sqliteTable("dictionary_source", {
   webUrl: text("web_url"),
   importBatch: text("import_batch").notNull(),
   importedAt: integer("imported_at", { mode: "timestamp_ms" }).notNull(),
+  /**
+   * An editor's record that NAISEMA may publish what its drafts take from this source (the team's
+   * own work, or permission held as a Rights Record), with why. Until then, no draft citing it is public.
+   */
+  clearedBy: text("cleared_by"),
+  clearedAt: integer("cleared_at", { mode: "timestamp_ms" }),
+  clearanceNote: text("clearance_note"),
 });
 
 /**
@@ -1112,6 +1119,16 @@ export const dictionaryEntry = sqliteTable(
     details: text("details", { mode: "json" }).$type<Record<string, unknown>>().notNull(),
     importBatch: text("import_batch").notNull(),
     importedAt: integer("imported_at", { mode: "timestamp_ms" }).notNull(),
+    importedBy: text("imported_by"),
+    /** SHA-256 of what is shown publicly (headword, meanings, part of speech), set on every import. */
+    contentFingerprint: text("content_fingerprint").notNull().default(""),
+    /**
+     * A language reviewer's approval of the content with this fingerprint. Public only while it
+     * matches `contentFingerprint`, so an import that changes the entry takes it down until re-reviewed.
+     */
+    approvedFingerprint: text("approved_fingerprint"),
+    approvedBy: text("approved_by"),
+    approvedAt: integer("approved_at", { mode: "timestamp_ms" }),
   },
   (table) => [index("dictionary_entry_headword_idx").on(table.headwordKey)],
 );

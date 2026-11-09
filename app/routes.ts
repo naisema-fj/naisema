@@ -9,6 +9,9 @@ export default [
     route("search", "routes/public/search.tsx"),
     // The Fijian apps hub (apps.naisema.com stays live; app/lib/fijian-apps.ts).
     route("apps", "routes/public/apps.tsx"),
+    // The public Vosa dictionary: reviewed entries with cleared sources only (app/lib/dictionary.server.ts).
+    route("learn/dictionary", "routes/public/dictionary.tsx"),
+    route("learn/dictionary/:id", "routes/public/dictionary-entry.tsx"),
     route("topics", "routes/public/topics.tsx"),
     route("topics/:slug", "routes/public/topic.tsx", { id: "topic" }),
     route("topics/:slug/:subtopic", "routes/public/topic.tsx", { id: "topic-filtered" }),

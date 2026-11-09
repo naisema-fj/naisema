@@ -48,6 +48,11 @@ export default function Apps() {
               <p className="not-open">
                 <span className="from-label">Not open yet</span> {app.notYetOpen}
               </p>
+              {app.onNaisema && (
+                <p>
+                  <Link to={app.onNaisema}>Reviewed entries on NAISEMA</Link>
+                </p>
+              )}
               <p>
                 <a href={app.href} rel="noopener">
                   Try the preview on apps.naisema.com

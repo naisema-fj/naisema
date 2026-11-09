@@ -256,6 +256,11 @@ A word, term or saying imported from the Vosa dictionary as a draft. It is never
 | `details` | text (JSON) | no |  |  |  |
 | `import_batch` | text | no |  |  |  |
 | `imported_at` | integer | no |  |  |  |
+| `imported_by` | text | yes |  |  |  |
+| `content_fingerprint` | text | no | `""` |  | SHA-256 of what is shown publicly (headword, meanings, part of speech), set on every import. |
+| `approved_fingerprint` | text | yes |  |  | A language reviewer's approval of the content with this fingerprint. Public only while it matches `contentFingerprint`, so an import that changes the entry takes it down until re-reviewed. |
+| `approved_by` | text | yes |  |  |  |
+| `approved_at` | integer | yes |  |  |  |
 
 ## dictionary_source
 
@@ -272,6 +277,9 @@ A source the Vosa dictionary cites: a scanned dictionary, a book, a web page. Ke
 | `web_url` | text | yes |  |  |  |
 | `import_batch` | text | no |  |  |  |
 | `imported_at` | integer | no |  |  |  |
+| `cleared_by` | text | yes |  |  | An editor's record that NAISEMA may publish what its drafts take from this source (the team's own work, or permission held as a Rights Record), with why. Until then, no draft citing it is public. |
+| `cleared_at` | integer | yes |  |  |  |
+| `clearance_note` | text | yes |  |  |  |
 
 ## email_failure
 

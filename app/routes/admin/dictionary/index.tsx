@@ -1,7 +1,14 @@
 import { data, Form, Link } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { canImportDictionary, DICTIONARY_PAGE, importVosaBundle, listDictionary } from "~/lib/dictionary.server";
-import { requireLayerStaff } from "~/lib/learning-layers.server";
+import {
+  canImportDictionary,
+  DICTIONARY_PAGE,
+  importVosaBundle,
+  listDictionary,
+  publicDictionaryPaths,
+  requireDictionaryStaff,
+} from "~/lib/dictionary.server";
+import { purgePublicPages } from "~/lib/public-cache.server";
 import { readVosaBundle, VOSA_MAX_BYTES } from "~/lib/vosa-bundle";
 import type { Route } from "./+types/index";
 
@@ -15,7 +22,7 @@ export function meta() {
  * can read them; editors import a newer data file.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db, actor } = await requireLayerStaff(context.get(cloudflareContext).env, request);
+  const { db, actor } = await requireDictionaryStaff(context.get(cloudflareContext).env, request);
   const params = new URL(request.url).searchParams;
   const search = params.get("q") ?? "";
   const kind = params.get("kind") ?? "";
@@ -38,7 +45,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
-  const { db, actor } = await requireLayerStaff(context.get(cloudflareContext).env, request);
+  const { env } = context.get(cloudflareContext);
+  const { db, actor } = await requireDictionaryStaff(env, request);
   if (!canImportDictionary(actor)) throw new Response("Only editors import the dictionary.", { status: 403 });
   const file = (await request.formData()).get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -50,16 +58,28 @@ export async function action({ request, context }: Route.ActionArgs) {
   const read = readVosaBundle(await file.text());
   if (!read.ok) return data({ error: read.error, imported: null }, { status: 400 });
   const imported = await importVosaBundle(db, actor, read.bundle);
+  if (imported.takenDown.length) {
+    await purgePublicPages(env, [...new Set(imported.takenDown.flatMap((id) => publicDictionaryPaths(id)))]);
+  }
   return { error: null, imported: { ...imported, skipped: read.skipped } };
 }
 
 const counted = (number: number, one: string, many: string) => `${number} ${number === 1 ? one : many}`;
 
-function importedText(imported: { words: number; sayings: number; sources: number; skipped: number }) {
+function importedText(imported: {
+  words: number;
+  sayings: number;
+  sources: number;
+  skipped: number;
+  takenDown: string[];
+}) {
   const skipped = imported.skipped
     ? `; ${counted(imported.skipped, "record was", "records were")} skipped as incomplete`
     : "";
-  return `Imported ${counted(imported.words, "word", "words")}, ${counted(imported.sayings, "saying", "sayings")} and ${counted(imported.sources, "source", "sources")} as drafts${skipped}.`;
+  const changed = imported.takenDown.length
+    ? ` ${counted(imported.takenDown.length, "approved entry has", "approved entries have")} changed and left the public dictionary until reviewed again.`
+    : "";
+  return `Imported ${counted(imported.words, "word", "words")}, ${counted(imported.sayings, "saying", "sayings")} and ${counted(imported.sources, "source", "sources")} as drafts${skipped}.${changed}`;
 }
 
 const KINDS = { "": "Words and sayings", word: "Words", saying: "Sayings" } as const;
@@ -71,9 +91,10 @@ export default function Dictionary({ loaderData, actionData }: Route.ComponentPr
     <main id="main" className="page">
       <h1>Vosa dictionary drafts</h1>
       <p>
-        Words, terms and sayings from the Vosa dictionary on apps.naisema.com. Every one here is a draft that needs
-        review: none is public, and none is an Expression that Annotations can use. The sources each one cites need a
-        Rights Record before anything taken from them is published.
+        Words, terms and sayings from the Vosa dictionary on apps.naisema.com. None is an Expression that Annotations
+        can use. One appears on the public dictionary only once a Standard Fijian language reviewer has approved it as
+        it stands and an editor has cleared every source it cites; importing a changed entry takes it down until it is
+        approved again. Cultural terms stay private until cultural review exists.
       </p>
       <p>
         <Link to="/admin/dictionary/sources">Sources the dictionary cites</Link>

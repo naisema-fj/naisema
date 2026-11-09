@@ -18,6 +18,8 @@ export type FijianApp = {
   href: string;
   /** What is still needed before it is part of NAISEMA, in the visitor's words. */
   notYetOpen: string;
+  /** Where its reviewed part is on NAISEMA, once there is one. */
+  onNaisema?: string;
   /** The forms that send something about this app to the team. */
   forms: SubmissionType[];
 };
@@ -30,7 +32,8 @@ export const FIJIAN_APPS: FijianApp[] = [
       "Fijian and English words, themes, grammar terms (Tuvavosa), proverbs and idioms (Vosavosavakaviti), a guide to veiqaravi vakavanua and icavuti by place.",
     href: `${APPS_SITE}/dictionary/`,
     notYetOpen:
-      "Vosa is a learning guide, not an official dictionary. Its entries are being reviewed for language and culture before they appear on NAISEMA.",
+      "Vosa is a learning guide, not an official dictionary. Its entries appear in NAISEMA's dictionary as each is reviewed.",
+    onNaisema: "/learn/dictionary",
     forms: ["word_suggestion", "entry_correction", "icavuti_suggestion"],
   },
   {
