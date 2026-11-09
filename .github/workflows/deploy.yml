@@ -5,6 +5,8 @@ name: Deploy
 # (configure required reviewers on that environment for manual approval).
 # Both jobs stay skipped until the repository variable CLOUDFLARE_ACCOUNT_ID
 # is set, so CI stays green before Cloudflare is provisioned (docs/handover/runbook.md).
+# Staging is also skipped, with a warning, while wrangler.jsonc still has its
+# placeholders; a production tag with placeholders fails, since a release is deliberate.
 
 on:
   push:
@@ -34,20 +36,32 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      # Until staging is set up for v1 (bash scripts/setup-environment.sh staging), wrangler.jsonc
+      # still holds placeholders: the deploy is skipped with a warning, so main stays green.
+      - name: Check staging is set up in wrangler.jsonc
+        id: config
+        run: |
+          if grep -Eq "REPLACE_WITH_(STAGING|ACCESS_TEAM)" wrangler.jsonc; then
+            echo "::warning::Staging isn't set up for v1 yet, so nothing was deployed. Run bash scripts/setup-environment.sh staging (docs/handover/runbook.md, provisioning)."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.config.outputs.ready == 'true'
+        uses: pnpm/action-setup@v6
+      - if: steps.config.outputs.ready == 'true'
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
-      - name: Check the staging D1 database ID is configured
-        run: |
-          if grep -Eq "REPLACE_WITH_(STAGING|ACCESS_TEAM)" wrangler.jsonc; then
-            echo "::error::Set the staging database_id and Access settings in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
-          fi
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm build
-      - run: pnpm wrangler d1 migrations apply DB --remote --env staging --config wrangler.jsonc
-      - run: pnpm wrangler deploy
+      - if: steps.config.outputs.ready == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.config.outputs.ready == 'true'
+        run: pnpm build
+      - if: steps.config.outputs.ready == 'true'
+        run: pnpm wrangler d1 migrations apply DB --remote --env staging --config wrangler.jsonc
+      - if: steps.config.outputs.ready == 'true'
+        run: pnpm wrangler deploy
 
   production:
     name: Deploy to production
