@@ -47,8 +47,10 @@ describe("the staff navigation", () => {
   it("shows a reviewer their reviews and nothing to edit or administer", () => {
     expect(labels(staff({ role: "reviewer", reviewType: "language", languageVariety: "standard-fijian" }))).toEqual([
       "What's coming up",
+      "Vosa dictionary drafts",
       "Your reviews",
     ]);
+    expect(labels(staff({ role: "reviewer", reviewType: "editorial" }))).toEqual(["What's coming up", "Your reviews"]);
   });
 
   it("offers What's coming up to the roles that have something on it, and not to an Educator", () => {

@@ -169,6 +169,13 @@
       "when": 1794186494569,
       "tag": "0023_vosa_dictionary_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1794188038440,
+      "tag": "0024_dictionary_review_and_clearance",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,5 @@
 import { CASE_KINDS } from "./case-rules";
+import { worksOnDictionary } from "./dictionary-rules";
 import { type Actor, type CaseKind, can, EXPORT_KINDS } from "./permissions";
 import { scheduleKinds } from "./staff-schedule";
 
@@ -33,7 +34,7 @@ export function staffNav(actor: Actor): NavGroup[] {
         editsContent && { label: "Providers and offerings", href: "/admin/providers" },
         allowed({ action: "media.upload" }) && { label: "Media library", href: "/admin/media" },
         (editsContent || isEducator) && { label: "Learning Layers", href: "/admin/learning-layers" },
-        (editsContent || isEducator) && { label: "Vosa dictionary drafts", href: "/admin/dictionary" },
+        worksOnDictionary(actor) && { label: "Vosa dictionary drafts", href: "/admin/dictionary" },
         allowed({ action: "reviewQueue.view" }) && { label: "Your reviews", href: "/admin/reviews" },
       ],
     },

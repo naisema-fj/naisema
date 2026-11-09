@@ -29,7 +29,11 @@ A Content Item backing one of the fixed site pages in the footer (About, Privacy
 
 **Learning Layer**:
 An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
-_Avoid_: Lesson, VideoLearningObject, learning object, practice unit
+_Avoid_: Lesson (a Lesson has no video), VideoLearningObject, learning object, practice unit
+
+**Lesson**:
+An interactive Content Item in Learn that isn't built on a video (ADR-0014): pictures, words and Activities with its own Completion Rule, reviewed and published by Revision like any Content Item. Its Fijian points to Expressions.
+_Avoid_: Learning Layer (that is on a video), course, module
 
 **Segment**:
 A timed span of a Learning Layer's clip holding the Fijian text, English translation and optional speaker for that span.
@@ -87,8 +91,8 @@ The small, reviewed set of Learning Layers that must exist and pass acceptance b
 _Avoid_: Pilot content, sample videos
 
 **Learning Unit**:
-An ordered step inside a later-phase bundle or Pathway; not a synonym for Learning Layer.
-_Avoid_: Lesson
+An ordered step inside a later-phase bundle or Pathway; not a synonym for Learning Layer or Lesson.
+_Avoid_: Lesson (a Lesson is a Content Item a Learning Unit may point to)
 
 **Pathway**:
 A described route for a type of learner (heritage, beginner, parent-led) through existing resources and Learning Layers.
