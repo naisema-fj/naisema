@@ -97,6 +97,8 @@ test("a learner saves their learning, carries on from another device, and offlin
 
   // Signing out on the phone leaves the account, and its learning, as it was.
   await phone.goto("/account");
+  // Leaving the player queues a last change; let this page send it, or Sign out asks first.
+  await phone.waitForLoadState("networkidle");
   await phone.getByRole("button", { name: "Sign out" }).click();
   await expect(phone).toHaveURL(/\/$/);
   await phone.goto("/account");

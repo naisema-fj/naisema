@@ -6,7 +6,17 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!migrations/meta", "!docs", "!.claude", "!THIRD_PARTY_LICENSES", "!skills-lock.json"]
+    "includes": [
+      "**",
+      "!migrations/meta",
+      "!docs",
+      "!.claude",
+      "!.impeccable",
+      "!THIRD_PARTY_LICENSES",
+      "!skills-lock.json",
+      "!pnpm-lock.yaml",
+      "!DESIGN.md"
+    ]
   },
   "formatter": {
     "indentStyle": "space",
