@@ -61,7 +61,7 @@
         {
           "binding": "DB",
           "database_name": "naisema-v1-staging",
-          "database_id": "REPLACE_WITH_STAGING_DATABASE_ID",
+          "database_id": "7d9d0bbc-4b50-444b-914d-bd7563a27de1",
           "migrations_dir": "migrations"
         }
       ],
