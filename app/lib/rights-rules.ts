@@ -1,10 +1,8 @@
 /**
- * The rules for Rights Records (CONTEXT.md, ADR-0007): which Permitted Uses exist, whether the
- * rights on an item are current enough to publish it, when expiry warnings are due, and which
- * evidence files are accepted. Pure, so every content type and the scheduled job share them.
+ * The rules for Rights Records (ADR-0007): which Permitted Uses exist and whether the rights on a
+ * Revision are current enough to publish it. Expiry is a day compared on every request, so a lapsed
+ * right takes the item down on the next request with no scheduled job (ADR-0015).
  */
-
-import { PERMITTED_USE_NAMES } from "./rights-names";
 
 /** Each Permitted Use is granted separately; none implies another. */
 export const PERMITTED_USES = [
@@ -18,206 +16,77 @@ export const PERMITTED_USES = [
 ] as const;
 export type PermittedUse = (typeof PERMITTED_USES)[number];
 
+export const PERMITTED_USE_NAMES: Record<PermittedUse, string> = {
+  publish: "Publish",
+  excerpt: "Excerpt",
+  translate: "Translate",
+  transcribe: "Transcribe",
+  educationalAdaptation: "Educational adaptation",
+  commercial: "Commercial use",
+  aiTraining: "AI training",
+};
+
 export const isPermittedUse = (value: string): value is PermittedUse =>
   (PERMITTED_USES as readonly string[]).includes(value);
 
-/**
- * The parts of an item that can carry their own Rights Records, apart from the item as a whole: a
- * speaker or guest, a piece of music, an archive clip (Voices Episodes, PRD §04).
- */
-export const RIGHTS_PART_KINDS = ["speaker", "music", "archive"] as const;
-export type RightsPartKind = (typeof RIGHTS_PART_KINDS)[number];
-export type RightsPart = { kind: RightsPartKind; name: string };
-
-export const RIGHTS_PART_NAMES: Record<RightsPartKind, string> = {
-  speaker: "speaker or guest",
-  music: "music",
-  archive: "archive clip",
-};
-
-/** A part as staff read it: "Music: Isa Lei (1962 recording)". */
-export const partLabel = (part: RightsPart) => {
-  const kind = RIGHTS_PART_NAMES[part.kind];
-  return `${kind.charAt(0).toUpperCase()}${kind.slice(1)}: ${part.name}`;
-};
-
-/** What a Rights Record can cover: a Content Item (or one part of it), or a media library file. */
-export type RightsSubject = { type: "content_item" | "media_asset"; id: string };
-
-/** Where staff manage a subject's Rights Records, on the admin host. */
-export const rightsPagePath = (subject: RightsSubject) =>
-  subject.type === "media_asset" ? `/admin/media/${subject.id}/rights` : `/admin/articles/${subject.id}/rights`;
-
-export const isRightsPartKind = (value: string): value is RightsPartKind =>
-  (RIGHTS_PART_KINDS as readonly string[]).includes(value);
-
 /** What the rules need to know about a Rights Record. */
 export type RightsFacts = {
-  id: string;
-  /** The part of the item it covers; absent or null for the item as a whole. */
-  part?: RightsPart | null;
   permittedUses: PermittedUse[];
-  /** The record is documented permission from the guardian of children who can be identified. */
   guardianPermission: boolean;
-  expiresAt: Date | null;
+  /** The last day it holds (YYYY-MM-DD), or null for no end. */
+  expiresOn: string | null;
   withdrawnAt: Date | null;
 };
 
-/** Current: not withdrawn, and not yet expired. A record expiring at this very moment has expired. */
-export const isCurrent = (record: RightsFacts, now: Date) =>
-  record.withdrawnAt === null && (record.expiresAt === null || record.expiresAt > now);
+/** Current on `today` (YYYY-MM-DD): not withdrawn, and today is on or before its last day. */
+export const isCurrent = (record: RightsFacts, today: string) =>
+  record.withdrawnAt === null && (record.expiresOn === null || record.expiresOn >= today);
 
-const grants = (use: PermittedUse) => (record: RightsFacts) => record.permittedUses.includes(use);
-const grantsPublish = grants("publish");
+/** The uses a Video's Learning Layer needs from the Video's own records (VID-01). */
+export const LAYER_USES: readonly PermittedUse[] = ["publish", "translate", "transcribe", "educationalAdaptation"];
 
-export const DAY_MS = 86_400_000;
+/** A day as staff and visitors read it: "30 Sept 2026". */
+export const formatDay = (day: string | Date) =>
+  new Date(typeof day === "string" ? `${day}T00:00:00Z` : day).toLocaleDateString("en-AU", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 
-/** A day as staff read it in rights pages and emails: "30 Sept 2026" (UTC). */
-export const formatDay = (date: Date | string) =>
-  new Date(date).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-
-/** The same part, however its name was spaced or capitalised. */
-const partKey = (part: RightsPart) => `${part.kind}|${part.name.trim().toLowerCase()}`;
+const why = (records: RightsFacts[], use: PermittedUse, what: string) => {
+  const granting = records.filter((record) => record.permittedUses.includes(use));
+  if (!granting.length) return `No Rights Record for ${what} grants ${PERMITTED_USE_NAMES[use]}.`;
+  if (granting.every((record) => record.withdrawnAt)) return `The Rights Record for ${what} was withdrawn.`;
+  return `The Rights Record for ${what} granting ${PERMITTED_USE_NAMES[use]} has expired.`;
+};
 
 /**
- * Why an item's rights don't allow publishing right now, or nothing if they do. Evaluated at the
- * moment of asking, so an expiry or withdrawal takes effect on the next request (ADR-0007).
- *
- * The item needs a current record granting Publish. `parts` are the parts the Revision itself
- * lists (an Episode's speakers, music and archive clips): each of those with records of its own
- * needs one of them current too. Records for parts the Revision doesn't list are set aside, so
- * cutting a clip from an Episode also lifts its rights.
+ * Why a Revision's rights don't allow it to be public on `today`, or nothing if they do. The item
+ * needs a current record granting Publish (and the Learning Layer uses, for a Video with one); each
+ * media file it shows needs one of its own; and an item flagged with identifiable children needs
+ * documented guardian permission.
  */
 export function rightsProblems(input: {
-  records: RightsFacts[];
+  itemRecords: RightsFacts[];
+  media: { id: string; name: string; records: RightsFacts[] }[];
   needsGuardianPermission: boolean;
-  parts?: RightsPart[];
-  now: Date;
+  hasLayer: boolean;
+  today: string;
 }): string[] {
-  const { now } = input;
-  const present = new Map((input.parts ?? []).map((part) => [partKey(part), part]));
+  const { today } = input;
   const problems: string[] = [];
-
-  const whole = input.records.filter((record) => !record.part);
-  const lapse = lapseOf(whole, now);
-  if (lapse === "withdrawn") problems.push("Its Rights Record granting Publish was withdrawn.");
-  else if (lapse === "none") problems.push("No current Rights Record grants Publish.");
-  else if (lapse) problems.push(`Its Rights Record granting Publish expired on ${formatDay(lapse)}.`);
-
-  const byPart = new Map<string, RightsFacts[]>();
-  for (const record of input.records) {
-    const key = record.part && partKey(record.part);
-    if (key && present.has(key)) byPart.set(key, [...(byPart.get(key) ?? []), record]);
+  const itemCurrent = input.itemRecords.filter((record) => isCurrent(record, today));
+  for (const use of input.hasLayer ? LAYER_USES : (["publish"] as const)) {
+    if (!itemCurrent.some((record) => record.permittedUses.includes(use)))
+      problems.push(why(input.itemRecords, use, "the item"));
   }
-  for (const [key, records] of byPart) {
-    const part = present.get(key) as RightsPart;
-    const label = `${RIGHTS_PART_NAMES[part.kind]}: ${part.name.trim()}`;
-    const partLapse = lapseOf(records, now);
-    if (partLapse === "withdrawn") problems.push(`The Rights Record for ${label} was withdrawn.`);
-    else if (partLapse === "none") problems.push(`No current Rights Record for ${label} grants Publish.`);
-    else if (partLapse) problems.push(`The Rights Record for ${label} expired on ${formatDay(partLapse)}.`);
+  if (input.needsGuardianPermission && !itemCurrent.some((record) => record.guardianPermission)) {
+    problems.push("It shows identifiable children, and no current Rights Record records guardian permission.");
   }
-
-  // Guardian permission comes with the item's own record or a listed speaker's, never with music.
-  const guardianRecords = input.records.filter(
-    (record) => !record.part || (record.part.kind === "speaker" && present.has(partKey(record.part))),
-  );
-  if (
-    input.needsGuardianPermission &&
-    !guardianRecords.some((record) => grantsPublish(record) && record.guardianPermission && isCurrent(record, now))
-  ) {
-    problems.push("Identifiable children need current, documented guardian permission granting Publish.");
+  for (const file of input.media) {
+    if (!file.records.some((record) => isCurrent(record, today) && record.permittedUses.includes("publish")))
+      problems.push(why(file.records, "publish", file.name));
   }
   return problems;
-}
-
-/**
- * Why the media library files an item uses can't be published with it: each needs its own current
- * Rights Record granting Publish (#17). The item's own record doesn't stand in for a file's.
- */
-export function assetRightsProblems(assets: { name: string | null; records: RightsFacts[] }[], now: Date): string[] {
-  return assets.flatMap(({ name, records }) => {
-    const lapse = lapseOf(records, now);
-    if (lapse === null) return [];
-    // A file removed from the library since the Revision was written has no rights left.
-    if (name === null) return ["It uses a file that is no longer in the media library."];
-    if (lapse === "withdrawn") return [`The Rights Record for the file ${name} was withdrawn.`];
-    if (lapse === "none") return [`The file ${name} has no current Rights Record granting Publish.`];
-    return [`The Rights Record for the file ${name} expired on ${formatDay(lapse)}.`];
-  });
-}
-
-/** Whether records include a current one granting Publish: what a media library file needs to be shown. */
-export const isPublishable = (records: RightsFacts[], now: Date) => lapseOf(records, now) === null;
-
-/** The Permitted Uses a Learning Layer needs on its Video, besides Excerpt when it is on an Excerpt. */
-const TEACHING_USES = ["publish", "translate", "transcribe", "educationalAdaptation"] as const;
-
-/**
- * Why a Video's Rights Records don't allow a Learning Layer on it right now (VID-01): Publish and
- * each teaching use must be granted by a current record on the Video as a whole, and Excerpt too
- * when the Learning Layer is on an Excerpt. Each use may come from a different record, so
- * withdrawing a record that grants only teaching uses removes the Learning Layer but leaves the
- * Video's own Publish grant. Footage showing identifiable children needs guardian permission, as
- * the Video does.
- */
-export function teachingRightsProblems(input: {
-  records: RightsFacts[];
-  excerpt: boolean;
-  needsGuardianPermission?: boolean;
-  now: Date;
-}): string[] {
-  const whole = input.records.filter((record) => !record.part);
-  const uses: PermittedUse[] = [...TEACHING_USES, ...(input.excerpt ? (["excerpt"] as const) : [])];
-  const guardian =
-    input.needsGuardianPermission &&
-    !whole.some((record) => grantsPublish(record) && record.guardianPermission && isCurrent(record, input.now))
-      ? ["Identifiable children in its Video need current, documented guardian permission granting Publish."]
-      : [];
-  const missing = uses.flatMap((use) => {
-    const name = PERMITTED_USE_NAMES[use];
-    const lapse = lapseOf(whole, input.now, use);
-    if (lapse === null) return [];
-    if (lapse === "withdrawn") return [`Its Video's Rights Record granting ${name} was withdrawn.`];
-    if (lapse === "none") return [`Its Video has no current Rights Record granting ${name}.`];
-    return [`Its Video's Rights Record granting ${name} expired on ${formatDay(lapse)}.`];
-  });
-  return [...missing, ...guardian];
-}
-
-/**
- * Whether records lack a current grant of a use (Publish unless said), and how the latest one
- * lapsed: null when one is current, then "withdrawn", the expiry date, or "none" when nothing
- * ever granted it.
- */
-function lapseOf(records: RightsFacts[], now: Date, use: PermittedUse = "publish"): null | "withdrawn" | "none" | Date {
-  const granting = records.filter(grants(use));
-  if (granting.some((record) => isCurrent(record, now))) return null;
-  const latest = granting.at(-1);
-  if (latest?.withdrawnAt) return "withdrawn";
-  return latest?.expiresAt ?? "none";
-}
-
-/** Warnings go out as a record enters each window before it expires, tightest first. */
-export const EXPIRY_WARNING_DAYS = [7, 30] as const;
-export type ExpiryWarning = { recordId: string; withinDays: (typeof EXPIRY_WARNING_DAYS)[number] };
-
-/**
- * The expiry warnings to send today: for each current record expiring within 30 days, the
- * tightest window it is in, unless that warning was already sent. A record found first at 5 days
- * gets one 7-day warning, not two.
- */
-export function expiryWarningsDue(input: {
-  records: RightsFacts[];
-  sent: ExpiryWarning[];
-  now: Date;
-}): ExpiryWarning[] {
-  const sent = new Set(input.sent.map((warning) => `${warning.recordId}:${warning.withinDays}`));
-  return input.records.flatMap((record) => {
-    if (!record.expiresAt || !isCurrent(record, input.now)) return [];
-    const daysLeft = (record.expiresAt.getTime() - input.now.getTime()) / DAY_MS;
-    const withinDays = EXPIRY_WARNING_DAYS.find((window) => daysLeft <= window);
-    if (!withinDays || sent.has(`${record.id}:${withinDays}`)) return [];
-    return [{ recordId: record.id, withinDays }];
-  });
 }

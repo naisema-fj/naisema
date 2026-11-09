@@ -1,102 +1,92 @@
 # Admin guide
 
-For the founder. This guide shows how to sign in, publish something, take it down again, export information, read the audit log and find the runbook. It uses the staff site as it looks today, and names each page and button as the screen shows it. You do not need to type any commands.
+This guide is for the founder. It shows how to sign in, publish something, take it down again, see who did what, and find the runbook, using the v1 staff site (ADR-0015). Pages and buttons are named as the screen shows them. You don't need to type any commands.
 
-Your role decides what you see. The menu only lists pages you may use, so a page missing from your menu is not an error.
+Your roles decide what you see. The menu only lists pages you may use, so a page missing from your menu isn't an error.
 
 ## Sign in
 
-1. Open the staff site address (`admin.naisema.com`). The page is called **Sign in to NAISEMA staff tools**.
-2. Type your email address in **Email address** and press **Email me a sign-in link**.
-3. The next page says **Check your email**. Open the email and press the link. It works once and expires after 15 minutes. If no email comes, check spam, then ask for a new link. The page gives the same reply whether or not the address has an account.
-4. The first time only, the page **Set up your authenticator app** appears. Press **Start setup**, scan the QR code with an authenticator app on your phone (Google Authenticator, Microsoft Authenticator or 1Password), type the 6-digit code under **2. Enter the code your app shows**, and press **Confirm**.
-5. Every later sign-in ends on **Enter your authenticator code**. Type the 6-digit code and press **Continue**. Five wrong codes sign you out, and you start again from step 2.
-
-If you lose your phone, another administrator presses **Reset two-factor for** your email under **Two-factor** on **Staff and roles**. You are signed out everywhere and emailed, and you set up the app again at your next sign-in. You cannot reset your own. If you are the only administrator, the technical owner can do it (runbook, "A lost authenticator app").
+1. Open `admin.naisema.com`. Cloudflare asks for your email address and sends you a code.
+2. Type the code. You're on **Staff home**.
+3. If it says your address isn't on the staff list, an administrator adds you at **Staff**, and the technical owner adds you to the Cloudflare Access list.
 
 To leave, press **Sign out** at the top right of any page.
 
 ## The staff home
 
-After sign-in you land on **NAISEMA staff**. From top to bottom:
+**Needs your attention** lists what is waiting for you:
+- **Waiting for your review**: versions you can review and didn't write.
+- **Ready to publish**: versions with everything they need.
+- **Not ready yet**: each item with the first thing it's missing.
+- **Rights running out in the next 30 days.**
+- New messages and reports.
 
-- **Needs your attention**: a list of things waiting for you, each with a count. Press one to go straight to it. If there is nothing, it says **Nothing needs your attention.**
-- **Platform**: one line per system check, such as backups. A line that ends **Needs attention.** is a problem to pass to the technical owner. Press its link to see more.
-- **Your roles**: the roles you hold.
-- **Where to go**: the same pages as the menu, in groups.
+On a wide screen the menu is on the left. On a phone, press **Menu** at the top.
 
-The menu is on the left on a wide screen. On a phone, press **Menu** at the top. **Search** at the top finds content, media and directory entries.
+## Add and edit something
 
-## Publish an eligible item
+1. Open **Content**. Under **Add something**, choose what it is and where it goes (for example "Article in E-zine"), type a title, and press **Add and start writing**.
+2. Fill in the page and press **Save as version N**. Every save is a new version, and a new version needs its reviews again. That keeps every Review Label true to the exact words published.
+3. Tick the **Content Flags** that apply. They decide which reviews are needed:
+   - every item needs an editorial review
+   - teaching language, or anything in Learn, needs a language review
+   - sensitive cultural material needs a Knowledge Holder Approval
+   - identifiable children need a safeguarding review and the guardian's permission
+4. To show it to a Knowledge Holder or anyone outside the team, press **Make a preview link**. Copy the address shown. It works for 14 days and shows only that version.
 
-Anything the public sees must pass review and have its rights recorded first. The staff site checks this for you and shows what is missing.
+## Review
 
-1. Open **Content** from the menu. The page lists items, newest saved first. Press an item's title.
-2. Press **Review and publish revision** (the number is the latest revision) near the top of the page.
-3. Find the section **Review and publishing**. It shows:
-   - **This revision**: for example Draft, Submitted for review or Approved.
-   - **Publishing**: either **Ready to publish** or **Not ready to publish**. If the revision is already live it says **This revision is the one published.**
-4. If it says **Ready to publish**, press **Publish revision** (with its number) under **Publishing**. The page confirms with **Published.** The item appears on the public site, and public search picks it up.
+Open the item from **Waiting for your review**. Under **Your review of version N**, add notes, then press **Approve** or **Ask for changes**. Asking for changes needs a note saying what.
 
-### When an item cannot be published
+For a **Knowledge Holder Approval**, an editor records it with the Knowledge Holder's name and how they approved (in person, by phone, by email). You can't review a version you wrote: someone else must.
 
-If it says **Not ready to publish**, a list titled **Before revision N can be published** says exactly what is missing. Where you can fix it yourself, a link sits beside the line. The usual reasons:
+## Rights
 
-| What the list says | What to do |
+From an item's page, press **Rights Records**, or use **Rights Records** beside a file in **Media library**. Add who holds the rights, what they permit, their last day if there is one, and the signed permission as a PDF or photo.
+
+Nothing can be public until a record grants **Publish**. A Video's Learning Layer also needs **Translate**, **Transcribe** and **Educational adaptation**. To take something down at once, withdraw its record.
+
+## Publish
+
+On the item's page, **Where it stands** says either "This version can be published", or exactly what is missing. When it can be published, press **Publish version N**. It is on the public site at once.
+
+| What it says | What to do |
 | --- | --- |
-| It hasn't been submitted for review. | Press the link, then **Submit revision N for review**. |
-| A review (for example Language review, Cultural review or Knowledge Holder Approval) is still needed, or was rejected. | An editor assigns a reviewer with **Assign**; the reviewer presses **Record decision**; a Knowledge Holder Approval is entered with **Record approval**. A rejection needs the item changed and saved again, which makes a new revision to submit. |
-| There is no current Rights Record granting Publish, or the file it uses has none. | Open **Rights Records** from the item's page and record the rights. The media library has the same for files. |
-| Its video hasn't finished processing, or a file hasn't passed its virus scan. | Wait a few minutes and reload. If it stays stuck, tell the technical owner. |
-| It is hidden while a Case about it is reviewed. | Only the safeguarding lead can show it again. You cannot override this. |
+| It needs editorial review (or language review...) | Someone with that role reviews it, from their staff home. |
+| ... asked for changes | Make the change and save. The new version needs its reviews again. |
+| No Rights Record for the item (or a file) grants Publish | Add the Rights Record. |
+| ... is missing | Fill in that field and save. |
+| Its Learning Layer has no Segments yet, or no Activity is required | The Educator finishes the Learning Layer. |
 
-You cannot approve a revision you wrote yourself. Someone else must.
+## Take it down
 
-## Withdraw an item
+On the item's page, type a reason and press **Withdraw from the site**. It leaves the site, search and the sitemap at once. **Archive** takes it out of use for good. To publish it again after withdrawing, publish a version.
 
-1. Open the item the same way (**Content**, then its title, then **Review and publish revision**).
-2. In **Review and publishing**, find the **Withdraw the** button for the item (for an article, **Withdraw the article**). Above it, **Why (optional, kept in the audit log)** takes a short reason. Write one; it helps later.
-3. Press the button. The page says **Withdrawn.** The public page then answers "gone" and the item leaves search.
+## Messages and reports
 
-A withdrawn item can be published again by publishing a revision. To remove it from the lists for good, use **Archive the** button that appears for withdrawn items. To take down several items at once, tick them on the **Content** page and use the actions under the list.
+**Messages and reports** lists what people sent through the public forms:
+- Reports go only to the Safeguarding Lead.
+- Requests about people's own information go only to administrators.
 
-## Export data
+Open one to read it and reply by email. Press **Mark as dealt with** when it's done.
 
-1. Open **Exports** from the menu.
-2. Each export has its own heading and a **Download** button. The file is saved as one `.json` file named with the export and the date.
-3. **Contacts from the public forms** first asks **What the contacts are for**. Write at least ten characters. The reason is recorded in the audit log.
-4. Each export lists who made it in the audit log. The contents of each file are described in `docs/handover/exports.md`.
+## The audit log
 
-## Read the audit log
-
-Open **Audit log** under **Administration** (administrators only). It lists who did what to which object and when, with the reason where one was given. Times are in UTC. Nothing here can be changed or removed.
-
-To narrow it, fill in any of **Object ID**, **Who acted** or **Action starts with** (for example `role.` or `content_item.`) and press **Show**. Press **Older events** at the bottom for earlier entries.
+**Audit log** (administrators) lists the latest 500 things anyone did: who, what, on which item, when, and why where a reason was given. Nothing in it can be changed.
 
 ## Find the runbook
 
-The runbook is the file `docs/handover/runbook.md` in the project on GitHub (`naisema-fj/naisema`). It is the technical owner's manual for deploying, restoring from backup, monitoring and handling incidents. Pages on the staff site point to it where it matters, for example **Usage and costs** and **Backups and restoring**. Share this link with whoever will help you run the platform.
+The runbook is `docs/handover/runbook.md` in the project on GitHub (`naisema-fj/naisema`). It's the technical owner's manual for deploying, restoring and handling incidents. Educators have their own guide, `docs/handover/educator-guide.md`.
 
-Educators have their own guide, `docs/handover/educator-guide.md`, which shows how a Video becomes a Learning Layer and what reviewers will check. It is useful when you assign Educators or review their work.
+## Rehearsal checklist (AC-08)
 
-Other pages worth knowing:
+Do these on staging without help, with this guide open, and note anything unclear:
 
-- **Usage and costs**: this month's video and storage use, and the estimated bill against the monthly ceiling.
-- **Backups and restoring**: backups held, and the restore steps used after a disaster.
-- **Staff and roles**: grant or revoke a role, and reset someone's two-factor.
-
-## AC-08 rehearsal checklist
-
-Do these on staging without help, with this guide open. Note anything that was unclear or took more than a couple of minutes.
-
-- [ ] Sign in with the emailed link and your authenticator code.
-- [ ] From **NAISEMA staff**, find what is under **Needs your attention**.
-- [ ] Publish an eligible item: open it from **Content**, check it says **Ready to publish**, press **Publish revision**, and see **Published.**
-- [ ] Open a draft that is not ready and read out why it cannot be published.
-- [ ] Withdraw the item you published, with a reason.
-- [ ] Download an export from **Exports** and open the file.
-- [ ] Open the **Audit log** and find the publish and the withdrawal you just made.
-- [ ] Find the runbook and the section on backups.
+- [ ] Sign in with the emailed code.
+- [ ] Add an Article, write a paragraph and save it.
+- [ ] Make a preview link and open it in a private window.
+- [ ] Ask someone else to approve it, and add a Rights Record granting Publish.
+- [ ] Publish it and find it on the public site.
+- [ ] Withdraw it with a reason, and see it gone.
+- [ ] Find the publish and the withdrawal in the **Audit log**.
 - [ ] Sign out.
-
-Report what was unclear on the ticket for this guide so the wording can be fixed.

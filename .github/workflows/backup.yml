@@ -1,0 +1,36 @@
+name: Weekly database export
+
+# The portable copy beside D1 Time Travel's 30 days (ADR-0015): every Monday at 14:20 UTC (02:20
+# Tuesday in Fiji), production's database is exported to SQL and kept privately in its media
+# bucket under backups/, which nothing in the app serves. Stays skipped until the repository
+# variable CLOUDFLARE_ACCOUNT_ID is set. The token needs D1 read and R2 write.
+
+on:
+  schedule:
+    - cron: "20 14 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    if: vars.CLOUDFLARE_ACCOUNT_ID != ''
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Export the production database
+        run: pnpm db:export production export.sql
+      - name: Keep it in the production media bucket
+        run: pnpm wrangler r2 object put "naisema-production-media/backups/$(date -u +%F).sql" --remote --file export.sql --content-type application/sql

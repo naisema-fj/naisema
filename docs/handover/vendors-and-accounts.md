@@ -1,65 +1,48 @@
 # Vendors and accounts
 
-Every external service NAISEMA depends on, found in the code, `wrangler.jsonc`, the CI workflows and the decision log. For each: what it is used for, who holds the account, what it costs, and what breaks without it. Setup steps are in `docs/handover/runbook.md`; the reasons are in `docs/decision-log.md` and the ADRs.
+Every external service NAISEMA v1 depends on (ADR-0015), who holds the account, and what breaks without it. Setup steps are in `docs/handover/runbook.md`.
 
-**The "Who holds the account" column is for the founder to fill in** wherever the repository can't know it. Never write a password, API key or recovery code here; those belong in the NAISEMA password manager. The names of the secrets are listed at the end so you know what to look for.
+**The "Who holds the account" column is for the founder to fill in.** Never write a password, API key or recovery code here; those belong in the NAISEMA password manager. The agreed cost ceiling is **AUD 100 a month**, and Cloudflare's invoice is the record.
 
-## How costs are known
+## Cloudflare (one account, "NAISEMA", Oceania location hint)
 
-The only cost figures in the repository are the prices in `app/lib/usage-rules.ts` (`PRICES_USD`), which drive the cost report at `/admin/usage` and the 50% and 80% budget emails. They are Cloudflare list prices in US dollars, converted at 1.55 AUD per USD, and are an estimate: **Cloudflare's invoice is the record.** The agreed ceiling is **AUD 100 a month**. Where a service has no price in the report, this page says so rather than guessing.
-
-## Cloudflare
-
-All of NAISEMA's own infrastructure sits in one Cloudflare account, "NAISEMA", with the Oceania location hint (ADR-0004). **Who holds the account:** _founder to fill in_. If Cloudflare is lost, nothing else here keeps the site running.
+**Who holds the account:** _founder to fill in_. If Cloudflare is lost, nothing else here keeps the site running.
 
 | Product | Used for | Cost | What breaks without it |
 | --- | --- | --- | --- |
-| Workers (paid plan) | Runs the public site, the staff site, the scheduled jobs and the queue consumer | USD 5 a month, counted in the cost report | Everything |
-| D1 | The database (`db/schema.ts`; see `data-dictionary.md`); Time Travel gives 30 days of point-in-time recovery | Within the plan at Phase 1a's size; not in the report | Everything that stores or reads data |
-| R2 | Six private buckets per environment: media, evidence, quarantine, video masters, backups, the deletion ledger | USD 0.015 per GB a month above 10 GB free, in the report | Uploads, media, evidence files, backups, the deletion ledger. Video masters exist only here until the off-Cloudflare copy decided in ticket #64 is built |
-| Queues | Hands each finished upload to the virus scan | Within the plan; not in the report | Uploads stay in quarantine and never publish |
-| Containers | Runs ClamAV (the Scanner) for upload scanning | Within the plan at 1a's size; not in the report | Same as Queues: files can't pass their scan |
-| Stream | Stores, encodes and delivers Videos | USD 5 per 1,000 minutes stored and USD 1 per 1,000 minutes delivered, in the report | Videos can't be processed or played. Stream has no account yet (runbook, Video) |
-| Images | Re-encodes images on delivery and strips their metadata | Within the plan; not in the report | Images can't be served |
-| Email Service | Sends sign-in links, alerts and confirmations from `no-reply@naisema.com` | Not in the report; check the dashboard for current sending prices | Staff and learners can't sign in, and alert emails fail too |
+| Workers (paid plan) | The public and staff sites | USD 5 a month | Everything |
+| D1 | The database; Time Travel gives 30 days of point-in-time recovery | Within the plan at v1's size | Everything that stores or reads data |
+| R2 | One private bucket per environment: media, evidence and weekly exports | USD 0.015 per GB a month above 10 GB free | Media, evidence and exports |
+| Images | Re-encodes images on delivery and strips their metadata | Within the plan at v1's size | Images can't be shown |
+| Email Service | Form notifications from `no-reply@naisema.com` | Check the dashboard for sending prices | The team isn't told about new forms; what was sent is still stored |
+| Access (Zero Trust, free up to 50 users) | Staff sign-in by emailed code on the admin host | Free | Nobody can reach the staff site |
 | Turnstile | Bot check on every public form | Free | Every public form refuses to send |
-| Workers Analytics Engine | Product events with IDs only (`EVENTS`) | Within the plan; not in the report | No event counts; the site keeps working |
-| Web Analytics | Cookieless traffic counts (decision log, analytics) | Free | No traffic counts |
-| Workers Observability | Redacted request and error logs | Within the plan | Harder troubleshooting; the monitor reads its error counts from the Cloudflare API |
-| Rate limiting binding | At most 5 form sends a minute from one address | Included | Public forms lose their rate limit |
-| DNS and custom domains | The `naisema.com` zone, with `staging.` and `admin.` names | Free plan | The site isn't reachable by name |
-| Cloudflare API tokens | Deploys (one per environment, in GitHub), the read-only usage token, and optional cache purge | Free | Deploys fail; cost report and monitor go blind |
-| Billing alerts | Cloudflare's own alerts at 50% and 80% of the ceiling | Free | Only the app's projected-cost emails remain |
+| Web Analytics | Cookieless traffic counts | Free | No traffic counts |
+| Workers Observability | Redacted request and error logs | Within the plan | Harder troubleshooting |
+| DNS and custom domains | `naisema.com`, `admin.`, `staging.` and `admin.staging.` | Free plan | The site isn't reachable by name |
+| Billing notifications | Alerts at 50% and 80% of the ceiling | Free | Overspending goes unnoticed |
 
 ## Other services
 
 | Service | Used for | Who holds the account | Cost | What breaks without it |
 | --- | --- | --- | --- | --- |
-| GitHub (`naisema-fj` organisation) | The code, CI, Dependabot updates, the deploy workflow and its `staging` and `production` environments with their secrets | _founder to fill in_ | Not known to the repository (depends on the GitHub plan) | No deploys, no CI, no history. The code is also on the technical owner's machine |
-| Buttondown | The newsletter list: double opt-in, unsubscribes, tags for the notice each person agreed to. Production only; staging writes sign-ups to a table | _founder to fill in_ | Not known to the repository; check Buttondown's plan | New newsletter sign-ups are refused with a plain message, and the newsletter consent just given is removed |
-| Uptime monitor (UptimeRobot or Better Stack; the runbook asks for the choice to be recorded in `docs/decision-log.md`) | Checks the public URLs every 5 minutes from outside Cloudflare (ADR-0012) | _not chosen yet; founder to record the choice_ | Not known to the repository; the free tiers of both are the usual start | A full outage goes unnoticed, because the in-app monitor runs on the same Worker |
-| Domain registrar for `naisema.com` | Owns the domain; its nameservers point at Cloudflare | _founder to fill in_ | Not known to the repository (yearly renewal) | If the domain lapses, the whole site and every email address on it stop |
-| Password manager ("NAISEMA password manager") | Holds the backup encryption key and recovery details, apart from Cloudflare | _founder to fill in_ | Not known to the repository | Backups can't be decrypted if the key is lost with Cloudflare access |
-| External survey tool and spreadsheet register | Consultation sign-ups (decision log, GOV-01 and GOV-02) | _founder to fill in; the tool is not named in the repository_ | Not known to the repository | Consultation records can't be collected or looked up |
-| Off-Cloudflare store for video master copies (decided in #64) | A periodic copy of the video masters bucket | _not chosen yet; founder to record provider and account holder_ | Not known; depends on provider and master volume | A Cloudflare account loss would lose the originals |
-| Docker Hub (`clamav/clamav`) and ClamAV signature servers | The base image for the Scanner, and the virus signatures its container downloads while running | Public; no account | Free | The Scanner image can't be built, or its signatures go stale |
-| npm registry and package maintainers | Libraries installed by `pnpm install` (licences in `THIRD_PARTY_LICENSES`) | Public; no account | Free | Fresh installs and builds fail; the deployed site is unaffected |
-| GitHub releases of gitleaks | Downloaded by CI for the secret scan, checked against a pinned hash | Public; no account | Free | The secret scan job fails |
-
-Fonts are installed from npm and served from NAISEMA's own site; no font service is called at run time.
+| GitHub (`naisema-fj`) | The code, CI, deploys and the weekly export | _founder to fill in_ | Depends on the plan | No deploys or exports. The deployed site is unaffected |
+| Buttondown | The newsletter: its own sign-up page, double opt-in and unsubscribes | _founder to fill in_ | Check Buttondown's plan | The newsletter page says it isn't open yet |
+| UptimeRobot | Checks `/` and `/health` every 5 minutes from outside Cloudflare (ADR-0012) | _founder to fill in_ | Free tier | A full outage goes unnoticed |
+| Domain registrar for `naisema.com` | Owns the domain; its nameservers point at Cloudflare | _founder to fill in_ | Yearly renewal | The site and every address on it stop |
+| NAISEMA Drive | Original clip files, and downloaded exports (#64) | _founder to fill in_ | Existing plan | A Cloudflare loss would lose the originals |
+| Password manager | Recovery details for the accounts above | _founder to fill in_ | Existing plan | Accounts can't be recovered |
+| npm registry | Libraries installed by `pnpm install` (licences in `THIRD_PARTY_LICENSES`) | Public | Free | Fresh builds fail; the deployed site is unaffected |
 
 ## Secrets and settings to look for
 
-Names only. Set with `pnpm wrangler secret put NAME --env <env>`, or in a GitHub environment for the CI ones.
+Names only.
 
 | Name | Held in | For |
 | --- | --- | --- |
-| `BETTER_AUTH_SECRET` | Worker secret | Signs sign-in sessions |
-| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | Worker secrets | Turnstile |
-| `BACKUP_ENCRYPTION_KEY` | Worker secret, plus a copy in the password manager | Encrypts backups |
-| `BUTTONDOWN_API_KEY` | Worker secret (production) | Newsletter |
-| `STREAM_WEBHOOK_SECRET`, `STREAM_API_TOKEN`, `STREAM_CUSTOMER_CODE`, `STREAM_SIGNING_KEY_ID`, `STREAM_SIGNING_KEY_JWK`, `R2_MASTERS_ACCESS_KEY_ID`, `R2_MASTERS_SECRET_ACCESS_KEY` | Worker secrets, once Stream is in use | Video |
-| `MONITORING_API_TOKEN` | Worker secret | Read-only token for the cost report and the monitor's error counts |
-| `CACHE_PURGE_TOKEN` (optional) | Worker secret | Purging cached pages in every data centre |
-| `ALERT_EMAILS` | Worker secret or variable | Who the monitor and budget emails go to |
-| `CLOUDFLARE_API_TOKEN` | GitHub environment secret, one per environment | Deploys |
+| `TURNSTILE_SECRET_KEY` | Worker secret | Turnstile |
+| `PREVIEW_SECRET` | Worker secret | Signing preview links |
+| `NOTIFY_EMAILS` | Worker secret | Who hears about new forms |
+| `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | `wrangler.jsonc` (not secret) | Checking Access's sign-in on the admin host |
+| `TURNSTILE_SITE_KEY`, `NEWSLETTER_FORM_URL` | `wrangler.jsonc` (not secret) | The forms' widget and the newsletter link |
+| `CLOUDFLARE_API_TOKEN` | GitHub environment secret, one per environment | Deploys and the weekly export |

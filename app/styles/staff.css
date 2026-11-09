@@ -381,6 +381,11 @@
   margin: 0;
 }
 
+.staff-signout a {
+  text-decoration: none;
+  min-height: 24px;
+}
+
 .staff-user {
   display: none;
   font-size: 0.9rem;
@@ -388,6 +393,7 @@
 }
 
 .staff-header button,
+.staff-signout a,
 .staff-menu summary {
   box-sizing: border-box;
   padding: 0.4rem 0.9rem;
@@ -403,6 +409,7 @@
 }
 
 .staff-header button:hover,
+.staff-signout a:hover,
 .staff-menu summary:hover {
   background: var(--ink-2);
 }

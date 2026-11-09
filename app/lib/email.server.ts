@@ -1,58 +1,35 @@
-import { emailFailure, emailOutbox } from "~db/schema";
-import { getDb } from "./db.server";
-
-export type OutgoingEmail = { to: string; subject: string; text: string };
+import { logError, logInfo } from "./log.server";
 
 /**
- * The single way the app sends email (ADR-0004). Deployed environments use the Cloudflare
- * Email Service binding; local development and tests write to the email_outbox table. A send that
- * fails is recorded, by its subject only, for the hourly monitor (app/lib/monitor.server.ts), and
- * the error is thrown on for the caller to handle.
+ * Operational email from `EMAIL_FROM` through Cloudflare Email Service (ADR-0004): form
+ * notifications to the team. Local development and tests have no sending binding and log the
+ * subject instead. A failed send is logged and never loses what the person sent, which is already
+ * stored.
  */
-export async function sendEmail(env: Env, email: OutgoingEmail): Promise<void> {
-  try {
-    await deliver(env, email);
-  } catch (error) {
-    await getDb(env.DB)
-      .insert(emailFailure)
-      .values({ subject: email.subject, failedAt: new Date() })
-      .catch(() => {});
-    throw error;
-  }
-}
 
-async function deliver(env: Env, email: OutgoingEmail) {
-  if (env.EMAIL_OUTBOX === "true") {
-    await getDb(env.DB)
-      .insert(emailOutbox)
-      .values({ ...email, createdAt: new Date() });
-    return;
-  }
-  if (!("EMAIL" in env) || !env.EMAIL) {
-    throw new Error("Email sending is not configured for this environment");
-  }
-  await env.EMAIL.send({ from: env.EMAIL_FROM, to: email.to, subject: email.subject, text: email.text });
-}
+type EmailEnv = Env & {
+  EMAIL?: { send(message: { from: string; to: string | string[]; subject: string; text: string }): Promise<unknown> };
+  NOTIFY_EMAILS?: string;
+};
 
-/**
- * Sends the same email to each address, each on its own so one refusal doesn't stop the rest.
- * Returns how many were sent; the failures are recorded by sendEmail.
- */
-export async function sendToEach(env: Env, recipients: string[], email: Omit<OutgoingEmail, "to">) {
-  const results = await Promise.allSettled(recipients.map((to) => sendEmail(env, { ...email, to })));
-  return results.filter((result) => result.status === "fulfilled").length;
-}
-
-/**
- * Who technical alerts go to: ALERT_EMAILS, comma-separated, set as a secret in deployed
- * environments. The technical owner, and their backup once named (docs/decision-log.md).
- */
-export const alertRecipients = (env: Env) =>
-  (env.ALERT_EMAILS ?? "")
+/** The team addresses notifications go to: the NOTIFY_EMAILS secret, comma-separated. */
+export const teamAddresses = (env: Env) =>
+  ((env as EmailEnv).NOTIFY_EMAILS ?? "")
     .split(",")
     .map((address) => address.trim())
     .filter(Boolean);
 
-/** A letter to a member of the public: a greeting, by name when we have one, the paragraphs, a sign-off. */
-export const letterText = (name: string, paragraphs: string[]) =>
-  [`Bula${name ? ` ${name}` : ""},`, ...paragraphs, "Vinaka,\nNAISEMA"].join("\n\n");
+export async function sendEmail(env: Env, message: { to: string[]; subject: string; text: string }) {
+  const { EMAIL } = env as EmailEnv;
+  if (!EMAIL || !message.to.length) {
+    logInfo("Email not sent (no sending binding or recipient)", { subject: message.subject });
+    return false;
+  }
+  try {
+    await EMAIL.send({ from: env.EMAIL_FROM, to: message.to, subject: message.subject, text: message.text });
+    return true;
+  } catch (error) {
+    logError("Email failed", { subject: message.subject, error });
+    return false;
+  }
+}

@@ -1,29 +1,62 @@
-import { Form, isRouteErrorResponse, Outlet, useLocation, useRouteError, useRouteLoaderData } from "react-router";
+import { isRouteErrorResponse, Outlet, useLocation, useRouteError, useRouteLoaderData } from "react-router";
 import { WovenMark } from "~/components/public/woven-mark";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { isCurrentNavItem, type NavGroup } from "~/lib/staff-nav";
-import { staffShellFor } from "~/lib/staff-nav.server";
-import { MAX_QUERY } from "~/lib/staff-search";
+import { can, ROLE_NAMES, type Staff } from "~/lib/roles";
+import { getStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/layout";
 import "~/styles/staff.css";
 
 /**
- * The staff site's shell: one header, navigation and footer around every staff page, so the pages
- * look and move alike. The navigation shows only what the signed-in person's roles allow
- * (app/lib/staff-nav.ts); before sign-in there is just the header. Pages keep their own
- * gate (requireStaff), so this shell only ever reads.
+ * The staff site's shell: one header and navigation around every staff page. The navigation shows
+ * only what the person's roles allow; each page keeps its own gate (requireStaff). Signing in and
+ * out is Cloudflare Access's (ADR-0015).
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
-  return staffShellFor(context.get(cloudflareContext).env, request);
+  const person = await getStaff(context.get(cloudflareContext).env, request);
+  return person
+    ? { email: person.email, groups: staffNav(person), roles: person.roles.map((role) => ROLE_NAMES[role]) }
+    : null;
 }
+
+type NavGroup = { name: string; items: { label: string; href: string }[] };
+
+function staffNav(person: Staff): NavGroup[] {
+  const groups: { name: string; items: ({ label: string; href: string } | false)[] }[] = [
+    {
+      name: "Content",
+      items: [
+        (can(person, "content.edit") || can(person, "video.edit")) && { label: "Content", href: "/admin/items" },
+        can(person, "media.upload") && { label: "Media library", href: "/admin/media" },
+        can(person, "content.edit") && { label: "Topics", href: "/admin/topics" },
+      ],
+    },
+    {
+      name: "People",
+      items: [
+        (can(person, "submissions.read") || can(person, "reports.read")) && {
+          label: "Messages and reports",
+          href: "/admin/submissions",
+        },
+        can(person, "staff.manage") && { label: "Staff", href: "/admin/staff" },
+        can(person, "audit.read") && { label: "Audit log", href: "/admin/audit" },
+      ],
+    },
+  ];
+  return groups
+    .map((group) => ({ name: group.name, items: group.items.filter((item) => item !== false) }))
+    .filter((group) => group.items.length > 0);
+}
+
+type Shell = Route.ComponentProps["loaderData"];
 
 function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
   const { pathname } = useLocation();
+  const current = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
   return (
     <nav aria-label={label} className="staff-nav">
       <ul className="staff-nav-groups">
         <li>
-          <a href="/admin" aria-current={isCurrentNavItem(pathname, "/admin") ? "page" : undefined}>
+          <a href="/admin" aria-current={current("/admin") ? "page" : undefined}>
             Staff home
           </a>
         </li>
@@ -33,7 +66,7 @@ function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
             <ul>
               {group.items.map((item) => (
                 <li key={item.href}>
-                  <a href={item.href} aria-current={isCurrentNavItem(pathname, item.href) ? "page" : undefined}>
+                  <a href={item.href} aria-current={current(item.href) ? "page" : undefined}>
                     {item.label}
                   </a>
                 </li>
@@ -46,43 +79,15 @@ function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
   );
 }
 
-type Shell = Route.ComponentProps["loaderData"];
-
-/** One search box on every staff page; on the search page it keeps what was asked. */
-function StaffSearch() {
-  const { pathname, search } = useLocation();
-  const asked = pathname === "/admin/search" ? (new URLSearchParams(search).get("q") ?? "") : "";
-  return (
-    <search className="staff-search">
-      <form method="get" action="/admin/search">
-        <label htmlFor="staff-search-q" className="visually-hidden">
-          Search content, media and directories
-        </label>
-        <input
-          id="staff-search-q"
-          type="search"
-          name="q"
-          defaultValue={asked}
-          placeholder="Search"
-          maxLength={MAX_QUERY}
-          autoComplete="off"
-        />
-        <button type="submit">Search</button>
-      </form>
-    </search>
-  );
-}
-
 function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNode }) {
   return (
     <div className="staff">
       <header className="staff-header">
         <div className="staff-header-inner">
-          <a href={shell ? "/admin" : "/admin/sign-in"} className="staff-wordmark">
+          <a href="/admin" className="staff-wordmark">
             <WovenMark />
             NAISEMA <span>staff</span>
           </a>
-          {shell?.search && <StaffSearch />}
           {shell && (
             <>
               {/* A native disclosure, so the menu works on phones without any JavaScript. */}
@@ -90,10 +95,9 @@ function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNo
                 <summary>Menu</summary>
                 <StaffNav groups={shell.groups} label="Staff menu" />
               </details>
-              <Form method="post" action="/admin/sign-out" className="staff-signout">
-                <span className="staff-user">{shell.email}</span>
-                <button type="submit">Sign out</button>
-              </Form>
+              <p className="staff-signout">
+                <span className="staff-user">{shell.email}</span> <a href="/cdn-cgi/access/logout">Sign out</a>
+              </p>
             </>
           )}
         </div>
@@ -132,7 +136,6 @@ export function ErrorBoundary() {
   return (
     <StaffFrame shell={shell ?? null}>
       <title>{`${heading} · NAISEMA staff`}</title>
-      <meta name="robots" content="noindex" />
       <main id="main" className="page">
         <h1>{heading}</h1>
         <p>{message}</p>

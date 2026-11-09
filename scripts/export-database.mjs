@@ -1,0 +1,16 @@
+// Exports a D1 database to a SQL file, the portable copy beside D1 Time Travel's 30 days
+// (ADR-0015): `pnpm db:export <staging|production> [file]`. The weekly GitHub Action runs it and
+// keeps the file; run it by hand before anything risky. The file holds personal data (staff
+// addresses and form submissions): keep it in the NAISEMA Drive, never in the repository.
+import { execFileSync } from "node:child_process";
+
+const [target, file = `naisema-${process.argv[2]}-${new Date().toISOString().slice(0, 10)}.sql`] =
+  process.argv.slice(2);
+if (!["staging", "production"].includes(target)) {
+  console.error("Usage: pnpm db:export <staging|production> [file]");
+  process.exit(1);
+}
+execFileSync("pnpm", ["wrangler", "d1", "export", "DB", "--remote", "--env", target, "--output", file], {
+  stdio: "inherit",
+});
+console.log(`Exported to ${file}`);

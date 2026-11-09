@@ -51,7 +51,7 @@ type Props = {
   videoDurationMs: number;
   /** The video's own orientation, which the preview starts in. */
   orientation: "landscape" | "portrait" | "square";
-  preview: { src: string; hls: boolean } | null;
+  preview: { src: string; type: string } | null;
   previewError: string | null;
   /** The Expression library for the Learning Layer's Language Variety, as it is now. */
   library: ExpressionChoice[];
@@ -368,7 +368,7 @@ export function TimelineEditor({
           {preview ? (
             <VideoPreview
               src={preview.src}
-              hls={preview.hls}
+              type={preview.type}
               label="The Learning Layer's video"
               videoRef={video}
               className={`layout-frame layout-${layout}`}

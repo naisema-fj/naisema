@@ -1,4 +1,4 @@
-import type { SubmissionType } from "./submission-fields";
+import type { FormKey } from "./forms";
 
 /**
  * The Fijian apps (apps.naisema.com), shown on NAISEMA at /apps. The apps site stays live on its own
@@ -21,7 +21,7 @@ export type FijianApp = {
   /** Where its reviewed part is on NAISEMA, once there is one. */
   onNaisema?: string;
   /** The forms that send something about this app to the team. */
-  forms: SubmissionType[];
+  forms: FormKey[];
 };
 
 export const FIJIAN_APPS: FijianApp[] = [
@@ -32,9 +32,8 @@ export const FIJIAN_APPS: FijianApp[] = [
       "Fijian and English words, themes, grammar terms (Tuvavosa), proverbs and idioms (Vosavosavakaviti), a guide to veiqaravi vakavanua and icavuti by place.",
     href: `${APPS_SITE}/dictionary/`,
     notYetOpen:
-      "Vosa is a learning guide, not an official dictionary. Its entries appear in NAISEMA's dictionary as each is reviewed.",
-    onNaisema: "/learn/dictionary",
-    forms: ["word_suggestion", "entry_correction", "icavuti_suggestion"],
+      "Vosa is a learning guide, not an official dictionary. Its entries come to NAISEMA once each is reviewed.",
+    forms: ["suggest-word", "correct-word"],
   },
   {
     key: "lessons",
@@ -52,6 +51,6 @@ export const FIJIAN_APPS: FijianApp[] = [
       "Explore an idea, like the water cycle, and propose how it could be said in Fijian, with the reasons your wording fits.",
     href: `${APPS_SITE}/translation/`,
     notYetOpen: "This is a design preview. No Fijian term shown there has been approved yet.",
-    forms: ["translation_proposal"],
+    forms: ["suggest-translation"],
   },
 ];

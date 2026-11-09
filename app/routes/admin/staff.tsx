@@ -1,173 +1,109 @@
+import { eq } from "drizzle-orm";
 import { data, Form, redirect } from "react-router";
-import { TableScroll } from "~/components/table-scroll";
+import { audit } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { can, REVIEW_TYPES, STAFF_ROLES } from "~/lib/permissions";
-import { describeRoleAssignment, ROLE_NAMES } from "~/lib/role-names";
+import { getDb } from "~/lib/db.server";
+import { isRole, ROLE_NAMES, ROLES } from "~/lib/roles";
 import { requireStaff } from "~/lib/staff.server";
-import { grantRole, listStaff, revokeRole, validateGrant } from "~/lib/staff-roles.server";
-import { listTwoFactorStatus, resetTwoFactor } from "~/lib/staff-two-factor.server";
+import { staff } from "~db/schema";
 import type { Route } from "./+types/staff";
 
-export const handle = { hydrate: false };
-
-export function meta() {
-  return [{ title: "Staff and roles · NAISEMA staff" }];
-}
-
-async function requireAdministrator(request: Request, env: Env) {
-  const staff = await requireStaff(env, request);
-  // Granting a role can also create the staff member's account.
-  if (!can(staff.actor, { action: "role.assign" }) || !can(staff.actor, { action: "account.manage" })) {
-    throw new Response("Only administrators can manage staff.", { status: 403 });
-  }
-  return staff;
-}
-
+/**
+ * /admin/staff: who works on the admin site and their roles. Cloudflare Access decides who can
+ * reach the site at all; this list decides what each person may do once there. Every change is
+ * audited.
+ */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const { db, actor } = await requireAdministrator(request, env);
-  return { staff: await listStaff(db), twoFactor: await listTwoFactorStatus(db, actor) };
+  await requireStaff(env, request, "staff.manage");
+  return { people: await getDb(env.DB).select().from(staff).orderBy(staff.name) };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
-  const staff = await requireAdministrator(request, env);
-  const { db, actor } = staff;
+  const actor = await requireStaff(env, request, "staff.manage");
+  const db = getDb(env.DB);
   const form = await request.formData();
+  const email = String(form.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  const name = String(form.get("name") ?? "")
+    .trim()
+    .slice(0, 120);
+  const roles = form.getAll("roles").map(String).filter(isRole);
+  const variety = roles.includes("reviewer") ? "standard-fijian" : null;
+  const active = form.get("active") !== "off";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !name)
+    return data({ error: "Enter a name and an email address." }, { status: 400 });
+  if (email === actor.email && !roles.includes("admin"))
+    return data({ error: "You can't remove your own administrator role." }, { status: 400 });
+  const existing = await db.query.staff.findFirst({ where: eq(staff.email, email) });
+  await db.batch([
+    existing
+      ? db.update(staff).set({ name, roles, languageVariety: variety, active }).where(eq(staff.email, email))
+      : db.insert(staff).values({ email, name, roles, languageVariety: variety, active }),
+    audit(db, actor.email, existing ? "staff.changed" : "staff.added", { type: "staff", id: email }, { roles, active }),
+  ]);
+  return redirect("/admin/staff");
+}
 
-  if (form.get("intent") === "revoke") {
-    const result = await revokeRole(
-      db,
-      actor.userId,
-      String(form.get("assignmentId") ?? ""),
-      String(form.get("reason") ?? ""),
-    );
-    if (!result.ok) return data({ error: result.error }, { status: 400 });
-    throw redirect("/admin/staff");
-  }
+export function meta() {
+  return [{ title: "Staff · NAISEMA staff" }];
+}
 
-  if (form.get("intent") === "resetTwoFactor") {
-    const result = await resetTwoFactor(env, staff, String(form.get("userId") ?? ""));
-    if (!result.ok) return data({ error: result.error }, { status: 400 });
-    throw redirect("/admin/staff");
-  }
-
-  const validation = validateGrant(form);
-  if (!validation.ok) return data({ error: validation.error }, { status: 400 });
-  await grantRole(db, actor.userId, validation.grant);
-  throw redirect("/admin/staff");
+function PersonForm({ person }: { person?: { email: string; name: string; roles: string[]; active: boolean } }) {
+  const key = person?.email ?? "new";
+  return (
+    <Form method="post" className="person-form">
+      <fieldset>
+        <legend>{person ? person.name : "Add someone"}</legend>
+        <label htmlFor={`name-${key}`}>Name</label>
+        <input id={`name-${key}`} name="name" defaultValue={person?.name} required maxLength={120} />
+        <label htmlFor={`email-${key}`}>Email address (as Cloudflare Access knows it)</label>
+        <input
+          id={`email-${key}`}
+          name="email"
+          type="email"
+          defaultValue={person?.email}
+          readOnly={Boolean(person)}
+          required
+        />
+        {ROLES.map((role) => (
+          <label key={role} className="checkbox">
+            <input type="checkbox" name="roles" value={role} defaultChecked={person?.roles.includes(role)} />{" "}
+            {ROLE_NAMES[role]}
+            {role === "reviewer" && " (Standard Fijian)"}
+          </label>
+        ))}
+        {person && (
+          <label className="checkbox">
+            <input type="checkbox" name="active" value="off" defaultChecked={!person.active} /> No longer works on
+            NAISEMA
+          </label>
+        )}
+        <button type="submit">{person ? "Save" : "Add"}</button>
+      </fieldset>
+    </Form>
+  );
 }
 
 export default function Staff({ loaderData, actionData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
-      <p>
-        <a href="/admin">Back to staff home</a>
+      <h1>Staff</h1>
+      <p className="hint">
+        Add each person to the Cloudflare Access allowlist as well, or they can't reach this site
+        (docs/handover/runbook.md).
       </p>
-      <h1>Staff and roles</h1>
-      {actionData?.error && <p role="alert">{actionData.error}</p>}
-
-      <h2>Current roles</h2>
-      <TableScroll label="Active staff role assignments">
-        <table>
-          <caption className="visually-hidden">Active staff role assignments</caption>
-          <thead>
-            <tr>
-              <th scope="col">Email</th>
-              <th scope="col">Role</th>
-              <th scope="col">
-                <span className="visually-hidden">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loaderData.staff.map((row) => (
-              <tr key={row.assignmentId}>
-                <td>{row.email}</td>
-                <td>{describeRoleAssignment(row.assignment)}</td>
-                <td>
-                  <Form method="post">
-                    <input type="hidden" name="intent" value="revoke" />
-                    <input type="hidden" name="assignmentId" value={row.assignmentId} />
-                    <label htmlFor={`reason-${row.assignmentId}`}>Why (optional, kept in the audit log)</label>
-                    <input id={`reason-${row.assignmentId}`} name="reason" maxLength={500} />
-                    <button type="submit" aria-label={`Revoke ${ROLE_NAMES[row.assignment.role]} from ${row.email}`}>
-                      Revoke
-                    </button>
-                  </Form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableScroll>
-
-      <h2>Two-factor</h2>
-      <p>
-        If someone loses the phone with their authenticator app, reset their two-factor. They are signed out everywhere
-        and set up a new authenticator app the next time they sign in.
-      </p>
-      <TableScroll label="Two-factor status of each staff member">
-        <table>
-          <caption className="visually-hidden">Two-factor status of each staff member</caption>
-          <thead>
-            <tr>
-              <th scope="col">Email</th>
-              <th scope="col">Two-factor</th>
-              <th scope="col">
-                <span className="visually-hidden">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {loaderData.twoFactor.map((member) => (
-              <tr key={member.userId}>
-                <td>{member.email}</td>
-                <td>{member.enrolled ? "Set up" : "Not set up yet"}</td>
-                <td>
-                  {member.canReset && (
-                    <Form method="post">
-                      <input type="hidden" name="intent" value="resetTwoFactor" />
-                      <input type="hidden" name="userId" value={member.userId} />
-                      <button type="submit" aria-label={`Reset two-factor for ${member.email}`}>
-                        Reset two-factor
-                      </button>
-                    </Form>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </TableScroll>
-
-      <h2>Grant a role</h2>
-      <p>New staff get an account when first granted a role; they then sign in by email link.</p>
-      <Form method="post">
-        <input type="hidden" name="intent" value="grant" />
-        <label htmlFor="grant-email">Email address</label>
-        <input id="grant-email" name="email" type="email" required />
-        <label htmlFor="grant-role">Role</label>
-        <select id="grant-role" name="role" required>
-          {STAFF_ROLES.map((role) => (
-            <option key={role} value={role}>
-              {ROLE_NAMES[role]}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="grant-review-type">Review Type (reviewers only)</label>
-        <select id="grant-review-type" name="reviewType">
-          <option value="">—</option>
-          {REVIEW_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-        <label htmlFor="grant-variety">Language Variety (language reviewers only)</label>
-        <input id="grant-variety" name="languageVariety" placeholder="standard-fijian" />
-        <button type="submit">Grant role</button>
-      </Form>
+      {actionData?.error && (
+        <p role="alert" className="error">
+          {actionData.error}
+        </p>
+      )}
+      {loaderData.people.map((person) => (
+        <PersonForm key={person.email} person={person} />
+      ))}
+      <PersonForm />
     </main>
   );
 }

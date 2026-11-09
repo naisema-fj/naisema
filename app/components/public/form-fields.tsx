@@ -1,5 +1,4 @@
-import type { Notice } from "~/lib/consent.server";
-import { CONSENT_PROMPTS, type ConsentPurpose } from "~/lib/submission-fields";
+import { NOTICE } from "~/lib/forms";
 import { TURNSTILE_SCRIPT } from "~/lib/turnstile";
 
 /**
@@ -112,46 +111,29 @@ export function ChoiceField({
 }
 
 /**
- * One consent: a box of its own, never pre-ticked, with the notice's wording beside it. The
- * notice's id goes with the form, so the version the person read is the one recorded.
+ * The privacy notice, with a box of its own that is never pre-ticked. Its version goes with the
+ * form, so the wording the person read is the one recorded on what they sent.
  */
-export function ConsentField({
-  purpose,
-  notice,
-  required,
-  values,
-  errors,
-}: {
-  purpose: ConsentPurpose;
-  notice: Pick<Notice, "id" | "wording">;
-  required: boolean;
-  values: Values;
-  errors: Errors;
-}) {
-  const id = `consent-${purpose}`;
+export function NoticeField({ values, errors }: { values: Values; errors: Errors }) {
   return (
     <div className="form-consent">
-      <input type="hidden" name={`notice-${purpose}`} value={notice.id} />
+      <p id="notice-wording" className="notice-wording">
+        {NOTICE.wording}
+      </p>
       <div className="form-choice">
         <input
           type="checkbox"
-          id={id}
-          name="consent"
-          value={purpose}
-          defaultChecked={[values.consent ?? []].flat().includes(purpose)}
-          required={required}
-          aria-invalid={errors[id] ? true : undefined}
-          aria-describedby={describedBy(`${id}-notice`, errors[id] && `${id}-error`)}
+          id="notice"
+          name="notice"
+          value={NOTICE.version}
+          defaultChecked={values.notice === NOTICE.version}
+          required
+          aria-invalid={errors.notice ? true : undefined}
+          aria-describedby={describedBy("notice-wording", errors.notice && "notice-error")}
         />
-        <label htmlFor={id}>
-          {CONSENT_PROMPTS[purpose]}
-          {!required && <span className="optional"> (optional)</span>}
-        </label>
+        <label htmlFor="notice">I've read how NAISEMA keeps what I send</label>
       </div>
-      <p id={`${id}-notice`} className="notice-wording">
-        {notice.wording}
-      </p>
-      <FieldError name={id} errors={errors} />
+      <FieldError name="notice" errors={errors} />
     </div>
   );
 }

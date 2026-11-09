@@ -14,3 +14,4 @@ worker-configuration.d.ts
 
 # Design-tool lock files (Affinity)
 *~lock~
+e2e/seed.sql

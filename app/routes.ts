@@ -1,139 +1,50 @@
 import { index, layout, prefix, type RouteConfig, route } from "@react-router/dev/routes";
-import { INFO_PAGES } from "./lib/info-pages";
 
 export default [
-  // The public site: edge-cached, no client JavaScript, eligible content only (ADR-0007).
+  // The public site: no client JavaScript except the learner player and forms' Turnstile, and
+  // eligible content only, decided on every request (ADR-0007, ADR-0015).
   layout("routes/public/layout.tsx", [
-    index("routes/home.tsx"),
-    ...INFO_PAGES.map((page) => route(page.path, "routes/public/info.tsx", { id: `info-${page.path}` })),
+    index("routes/public/home.tsx"),
     route("search", "routes/public/search.tsx"),
-    // The Fijian apps hub (apps.naisema.com stays live; app/lib/fijian-apps.ts).
     route("apps", "routes/public/apps.tsx"),
-    // The public Vosa dictionary: reviewed entries with cleared sources only (app/lib/dictionary.server.ts).
-    route("learn/dictionary", "routes/public/dictionary.tsx"),
-    route("learn/dictionary/:id", "routes/public/dictionary-entry.tsx"),
-    route("topics", "routes/public/topics.tsx"),
+    route("topics", "routes/public/topic.tsx", { id: "topics" }),
     route("topics/:slug", "routes/public/topic.tsx", { id: "topic" }),
-    route("topics/:slug/:subtopic", "routes/public/topic.tsx", { id: "topic-filtered" }),
-    route("resources/:id/report-link", "routes/public/report-link.tsx"),
-    // Public forms, never cached (PUB-05, PUB-06; app/lib/submissions.server.ts).
     route("forms/:form", "routes/public/form.tsx"),
     route("newsletter", "routes/public/newsletter.tsx"),
-    route("newsletter/unsubscribe", "routes/public/newsletter-unsubscribe.tsx"),
-    route("consent/:token", "routes/public/consent.tsx"),
-    route("upload/:token", "routes/public/upload-link.tsx"),
-    // Reports, rights concerns and data requests open restricted Cases (app/lib/cases.server.ts).
-    route("report", "routes/public/report.tsx"),
-    route("privacy/request", "routes/public/data-request.tsx"),
-    route("cases/appeal/:token", "routes/public/case-appeal.tsx"),
-    // Learner Accounts (#33): private, never cached (app/lib/learners.server.ts).
-    route("account", "routes/public/account/index.tsx"),
-    route("account/sign-in", "routes/public/account/sign-in.tsx"),
-    route("connect/providers", "routes/public/connect/providers.tsx"),
-    route("connect/providers/:slug", "routes/public/connect/provider.tsx"),
-    route("connect/offerings", "routes/public/connect/offerings.tsx"),
-    route("connect/creators", "routes/public/connect/creators.tsx"),
-    route("connect/creators/:slug", "routes/public/connect/creator.tsx"),
+    // One exact Revision, for a Knowledge Holder, never cached or indexed (app/lib/preview.server.ts).
+    route("preview/:token", "routes/public/preview.tsx"),
+    // An area's listing, or a footer Page at /{slug}.
     route(":area", "routes/public/area.tsx"),
-    route(":area/:slug", "routes/public/article.tsx"),
-    route(":area/:slug/language/:layerId", "routes/public/learning-layer.tsx"),
+    route(":area/:slug", "routes/public/item.tsx"),
+    route(":area/:slug/language", "routes/public/player.tsx"),
   ]),
-  // Review Links: one exact Revision, of a Learning Layer or a Content Item, for a Knowledge Holder, never cached or indexed.
-  route("review/:token", "routes/public/review-link.tsx"),
-  route("review/:token/video", "routes/public/review-link-video.ts"),
-  route("review/:token/audio", "routes/public/review-link-audio.ts"),
+  route("preview/:token/media/:type/:id/:width?", "routes/public/preview-media.ts"),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),
   // For the external uptime monitor (ADR-0012): never cached, reads D1.
   route("health", "routes/public/health.ts"),
-  // Media library files that passed their scan (app/lib/media-delivery.server.ts).
+  // Media files whose own rights allow them public, asked on every request (app/lib/media.server.ts).
   route("media/images/:id/:width", "routes/media/image.ts"),
   route("media/files/:id", "routes/media/file.ts"),
-  route("resources/:id/download", "routes/public/resource-download.ts"),
-  route("episodes/:id/audio", "routes/public/episode-audio.ts"),
-  // Public Videos and their Learning Layers' captions, decided on every request (app/lib/public-video.server.ts).
-  route("videos/:itemId/playback", "routes/public/video-playback.ts"),
-  route("videos/:itemId/stream", "routes/public/video-stream.ts"),
-  route("language/:layerId/captions/:language", "routes/public/layer-captions.ts"),
-  route("language/:layerId/english/:segmentId", "routes/public/layer-english.ts"),
-  route("language/:layerId/events", "routes/public/layer-events.ts"),
-  route("account/events", "routes/public/account/events.ts"),
-  route("account/export", "routes/public/account/export.ts"),
-  route("account/sign-out", "routes/public/account/sign-out.ts"),
-  route("e/opened/:id", "routes/public/opened.ts"),
-  // Cloudflare Stream's signed processing reports (app/lib/video-assets.server.ts).
-  route("webhooks/stream", "routes/public/stream-webhook.ts"),
-  // A contributor's upload link: the resumable uploader's endpoints, bound to the link's token.
-  route("upload/:token/files", "routes/public/upload-link-files.ts"),
-  route("upload/:token/files/:id", "routes/public/upload-link-file.ts"),
-  route("upload/:token/files/:id/parts/:number", "routes/public/upload-link-part.ts"),
-  // Staff tools, served only on the admin host (workers/app.ts, ADR-0005).
+  // A public Video's Learning Layer, for the player's tracks and help.
+  route("videos/:itemId/captions/:language", "routes/public/captions.ts"),
+  route("videos/:itemId/english/:segmentId", "routes/public/english-line.ts"),
+  // Staff tools, served only on the admin host behind Cloudflare Access (workers/app.ts, ADR-0015).
   ...prefix("admin", [
     layout("routes/admin/layout.tsx", [
       index("routes/admin/home.tsx"),
-      route("articles", "routes/admin/articles/index.tsx"),
-      route("articles/new", "routes/admin/articles/new.tsx"),
-      route("articles/:id", "routes/admin/articles/edit.tsx"),
-      route("articles/:id/history", "routes/admin/articles/history.tsx"),
-      route("articles/:id/revisions/:number", "routes/admin/articles/revision.tsx"),
-      route("articles/:id/revisions/:number/audio", "routes/admin/articles/revision-audio.ts"),
-      route("articles/approvals/:approvalId/evidence", "routes/admin/articles/approval-evidence.tsx"),
-      route("articles/:id/compare", "routes/admin/articles/compare.tsx"),
-      route("articles/:id/rights", "routes/admin/articles/rights.tsx"),
-      route("contributors", "routes/admin/contributors.tsx"),
-      route("providers", "routes/admin/providers/index.tsx"),
-      route("providers/new", "routes/admin/providers/new.tsx"),
-      route("providers/:id", "routes/admin/providers/edit.tsx"),
-      route("providers/:id/offerings/new", "routes/admin/providers/offering-new.tsx"),
-      route("offerings/:id", "routes/admin/providers/offering-edit.tsx"),
-      route("media", "routes/admin/media/index.tsx"),
-      route("media/:id/rights", "routes/admin/media/rights.tsx"),
-      route("media/:id/video", "routes/admin/media/video.tsx"),
-      route("media/:id/video/master", "routes/admin/media/video-master.ts"),
-      // Learning Layers on Videos (app/lib/learning-layers.server.ts).
-      route("learning-layers", "routes/admin/learning-layers/index.tsx"),
-      route("learning-layers/:id", "routes/admin/learning-layers/layer.tsx"),
-      route("learning-layers/:id/webvtt/:language", "routes/admin/learning-layers/webvtt.ts"),
-      route("learning-layers/:id/revisions/:number", "routes/admin/learning-layers/revision.tsx"),
-      route("learning-layers/approvals/:approvalId/evidence", "routes/admin/learning-layers/evidence.tsx"),
-      route("videos/:id/learning-layers", "routes/admin/learning-layers/video.tsx"),
-      route("expressions", "routes/admin/expressions/index.tsx"),
-      route("expressions/:id", "routes/admin/expressions/expression.tsx"),
-      // The Vosa dictionary's drafts from apps.naisema.com: never public (app/lib/dictionary.server.ts).
-      route("dictionary", "routes/admin/dictionary/index.tsx"),
-      route("dictionary/sources", "routes/admin/dictionary/sources.tsx"),
-      route("dictionary/:id", "routes/admin/dictionary/entry.tsx"),
-      route("media/uploads", "routes/admin/media/uploads.ts"),
-      route("media/uploads/:id", "routes/admin/media/upload.ts"),
-      route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),
-      route("rights/:recordId/evidence", "routes/admin/rights/evidence.tsx"),
-      route("sign-in", "routes/admin/sign-in.tsx"),
-      route("sign-out", "routes/admin/sign-out.tsx"),
-      route("reviews", "routes/admin/reviews.tsx"),
-      // Assign a reviewer to, withdraw or archive several chosen items at once (BO-07).
-      route("bulk", "routes/admin/bulk.tsx"),
-      route("search", "routes/admin/search.tsx"),
-      route("schedule", "routes/admin/schedule.tsx"),
-      route("submissions", "routes/admin/submissions/index.tsx"),
-      route("submissions/:id", "routes/admin/submissions/submission.tsx"),
-      route("submissions/:id/files/:assetId", "routes/admin/submissions/file.ts"),
-      route("notices", "routes/admin/notices.tsx"),
-      route("cases", "routes/admin/cases/index.tsx"),
-      route("cases/:id", "routes/admin/cases/case.tsx"),
-      route("cases/:id/evidence/:assetId", "routes/admin/cases/evidence.ts"),
-      route("consents", "routes/admin/consents.tsx"),
-      route("staff", "routes/admin/staff.tsx"),
-      // Media usage and cost (VAC-10) and the monitor's current problems (app/lib/usage.server.ts).
-      route("usage", "routes/admin/usage.tsx"),
-      // Backups held, and finishing a restore (ADR-0009; app/lib/restore.server.ts).
-      route("restore", "routes/admin/restore.tsx"),
-      // The audit log and bulk exports (CMS-05, VCMS-06; app/lib/exports.server.ts).
-      route("audit", "routes/admin/audit.tsx"),
-      route("exports", "routes/admin/exports/index.tsx"),
-      route("exports/download", "routes/admin/exports/download.ts"),
+      route("items", "routes/admin/items.tsx"),
+      route("items/:id", "routes/admin/item.tsx"),
+      route("items/:id/layer", "routes/admin/layer.tsx"),
+      route("rights/evidence/:recordId", "routes/admin/evidence.ts"),
+      route("rights/:type/:id", "routes/admin/rights.tsx"),
+      route("media", "routes/admin/media.tsx"),
+      route("media/upload", "routes/admin/media-upload.ts"),
       route("topics", "routes/admin/topics.tsx"),
-      route("two-factor", "routes/admin/two-factor.tsx"),
-      route("two-factor/setup", "routes/admin/two-factor-setup.tsx"),
+      route("submissions", "routes/admin/submissions.tsx", { id: "submissions" }),
+      route("submissions/:id", "routes/admin/submissions.tsx", { id: "submission" }),
+      route("staff", "routes/admin/staff.tsx"),
+      route("audit", "routes/admin/audit.tsx"),
     ]),
   ]),
 ] satisfies RouteConfig;

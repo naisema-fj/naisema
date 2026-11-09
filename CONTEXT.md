@@ -15,20 +15,20 @@ _Avoid_: Cultural item, post, page (for content other than a Page)
 A Content Item a visitor downloads (a scanned PDF or audio file) or follows (an external link with a last-checked date), shown with its language, age guidance, accessibility and usage terms first.
 
 **Episode**:
-A NAISEMA Voices recording published as a Content Item in the Voices area: its audio, host, guests, the music and archive clips it uses, recording date, length, approved distribution links and a reviewed transcript. Video Episodes, using a ready Video Asset, come with the learner player.
+A NAISEMA Voices recording published as a Content Item in the Voices area: its audio, host and guests, approved distribution links and a full transcript.
 _Avoid_: Podcast (until distribution to podcast apps is approved), show
 
 **Usage Terms**:
 What a Resource tells visitors they may do with it, in plain words (for example "free to print for teaching"). Not a Permitted Use, which is what a Rights Record grants NAISEMA.
 
 **Video**:
-A Content Item showing one Video Asset, which Learning Layers are built on.
+A Content Item showing one piece of Footage, which its Learning Layer is built on.
 
 **Page**:
 A Content Item backing one of the fixed site pages in the footer (About, Privacy and so on), at `/{slug}`, outside the primary areas and Topics.
 
 **Learning Layer**:
-An optional, separately reviewed language-learning overlay attached to a video Content Item, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. A Content Item may have several.
+An optional language-learning overlay on a Video, covering either the whole video or one Excerpt, with its own level, segments, annotations, activities and completion rule. In v1 a Video has at most one, kept inside the Video's Revision and reviewed with it (ADR-0015).
 _Avoid_: Lesson (a Lesson has no video), VideoLearningObject, learning object, practice unit
 
 **Lesson**:
@@ -74,9 +74,9 @@ _Avoid_: Lesson plan, course
 One step of the Immersion Route, deciding what the player shows (which captions, whether English is on the page at all, meanings, notes) and which Activities are done in it.
 _Avoid_: Level, step (in the record; learners read "step")
 
-**Video Asset**:
-A video source master kept as NAISEMA's original in private storage, with its length, picture size and orientation read from the file, and the copy a video provider (Cloudflare Stream) made of it for playing. Its processing state only moves forwards: uploaded, processing, then ready or failed (a failure can be tried again).
-_Avoid_: Stream video (for the master), clip
+**Footage**:
+The MP4 media file a Video plays, kept in the media library with its length and picture size, served from NAISEMA's own address (ADR-0015). Its original is kept in the NAISEMA Drive.
+_Avoid_: Video Asset (Phase 1a's Stream-processed master), clip
 
 **Excerpt**:
 A bounded portion of a longer source video, defined by source in/out times, that a Learning Layer is built on.
@@ -118,9 +118,6 @@ An editor-set marker on a Revision (language instruction, sensitive cultural mat
 The public statement of what a published item was actually reviewed for, generated from its Review Approvals.
 _Avoid_: Badge, verified
 
-**Carried-forward Approval**:
-A new Review Approval on a later revision that explicitly references an earlier one because none of the fields its Review Type covers changed. Never implicit.
-
 **Rights Record**:
 The legal permission attached to a media asset or contributed work: rights holder, evidence, expiry, withdrawal and a set of Permitted Uses. A record can cover the whole item or one part an Episode lists with rights of its own (a speaker or guest, a piece of music, an archive clip).
 _Avoid_: Licence (for the record), consent (for rights)
@@ -128,16 +125,16 @@ _Avoid_: Licence (for the record), consent (for rights)
 **Permitted Use**:
 One specific use a Rights Record grants: publish, excerpt, translate, transcribe, educational adaptation, commercial or AI training. Each is granted separately; none implies another.
 
-**Review Link**:
-A view-only, expiring and revocable link to one exact Revision, used to show material to a reviewer or Knowledge Holder without an account. Its address carries a random token that is kept only as a hash, so the address is shown once; revoking it closes it at once. In 1a it shows a Learning Layer Revision or a Content Item Revision, lasts 14 days and logs every opening.
-_Avoid_: Preview URL, share link
+**Preview Link**:
+A view-only link to one exact Revision, with its media, for a reviewer or Knowledge Holder without an account. It is signed, lasts 14 days, and all of them end when the signing secret is rotated (ADR-0015).
+_Avoid_: Review Link (Phase 1a's stored, revocable kind), share link
 
 **Knowledge Holder**:
 A person or authority with standing to permit use of culturally sensitive knowledge; permission from a Knowledge Holder is separate from legal rights and from founder approval.
 _Avoid_: Elder (as a role), cultural reviewer
 
 **Knowledge Holder Approval**:
-A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions. It also names the Review Link they saw it through (for approvals recorded before Content Items had Review Links, none), and can carry private evidence.
+A cultural Review Approval given by a Knowledge Holder and recorded by an editor on their behalf, stating how it was given, the exact revision seen and any conditions. In v1 they usually see it through a Preview Link.
 
 ## People and roles
 
@@ -150,14 +147,10 @@ A Contributor with a public Creator Profile and their own channel of work. A Cre
 _Avoid_: Influencer, channel owner
 
 **Learner**:
-An adult (18+) using Learn; may browse and practise without an account.
+An adult (18+) using Learn, without an account in v1; their progress stays on their own device.
 
-**Learner Account**:
-An optional, self-declared 18+ account that holds a Learner's private saves, history and progress, and only their email address about them. No under-18 accounts exist; families use the platform through a caregiver's account or without one. An address with a staff role can't hold one.
-_Avoid_: Member profile, child account
-
-**Role Assignment**:
-A staff role granted to a person by an administrator, optionally scoped to a Review Type and, for language reviewers, a Language Variety. Revoked, never deleted.
+**Staff Role**:
+What a person on the staff list may do: Administrator, Editor, Educator, Language Reviewer (for one Language Variety) or Safeguarding Lead. Cloudflare Access decides who reaches the staff site; roles decide what they may do there (ADR-0015).
 _Avoid_: Permission, group
 
 **Educator**:
@@ -171,26 +164,16 @@ _Avoid_: Approved tutor
 ## Operations
 
 **Submission**:
-Anything a member of the public sends through a form (enquiry, contribution proposal, educator interest, consultation interest); never published automatically.
+Anything a member of the public sends through a form (enquiry, contribution offer, offer to teach, consultation interest, report, privacy request, dictionary suggestion), stored with the Notice version it was sent under and never published.
 _Avoid_: Post, entry
 
-**Consent Record**:
-The stored fact that a person agreed to one purpose under one notice version, with time, source and any withdrawal; kept apart from the Submission it came with.
-
 **Notice**:
-The words shown beside a consent box for one purpose, kept as numbered versions. New wording is a new version; earlier versions are never changed, so a Consent Record always names words that can still be read.
+The privacy wording shown on every public form, kept as numbered versions. New wording is a new version, so each Submission names words that can still be read.
 _Avoid_: Privacy policy (the Privacy page is a Page, not a Notice)
 
-**Upload Link**:
-A single-use, expiring link an editor emails to someone whose contribution proposal they want, through which that person uploads into quarantine. The only public way to upload.
-
-**Case**:
-A restricted, audited record of a report, rights concern or data request that moves through received, triaged, actioned and reviewed/closed with one owner. Its decision can be appealed once, and someone other than the decision's maker decides the appeal.
-_Avoid_: Ticket, complaint (as the record)
-
-**Hold**:
-The safeguarding lead's hiding of a Content Item while a Case about it is reviewed. A held item is not eligible, so it is off the public site and can't be republished until the hold is lifted.
-_Avoid_: Takedown (a withdrawal is the editor's)
+**Report**:
+A Submission about something on NAISEMA that is harmful, wrong or used without permission; read only by the Safeguarding Lead, who can have the item withdrawn. It can be anonymous.
+_Avoid_: Case (Phase 1a's workflow record), ticket
 
 ## Discovery
 
@@ -209,7 +192,7 @@ _Avoid_: Partner (unless an agreement exists)
 A Provider with a recorded Partnership Agreement in force. Only then is "Partner" shown, and only a Partner's Offering can be shown or hosted on NAISEMA.
 
 **Offering**:
-A listed programme, course, resource or class belonging to a Provider, with one explicit access mode.
+A programme, course, resource or class a Provider lists; in v1, one line on the Provider's page.
 _Avoid_: Programme (unqualified), partner programme
 
 **Radio Programme**:

@@ -1,119 +1,62 @@
 import { data, Form, Link } from "react-router";
 import {
-  ChoiceField,
-  ConsentField,
   type Errors,
   FormAlert,
+  NoticeField,
   TextField,
   TurnstileField,
   type Values,
 } from "~/components/public/form-fields";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { currentNotices } from "~/lib/consent.server";
 import { getDb } from "~/lib/db.server";
 import { guardForm } from "~/lib/form-guard.server";
-import {
-  CONSULTATION_WAYS,
-  EDUCATOR_CATEGORIES,
-  FORM_CONSENTS,
-  formValues,
-  ICAVUTI_LEVELS,
-  readSubmission,
-  SUBMISSION_LIMITS,
-  SUBMISSION_TYPES,
-  type SubmissionType,
-  submissionTypeAt,
-  TRANSLATION_APPROACHES,
-} from "~/lib/submission-fields";
-import { alreadyReceived, newFormKey, type Received, receiveSubmission } from "~/lib/submissions.server";
+import { FIELD_LIMITS, FORMS, type FormSpec, isFormKey, readForm } from "~/lib/forms";
+import { PRIVATE_NO_STORE } from "~/lib/http";
+import type { RouteHandle } from "~/lib/route-handle";
+import { receiveSubmission } from "~/lib/submissions.server";
 import type { Route } from "./+types/form";
 
-/** A public form (PUB-05): never cached, no client JavaScript but Turnstile's own. */
-export const handle = { hydrate: false, turnstile: true };
-export const headers = () => ({ "Cache-Control": "no-store" });
+export const handle: RouteHandle = { hydrate: false, turnstile: true };
+
+export function headers() {
+  return { "Cache-Control": PRIVATE_NO_STORE };
+}
+
+/** GET /forms/:form: one public form. Nothing is sent until it is stored (PUB-05, PUB-06). */
+export function loader({ params, request, context }: Route.LoaderArgs) {
+  if (!isFormKey(params.form)) throw new Response("Not found", { status: 404 });
+  const about = new URL(request.url).searchParams.get("about")?.slice(0, 300) ?? "";
+  return { key: params.form, siteKey: context.get(cloudflareContext).env.TURNSTILE_SITE_KEY, about };
+}
+
+export async function action({ params, request, context }: Route.ActionArgs) {
+  if (!isFormKey(params.form)) throw new Response("Not found", { status: 404 });
+  const { env } = context.get(cloudflareContext);
+  const form = await request.formData();
+  const input = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
+  const guard = await guardForm(env, request, form, params.form);
+  if (!guard.ok)
+    return data({ sent: false as const, errors: { form: guard.error }, values: input }, { status: guard.status });
+  const spec: FormSpec = FORMS[params.form];
+  const read = readForm(spec, input);
+  if (!read.ok) return data({ sent: false as const, errors: read.errors, values: input }, { status: 400 });
+  const adminOrigin = `https://${env.ADMIN_HOSTNAME}`;
+  await receiveSubmission(env, getDb(env.DB), params.form, read.values, adminOrigin);
+  return { sent: true as const };
+}
 
 export function meta({ loaderData }: Route.MetaArgs) {
-  return [{ title: `${loaderData?.title ?? "Get in touch"} · NAISEMA` }];
+  return [{ title: `${loaderData ? FORMS[loaderData.key].title : "Form"} · NAISEMA` }];
 }
-
-function formType(path: string | undefined) {
-  const type = path ? submissionTypeAt(path) : null;
-  if (!type) throw new Response("Not found", { status: 404 });
-  return type;
-}
-
-export async function loader({ params, context }: Route.LoaderArgs) {
-  const { env } = context.get(cloudflareContext);
-  const type = formType(params.form);
-  const notices = await currentNotices(getDb(env.DB));
-  const { required, optional } = FORM_CONSENTS[type];
-  return {
-    type,
-    title: SUBMISSION_TYPES[type].title,
-    intro: SUBMISSION_TYPES[type].intro,
-    formKey: newFormKey(),
-    siteKey: env.TURNSTILE_SITE_KEY,
-    consents: [
-      ...required.map((purpose) => ({ purpose, required: true, notice: notices[purpose] })),
-      ...optional.map((purpose) => ({ purpose, required: false, notice: notices[purpose] })),
-    ],
-  };
-}
-
-export async function action({ request, params, context }: Route.ActionArgs) {
-  const { env } = context.get(cloudflareContext);
-  const type = formType(params.form);
-  const form = await request.formData();
-  const db = getDb(env.DB);
-  // A form sent again (a double click, a refresh) is answered from what the first send stored,
-  // before Turnstile, which never accepts the same token twice.
-  const earlier = await alreadyReceived(db, String(form.get("formKey") ?? ""));
-  if (earlier) return sentResult(earlier);
-  const guarded = await guardForm(env, request, form, type);
-  const refuse = (status: number, errors: Errors, values: Values) =>
-    data({ sent: false as const, errors, values }, { status });
-  if (!guarded.ok) return refuse(guarded.status, { form: guarded.error }, formValues(form));
-  const read = readSubmission(form, type);
-  if (!read.ok) return refuse(400, read.errors, read.values);
-  const received = await receiveSubmission(
-    env,
-    db,
-    read.submission,
-    String(form.get("formKey") ?? ""),
-    new URL(request.url).origin,
-  );
-  if (!received.ok) return refuse(400, { form: received.error }, formValues(form));
-  return sentResult(received);
-}
-
-const sentResult = (received: Received) => ({
-  sent: true as const,
-  email: received.email,
-  confirmed: received.confirmed,
-  newsletter: received.newsletter,
-});
 
 export default function PublicForm({ loaderData, actionData }: Route.ComponentProps) {
-  const { type, title, intro, formKey, siteKey, consents } = loaderData;
+  const spec: FormSpec = FORMS[loaderData.key];
   if (actionData?.sent) {
     return (
       <main id="main">
         <article className="pane pane-narrow">
           <h1>Thank you, it's been sent</h1>
-          <p role="status">
-            We've received your {SUBMISSION_TYPES[type].name.toLowerCase()}, and someone on our team will read it.
-          </p>
-          <p>
-            {actionData.confirmed
-              ? `We've emailed a copy to ${actionData.email}, with links to withdraw your agreement if you change your mind.`
-              : "We couldn't email you a copy just now, but what you sent is safely stored."}
-          </p>
-          {actionData.newsletter === false && (
-            <p>
-              We couldn't reach our newsletter service, so you aren't signed up for the newsletter.{" "}
-              <Link to="/newsletter">Try again on the newsletter page</Link>.
-            </p>
-          )}
+          <p role="status">{spec.done}</p>
           <p>
             <Link to="/">Back to NAISEMA</Link>
           </p>
@@ -122,22 +65,22 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
     );
   }
   const errors: Errors = actionData?.errors ?? {};
-  const values: Values = actionData?.values ?? {};
+  const values: Values = actionData?.values ?? (loaderData.about ? { address: loaderData.about } : {});
   return (
     <main id="main">
       <article className="pane pane-narrow">
-        <h1>{title}</h1>
-        <p className="standfirst">{intro}</p>
+        <h1>{spec.title}</h1>
+        <p className="standfirst">{spec.intro}</p>
         <Form method="post" className="public-form" noValidate>
           <FormAlert errors={errors} />
-          <input type="hidden" name="formKey" value={formKey} />
           <TextField
             name="name"
             label="Your name"
             values={values}
             errors={errors}
             autoComplete="name"
-            maxLength={SUBMISSION_LIMITS.name}
+            maxLength={FIELD_LIMITS.name}
+            optional={!spec.needsEmail}
           />
           <TextField
             name="email"
@@ -147,168 +90,27 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
             errors={errors}
             autoComplete="email"
             hint="We use it only to reply to you."
-            maxLength={SUBMISSION_LIMITS.email}
+            maxLength={FIELD_LIMITS.email}
+            optional={!spec.needsEmail}
           />
-          <TypeFields type={type} values={values} errors={errors} />
-          <fieldset className="form-consents">
-            <legend>Your agreement</legend>
-            {consents.map((consent) => (
-              <ConsentField
-                key={consent.purpose}
-                purpose={consent.purpose}
-                notice={consent.notice}
-                required={consent.required}
-                values={values}
-                errors={errors}
-              />
-            ))}
-          </fieldset>
-          <TurnstileField siteKey={siteKey} />
+          {spec.fields.map((field) => (
+            <TextField
+              key={field.name}
+              name={field.name}
+              label={field.label}
+              hint={field.hint}
+              long={field.long}
+              optional={field.optional}
+              values={values}
+              errors={errors}
+              maxLength={field.long ? FIELD_LIMITS.long : FIELD_LIMITS.short}
+            />
+          ))}
+          <NoticeField values={values} errors={errors} />
+          <TurnstileField siteKey={loaderData.siteKey} />
           <button type="submit">Send</button>
         </Form>
       </article>
     </main>
   );
-}
-
-function TypeFields({ type, values, errors }: { type: SubmissionType; values: Values; errors: Errors }) {
-  const long = { values, errors, long: true, maxLength: SUBMISSION_LIMITS.text };
-  const short = { values, errors, maxLength: SUBMISSION_LIMITS.short };
-  const sourceField = {
-    ...long,
-    name: "source",
-    label: "Where have you seen or heard it?",
-    hint: "A book, a place, a person you learned it from. Name a person only if they're happy to be named.",
-    optional: true,
-  };
-  switch (type) {
-    case "enquiry":
-      return <TextField name="message" label="Your message" {...long} />;
-    case "contribution":
-      return (
-        <TextField
-          name="description"
-          label="What you'd like to share"
-          hint="What it is (a story, a recording, a photograph, a song), who made it, and what it's about. Please don't attach anything yet."
-          {...long}
-        />
-      );
-    case "educator_interest":
-      return (
-        <>
-          <ChoiceField
-            name="category"
-            legend="What best describes you?"
-            options={EDUCATOR_CATEGORIES}
-            values={values}
-            errors={errors}
-          />
-          <TextField
-            name="languages"
-            label="Languages and varieties you would teach"
-            hint="One on each line, like Standard Fijian, or the variety of your village or island."
-            {...long}
-          />
-          <TextField name="experience" label="Your teaching so far" {...long} />
-          <TextField name="scope" label="What you'd like to teach, and to whom" {...long} />
-        </>
-      );
-    case "consultation_interest":
-      return (
-        <>
-          <ChoiceField
-            name="ways"
-            legend="How would you like to take part?"
-            options={CONSULTATION_WAYS}
-            values={values}
-            errors={errors}
-            multiple
-          />
-          <TextField
-            name="languages"
-            label="Languages and varieties you speak"
-            hint="One on each line."
-            optional
-            {...long}
-          />
-          <TextField
-            name="connection"
-            label="Your connection to Fiji"
-            hint="For example: grew up in Labasa, now in Auckland."
-            values={values}
-            errors={errors}
-            optional
-            maxLength={SUBMISSION_LIMITS.short}
-          />
-          <TextField name="topics" label="What you'd like to be asked about" optional {...long} />
-        </>
-      );
-    case "word_suggestion":
-      return (
-        <>
-          <TextField {...short} name="word" label="Fijian word or phrase" />
-          <TextField name="meaning" label="What it means in English" {...long} />
-          <TextField
-            name="example"
-            label="A Fijian sentence that uses it"
-            hint="With its English meaning, if you can."
-            optional
-            {...long}
-          />
-          <TextField {...sourceField} />
-        </>
-      );
-    case "entry_correction":
-      return (
-        <>
-          <TextField {...short} name="word" label="The word whose entry is wrong" />
-          <TextField
-            name="correction"
-            label="What the entry should say"
-            hint="The corrected English meaning, spelling or example, and what is wrong now."
-            {...long}
-          />
-          <TextField {...sourceField} />
-        </>
-      );
-    case "icavuti_suggestion":
-      return (
-        <>
-          <ChoiceField
-            name="level"
-            legend="What does this title belong to?"
-            options={ICAVUTI_LEVELS}
-            values={values}
-            errors={errors}
-          />
-          <TextField {...short} name="province" label="Yasana (province)" />
-          <TextField
-            {...short}
-            name="district"
-            label="Tikina (district)"
-            hint="Needed for a tikina or koro title."
-            optional
-          />
-          <TextField {...short} name="village" label="Koro (village)" hint="Needed for a koro title." optional />
-          <TextField {...short} name="title" label="Icavuti" hint="The title only, never a chief's personal name." />
-          <TextField {...sourceField} label="How do you know this?" />
-        </>
-      );
-    case "translation_proposal":
-      return (
-        <>
-          <TextField {...short} name="term" label="The idea or English term" hint="For example: evaporation." />
-          <TextField {...short} name="expression" label="Your Fijian expression" />
-          <ChoiceField
-            name="approach"
-            legend="How did you make it?"
-            options={TRANSLATION_APPROACHES}
-            values={values}
-            errors={errors}
-          />
-          <TextField name="reasoning" label="Why this wording?" optional {...long} />
-          <TextField {...sourceField} />
-        </>
-      );
-  }
 }

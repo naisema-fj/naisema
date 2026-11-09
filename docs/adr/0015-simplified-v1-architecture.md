@@ -1,0 +1,14 @@
+# Rewrite for launch as one small Worker, one D1 database and one R2 bucket
+
+Phase 1a was built complete (65 tables, six R2 buckets, Stream, a ClamAV container, a queue and three crons), and that weight became the launch blocker: half the launch checklist was accounts, spikes, drills and approvals that existed only because of the infrastructure. On 9 November 2026 the founder chose to launch with video Learn, and to rewrite on the same stack to the smallest app one technical owner can run. The rewrite keeps the two promises the product rests on, which are exact-Revision Review Approvals (ADR-0003) and the single eligibility decision at request time (ADR-0007). It drops everything else that a first launch can do without. The full Phase 1a code is kept at the git tag `v0-full`, so anything dropped can be restored from it.
+
+## Consequences
+
+- **Staff sign in through Cloudflare Access** on the admin host (email one-time code and an allowlist). The Worker verifies Access's JWT and reads roles from its own `staff` table. This supersedes Better Auth and our staff two-factor gate (ADR-0005, ADR-0013). There are no Learner Accounts. Learner progress stays in the learner's browser.
+- **Video is H.264 MP4 in R2, served with byte ranges** to a native `<video>` element, with our own WebVTT captions generated from reviewed Segments. This supersedes Stream delivery and hls.js (ADR-0008); clips are 30–120 seconds, so progressive download is enough. Captions still come only from reviewed Segments, never from a provider.
+- **Only staff upload, behind Access, written straight to R2** after the type allowlist and magic-byte check. Images are re-encoded on delivery by Cloudflare Images. This supersedes the quarantine and ClamAV pipeline (ADR-0010). Accepting files from the public needs it back.
+- **Recovery is D1 Time Travel plus a weekly `wrangler d1 export`.** Search is a plain `LIKE` over a denormalised column rather than FTS5, so the export works. With no Learner Accounts there is nothing for a deletion ledger to replay (ADR-0009 superseded).
+- **One Learning Layer per Video, inside the Video's own Revision**, reviewed with it. This amends ADR-0001, under which a Content Item had several, each reviewed on its own. A layer can still cover the whole clip or an Excerpt, and Tokens and Annotations still anchor to stable token IDs (ADR-0011).
+- **Approvals belong to one exact Revision and are never carried forward**, which amends ADR-0006. Any edit makes a new Revision that needs its reviews again. That is stricter and simpler than fingerprints.
+- **No edge cache for pages.** Public pages are revalidated on every request, so a withdrawal never waits for a purge. v1's traffic doesn't need the cache.
+- **No scheduled jobs.** Rights expiry is a date compared in the query on every request. Monitoring is the external uptime monitor (ADR-0012) and Cloudflare's billing alerts.

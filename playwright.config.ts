@@ -15,8 +15,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   projects: [
-    // Each project reports its own client IP, as Cloudflare would, so the sign-in rate limit
-    // (5 magic links a minute per IP) counts each project's sign-ins separately.
+    // Each project reports its own client IP, as Cloudflare would, so the form rate limit
+    // (5 sends a minute per address) counts each project's sends separately.
     {
       name: "desktop-chromium",
       use: {
@@ -36,7 +36,7 @@ export default defineConfig({
   ],
   webServer: {
     // Serves the production build with local D1, migrated and seeded with e2e fixtures.
-    command: `node scripts/ensure-dev-vars.mjs && pnpm db:migrate:local && pnpm wrangler d1 execute DB --local --file e2e/seed.sql && pnpm wrangler r2 object put naisema-dev-video-masters/masters/e2e-public-video --local --file e2e/fixtures/market.mp4 --content-type video/mp4 && pnpm preview --port ${port} --strictPort`,
+    command: `node scripts/ensure-dev-vars.mjs && rm -rf .wrangler/state && pnpm db:migrate:local && node e2e/seed.mjs && pnpm wrangler d1 execute DB --local --file e2e/seed.sql && pnpm wrangler r2 object put naisema-dev-media/media/e2e-market --local --file e2e/fixtures/market.mp4 --content-type video/mp4 && pnpm preview --port ${port} --strictPort`,
     url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
