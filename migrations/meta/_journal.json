@@ -162,6 +162,13 @@
       "when": 1791839439701,
       "tag": "0022_review_links_for_content_items",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1794186494569,
+      "tag": "0023_vosa_dictionary_drafts",
+      "breakpoints": true
     }
   ]
 }

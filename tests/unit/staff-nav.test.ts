@@ -41,7 +41,7 @@ describe("the staff navigation", () => {
   it("shows an educator Learning Layers and the media library, but not the content pages", () => {
     const nav = labels(staff({ role: "educator" }));
 
-    expect(nav).toEqual(["Media library", "Learning Layers"]);
+    expect(nav).toEqual(["Media library", "Learning Layers", "Vosa dictionary drafts"]);
   });
 
   it("shows a reviewer their reviews and nothing to edit or administer", () => {
