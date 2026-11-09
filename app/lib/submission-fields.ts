@@ -32,6 +32,36 @@ export const SUBMISSION_TYPES = {
     title: "Take part in a consultation",
     intro: "NAISEMA asks Fijians at home and abroad what it should do next. Tell us you'd like to be asked, and how.",
   },
+  // The Vosa dictionary's community forms (apps.naisema.com). What arrives is checked by the team
+  // and never published from here: an accepted word becomes a draft Expression that is reviewed.
+  word_suggestion: {
+    name: "Word suggestion",
+    path: "suggest-word",
+    title: "Suggest a Fijian word",
+    intro:
+      "Share a Fijian word or phrase and what it means in English. Our team checks every suggestion before anything joins the Vosa dictionary.",
+  },
+  entry_correction: {
+    name: "Dictionary correction",
+    path: "correct-word",
+    title: "Correct a dictionary entry",
+    intro:
+      "Found a mistake in a Vosa entry? Tell us the word and what it should say. Our team checks every correction before the entry changes.",
+  },
+  icavuti_suggestion: {
+    name: "Icavuti suggestion",
+    path: "suggest-icavuti",
+    title: "Add a missing icavuti",
+    intro:
+      "Know an icavuti that is missing or wrong? Tell us the place it belongs to and the title. Give the title only, never a chief's personal name. It is checked privately, with people who hold that knowledge, before it is shown.",
+  },
+  translation_proposal: {
+    name: "Translation proposal",
+    path: "suggest-translation",
+    title: "Propose a Fijian expression",
+    intro:
+      "How would you say an idea, like evaporation, in Fijian? Share your wording and why it fits. Proposals are discussed and reviewed; none becomes an approved term automatically.",
+  },
 } as const;
 export type SubmissionType = keyof typeof SUBMISSION_TYPES;
 
@@ -93,6 +123,24 @@ export const CONSENT_PROMPTS: Record<ConsentPurpose, string> = {
 
 export const isConsentPurpose = (value: string): value is ConsentPurpose => Object.hasOwn(CONSENT_PURPOSES, value);
 
+/** The level of place an icavuti belongs to (apps.naisema.com's Icavuti by place). */
+export const ICAVUTI_LEVELS = {
+  koro: "Koro · a village",
+  tikina: "Tikina · a district",
+  yasana: "Yasana · a whole province",
+} as const;
+export type IcavutiLevel = keyof typeof ICAVUTI_LEVELS;
+
+/** How a proposed Fijian expression was made (apps.naisema.com's community translation). */
+export const TRANSLATION_APPROACHES = {
+  existing: "Existing usage: I've heard or seen it used",
+  literal: "Literal: word for word",
+  descriptive: "Descriptive: it explains the idea",
+  borrowed: "Borrowed: from English or another language",
+  new: "New wording",
+} as const;
+export type TranslationApproach = keyof typeof TRANSLATION_APPROACHES;
+
 /** The consents each form asks for: those it needs, and one the person may add. */
 /** A public form that asks for consent: a Submission's, the newsletter's, or one that opens a Case. */
 export type ConsentForm = SubmissionType | "newsletter" | "report" | "data_request";
@@ -102,6 +150,10 @@ export const FORM_CONSENTS: Record<ConsentForm, { required: ConsentPurpose[]; op
   contribution: { required: ["reply"], optional: ["newsletter"] },
   educator_interest: { required: ["reply"], optional: ["newsletter"] },
   consultation_interest: { required: ["reply", "consultation"], optional: ["newsletter"] },
+  word_suggestion: { required: ["reply"], optional: ["newsletter"] },
+  entry_correction: { required: ["reply"], optional: ["newsletter"] },
+  icavuti_suggestion: { required: ["reply"], optional: ["newsletter"] },
+  translation_proposal: { required: ["reply"], optional: ["newsletter"] },
   newsletter: { required: ["newsletter"], optional: [] },
   // A report can be anonymous; one that leaves an email address needs the reply consent.
   report: { required: ["reply"], optional: [] },
@@ -244,6 +296,34 @@ export function readSubmission(form: FormData, type: SubmissionType): Submission
       fields.topics = text("topics", SUBMISSION_LIMITS.text, null);
       break;
     }
+    case "word_suggestion":
+      fields.word = text("word", SUBMISSION_LIMITS.short, "Enter the Fijian word or phrase.");
+      fields.meaning = text("meaning", SUBMISSION_LIMITS.text, "Enter what it means in English.");
+      fields.example = text("example", SUBMISSION_LIMITS.text, null);
+      fields.source = text("source", SUBMISSION_LIMITS.text, null);
+      break;
+    case "entry_correction":
+      fields.word = text("word", SUBMISSION_LIMITS.short, "Enter the word whose entry is wrong.");
+      fields.correction = text("correction", SUBMISSION_LIMITS.text, "Tell us what the entry should say.");
+      fields.source = text("source", SUBMISSION_LIMITS.text, null);
+      break;
+    case "icavuti_suggestion":
+      fields.level = choice("level", ICAVUTI_LEVELS, "Choose what the title belongs to.");
+      fields.province = text("province", SUBMISSION_LIMITS.short, "Enter the yasana (province).");
+      fields.district = text("district", SUBMISSION_LIMITS.short, null);
+      fields.village = text("village", SUBMISSION_LIMITS.short, null);
+      if (fields.level === "tikina" && !fields.district) errors.district = "Enter the tikina the title belongs to.";
+      if (fields.level === "koro" && !fields.village) errors.village = "Enter the koro the title belongs to.";
+      fields.title = text("title", SUBMISSION_LIMITS.short, "Enter the icavuti.");
+      fields.source = text("source", SUBMISSION_LIMITS.text, null);
+      break;
+    case "translation_proposal":
+      fields.term = text("term", SUBMISSION_LIMITS.short, "Enter the idea or English term.");
+      fields.expression = text("expression", SUBMISSION_LIMITS.short, "Enter your Fijian expression.");
+      fields.approach = choice("approach", TRANSLATION_APPROACHES, "Choose how you made it.");
+      fields.reasoning = text("reasoning", SUBMISSION_LIMITS.text, null);
+      fields.source = text("source", SUBMISSION_LIMITS.text, null);
+      break;
   }
 
   const consent = readConsents(form, type);
@@ -284,6 +364,39 @@ export function submissionSummary(type: SubmissionType, fields: SubmissionFields
             .join(", "),
         },
         { label: "What you'd like to be asked about", text: String(value("topics")) || "Not given" },
+      ];
+    case "word_suggestion":
+      return [
+        { label: "Fijian word or phrase", text: String(value("word")) },
+        { label: "English meaning", text: String(value("meaning")) },
+        { label: "Example", text: String(value("example")) || "Not given" },
+        { label: "Where it's from", text: String(value("source")) || "Not given" },
+      ];
+    case "entry_correction":
+      return [
+        { label: "Word", text: String(value("word")) },
+        { label: "What it should say", text: String(value("correction")) },
+        { label: "Where it's from", text: String(value("source")) || "Not given" },
+      ];
+    case "icavuti_suggestion":
+      return [
+        { label: "Belongs to", text: ICAVUTI_LEVELS[value("level") as IcavutiLevel] ?? String(value("level")) },
+        { label: "Yasana", text: String(value("province")) },
+        { label: "Tikina", text: String(value("district")) || "Not given" },
+        { label: "Koro", text: String(value("village")) || "Not given" },
+        { label: "Icavuti", text: String(value("title")) },
+        { label: "How you know", text: String(value("source")) || "Not given" },
+      ];
+    case "translation_proposal":
+      return [
+        { label: "Idea or English term", text: String(value("term")) },
+        { label: "Fijian expression", text: String(value("expression")) },
+        {
+          label: "How it was made",
+          text: TRANSLATION_APPROACHES[value("approach") as TranslationApproach] ?? String(value("approach")),
+        },
+        { label: "Why this wording", text: String(value("reasoning")) || "Not given" },
+        { label: "Where it's from", text: String(value("source")) || "Not given" },
       ];
   }
 }

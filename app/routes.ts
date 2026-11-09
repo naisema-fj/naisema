@@ -7,6 +7,8 @@ export default [
     index("routes/home.tsx"),
     ...INFO_PAGES.map((page) => route(page.path, "routes/public/info.tsx", { id: `info-${page.path}` })),
     route("search", "routes/public/search.tsx"),
+    // The Fijian apps hub (apps.naisema.com stays live; app/lib/fijian-apps.ts).
+    route("apps", "routes/public/apps.tsx"),
     route("topics", "routes/public/topics.tsx"),
     route("topics/:slug", "routes/public/topic.tsx", { id: "topic" }),
     route("topics/:slug/:subtopic", "routes/public/topic.tsx", { id: "topic-filtered" }),

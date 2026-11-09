@@ -81,6 +81,36 @@ describe("public forms (PUB-05)", () => {
     expect(confirmation.text).toContain(`${PUBLIC}/consent/`);
   });
 
+  it("store a Vosa word suggestion for review, never as a published Expression", async () => {
+    const email = address();
+    const { message: _unused, ...rest } = enquiry(email);
+    const response = await visitor()("/forms/suggest-word", {
+      ...rest,
+      word: "Baca",
+      meaning: "Bait for a fishhook or trap.",
+    });
+
+    expect(response.status).toBe(200);
+    const [stored] = await rows<{ type: string; status: string; fields: string }>(
+      "SELECT type, status, fields FROM submission WHERE email = ?1",
+      email,
+    );
+    expect(stored).toMatchObject({ type: "word_suggestion", status: "new" });
+    expect(JSON.parse(stored.fields)).toMatchObject({ word: "Baca", meaning: "Bait for a fishhook or trap." });
+    expect(await rows("SELECT id FROM expression WHERE headword = 'Baca'")).toEqual([]);
+  });
+
+  it("list the Fijian apps, each saying what isn't open yet and linking its forms", async () => {
+    const page = await visitor()("/apps");
+
+    expect(page.status).toBe(200);
+    const html = await page.text();
+    expect(html).toContain("Vosa, the Fijian dictionary");
+    expect(html).toContain("https://apps.naisema.com/dictionary/");
+    expect(html).toContain('href="/forms/suggest-icavuti"');
+    expect(html.match(/Not open yet/g)?.length).toBe(3);
+  });
+
   it("allow Turnstile in the page's policy, and nothing else that runs", async () => {
     const page = await visitor()("/forms/teach");
 

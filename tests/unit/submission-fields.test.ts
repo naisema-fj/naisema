@@ -165,3 +165,57 @@ describe("forms", () => {
     ]);
   });
 });
+
+describe("the Vosa dictionary's forms", () => {
+  it("reads a word suggestion, with its optional example and source left empty", () => {
+    expect(
+      readSubmission(form({ ...person, word: " Baca ", meaning: "Bait for a fishhook or trap." }), "word_suggestion"),
+    ).toMatchObject({
+      ok: true,
+      submission: {
+        type: "word_suggestion",
+        fields: { word: "Baca", meaning: "Bait for a fishhook or trap.", example: "", source: "" },
+      },
+    });
+  });
+
+  it("needs the word and the corrected meaning for a correction", () => {
+    const refused = readSubmission(form({ ...person }), "entry_correction");
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) expect(Object.keys(refused.errors).sort()).toEqual(["correction", "word"]);
+  });
+
+  it("needs the tikina for a tikina icavuti and the koro for a koro one", () => {
+    const tikina = readSubmission(
+      form({ ...person, level: "tikina", province: "Ba", title: "Na Tui Ba" }),
+      "icavuti_suggestion",
+    );
+    expect(tikina.ok).toBe(false);
+    if (!tikina.ok) expect(Object.keys(tikina.errors)).toEqual(["district"]);
+
+    const yasana = readSubmission(
+      form({ ...person, level: "yasana", province: "Ba", title: "Na Tui Ba" }),
+      "icavuti_suggestion",
+    );
+    expect(yasana.ok).toBe(true);
+  });
+
+  it("refuses a translation approach that isn't one of the listed ones", () => {
+    const result = readSubmission(
+      form({ ...person, term: "evaporation", expression: "vakacegu ni wai", approach: "guess" }),
+      "translation_proposal",
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(Object.keys(result.errors)).toEqual(["approach"]);
+  });
+
+  it("finds each form at its path and summarises it for staff", () => {
+    expect(submissionTypeAt("suggest-word")).toBe("word_suggestion");
+    expect(submissionTypeAt("correct-word")).toBe("entry_correction");
+    expect(submissionTypeAt("suggest-icavuti")).toBe("icavuti_suggestion");
+    expect(submissionTypeAt("suggest-translation")).toBe("translation_proposal");
+    expect(
+      submissionSummary("icavuti_suggestion", { level: "koro", province: "Ba", village: "Votua", title: "Na Tui" }),
+    ).toContainEqual({ label: "Belongs to", text: "Koro · a village" });
+  });
+});
