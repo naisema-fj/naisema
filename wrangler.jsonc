@@ -18,8 +18,8 @@
   "vars": {
     // Cloudflare's always-passing Turnstile test site key (app/lib/turnstile.ts).
     "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
-    // Locally the staff site answers on admin.localhost. There is no Cloudflare Access there, so
-    // staff are named by the X-Dev-Staff-Email header, which only development accepts (app/lib/staff.server.ts).
+    // Locally the staff site answers on admin.localhost. Nothing is emailed there: the sign-in page
+    // shows the link instead, and tests may name staff with the X-Dev-Staff-Email header (app/lib/staff.server.ts).
     "ADMIN_HOSTNAME": "admin.localhost",
     "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>",
     // Buttondown's own embedded sign-up form (docs/decision-log.md, v1 launch rewrite). Empty: the
@@ -53,11 +53,7 @@
         "ADMIN_HOSTNAME": "admin.staging.naisema.com",
         "EMAIL_FROM": "NAISEMA Staging <no-reply@naisema.com>",
         "NEWSLETTER_FORM_URL": "",
-        "ENVIRONMENT": "staging",
-        // Cloudflare Access on the admin host (docs/handover/runbook.md, staff sign-in): the team's
-        // domain and the application's audience tag, which every staff request's JWT must carry.
-        "ACCESS_TEAM_DOMAIN": "REPLACE_WITH_ACCESS_TEAM_DOMAIN",
-        "ACCESS_AUD": "REPLACE_WITH_STAGING_ACCESS_AUD"
+        "ENVIRONMENT": "staging"
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": { "required": ["TURNSTILE_SECRET_KEY", "PREVIEW_SECRET", "NOTIFY_EMAILS"] },
@@ -85,9 +81,7 @@
         "ADMIN_HOSTNAME": "admin.naisema.com",
         "EMAIL_FROM": "NAISEMA <no-reply@naisema.com>",
         "NEWSLETTER_FORM_URL": "",
-        "ENVIRONMENT": "production",
-        "ACCESS_TEAM_DOMAIN": "REPLACE_WITH_ACCESS_TEAM_DOMAIN",
-        "ACCESS_AUD": "REPLACE_WITH_PRODUCTION_ACCESS_AUD"
+        "ENVIRONMENT": "production"
       },
       "send_email": [{ "name": "EMAIL" }],
       "secrets": { "required": ["TURNSTILE_SECRET_KEY", "PREVIEW_SECRET", "NOTIFY_EMAILS"] },

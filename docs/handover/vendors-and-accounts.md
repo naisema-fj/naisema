@@ -14,8 +14,7 @@ Every external service NAISEMA v1 depends on (ADR-0015), who holds the account, 
 | D1 | The database; Time Travel gives 30 days of point-in-time recovery | Within the plan at v1's size | Everything that stores or reads data |
 | R2 | One private bucket per environment: media, evidence and weekly exports | USD 0.015 per GB a month above 10 GB free | Media, evidence and exports |
 | Images | Re-encodes images on delivery and strips their metadata | Within the plan at v1's size | Images can't be shown |
-| Email Service | Form notifications from `no-reply@naisema.com` | Check the dashboard for sending prices | The team isn't told about new forms; what was sent is still stored |
-| Access (Zero Trust, free up to 50 users) | Staff sign-in by emailed code on the admin host | Free | Nobody can reach the staff site |
+| Email Service | Staff sign-in links and form notifications from `no-reply@naisema.com` | Check the dashboard for sending prices | Nobody can sign in to the staff site (anyone already signed in carries on), and the team isn't told about new forms |
 | Turnstile | Bot check on every public form | Free | Every public form refuses to send |
 | Web Analytics | Cookieless traffic counts | Free | No traffic counts |
 | Workers Observability | Redacted request and error logs | Within the plan | Harder troubleshooting |
@@ -43,6 +42,5 @@ Names only.
 | `TURNSTILE_SECRET_KEY` | Worker secret | Turnstile |
 | `PREVIEW_SECRET` | Worker secret | Signing preview links |
 | `NOTIFY_EMAILS` | Worker secret | Who hears about new forms |
-| `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD` | `wrangler.jsonc` (not secret) | Checking Access's sign-in on the admin host |
 | `TURNSTILE_SITE_KEY`, `NEWSLETTER_FORM_URL` | `wrangler.jsonc` (not secret) | The forms' widget and the newsletter link |
 | `CLOUDFLARE_API_TOKEN` | GitHub environment secret, one per environment | Deploys and the weekly export |

@@ -3,7 +3,7 @@ import { expect, type Page } from "@playwright/test";
 
 export const ADMIN = "http://admin.localhost:4173";
 
-/** Seeded staff (e2e/seed.sql). Locally there is no Cloudflare Access: this header names the person. */
+/** Seeded staff (e2e/seed.sql). Locally, this header names the person instead of a signed-in session. */
 export const STAFF_HEADER = "X-Dev-Staff-Email";
 export const EDITOR = "e2e-editor@naisema.test";
 

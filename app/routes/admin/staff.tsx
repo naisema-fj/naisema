@@ -4,14 +4,14 @@ import { audit } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { isRole, ROLE_NAMES, ROLES } from "~/lib/roles";
-import { requireStaff } from "~/lib/staff.server";
+import { endSessions, requireStaff } from "~/lib/staff.server";
 import { staff } from "~db/schema";
 import type { Route } from "./+types/staff";
 
 /**
- * /admin/staff: who works on the admin site and their roles. Cloudflare Access decides who can
- * reach the site at all; this list decides what each person may do once there. Every change is
- * audited.
+ * /admin/staff: who works on the admin site and their roles. Only addresses on this list can ask
+ * for a sign-in link (ADR-0016), and someone marked as no longer working here is signed out at
+ * once. Every change is audited.
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
@@ -43,6 +43,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       ? db.update(staff).set({ name, roles, languageVariety: variety, active }).where(eq(staff.email, email))
       : db.insert(staff).values({ email, name, roles, languageVariety: variety, active }),
     audit(db, actor.email, existing ? "staff.changed" : "staff.added", { type: "staff", id: email }, { roles, active }),
+    ...(active ? [] : [endSessions(db, email)]),
   ]);
   return redirect("/admin/staff");
 }
@@ -59,7 +60,7 @@ function PersonForm({ person }: { person?: { email: string; name: string; roles:
         <legend>{person ? person.name : "Add someone"}</legend>
         <label htmlFor={`name-${key}`}>Name</label>
         <input id={`name-${key}`} name="name" defaultValue={person?.name} required maxLength={120} />
-        <label htmlFor={`email-${key}`}>Email address (as Cloudflare Access knows it)</label>
+        <label htmlFor={`email-${key}`}>Email address (their sign-in link goes here)</label>
         <input
           id={`email-${key}`}
           name="email"
@@ -92,8 +93,8 @@ export default function Staff({ loaderData, actionData }: Route.ComponentProps) 
     <main id="main" className="page">
       <h1>Staff</h1>
       <p className="hint">
-        Add each person to the Cloudflare Access allowlist as well, or they can't reach this site
-        (docs/handover/runbook.md).
+        Someone added here signs in at the staff site with their email address. Ask them to turn on two-factor for that
+        email account, since anyone who can read it can sign in as them.
       </p>
       {actionData?.error && (
         <p role="alert" className="error">

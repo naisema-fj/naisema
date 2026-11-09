@@ -150,7 +150,7 @@ _Avoid_: Influencer, channel owner
 An adult (18+) using Learn, without an account in v1; their progress stays on their own device.
 
 **Staff Role**:
-What a person on the staff list may do: Administrator, Editor, Educator, Language Reviewer (for one Language Variety) or Safeguarding Lead. Cloudflare Access decides who reaches the staff site; roles decide what they may do there (ADR-0015).
+What a person on the staff list may do: Administrator, Editor, Educator, Language Reviewer (for one Language Variety) or Safeguarding Lead. Only people on the staff list can sign in, with a link emailed to them (ADR-0016); their roles decide what they may do.
 _Avoid_: Permission, group
 
 **Educator**:

@@ -6,9 +6,12 @@ Your roles decide what you see. The menu only lists pages you may use, so a page
 
 ## Sign in
 
-1. Open `admin.naisema.com`. Cloudflare asks for your email address and sends you a code.
-2. Type the code. You're on **Staff home**.
-3. If it says your address isn't on the staff list, an administrator adds you at **Staff**, and the technical owner adds you to the Cloudflare Access list.
+1. Open `admin.naisema.com`. On **Sign in to NAISEMA staff**, type your email address and press **Email me a sign-in link**.
+2. Open the email "Your NAISEMA sign-in link" and press the link. It works once, for 15 minutes.
+3. On the page it opens, press **Sign in**. You're on **Staff home**, and you stay signed in on that browser for 14 days.
+4. No email? Check your spam folder, then ask for another link. Only addresses on the staff list get one: an administrator adds you at **Staff**.
+
+Anyone who can read your email can sign in as you, so turn on two-factor for that email account.
 
 To leave, press **Sign out** at the top right of any page.
 
@@ -82,7 +85,7 @@ The runbook is `docs/handover/runbook.md` in the project on GitHub (`naisema-fj/
 
 Do these on staging without help, with this guide open, and note anything unclear:
 
-- [ ] Sign in with the emailed code.
+- [ ] Sign in with the emailed link.
 - [ ] Add an Article, write a paragraph and save it.
 - [ ] Make a preview link and open it in a private window.
 - [ ] Ask someone else to approve it, and add a Rights Record granting Publish.

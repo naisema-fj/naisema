@@ -4,7 +4,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 /**
  * The v1 journeys end to end, against the built Worker: the staff gate, an Article through review
  * to the public site and back off it, the public forms, and a Video with its Learning Layer.
- * In development the X-Dev-Staff-Email header stands in for Cloudflare Access (app/lib/staff.server.ts).
+ * In development the X-Dev-Staff-Email header stands in for a signed-in session (app/lib/staff.server.ts);
+ * the sign-in link itself has its own journey below.
  */
 
 const ADMIN = "http://admin.localhost";
@@ -22,7 +23,7 @@ async function addStaff(email: string, roles: string[], variety: string | null =
     .run();
 }
 
-/** A request as one staff member, as Access would let it through. */
+/** A request as one signed-in staff member. */
 function as(email: string | null, path: string, init: RequestInit & { form?: Record<string, string | string[]> } = {}) {
   const headers = new Headers(init.headers);
   if (email) headers.set("X-Dev-Staff-Email", email);
@@ -41,6 +42,11 @@ function as(email: string | null, path: string, init: RequestInit & { form?: Rec
     headers,
     redirect: "manual",
   });
+}
+
+async function hash(text: string) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 const visit = (path: string, init: RequestInit = {}) => SELF.fetch(`${PUBLIC}${path}`, { redirect: "manual", ...init });
@@ -99,11 +105,88 @@ beforeAll(async () => {
 
 describe("the staff site", () => {
   it("is only for people on the staff list, and only on the admin host", async () => {
-    expect((await as(null, "/admin")).status).toBe(403);
-    expect((await as("stranger@example.org", "/admin")).status).toBe(403);
+    for (const who of [null, "stranger@example.org"]) {
+      const response = await as(who, "/admin/items");
+      expect(response.status).toBe(302);
+      expect(response.headers.get("Location")).toBe("/admin/sign-in");
+    }
     expect((await as(EDITOR, "/admin")).status).toBe(200);
     expect((await visit("/admin")).status).toBe(404);
     expect((await visit("/Admin/items")).status).toBe(404);
+  });
+
+  it("signs staff in with an emailed link that works once, and signs them out", async () => {
+    const ask = (email: string) =>
+      SELF.fetch(`${ADMIN}/admin/sign-in`, {
+        method: "POST",
+        headers: {
+          Origin: ADMIN,
+          "Content-Type": "application/x-www-form-urlencoded",
+          "CF-Connecting-IP": `10.1.0.${Math.floor(Math.random() * 250)}`,
+        },
+        body: new URLSearchParams({ email }),
+      });
+    // Someone not on the staff list is told the same thing, and no link is made for them.
+    const stranger = await (await ask("stranger@example.org")).text();
+    expect(stranger).toContain("Check your email");
+    expect(stranger).not.toContain("open the sign-in link");
+
+    // In development nothing is sent, so the page shows the link instead.
+    const page = await (await ask("Second-Editor@naisema.test")).text();
+    const link = /href="(http:\/\/admin\.localhost\/admin\/sign-in\/link\?token=[\w-]+)"/.exec(page)?.[1];
+    expect(link).toBeTruthy();
+    const token = new URL(link as string).searchParams.get("token") as string;
+    const stored = await one<{ token_hash: string }>(
+      "SELECT token_hash FROM sign_in_link WHERE email = ?",
+      SECOND_EDITOR,
+    );
+    expect(stored.token_hash).not.toContain(token);
+
+    // Opening the link only shows a button, so a mail scanner opening it doesn't use it up.
+    expect(await (await SELF.fetch(link as string)).text()).toContain("Sign in");
+    const use = () =>
+      SELF.fetch(`${ADMIN}/admin/sign-in/link`, {
+        method: "POST",
+        headers: { Origin: ADMIN, "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ token }),
+        redirect: "manual",
+      });
+    const signedIn = await use();
+    expect(signedIn.status).toBe(302);
+    const cookie = (signedIn.headers.get("Set-Cookie") as string).split(";")[0];
+    expect(signedIn.headers.get("Set-Cookie")).toContain("HttpOnly");
+    expect((await use()).status).toBe(400);
+
+    const withCookie = (path: string, init: RequestInit = {}) =>
+      SELF.fetch(`${ADMIN}${path}`, {
+        ...init,
+        headers: { ...init.headers, Cookie: cookie, Origin: ADMIN },
+        redirect: "manual",
+      });
+    expect((await withCookie("/admin/items")).status).toBe(200);
+    const out = await withCookie("/admin/sign-out", { method: "POST" });
+    expect(out.headers.get("Set-Cookie")).toContain("Max-Age=0");
+    expect((await withCookie("/admin/items")).status).toBe(302);
+  });
+
+  it("signs someone out everywhere when they leave the staff list", async () => {
+    await addStaff("leaving@naisema.test", ["editor"]);
+    await env.DB.prepare("INSERT INTO sign_in_link (token_hash, email, expires_at) VALUES (?, ?, ?)")
+      .bind(await hash("leaving-token"), "leaving@naisema.test", Date.now() + 60_000)
+      .run();
+    const signedIn = await SELF.fetch(`${ADMIN}/admin/sign-in/link`, {
+      method: "POST",
+      headers: { Origin: ADMIN, "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: "leaving-token" }),
+      redirect: "manual",
+    });
+    const cookie = (signedIn.headers.get("Set-Cookie") as string).split(";")[0];
+    const items = () => SELF.fetch(`${ADMIN}/admin/items`, { headers: { Cookie: cookie }, redirect: "manual" });
+    expect((await items()).status).toBe(200);
+    await as(EDITOR, "/admin/staff", {
+      form: { email: "leaving@naisema.test", name: "Leaving", roles: ["editor"], active: "off" },
+    });
+    expect((await items()).status).toBe(302);
   });
 
   it("refuses a change sent from another site", async () => {

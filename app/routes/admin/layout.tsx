@@ -1,4 +1,4 @@
-import { isRouteErrorResponse, Outlet, useLocation, useRouteError, useRouteLoaderData } from "react-router";
+import { Form, isRouteErrorResponse, Outlet, useLocation, useRouteError, useRouteLoaderData } from "react-router";
 import { WovenMark } from "~/components/public/woven-mark";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can, ROLE_NAMES, type Staff } from "~/lib/roles";
@@ -8,8 +8,8 @@ import "~/styles/staff.css";
 
 /**
  * The staff site's shell: one header and navigation around every staff page. The navigation shows
- * only what the person's roles allow; each page keeps its own gate (requireStaff). Signing in and
- * out is Cloudflare Access's (ADR-0015).
+ * only what the person's roles allow; each page keeps its own gate (requireStaff). Before sign-in
+ * there is just the header (ADR-0016).
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const person = await getStaff(context.get(cloudflareContext).env, request);
@@ -84,7 +84,7 @@ function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNo
     <div className="staff">
       <header className="staff-header">
         <div className="staff-header-inner">
-          <a href="/admin" className="staff-wordmark">
+          <a href={shell ? "/admin" : "/admin/sign-in"} className="staff-wordmark">
             <WovenMark />
             NAISEMA <span>staff</span>
           </a>
@@ -95,9 +95,10 @@ function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNo
                 <summary>Menu</summary>
                 <StaffNav groups={shell.groups} label="Staff menu" />
               </details>
-              <p className="staff-signout">
-                <span className="staff-user">{shell.email}</span> <a href="/cdn-cgi/access/logout">Sign out</a>
-              </p>
+              <Form method="post" action="/admin/sign-out" className="staff-signout">
+                <span className="staff-user">{shell.email}</span>
+                <button type="submit">Sign out</button>
+              </Form>
             </>
           )}
         </div>
