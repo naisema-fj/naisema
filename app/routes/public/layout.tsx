@@ -2,10 +2,8 @@ import { isRouteErrorResponse, Link, Outlet, useLocation } from "react-router";
 import { WovenMark } from "~/components/public/woven-mark";
 import { AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { INFO_PAGES } from "~/lib/info-pages";
-import { LEARNER_PATHS } from "~/lib/learner-progress";
 import type { Route } from "./+types/layout";
 import "~/styles/public.css";
-import { SUBMISSION_TYPES } from "~/lib/submission-fields";
 
 export const handle = { hydrate: false };
 
@@ -72,8 +70,8 @@ function SiteFooter() {
               </li>
             ))}
             <li>
-              <Link reloadDocument to={`/forms/${SUBMISSION_TYPES.enquiry.path}`}>
-                {SUBMISSION_TYPES.enquiry.title}
+              <Link reloadDocument to="/forms/enquiry">
+                Send us a message
               </Link>
             </li>
             <li>
@@ -82,13 +80,13 @@ function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link reloadDocument to={LEARNER_PATHS.home}>
-                Your learning
+              <Link reloadDocument to="/forms/report">
+                Report a problem
               </Link>
             </li>
             <li>
-              <Link reloadDocument to="/report">
-                Report a problem
+              <Link reloadDocument to="/forms/privacy-request">
+                Your information
               </Link>
             </li>
           </ul>

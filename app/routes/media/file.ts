@@ -1,19 +1,24 @@
+import { eq } from "drizzle-orm";
+import { media } from "~db/schema";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { fileDownload, publishableMedia } from "~/lib/media-delivery.server";
-import { PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
+import { downloadName } from "~/lib/media-rules";
+import { mediaIsPublic, serveObject } from "~/lib/media.server";
+import { getStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/file";
 
 /**
- * GET /media/files/:id — a media library PDF, always as a download, sandboxed by its own content
- * security policy so it can never run in the site's origin (docs/phase-1a-defaults.md §1), while a
- * current Rights Record of its own grants Publish.
+ * GET /media/files/:id: audio and video, streamed with byte ranges so players can seek, and
+ * documents as downloads. Public only while a Rights Record of its own grants Publish, asked on
+ * every request; staff on the admin host see any.
  */
-export async function loader({ params, context }: Route.LoaderArgs) {
+export async function loader({ request, params, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
-  const asset = await publishableMedia(getDb(env.DB), params.id);
-  if (asset?.type !== "application/pdf") throw new Response("Not found", { status: 404 });
-  const response = await fileDownload(env, asset, PUBLIC_CACHE_CONTROL);
-  if (!response) throw new Response("Not found", { status: 404 });
-  return response;
+  const db = getDb(env.DB);
+  const row = await db.query.media.findFirst({ where: eq(media.id, params.id) });
+  if (!row || row.kind === "image") throw new Response("Not found", { status: 404 });
+  const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
+  const allowed = onAdminHost ? Boolean(await getStaff(env, request)) : await mediaIsPublic(db, row.id);
+  if (!allowed) throw new Response("Not found", { status: 404 });
+  return serveObject(env, request, row.key, row.contentType, row.kind === "document" ? downloadName(row.filename) : undefined);
 }

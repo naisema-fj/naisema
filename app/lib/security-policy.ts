@@ -7,9 +7,8 @@ import { TURNSTILE_ORIGIN } from "./turnstile";
  * `nonce` is null for a page that ships no client JavaScript: it then allows no scripts at all,
  * which also means a cached public page carries no reusable nonce. A public form (`turnstile`)
  * also loads Cloudflare Turnstile's script and frame, and nothing else (app/lib/turnstile.ts).
- * A page that plays or reads video (`video`) may load media from `blob:` addresses, which is how
- * hls.js hands video to the browser and how a chosen file's length is read before it is uploaded,
- * and media and playlists from the video provider's origin when there is one.
+ * A page that plays or reads video (`video`) may also load media from `blob:` addresses, which is
+ * how a chosen file's length is read before it is uploaded. Video itself comes from this site.
  */
 export function applySecurityHeaders(
   headers: Headers,
@@ -17,8 +16,8 @@ export function applySecurityHeaders(
   {
     allowIndexing,
     turnstile = false,
-    video = null,
-  }: { allowIndexing: boolean; turnstile?: boolean; video?: { origin: string | null } | null },
+    video = false,
+  }: { allowIndexing: boolean; turnstile?: boolean; video?: boolean },
 ) {
   const scripts = [...(nonce ? ["'self'", `'nonce-${nonce}'`] : []), ...(turnstile ? [TURNSTILE_ORIGIN] : [])];
   headers.set(
@@ -29,8 +28,8 @@ export function applySecurityHeaders(
       ...(turnstile ? [`frame-src ${TURNSTILE_ORIGIN}`] : []),
       "style-src 'self'",
       "img-src 'self' data:",
-      ...(video ? [["media-src 'self' blob:", video.origin].filter(Boolean).join(" ")] : []),
-      ["connect-src 'self'", video?.origin].filter(Boolean).join(" "),
+      video ? "media-src 'self' blob:" : "media-src 'self'",
+      "connect-src 'self'",
       "object-src 'none'",
       "base-uri 'none'",
       "form-action 'self'",

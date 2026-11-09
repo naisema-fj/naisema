@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from "vitest";
-import { signToken, verifyToken } from "~/lib/signed-tokens.server";
 import { TURNSTILE_TEST_KEYS } from "~/lib/turnstile";
 import { verifyTurnstile } from "~/lib/turnstile.server";
 
@@ -41,24 +40,5 @@ describe("verifyTurnstile", () => {
     expect(await verifyTurnstile("real-secret", "token", null, async () => new Response("down", { status: 500 }))).toBe(
       false,
     );
-  });
-});
-
-describe("signed tokens", () => {
-  it("give back what they sign, only for the same use and secret", async () => {
-    const token = await signToken("secret", "consent-withdrawal", "record-1");
-
-    expect(token.startsWith("record-1.")).toBe(true);
-    expect(await verifyToken("secret", "consent-withdrawal", token)).toBe("record-1");
-    expect(await verifyToken("secret", "something-else", token)).toBeNull();
-    expect(await verifyToken("other-secret", "consent-withdrawal", token)).toBeNull();
-  });
-
-  it("can't be altered to point at another record", async () => {
-    const token = await signToken("secret", "consent-withdrawal", "record-1");
-
-    expect(await verifyToken("secret", "consent-withdrawal", token.replace("record-1", "record-2"))).toBeNull();
-    expect(await verifyToken("secret", "consent-withdrawal", "record-1")).toBeNull();
-    expect(await verifyToken("secret", "consent-withdrawal", `${token}x`)).toBeNull();
   });
 });

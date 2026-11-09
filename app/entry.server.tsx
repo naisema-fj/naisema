@@ -7,7 +7,6 @@ import { logError } from "~/lib/log.server";
 import { pageHydrates, pagePlaysVideo, type RouteHandle } from "~/lib/route-handle";
 import { createNonce, NonceContext } from "~/lib/security-headers";
 import { applySecurityHeaders } from "~/lib/security-policy";
-import { videoPlaybackOrigin } from "~/lib/video-provider.server";
 
 export default async function handleRequest(
   request: Request,
@@ -46,14 +45,12 @@ export default async function handleRequest(
   // Vite's dev server injects its own inline scripts, so the policy applies to builds only.
   if (!import.meta.env.DEV) {
     const { env } = loadContext.get(cloudflareContext);
-    // Staff pages, and pages that say so (Review Links), are never indexed, whatever the environment.
+    // Staff pages, and pages that say so (previews), are never indexed, whatever the environment.
     const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
     applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
       allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost && leafHandle(routerContext)?.noindex !== true,
       turnstile: leafHandle(routerContext)?.turnstile === true,
-      video: pagePlaysVideo(leafHandle(routerContext), leafData(routerContext))
-        ? { origin: videoPlaybackOrigin(env) }
-        : null,
+      video: pagePlaysVideo(leafHandle(routerContext), leafData(routerContext)),
     });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });

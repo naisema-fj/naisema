@@ -2,79 +2,74 @@ import { Link } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { DateMark, Postmarks } from "~/components/public/postmarks";
 import { TranscriptParagraphs } from "~/components/transcript-paragraphs";
-import { VideoPreview } from "~/components/video-preview";
-import type { PublicArticle } from "~/lib/public.server";
-
-const sameDay = (a: Date | string, b: Date | string) =>
-  new Date(a).toISOString().slice(0, 10) === new Date(b).toISOString().slice(0, 10);
+import type { PublicView } from "~/lib/public-view.server";
 
 /**
- * A published Article, Resource, Episode, Video or Page as a letter: who it is from, when, what it
- * was reviewed for, a Resource's details before its download, a Video's footage and its Learning
- * Layers, the body, and the related items chosen for it.
+ * A published item as a letter: who it is from, when, what it was reviewed for (only the Review
+ * Labels its approvals generate), what its kind adds, the body, and its Topics. Server-rendered,
+ * with no client JavaScript: audio and video use the browser's own players.
  */
-export function ContentLetter({
-  item,
-  playback = null,
-}: {
-  item: PublicArticle;
-  /** A Video's signed playback address, for its page only. */
-  playback?: { src: string; hls: boolean } | null;
-}) {
-  const published = item.firstPublishedAt;
-  const updated = item.lastPublishedAt;
-  const name = item.format.toLowerCase();
+export function ContentLetter({ item }: { item: PublicView }) {
+  const name = item.kindName.toLowerCase();
   return (
     <article className="pane">
       <header className="pane-intro">
         <div className={`pane-head tile-${item.area ?? "none"}`}>
           <h1>{item.title}</h1>
         </div>
-        <p className="lede">{item.summary}</p>
-        <p className="from">
-          <span className="from-label">From</span> {item.credit}
-        </p>
+        {item.summary && <p className="lede">{item.summary}</p>}
+        {item.credit && (
+          <p className="from">
+            <span className="from-label">From</span> {item.credit}
+          </p>
+        )}
       </header>
 
       <Postmarks label={`About this ${name}`}>
-        <li>{item.format}</li>
-        {published && (
+        <li>{item.kindName}</li>
+        {item.publishedAt && (
           <li>
-            <DateMark label="Published" date={published} />
-          </li>
-        )}
-        {published && updated && !sameDay(published, updated) && (
-          <li>
-            <DateMark label="Updated" date={updated} />
+            <DateMark label="Published" date={item.publishedAt} />
           </li>
         )}
       </Postmarks>
 
-      <section className="review-labels" aria-labelledby="reviewed-heading">
-        <h2 id="reviewed-heading" className="review-labels-heading">
-          Review Labels
-        </h2>
-        {item.labels.length ? (
-          <Postmarks label="Review Labels">
-            {item.labels.map((label) => (
-              <li key={label}>{label}</li>
-            ))}
-          </Postmarks>
-        ) : (
-          <p className="no-review">{`This ${name} has none.`}</p>
-        )}
-      </section>
+      {item.kind !== "page" && (
+        <section className="review-labels" aria-labelledby="reviewed-heading">
+          <h2 id="reviewed-heading" className="review-labels-heading">
+            Review Labels
+          </h2>
+          {item.labels.length ? (
+            <Postmarks label="Review Labels">
+              {item.labels.map((label) => (
+                <li key={label}>{label}</li>
+              ))}
+            </Postmarks>
+          ) : (
+            <p className="no-review">{`This ${name} has none.`}</p>
+          )}
+        </section>
+      )}
 
-      {item.resource && <ResourceDetails id={item.id} resource={item.resource} />}
-      {item.video && <StoryVideo title={item.title} video={item.video} playback={playback} />}
+      {item.cover && (
+        <img className="cover" src={item.cover.src} srcSet={item.cover.srcSet} sizes="(min-width: 48rem) 48rem, 100vw" alt={item.cover.alt} />
+      )}
+      {item.resource && <ResourceDetails resource={item.resource} />}
+      {item.video && <StoryVideo title={item.title} video={item.video} />}
       {item.episode && <EpisodePlayer title={item.title} episode={item.episode} />}
       {item.creator && <CreatorDetails creator={item.creator} />}
+      {item.provider && <ProviderDetails provider={item.provider} />}
 
       <div className="pane-body">
         <ArticleBodyView body={item.body} embeds={item.embeds} />
       </div>
 
-      {item.episode && <Transcript paragraphs={item.episode.transcript} />}
+      {item.episode && item.episode.transcript.length > 0 && (
+        <section id="transcript" className="transcript" aria-labelledby="transcript-heading">
+          <h2 id="transcript-heading">Transcript</h2>
+          <TranscriptParagraphs paragraphs={item.episode.transcript} />
+        </section>
+      )}
 
       <footer className="pane-foot">
         {item.topics.length > 0 && (
@@ -90,28 +85,6 @@ export function ContentLetter({
             ))}
           </p>
         )}
-        {item.sources && (
-          <section aria-labelledby="sources-heading">
-            <h2 id="sources-heading">Sources</h2>
-            <p className="sources">{item.sources}</p>
-          </section>
-        )}
-        {item.related.length > 0 && (
-          <section aria-labelledby="related-heading" className="related">
-            <h2 id="related-heading">Related</h2>
-            <ul className="piece-list">
-              {item.related.map((related) => (
-                <li key={related.path}>
-                  <Link reloadDocument to={related.path}>
-                    {related.title}
-                  </Link>
-                  <p>{related.summary}</p>
-                  <p className="list-mark">{related.typeName}</p>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
         {item.area && (
           <p>
             <Link reloadDocument to={`/${item.area}`}>
@@ -119,63 +92,48 @@ export function ContentLetter({
             </Link>
           </p>
         )}
-        {/* Carries the item's id, so the Case knows what it is about (SAFE-01). */}
         <p className="report-problem">
-          <Link reloadDocument to={`/report?item=${item.id}`}>
+          <Link reloadDocument to={`/forms/report?about=${encodeURIComponent(item.path)}`}>
             Report a problem with this {name}
           </Link>
         </p>
       </footer>
-      {/* Counts the view (content_opened, IDs only) even when the page came from the edge cache; no script needed. */}
-      <img src={`/e/opened/${item.id}`} alt="" width={1} height={1} className="beacon" />
     </article>
   );
 }
 
-/**
- * A Video's footage, in its own shape (never cropped), and the Learning Layers that explore its
- * language. Nothing plays until the visitor presses play; a lost address is renewed while they watch.
- */
-function StoryVideo({
-  title,
-  video,
-  playback,
-}: {
-  title: string;
-  video: NonNullable<PublicArticle["video"]>;
-  playback: { src: string; hls: boolean } | null;
-}) {
+/** A Video's footage in its own shape, and the way into its Learning Layer. Nothing plays until pressed. */
+function StoryVideo({ title, video }: { title: string; video: NonNullable<PublicView["video"]> }) {
   return (
     <section className="story-video" aria-labelledby="watch-heading">
       <h2 id="watch-heading" className="visually-hidden">
         Watch
       </h2>
-      {playback ? (
-        <div className={`video-frame video-${video.orientation}`}>
-          <VideoPreview
-            src={playback.src}
-            hls={playback.hls}
-            label={title}
-            className="public-video"
-            aspectRatio={`${video.width} / ${video.height}`}
-            refreshPath={video.playbackPath}
-          />
-        </div>
-      ) : (
-        <p>The video can't be played right now. Please try again later.</p>
-      )}
-      {video.layers.length > 0 && (
+      <div className={`video-frame video-${video.orientation}`}>
+        {/* biome-ignore lint/a11y/useMediaCaption: captions come with its Learning Layer's player, linked below, which has a full transcript. */}
+        <video
+          controls
+          preload="none"
+          playsInline
+          poster={video.poster ?? undefined}
+          className="public-video"
+          aria-label={title}
+          width={video.width}
+          height={video.height}
+        >
+          <source src={video.src} type={video.type} />
+        </video>
+      </div>
+      {video.layer && (
         <section aria-labelledby="explore-heading" className="explore-language">
           <h3 id="explore-heading">Explore the language</h3>
           <ul className="piece-list">
-            {video.layers.map((layer) => (
-              <li key={layer.id}>
-                <Link to={layer.path} reloadDocument>
-                  {layer.title}
-                </Link>
-                <p className="list-mark">{`${layer.level} · ${layer.span}`}</p>
-              </li>
-            ))}
+            <li>
+              <Link to={video.layer.path} reloadDocument>
+                {video.layer.title}
+              </Link>
+              <p className="list-mark">{`${video.layer.level} · Fijian captions, a transcript, word meanings and practice`}</p>
+            </li>
           </ul>
         </section>
       )}
@@ -183,66 +141,39 @@ function StoryVideo({
   );
 }
 
-/**
- * An Episode's native audio player and who is speaking. Nothing plays until the visitor presses
- * play (`preload="none"`), the page has one player, and the transcript below doesn't depend on it.
- */
-function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable<PublicArticle["episode"]> }) {
+/** An Episode's audio, who is speaking, and where else it can be heard. The transcript follows the body. */
+function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable<PublicView["episode"]> }) {
   return (
     <section className="episode" aria-labelledby="listen-heading">
-      {/* A video Episode plays above, as a Video does; an audio one plays here. */}
-      <h2 id="listen-heading">{episode.audioPath ? "Listen" : "Who's speaking"}</h2>
-      {episode.audioPath && (
+      <h2 id="listen-heading">Listen</h2>
+      {episode.audioPath ? (
         // biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the full transcript on this page (WCAG 1.2.1).
         <audio controls preload="none" className="episode-player" aria-label={`Audio of ${title}`}>
           <source src={episode.audioPath} type={episode.audioType} />
           <a href={episode.audioPath}>Open the audio</a>
         </audio>
+      ) : (
+        <p>The recording can't be played right now.</p>
       )}
       <p>
         <a href="#transcript">Read the transcript</a>
       </p>
-      <dl>
-        <dt>Host</dt>
-        <dd>{episode.host}</dd>
-        {episode.guests.length > 0 && (
-          <>
-            <dt>{episode.guests.length === 1 ? "Guest" : "Guests"}</dt>
-            <dd>{episode.guests.join(", ")}</dd>
-          </>
-        )}
-        {episode.music.length > 0 && (
-          <>
-            <dt>Music</dt>
-            <dd>{episode.music.join("; ")}</dd>
-          </>
-        )}
-        {episode.archiveClips.length > 0 && (
-          <>
-            <dt>Archive</dt>
-            <dd>{episode.archiveClips.join("; ")}</dd>
-          </>
-        )}
-        <dt>Recorded</dt>
-        <dd>
-          <DateMark date={episode.recordedOn} />
-        </dd>
-        <dt>Length</dt>
-        <dd>
-          <time dateTime={episode.isoDuration}>{episode.duration}</time>
-        </dd>
-      </dl>
-      {episode.distribution.length > 0 && (
+      {episode.guests && (
+        <dl>
+          <dt>Host and guests</dt>
+          <dd>{episode.guests}</dd>
+        </dl>
+      )}
+      {episode.links.length > 0 && (
         <>
           <h3>Also available on</h3>
           <ul className="distribution">
-            {episode.distribution.map((link, index) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: the links are in the order the editor saved them.
-              <li key={index}>
+            {episode.links.map((link) => (
+              <li key={link.url}>
                 <a href={link.url} rel="external noopener noreferrer">
-                  {link.label}
+                  {link.host}
                 </a>
-                {` (${link.host}, another website)`}
+                {" (another website)"}
               </li>
             ))}
           </ul>
@@ -252,35 +183,21 @@ function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable
   );
 }
 
-/**
- * A Creator Profile's portrait (consented, with its own Rights Record), where they are at a level
- * that can't find their door, what they make, and their free sample (CRE-01).
- */
-function CreatorDetails({ creator }: { creator: NonNullable<PublicArticle["creator"]> }) {
+function CreatorDetails({ creator }: { creator: NonNullable<PublicView["creator"]> }) {
   return (
     <section className="creator" aria-labelledby="creator-heading">
       <h2 id="creator-heading" className="visually-hidden">
         About the creator
       </h2>
-      <img
-        className="portrait"
-        src={creator.portrait.src}
-        srcSet={creator.portrait.srcSet}
-        sizes="(min-width: 40rem) 16rem, 60vw"
-        alt={creator.portrait.alt}
-      />
-      <dl>
-        <dt>Based in</dt>
-        <dd>{creator.location}</dd>
-        {creator.languages.length > 0 && (
-          <>
-            <dt>Languages</dt>
-            <dd>{creator.languages.join(", ")}</dd>
-          </>
-        )}
-        <dt>Works in</dt>
-        <dd>{creator.mediaTypes.join(", ")}</dd>
-      </dl>
+      {creator.portrait && (
+        <img
+          className="portrait"
+          src={creator.portrait.src}
+          srcSet={creator.portrait.srcSet}
+          sizes="(min-width: 40rem) 16rem, 60vw"
+          alt={creator.portrait.alt}
+        />
+      )}
       {creator.sample && (
         <div className="sample">
           <h3>A free sample of their work</h3>
@@ -288,72 +205,102 @@ function CreatorDetails({ creator }: { creator: NonNullable<PublicArticle["creat
             <Link reloadDocument to={creator.sample.path}>
               {creator.sample.title}
             </Link>
-            {` · ${creator.sample.typeName}`}
+            {` · ${creator.sample.kindName}`}
           </p>
           <p>{creator.sample.summary}</p>
         </div>
+      )}
+      {creator.links.length > 0 && (
+        <ul className="distribution">
+          {creator.links.map((link) => (
+            <li key={link.url}>
+              <a href={link.url} rel="external noopener noreferrer">
+                {link.host}
+              </a>
+              {" (another website)"}
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
 }
 
-/** The full transcript, always on the page: the Episode can be read without the player (A11Y-03). */
-function Transcript({ paragraphs }: { paragraphs: NonNullable<PublicArticle["episode"]>["transcript"] }) {
+function ProviderDetails({ provider }: { provider: NonNullable<PublicView["provider"]> }) {
   return (
-    <section id="transcript" className="transcript" aria-labelledby="transcript-heading">
-      <h2 id="transcript-heading">Transcript</h2>
-      <TranscriptParagraphs paragraphs={paragraphs} />
+    <section className="resource-details" aria-labelledby="provider-heading">
+      <h2 id="provider-heading">What they offer</h2>
+      {provider.offerings.length > 0 && (
+        <ul>
+          {provider.offerings.map((offering) => (
+            <li key={offering}>{offering}</li>
+          ))}
+        </ul>
+      )}
+      <dl>
+        <dt>Where</dt>
+        <dd>{provider.location}</dd>
+        {provider.contact && (
+          <>
+            <dt>Getting in touch</dt>
+            <dd>{provider.contact}</dd>
+          </>
+        )}
+      </dl>
+      {provider.website && (
+        <p>
+          <a className="primary-link" href={provider.website.href} rel="external noopener noreferrer">
+            {`Go to ${provider.website.host}`}
+          </a>{" "}
+          (another website)
+        </p>
+      )}
     </section>
   );
 }
 
 /** What a visitor reads before downloading a Resource or following its link (resource behaviour). */
-function ResourceDetails({ id, resource }: { id: string; resource: NonNullable<PublicArticle["resource"]> }) {
+function ResourceDetails({ resource }: { resource: NonNullable<PublicView["resource"]> }) {
   return (
     <section className="resource-details" aria-labelledby="resource-heading">
-      <h2 id="resource-heading">{resource.kind === "file" ? "Before you download" : "Before you go"}</h2>
+      <h2 id="resource-heading">{resource.file ? "Before you download" : "Before you go"}</h2>
       <dl>
-        {resource.kind === "file" ? (
+        {resource.file ? (
           <>
             <dt>File</dt>
-            <dd>{`${resource.fileType}, ${resource.size}`}</dd>
+            <dd>{`${resource.file.type}, ${resource.file.size}`}</dd>
           </>
         ) : (
-          <>
-            <dt>Goes to</dt>
-            <dd>{`${resource.host}, another website`}</dd>
-            <dt>Link last checked</dt>
-            <dd>
-              <DateMark date={resource.checkedOn} />
-            </dd>
-          </>
+          resource.url && (
+            <>
+              <dt>Goes to</dt>
+              <dd>{`${resource.url.host}, another website`}</dd>
+            </>
+          )
         )}
         <dt>Language</dt>
         <dd>{resource.language}</dd>
         <dt>Suitable for</dt>
         <dd>{resource.ageGuidance}</dd>
         <dt>Accessibility</dt>
-        <dd>{resource.accessibility || "Not described yet."}</dd>
+        <dd>{resource.accessibility}</dd>
         <dt>You may</dt>
         <dd>{resource.usageTerms}</dd>
       </dl>
-      {resource.kind === "file" ? (
+      {resource.file ? (
         <p>
-          <a className="primary-link" href={resource.downloadPath}>
-            {`Download (${resource.fileType}, ${resource.size})`}
+          <a className="primary-link" href={resource.file.path}>
+            {`Download (${resource.file.type}, ${resource.file.size})`}
           </a>
         </p>
       ) : (
-        <>
+        resource.url && (
           <p>
-            <a className="primary-link" href={resource.url} rel="external noopener noreferrer">
-              {`Go to ${resource.host}`}
+            <a className="primary-link" href={resource.url.href} rel="external noopener noreferrer">
+              {`Go to ${resource.url.host}`}
             </a>
           </p>
-          <form method="post" action={`/resources/${id}/report-link`} className="report-link">
-            <button type="submit">Report a broken link</button>
-          </form>
-        </>
+        )
       )}
     </section>
   );

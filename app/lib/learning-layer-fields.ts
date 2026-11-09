@@ -1,12 +1,21 @@
-import type { Activity, ActivityProblem } from "./activities";
-import type { Annotation, AnnotationProblem, ContextNote, ExpressionDetails, NoteProblem } from "./annotations";
-import type { LayerFlag } from "./layer-review-rules";
-import type { ReviewType } from "./permissions";
+import { type Activity, type ActivityProblem, activityProblems, countsForCompletion } from "./activities";
+import {
+  type Annotation,
+  type AnnotationProblem,
+  annotationProblems,
+  type ContextNote,
+  type ExpressionDetails,
+  type NoteProblem,
+  noteProblems,
+} from "./annotations";
 import { type Excerpt, formatTimecode, parseTimecode, type Segment, type SegmentProblem } from "./segment-rules";
 import { retokenise } from "./tokens";
 
+/** A Learning Layer's only Content Flag: it needs a Knowledge Holder's approval. */
+export type LayerFlag = "sensitiveCultural";
+
 /**
- * What a Learning Layer Revision holds (ADR-0001, ADR-0006, ADR-0011, docs/phase-1a-defaults.md
+ * What a Learning Layer holds, inside its Video's Revision (ADR-0015) (ADR-0001, ADR-0006, ADR-0011, docs/phase-1a-defaults.md
  * §2): its title and level, the clip it is built on (the whole video or an Excerpt), its Segments
  * with their tokens, its Annotations and cultural or context notes, and a copy of each Expression
  * its Annotations use, so the Revision says exactly what was reviewed, and its Activities, whose
@@ -122,54 +131,43 @@ export function readLayerDetails(
   return { ok: true, details: { title, level: input.level as LayerLevel, flags, excerpt } };
 }
 
+/** A Learning Layer as stored in its Video's Revision. */
+export type LearningLayer = LearningLayerSnapshot;
+
+const counted = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
+
 /**
- * The parts of a Learning Layer each Review Type covers, which its fingerprints are taken over
- * (ADR-0003, ADR-0006). Language review covers the Fijian and English, the Variety taught, the
- * Annotations, the Expressions they use and the Activities' words and answers; cultural review
- * the words, who speaks, which part of the video is used, the Annotations, the cultural and
- * context notes and the Activities' words, which can carry context too; accessibility the
- * captions as timed text, the notes and the Activities, which their text route shows;
- * safeguarding the words, notes, real-world prompts and what is shown; editorial everything.
- * Token IDs aren't covered: they only anchor Annotations. Which Activities are required, and their
- * order, are editorial only: they change no words.
+ * Why a Learning Layer isn't ready for learners, whatever its reviews say: it has no Segments,
+ * text imported as a draft or Segments retimed by an Excerpt change still unchecked, Annotations,
+ * notes or Activities that lost their place, or nothing a learner must do, so it could never be
+ * completed (decision log 1a-13).
  */
-export function learningLayerReviewFields(
-  snapshot: LearningLayerSnapshot,
-  languageVariety: string,
-): Record<ReviewType, unknown> {
-  const words = snapshot.segments.map(({ id, fijian, english }) => ({ id, fijian, english }));
-  // Authoring state, not what a reviewer approves: the vocabulary choice and the check flag.
-  const annotations = snapshot.annotations.map(({ inVocabulary, needsCheck, ...annotation }) => annotation);
-  const { expressions, notes } = snapshot;
-  const activities = snapshot.activities
-    .map(({ required, ...activity }) => activity)
-    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const realWorld = activities.filter((activity) => activity.kind === "real-world");
-  const spoken = snapshot.segments.map(({ id, fijian, english, speaker }) => ({ id, fijian, english, speaker }));
-  const timed = snapshot.segments.map(({ id, startMs, endMs, fijian, english }) => ({
-    id,
-    startMs,
-    endMs,
-    fijian,
-    english,
-  }));
-  return {
-    language: { languageVariety, words, annotations, expressions, activities },
-    cultural: {
-      title: snapshot.title,
-      excerpt: snapshot.excerpt,
-      spoken,
-      annotations,
-      expressions,
-      notes,
-      activities,
-    },
-    editorial: {
-      ...snapshot,
-      segments: snapshot.segments.map(({ draft, retimed, tokens, ...segment }) => segment),
-      annotations,
-    },
-    accessibility: { title: snapshot.title, timed, notes, activities },
-    safeguarding: { title: snapshot.title, excerpt: snapshot.excerpt, spoken, notes, realWorld },
-  };
+export function layerReadinessProblems(layer: LearningLayer): string[] {
+  const problems: string[] = [];
+  const { segments } = layer;
+  if (!segments.length) problems.push("Its Learning Layer has no Segments yet.");
+  const drafts = segments.filter((segment) => segment.draft).length;
+  if (drafts) {
+    problems.push(
+      `${counted(drafts, "Segment is an unreviewed draft", "Segments are unreviewed drafts")}. Check ${drafts === 1 ? "its" : "their"} text in the editor.`,
+    );
+  }
+  const retimed = segments.filter((segment) => segment.retimed).length;
+  if (retimed) {
+    problems.push(
+      `${counted(retimed, "Segment was", "Segments were")} retimed. Check ${retimed === 1 ? "its" : "their"} times in the editor.`,
+    );
+  }
+  const lost =
+    annotationProblems(layer.annotations, segments, new Set(Object.keys(layer.expressions))).length +
+    noteProblems(layer.notes, segments).length;
+  if (lost) {
+    problems.push(`${counted(lost, "Annotation or note needs", "Annotations or notes need")} checking in the editor.`);
+  }
+  const unlinked = activityProblems(layer.activities, segments).filter((problem) => problem.revalidate).length;
+  if (unlinked) problems.push(`${counted(unlinked, "Activity needs", "Activities need")} linking to a Segment again.`);
+  if (!layer.activities.some(countsForCompletion)) {
+    problems.push("No Activity is required, so learners can't complete this Learning Layer.");
+  }
+  return problems;
 }

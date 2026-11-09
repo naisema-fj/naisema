@@ -1,135 +1,81 @@
+import { eq } from "drizzle-orm";
 import { data, Form, redirect } from "react-router";
-import { listArticles } from "~/lib/articles.server";
+import { topic } from "~db/schema";
+import { audit } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { requireEditor } from "~/lib/content.server";
-import { purgePublicPages } from "~/lib/public-cache.server";
-import { TOPIC_DESCRIPTION_LIMIT, TOPIC_NAME_LIMIT } from "~/lib/topics";
-import { createTopic, listTopics, updateTopic } from "~/lib/topics.server";
+import { getDb } from "~/lib/db.server";
+import { slugify } from "~/lib/slug";
+import { requireStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/topics";
 
-export const handle = { hydrate: false };
+/** /admin/topics: the Topics editors file items under, with at most one level of subtopics. */
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const { env } = context.get(cloudflareContext);
+  await requireStaff(env, request, "content.edit");
+  return { topics: await getDb(env.DB).select().from(topic).orderBy(topic.name) };
+}
+
+export async function action({ request, context }: Route.ActionArgs) {
+  const { env } = context.get(cloudflareContext);
+  const actor = await requireStaff(env, request, "content.edit");
+  const db = getDb(env.DB);
+  const form = await request.formData();
+  const name = String(form.get("name") ?? "").trim().slice(0, 100);
+  const parent = String(form.get("parent") ?? "") || null;
+  const slug = slugify(name);
+  if (!slug) return data({ error: "Enter the Topic's name." }, { status: 400 });
+  if (await db.query.topic.findFirst({ where: eq(topic.slug, slug) })) return data({ error: "That Topic already exists." }, { status: 400 });
+  if (parent) {
+    const above = await db.query.topic.findFirst({ where: eq(topic.slug, parent) });
+    if (!above || above.parent) return data({ error: "A subtopic goes under a top-level Topic." }, { status: 400 });
+  }
+  await db.batch([
+    db.insert(topic).values({ slug, name, description: String(form.get("description") ?? "").trim().slice(0, 500), parent }),
+    audit(db, actor.email, "topic.added", { type: "topic", id: slug }),
+  ]);
+  return redirect("/admin/topics");
+}
 
 export function meta() {
   return [{ title: "Topics · NAISEMA staff" }];
 }
 
-export async function loader({ request, context }: Route.LoaderArgs) {
-  const { db } = await requireEditor(context.get(cloudflareContext).env, request);
-  const [topics, items] = await Promise.all([listTopics(db), listArticles(db)]);
-  return {
-    topics: topics.map((topic) => ({
-      ...topic,
-      // A lead feature is chosen from the items tagged with the Topic.
-      candidates: items
-        .filter((item) => item.topicIds.includes(topic.id))
-        .map(({ id, title, typeName }) => ({ id, title, typeName })),
-    })),
-    updated: new URL(request.url).searchParams.get("updated"),
-  };
-}
-
-export async function action({ request, context }: Route.ActionArgs) {
-  const { env } = context.get(cloudflareContext);
-  const { db, actor } = await requireEditor(env, request);
-  const form = await request.formData();
-  if (form.get("intent") === "update") {
-    const id = String(form.get("topicId") ?? "");
-    const result = await updateTopic(db, actor.userId, id, {
-      description: String(form.get("description") ?? ""),
-      parentTopicId: String(form.get("parentTopicId") ?? "") || null,
-      leadItemId: String(form.get("leadItemId") ?? "") || null,
-    });
-    if (!result.ok) return data({ error: null, updateError: { id, message: result.error } }, { status: 400 });
-    await purgePublicPages(env, ["/topics", ...(result.paths ?? [])]);
-    throw redirect(`/admin/topics?updated=${id}`);
-  }
-  const result = await createTopic(db, actor.userId, String(form.get("name") ?? ""));
-  if (!result.ok) return data({ error: result.error, updateError: null }, { status: 400 });
-  await purgePublicPages(env, ["/topics"]);
-  throw redirect("/admin/topics");
-}
-
 export default function Topics({ loaderData, actionData }: Route.ComponentProps) {
-  const { topics, updated } = loaderData;
+  const top = loaderData.topics.filter((row) => !row.parent);
   return (
     <main id="main" className="page">
-      <p>
-        <a href="/admin">Back to staff home</a>
-      </p>
       <h1>Topics</h1>
-      <p>
-        Topics tag Content Items by subject. Each has a page on the public site at /topics/ followed by its address,
-        with its description, a lead feature and its items; a subtopic narrows its broader topic's page.
-      </p>
-
-      {topics.map((topic) => {
-        const error = actionData?.updateError?.id === topic.id ? actionData.updateError.message : null;
-        return (
-          <section key={topic.id} aria-labelledby={`topic-${topic.id}`}>
-            <h2 id={`topic-${topic.id}`}>{topic.name}</h2>
-            <p>
-              Public page: <a href={`/topics/${topic.slug}`}>/topics/{topic.slug}</a>
-            </p>
-            {updated === topic.id && !actionData && <p role="status">Saved.</p>}
-            <Form method="post" className="article-form">
-              <input type="hidden" name="intent" value="update" />
-              <input type="hidden" name="topicId" value={topic.id} />
-              <label htmlFor={`description-${topic.id}`}>Description</label>
-              <textarea
-                id={`description-${topic.id}`}
-                name="description"
-                rows={3}
-                maxLength={TOPIC_DESCRIPTION_LIMIT}
-                defaultValue={topic.description}
-              />
-              <label htmlFor={`parent-${topic.id}`}>Sits under (makes it a subtopic)</label>
-              <select id={`parent-${topic.id}`} name="parentTopicId" defaultValue={topic.parentTopicId ?? ""}>
-                <option value="">Nothing: it is a broader topic</option>
-                {topics
-                  .filter((other) => other.id !== topic.id && !other.parentTopicId)
-                  .map((other) => (
-                    <option key={other.id} value={other.id}>
-                      {other.name}
-                    </option>
-                  ))}
-              </select>
-              <label htmlFor={`lead-${topic.id}`}>Lead feature</label>
-              <select id={`lead-${topic.id}`} name="leadItemId" defaultValue={topic.leadItemId ?? ""}>
-                <option value="">None</option>
-                {topic.candidates.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.title} ({item.typeName})
-                  </option>
+      <ul>
+        {top.map((row) => (
+          <li key={row.slug}>
+            {row.name}
+            <ul>
+              {loaderData.topics
+                .filter((child) => child.parent === row.slug)
+                .map((child) => (
+                  <li key={child.slug}>{child.name}</li>
                 ))}
-              </select>
-              {error && (
-                <p className="field-error" role="alert">
-                  {error}
-                </p>
-              )}
-              <button type="submit">Save {topic.name}</button>
-            </Form>
-          </section>
-        );
-      })}
-      {!topics.length && <p>No topics yet.</p>}
-
-      <h2>Add a topic</h2>
-      <Form method="post">
-        <label htmlFor="topic-name">Name</label>
-        <input
-          id="topic-name"
-          name="name"
-          required
-          maxLength={TOPIC_NAME_LIMIT}
-          aria-describedby={actionData?.error ? "topic-name-error" : undefined}
-        />
-        {actionData?.error && (
-          <p id="topic-name-error" role="alert">
-            {actionData.error}
-          </p>
-        )}
-        <button type="submit">Add topic</button>
+            </ul>
+          </li>
+        ))}
+      </ul>
+      <Form method="post" aria-labelledby="add-heading">
+        <h2 id="add-heading">Add a Topic</h2>
+        {actionData?.error && <p role="alert" className="error">{actionData.error}</p>}
+        <label htmlFor="name">Name</label>
+        <input id="name" name="name" required maxLength={100} />
+        <label htmlFor="description">Description</label>
+        <input id="description" name="description" maxLength={500} />
+        <label htmlFor="parent">Under</label>
+        <select id="parent" name="parent">
+          <option value="">Nothing (a top-level Topic)</option>
+          {top.map((row) => (
+            <option key={row.slug} value={row.slug}>
+              {row.name}
+            </option>
+          ))}
+        </select>
+        <button type="submit">Add</button>
       </Form>
     </main>
   );

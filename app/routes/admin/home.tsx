@@ -1,82 +1,85 @@
 import { cloudflareContext } from "~/lib/cloudflare";
-import { describeRoleAssignment } from "~/lib/role-names";
+import { attention } from "~/lib/dashboard.server";
+import { getDb } from "~/lib/db.server";
+import { formatDay } from "~/lib/rights-rules";
 import { requireStaff } from "~/lib/staff.server";
-import { staffDashboard } from "~/lib/staff-dashboard.server";
-import { staffNav } from "~/lib/staff-nav";
 import type { Route } from "./+types/home";
 
-export const handle = { hydrate: false };
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const { env } = context.get(cloudflareContext);
+  const actor = await requireStaff(env, request);
+  return { name: actor.name, ...(await attention(getDb(env.DB), actor)) };
+}
 
 export function meta() {
-  return [{ title: "NAISEMA staff" }];
+  return [{ title: "Staff home · NAISEMA staff" }];
 }
 
-export async function loader({ request, context }: Route.LoaderArgs) {
-  const { user, actor, db } = await requireStaff(context.get(cloudflareContext).env, request);
-  return {
-    email: user.email,
-    ...(await staffDashboard(db, actor)),
-    roles: actor.roles.map(describeRoleAssignment),
-    groups: staffNav(actor),
-  };
-}
-
-export default function AdminHome({ loaderData }: Route.ComponentProps) {
+export default function StaffHome({ loaderData }: Route.ComponentProps) {
+  const { toReview, ready, waiting, expiring, newMessages } = loaderData;
+  const nothing = !toReview.length && !ready.length && !waiting.length && !expiring.length && !newMessages;
   return (
     <main id="main" className="page">
-      <h1>NAISEMA staff</h1>
-      <p>
-        Signed in as <strong>{loaderData.email}</strong>.
-      </p>
+      <h1>Bula, {loaderData.name}</h1>
       <h2>Needs your attention</h2>
-      {loaderData.attention.length ? (
-        <ul className="staff-attention">
-          {loaderData.attention.map((item) => (
-            <li key={item.key}>
-              <a href={item.href}>
-                <strong>{item.count}</strong> {item.label}
-              </a>
-              {item.detail && <span> {item.detail}</span>}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Nothing needs your attention.</p>
-      )}
-      {loaderData.status.length > 0 && (
-        <>
-          <h2>Platform</h2>
-          <ul className="staff-attention">
-            {loaderData.status.map((line) => (
-              <li key={line.key}>
-                <a href={line.href}>{line.label}</a>: {line.text}
-                {!line.ok && <strong> Needs attention.</strong>}
+      {nothing && <p>Nothing is waiting for you.</p>}
+      {toReview.length > 0 && (
+        <section aria-labelledby="review-heading">
+          <h3 id="review-heading">Waiting for your review</h3>
+          <ul>
+            {toReview.map(({ item, types }) => (
+              <li key={item.id}>
+                <a href={`/admin/items/${item.id}`}>{item.title}</a>: {types.join(", ")}
               </li>
             ))}
           </ul>
-        </>
+        </section>
       )}
-      <h2>Your roles</h2>
-      <ul>
-        {loaderData.roles.map((role) => (
-          <li key={role}>{role}</li>
-        ))}
-      </ul>
-      <h2>Where to go</h2>
-      <div className="staff-links">
-        {loaderData.groups.map((group, index) => (
-          <section key={group.name} aria-labelledby={`links-${index}`}>
-            <h3 id={`links-${index}`}>{group.name}</h3>
-            <ul>
-              {group.items.map((item) => (
-                <li key={item.href}>
-                  <a href={item.href}>{item.label}</a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      {ready.length > 0 && (
+        <section aria-labelledby="ready-heading">
+          <h3 id="ready-heading">Ready to publish</h3>
+          <ul>
+            {ready.map((item) => (
+              <li key={item.id}>
+                <a href={`/admin/items/${item.id}`}>{item.title}</a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {waiting.length > 0 && (
+        <section aria-labelledby="waiting-heading">
+          <h3 id="waiting-heading">Not ready yet</h3>
+          <ul>
+            {waiting.map(({ item, reasons }) => (
+              <li key={item.id}>
+                <a href={`/admin/items/${item.id}`}>{item.title}</a>: {reasons[0]}
+                {reasons.length > 1 && ` (and ${reasons.length - 1} more)`}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {expiring.length > 0 && (
+        <section aria-labelledby="expiring-heading">
+          <h3 id="expiring-heading">Rights running out in the next 30 days</h3>
+          <ul>
+            {expiring.map((record) => (
+              <li key={record.id}>
+                <a href={`/admin/rights/${record.subjectType}/${record.subjectId}`}>{record.holder}</a>: last day{" "}
+                {formatDay(record.expiresOn as string)}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      {newMessages > 0 && (
+        <p>
+          <a href="/admin/submissions">
+            {newMessages === 1 ? "1 message or report" : `${newMessages} messages and reports`} to deal with
+          </a>
+        </p>
+      )}
     </main>
   );
 }

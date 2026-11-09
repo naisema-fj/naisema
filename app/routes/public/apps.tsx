@@ -1,22 +1,16 @@
 import { Link } from "react-router";
 import { FIJIAN_APPS } from "~/lib/fijian-apps";
-import { publicHeaders } from "~/lib/public-cache.server";
-import { SUBMISSION_TYPES } from "~/lib/submission-fields";
+import { FORMS } from "~/lib/forms";
+import { publicHeaders } from "~/lib/http";
 
 export const handle = { hydrate: false };
 export const headers = publicHeaders;
 
 export function meta() {
-  return [
-    { title: "Fijian apps · NAISEMA" },
-    {
-      name: "description",
-      content: "The Fijian dictionary, lessons and community translation, and how to help them grow.",
-    },
-  ];
+  return [{ title: "Fijian apps · NAISEMA" }];
 }
 
-/** The Fijian apps hub: what each app is, where it runs now, what isn't open yet, and how to contribute. */
+/** GET /apps: the Fijian apps on apps.naisema.com, each saying plainly what isn't open yet (PUB-01). */
 export default function Apps() {
   return (
     <main id="main" className="area-page">
@@ -48,11 +42,6 @@ export default function Apps() {
               <p className="not-open">
                 <span className="from-label">Not open yet</span> {app.notYetOpen}
               </p>
-              {app.onNaisema && (
-                <p>
-                  <Link to={app.onNaisema}>Reviewed entries on NAISEMA</Link>
-                </p>
-              )}
               <p>
                 <a href={app.href} rel="noopener">
                   Try the preview on apps.naisema.com
@@ -60,9 +49,9 @@ export default function Apps() {
               </p>
               {app.forms.length > 0 && (
                 <ul aria-label={`Help ${app.name} grow`}>
-                  {app.forms.map((type) => (
-                    <li key={type}>
-                      <Link to={`/forms/${SUBMISSION_TYPES[type].path}`}>{SUBMISSION_TYPES[type].title}</Link>
+                  {app.forms.map((key) => (
+                    <li key={key}>
+                      <Link to={`/forms/${key}`}>{FORMS[key].title}</Link>
                     </li>
                   ))}
                 </ul>

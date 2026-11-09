@@ -1,195 +1,107 @@
-import { and, eq, gt, isNull, sql } from "drizzle-orm";
-import { redirect } from "react-router";
-import { auditEvent, roleAssignment, session as sessionTable, staffSession, user as userTable } from "~db/schema";
-import { recordAudit } from "./audit.server";
-import { type Auth, createAuth, sessionTokenFromSetCookie } from "./auth.server";
-import { type Database, getDb } from "./db.server";
-import { type Actor, can, type RoleAssignment } from "./permissions";
-import { toRoleAssignment } from "./staff-roles.server";
-
-export const ADMIN_PATHS = {
-  home: "/admin",
-  signIn: "/admin/sign-in",
-  twoFactor: "/admin/two-factor",
-  twoFactorSetup: "/admin/two-factor/setup",
-} as const;
-
-/** Sign-in links one address can be sent per window, so nobody can flood a staff inbox. */
-export const MAGIC_LINKS_PER_WINDOW = 3;
-const MAGIC_LINK_WINDOW_MS = 15 * 60 * 1000;
-
-/** Wrong codes allowed per session before the session is ended (ADR-0013). */
-export const MAX_TWO_FACTOR_ATTEMPTS = 5;
-
-type SignedIn = {
-  auth: Auth;
-  db: Database;
-  user: { id: string; email: string; name: string; twoFactorEnabled?: boolean | null };
-  sessionId: string;
-  verified: boolean;
-};
-
-export async function getSignedIn(env: Env, request: Request): Promise<SignedIn | null> {
-  const auth = createAuth(env, request);
-  const result = await auth.api.getSession({ headers: request.headers });
-  if (!result) return null;
-  const db = getDb(env.DB);
-  const staffState = await db.select().from(staffSession).where(eq(staffSession.sessionId, result.session.id)).get();
-  return { auth, db, user: result.user, sessionId: result.session.id, verified: Boolean(staffState?.verifiedAt) };
-}
-
-export async function activeRoles(db: Database, userId: string): Promise<RoleAssignment[]> {
-  const rows = await db
-    .select()
-    .from(roleAssignment)
-    .where(and(eq(roleAssignment.userId, userId), isNull(roleAssignment.revokedAt)));
-  return rows.map(toRoleAssignment);
-}
+import { eq } from "drizzle-orm";
+import { staff as staffTable } from "~db/schema";
+import { getDb } from "./db.server";
+import { can, type Permission, type Staff } from "./roles";
 
 /**
- * Emails a sign-in link to a current staff member. Silently does nothing for unknown addresses,
- * accounts with no active role, or addresses that have hit the throttle, so the reply never
- * reveals which of those applied. Each link sent is audited, which is also the throttle's count.
+ * Who a staff request comes from (ADR-0015). Cloudflare Access stands in front of the admin host
+ * and lets through only the addresses on its allowlist, after an emailed one-time code. Every
+ * request then carries Access's signed JWT, which is checked here against the team's public keys
+ * and the application's audience tag before the `staff` table is asked for that person's roles.
+ * So a request that slipped past Access, or a person removed from the table, gets nothing.
+ *
+ * Development and tests have no Access: there, and only there, the X-Dev-Staff-Email header names
+ * the person.
  */
-export async function requestStaffSignInLink(env: Env, request: Request, email: string): Promise<void> {
-  const db = getDb(env.DB);
-  const member = await db.select({ id: userTable.id }).from(userTable).where(eq(userTable.email, email)).get();
-  if (!member || (await activeRoles(db, member.id)).length === 0) return;
 
-  const recent = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(auditEvent)
-    .where(
-      and(
-        eq(auditEvent.action, "magic_link.sent"),
-        eq(auditEvent.objectId, member.id),
-        gt(auditEvent.createdAt, new Date(Date.now() - MAGIC_LINK_WINDOW_MS)),
-      ),
-    )
-    .get();
-  if ((recent?.count ?? 0) >= MAGIC_LINKS_PER_WINDOW) return;
+type AccessEnv = Env & { ACCESS_TEAM_DOMAIN?: string; ACCESS_AUD?: string };
 
-  await createAuth(env, request).api.signInMagicLink({
-    body: { email, callbackURL: ADMIN_PATHS.home },
-    headers: request.headers,
-  });
-  await recordAudit(db, { actorId: null, action: "magic_link.sent", objectType: "user", objectId: member.id });
-}
+export const DEV_STAFF_HEADER = "X-Dev-Staff-Email";
 
-type StaffStep = "signIn" | "twoFactorSetup" | "twoFactor" | "done";
+type Jwk = JsonWebKey & { kid: string };
+let keyCache: { team: string; fetchedAt: number; keys: Map<string, CryptoKey> } | null = null;
 
-/** Where a person is in the staff sign-in sequence: email link, then enrolment, then a code. */
-export function staffStep(signedIn: SignedIn | null): StaffStep {
-  if (!signedIn) return "signIn";
-  if (!signedIn.user.twoFactorEnabled) return "twoFactorSetup";
-  if (!signedIn.verified) return "twoFactor";
-  return "done";
-}
-
-const STEP_PATHS: Record<StaffStep, string> = {
-  signIn: ADMIN_PATHS.signIn,
-  twoFactorSetup: ADMIN_PATHS.twoFactorSetup,
-  twoFactor: ADMIN_PATHS.twoFactor,
-  done: ADMIN_PATHS.home,
+const base64url = (text: string) => {
+  const padded = text.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(text.length / 4) * 4, "=");
+  return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
 };
 
-/** For the sign-in step pages: continue only if this is the person's current step, else send them on. */
-export async function requireStaffStep(env: Env, request: Request, step: Exclude<StaffStep, "signIn" | "done">) {
-  const signedIn = await getSignedIn(env, request);
-  const current = staffStep(signedIn);
-  if (current !== step || !signedIn) throw redirect(STEP_PATHS[current]);
-  return signedIn;
-}
-
-/**
- * The staff gate. Returns an Actor whose roles are active only because this session has
- * signed in by magic link AND passed the two-factor check; otherwise redirects to the next step.
- */
-export async function requireStaff(env: Env, request: Request) {
-  const signedIn = await getSignedIn(env, request);
-  const current = staffStep(signedIn);
-  if (current !== "done" || !signedIn) throw redirect(STEP_PATHS[current]);
-
-  const actor: Actor = { userId: signedIn.user.id, roles: await activeRoles(signedIn.db, signedIn.user.id) };
-  if (!can(actor, { action: "staffArea.enter" })) {
-    await recordAudit(signedIn.db, {
-      actorId: signedIn.user.id,
-      action: "staff_area.refused",
-      objectType: "session",
-      objectId: signedIn.sessionId,
-    });
-    throw new Response("This account has no staff access.", { status: 403 });
+async function accessKeys(team: string, refresh: boolean) {
+  if (!refresh && keyCache?.team === team && Date.now() - keyCache.fetchedAt < 3_600_000) return keyCache.keys;
+  const response = await fetch(`https://${team}/cdn-cgi/access/certs`);
+  if (!response.ok) throw new Error(`Access keys unavailable (${response.status})`);
+  const { keys } = (await response.json()) as { keys: Jwk[] };
+  const imported = new Map<string, CryptoKey>();
+  for (const key of keys) {
+    imported.set(
+      key.kid,
+      await crypto.subtle.importKey("jwk", key, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]),
+    );
   }
-  return { ...signedIn, actor };
+  keyCache = { team, fetchedAt: Date.now(), keys: imported };
+  return imported;
 }
 
-export type CodeCheck =
-  | { ok: true; headers: Headers }
-  | { ok: false; reason: "invalid"; attemptsLeft: number }
-  | { ok: false; reason: "locked" };
-
-/**
- * Checks an authenticator code for the current session and records the outcome. Also completes
- * enrolment: on a user's first successful code Better Auth replaces the session, so the new
- * session is the one marked as verified and its cookie is returned to be sent to the browser.
- */
-export async function checkStaffCode(signedIn: SignedIn, request: Request, code: string): Promise<CodeCheck> {
-  const { auth, db, user, sessionId } = signedIn;
-  let headers: Headers;
+/** The email address a valid Access JWT vouches for, or null. */
+export async function verifyAccessJwt(token: string, team: string, audience: string, now = Date.now()) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
   try {
-    ({ headers } = await auth.api.verifyTOTP({ headers: request.headers, body: { code }, returnHeaders: true }));
+    const header = JSON.parse(new TextDecoder().decode(base64url(parts[0]))) as { alg?: string; kid?: string };
+    const claims = JSON.parse(new TextDecoder().decode(base64url(parts[1]))) as {
+      aud?: string | string[];
+      email?: string;
+      exp?: number;
+      nbf?: number;
+      iss?: string;
+    };
+    if (header.alg !== "RS256" || !header.kid) return null;
+    let key = (await accessKeys(team, false)).get(header.kid);
+    // Access rotates its keys; a key we haven't seen yet means fetching them again, once.
+    if (!key) key = (await accessKeys(team, true)).get(header.kid);
+    if (!key) return null;
+    const signed = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
+    if (!(await crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, base64url(parts[2]), signed))) return null;
+    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    if (!audiences.includes(audience)) return null;
+    if (claims.iss !== `https://${team}`) return null;
+    if (!claims.exp || claims.exp * 1000 < now) return null;
+    if (claims.nbf && claims.nbf * 1000 > now + 60_000) return null;
+    return typeof claims.email === "string" ? claims.email.toLowerCase() : null;
   } catch {
-    const staffState = await db
-      .insert(staffSession)
-      .values({ sessionId, userId: user.id, failedAttempts: 1 })
-      .onConflictDoUpdate({
-        target: staffSession.sessionId,
-        set: { failedAttempts: sql`${staffSession.failedAttempts} + 1` },
-      })
-      .returning()
-      .get();
-    await recordAudit(db, {
-      actorId: user.id,
-      action: "two_factor.failed",
-      objectType: "session",
-      objectId: sessionId,
-    });
-    if (staffState.failedAttempts >= MAX_TWO_FACTOR_ATTEMPTS) {
-      await db.delete(sessionTable).where(eq(sessionTable.id, sessionId));
-      await recordAudit(db, {
-        actorId: user.id,
-        action: "session.ended_after_failed_codes",
-        objectType: "session",
-        objectId: sessionId,
-      });
-      return { ok: false, reason: "locked" };
-    }
-    return { ok: false, reason: "invalid", attemptsLeft: MAX_TWO_FACTOR_ATTEMPTS - staffState.failedAttempts };
+    return null;
   }
-
-  const verifiedSessionId = (await sessionIdForToken(db, sessionTokenFromSetCookie(headers))) ?? sessionId;
-  await db
-    .insert(staffSession)
-    .values({ sessionId: verifiedSessionId, userId: user.id, verifiedAt: new Date(), failedAttempts: 0 })
-    .onConflictDoUpdate({ target: staffSession.sessionId, set: { verifiedAt: new Date(), failedAttempts: 0 } });
-  await recordAudit(db, {
-    actorId: user.id,
-    action: user.twoFactorEnabled ? "two_factor.verified" : "two_factor.enrolled",
-    objectType: "session",
-    objectId: verifiedSessionId,
-  });
-  return { ok: true, headers };
 }
 
-async function sessionIdForToken(db: Database, token: string | null): Promise<string | null> {
-  if (!token) return null;
-  const row = await db.select({ id: sessionTable.id }).from(sessionTable).where(eq(sessionTable.token, token)).get();
-  return row?.id ?? null;
+/** The email address the request is from, as Access (or, in development, the header) says. */
+async function requestEmail(env: AccessEnv, request: Request) {
+  if (env.ENVIRONMENT === "development" && !env.ACCESS_TEAM_DOMAIN) {
+    return request.headers.get(DEV_STAFF_HEADER)?.trim().toLowerCase() || null;
+  }
+  const token = request.headers.get("Cf-Access-Jwt-Assertion");
+  if (!token || !env.ACCESS_TEAM_DOMAIN || !env.ACCESS_AUD) return null;
+  return verifyAccessJwt(token, env.ACCESS_TEAM_DOMAIN, env.ACCESS_AUD);
 }
 
-/** Turns a code check into the page's response: on to staff home, back to sign-in, or an error to show. */
-export function respondToCodeCheck(result: CodeCheck) {
-  if (result.ok) throw redirect(ADMIN_PATHS.home, { headers: result.headers });
-  if (result.reason === "locked") throw redirect(ADMIN_PATHS.signIn);
-  return `That code didn't match. ${result.attemptsLeft} attempts left.`;
+/** The signed-in staff member, or null if the request isn't from an active one. */
+export async function getStaff(env: Env, request: Request): Promise<Staff | null> {
+  const email = await requestEmail(env, request);
+  if (!email) return null;
+  const row = await getDb(env.DB).query.staff.findFirst({ where: eq(staffTable.email, email) });
+  if (!row?.active) return null;
+  return { email: row.email, name: row.name, roles: row.roles, languageVariety: row.languageVariety };
+}
+
+/** The signed-in staff member, who must hold `permission` when one is named; otherwise a 403. */
+export async function requireStaff(env: Env, request: Request, permission?: Permission): Promise<Staff> {
+  const person = await getStaff(env, request);
+  if (!person) {
+    throw new Response("Your address isn't on NAISEMA's staff list. Ask an administrator to add you.", {
+      status: 403,
+    });
+  }
+  if (permission && !can(person, permission)) {
+    throw new Response("Your roles don't allow this page.", { status: 403 });
+  }
+  return person;
 }

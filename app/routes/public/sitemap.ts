@@ -1,48 +1,23 @@
-import { PRIMARY_AREAS } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { itemPath } from "~/lib/content-rules";
+import { publicItems } from "~/lib/content.server";
 import { getDb } from "~/lib/db.server";
-import { providerPath } from "~/lib/listing-fields";
-import { providerSitemap } from "~/lib/providers.server";
-import { itemPath } from "~/lib/public.server";
-import { PUBLIC_CACHE_CONTROL } from "~/lib/public-cache.server";
-import { sitemapEntries } from "~/lib/search.server";
+import { PRIMARY_AREAS } from "~/lib/areas";
 import type { Route } from "./+types/sitemap";
 
-const escapeXml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 
-/**
- * The sitemap: the homepage, the six areas, Connect's listings and listed Providers, and every item
- * in the public index (§5, app/lib/search.server.ts).
- */
+/** GET /sitemap.xml: the areas and every eligible item, from the same rule the pages use. */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
-  const db = getDb(context.get(cloudflareContext).env.DB);
-  const [items, providers] = await Promise.all([sitemapEntries(db), providerSitemap(db)]);
+  const items = await publicItems(getDb(context.get(cloudflareContext).env.DB), { limit: 2000 });
   const urls = [
-    { loc: `${origin}/` },
-    ...PRIMARY_AREAS.map((area) => ({ loc: `${origin}/${area}` })),
-    { loc: `${origin}/apps` },
-    ...["/connect/offerings", "/connect/providers", "/connect/creators"].map((path) => ({ loc: `${origin}${path}` })),
-    ...providers.map((row) => ({
-      loc: `${origin}${providerPath(row.slug)}`,
-      lastmod: row.updatedAt.toISOString().slice(0, 10),
-    })),
-    ...items.map((item) => ({
-      loc: `${origin}${itemPath(item)}`,
-      lastmod: item.publishedAt ? new Date(item.publishedAt).toISOString().slice(0, 10) : undefined,
-    })),
+    `${origin}/`,
+    ...PRIMARY_AREAS.map((area) => `${origin}/${area}`),
+    ...items.map(({ item }) => `${origin}${itemPath(item)}`),
   ];
-  const body = [
-    '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...urls.map(
-      (url) =>
-        `<url><loc>${escapeXml(url.loc)}</loc>${"lastmod" in url && url.lastmod ? `<lastmod>${url.lastmod}</lastmod>` : ""}</url>`,
-    ),
-    "</urlset>",
-  ].join("\n");
-  return new Response(body, {
-    headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": PUBLIC_CACHE_CONTROL },
-  });
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+    .map((url) => `  <url><loc>${escape(url)}</loc></url>`)
+    .join("\n")}\n</urlset>\n`;
+  return new Response(body, { headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-cache" } });
 }

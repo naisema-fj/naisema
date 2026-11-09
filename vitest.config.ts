@@ -14,27 +14,19 @@ export default defineConfig({
       // Tests must never reach real Cloudflare resources, whatever the config says.
       remoteBindings: false,
       miniflare: {
-        // A second, empty database: an exported Learning Layer is imported into it (tests/integration/learning-layer-export.test.ts).
-        d1Databases: ["IMPORT_DB"],
         bindings: {
           TEST_MIGRATIONS: await readD1Migrations(path.join(import.meta.dirname, "migrations")),
-          BETTER_AUTH_SECRET: "test-only-secret-at-least-32-characters-long",
-          PUBLIC_ORIGINS: "https://naisema.test",
           // Cloudflare's always-passing Turnstile test secret (app/lib/turnstile.ts).
           TURNSTILE_SECRET_KEY: "1x0000000000000000000000000000000AA",
-          // Signs the Stream webhook deliveries tests send (app/routes/public/stream-webhook.ts).
-          STREAM_WEBHOOK_SECRET: "test-stream-webhook-secret",
-          // Encrypts the backups tests take (app/lib/backup-crypto.ts): 32 bytes of 7, base64.
-          BACKUP_ENCRYPTION_KEY: "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=",
+          PREVIEW_SECRET: "test-only-preview-secret",
         },
       },
     })),
   ],
   test: {
     include: ["tests/integration/**/*.test.ts", "tests/unit/**/*.test.ts"],
-    // The longest journeys (a Case through triage and appeal, a Revision through every review gate)
-    // make dozens of requests to the built Worker: about 2 s locally, but over the 5 s default on a
-    // slow CI runner. A test that hangs still fails, at 20 s.
+    // The longest journeys (a Revision through every review gate) make dozens of requests to the
+    // built Worker, which can pass the 5 s default on a slow CI runner. A test that hangs still fails, at 20 s.
     testTimeout: 20_000,
     setupFiles: ["./tests/integration/apply-migrations.ts"],
   },
