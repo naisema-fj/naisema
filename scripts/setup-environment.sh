@@ -209,12 +209,12 @@ if [[ "$TARGET" == "staging" ]]; then
   WORKER="naisema-staging"; DATABASE="naisema-v1-staging"; BUCKET="naisema-staging-media"
   PUBLIC_HOST="staging.naisema.com"; ADMIN_HOST="admin.staging.naisema.com"
   OLD_QUEUE="naisema-staging-upload-scans"
-  DB_PLACEHOLDER="REPLACE_WITH_STAGING_DATABASE_ID"; AUD_PLACEHOLDER="REPLACE_WITH_STAGING_ACCESS_AUD"
+  DB_PLACEHOLDER="REPLACE_WITH_STAGING_DATABASE_ID"
 else
   WORKER="naisema-production"; DATABASE="naisema-v1-production"; BUCKET="naisema-production-media"
   PUBLIC_HOST="naisema.com"; ADMIN_HOST="admin.naisema.com"
   OLD_QUEUE="naisema-production-upload-scans"
-  DB_PLACEHOLDER="REPLACE_WITH_PRODUCTION_DATABASE_ID"; AUD_PLACEHOLDER="REPLACE_WITH_PRODUCTION_ACCESS_AUD"
+  DB_PLACEHOLDER="REPLACE_WITH_PRODUCTION_DATABASE_ID"
 fi
 ACCOUNT_ID=$(grep -Eo '"account_id": *"[0-9a-f]{32}"' "$CONFIG" | grep -Eo '[0-9a-f]{32}' | head -n1)
 
@@ -260,7 +260,7 @@ ask_until() {
   done
 }
 
-TOTAL_STAGES=11
+TOTAL_STAGES=10
 
 banner "NAISEMA v1: set up $TARGET"
 
@@ -291,6 +291,7 @@ if ! gh auth status >/dev/null 2>&1; then
   gh auth login
 fi
 printf '  %s✓%s GitHub: signed in\n' "$GREEN" "$RESET"
+note "naisema.com must be an active zone in this Cloudflare account, for $PUBLIC_HOST and $ADMIN_HOST."
 pause "Press Enter for the next stage."
 
 # ── 2 ─────────────────────────────────────────────────────────────────────
@@ -353,27 +354,6 @@ fi
 pause "Press Enter for the next stage."
 
 # ── 5 ─────────────────────────────────────────────────────────────────────
-stage "Staff sign-in: Cloudflare Access"
-say "Cloudflare Access puts an emailed-code sign-in in front of $ADMIN_HOST, letting in"
-say "only the staff addresses you list. The app checks Access's signature on every request."
-note "naisema.com must already be an active zone in this Cloudflare account (runbook, custom domains)."
-open_url "https://one.dash.cloudflare.com/"
-step "If Zero Trust asks you to choose a team name and plan, choose a team name and the Free plan."
-step "Settings → Authentication → Login methods: make sure One-time PIN is added."
-step "Access → Applications → Add an application → Self-hosted."
-step "Application domain: $ADMIN_HOST. Session duration: 24 hours."
-step "Add a policy: Action Allow, Include → Emails → each staff member's address."
-step "Save the application, then open it: its Overview shows the Application Audience (AUD) Tag."
-note "Dashboard names move around; if a menu differs, look for the same words nearby."
-ask_until ACCESS_TEAM_DOMAIN "Your team domain (like naisema.cloudflareaccess.com):" '^[a-z0-9-]+\.cloudflareaccess\.com$' "your-team.cloudflareaccess.com"
-ask_until ACCESS_AUD "The application's AUD tag:" '^[0-9a-f]{64}$' "64 letters and digits (0-9, a-f)"
-write_env ACCESS_TEAM_DOMAIN "$ACCESS_TEAM_DOMAIN"
-write_env ACCESS_AUD "$ACCESS_AUD"
-fill_config "REPLACE_WITH_ACCESS_TEAM_DOMAIN" "$ACCESS_TEAM_DOMAIN"
-fill_config "$AUD_PLACEHOLDER" "$ACCESS_AUD"
-pause "Press Enter for the next stage."
-
-# ── 6 ─────────────────────────────────────────────────────────────────────
 stage "Bot check on the forms: Turnstile"
 if [[ "$TARGET" == "staging" ]]; then
   say "Staging uses Cloudflare's Turnstile test keys, which always pass, so there is no widget to make."
@@ -392,7 +372,7 @@ else
 fi
 pause "Press Enter for the next stage."
 
-# ── 7 ─────────────────────────────────────────────────────────────────────
+# ── 6 ─────────────────────────────────────────────────────────────────────
 stage "Preview links and form notifications"
 existing_secrets=$(wrangler secret list --name "$WORKER" 2>/dev/null || true)
 if [[ "$existing_secrets" == *'"PREVIEW_SECRET"'* ]] \
@@ -409,9 +389,10 @@ write_env NOTIFY_EMAILS "$NOTIFY_EMAILS"
 add_deploy_secret NOTIFY_EMAILS "$NOTIFY_EMAILS"
 pause "Press Enter for the next stage."
 
-# ── 8 ─────────────────────────────────────────────────────────────────────
+# ── 7 ─────────────────────────────────────────────────────────────────────
 stage "Sending email from no-reply@naisema.com"
-say "Form notifications are sent through Cloudflare Email Service, from no-reply@naisema.com."
+say "Staff sign-in links and form notifications are sent through Cloudflare Email Service,"
+say "from no-reply@naisema.com. Without it, nobody can sign in to the staff site."
 if [[ "$(_existing EMAIL_DOMAIN_READY || true)" == "yes" ]]; then
   note "Done on an earlier run: nothing to do."
 else
@@ -425,7 +406,7 @@ else
 fi
 pause "Press Enter for the next stage."
 
-# ── 9 ─────────────────────────────────────────────────────────────────────
+# ── 8 ─────────────────────────────────────────────────────────────────────
 stage "GitHub: deploys from CI"
 say "From now on GitHub deploys $TARGET itself. It needs the account ID, a $TARGET environment,"
 say "and a Cloudflare API token that only that environment can read."
@@ -457,7 +438,7 @@ fi
 unset CLOUDFLARE_API_TOKEN
 pause "Press Enter for the next stage."
 
-# ── 10 ────────────────────────────────────────────────────────────────────
+# ── 9 ────────────────────────────────────────────────────────────────────
 stage "Database tables, first administrator and first deploy"
 step "Creating the tables in $DATABASE..."
 wrangler d1 migrations apply DB --remote --env "$TARGET" --config "$CONFIG"
@@ -467,7 +448,7 @@ ask ADMIN_NAME "Their name:"
 write_env ADMIN_EMAIL "$ADMIN_EMAIL"
 write_env ADMIN_NAME "$ADMIN_NAME"
 node scripts/grant-staff.mjs "$TARGET" "$ADMIN_EMAIL" "$ADMIN_NAME" admin,editor
-warn "Make sure $ADMIN_EMAIL is in the Access policy from stage 5, or they can't reach the staff site."
+note "They sign in at https://$ADMIN_HOST/admin/sign-in with that address, and get a link by email."
 if confirm "Build and deploy $TARGET now, from this computer?"; then
   CLOUDFLARE_ENV="$TARGET" pnpm build >/dev/null
   wrangler deploy --secrets-file "$SECRETS_FILE"
@@ -483,21 +464,22 @@ if confirm "Build and deploy $TARGET now, from this computer?"; then
     SKIPPED+=("https://$PUBLIC_HOST/health didn't answer ok yet; try it again in a few minutes")
     warn "/health didn't answer ok yet. Try it again in a few minutes."
   fi
-  location=$(curl -sS -o /dev/null -w '%{redirect_url}' "https://$ADMIN_HOST/admin" || true)
-  if [[ "$location" == *cloudflareaccess.com* ]]; then
-    printf '  %s✓%s %s sends visitors to Access to sign in\n' "$GREEN" "$RESET" "$ADMIN_HOST"
+  location=$(curl -sS -o /dev/null -w '%{redirect_url}' "https://$ADMIN_HOST/admin/items" || true)
+  if [[ "$location" == *"/admin/sign-in"* ]]; then
+    printf '  %s✓%s %s asks visitors to sign in\n' "$GREEN" "$RESET" "$ADMIN_HOST"
   else
-    SKIPPED+=("Check that $ADMIN_HOST asks for the Access sign-in (stage 5)")
-    warn "$ADMIN_HOST didn't send us to the Access sign-in. Check the Access application in stage 5."
+    SKIPPED+=("Check that https://$ADMIN_HOST/admin/items asks you to sign in")
+    warn "$ADMIN_HOST didn't send us to its sign-in page. Check the deploy above."
   fi
+  say "Now sign in: open https://$ADMIN_HOST/admin/sign-in and ask for a link for $ADMIN_EMAIL."
 else
   SKIPPED+=("First deploy: merge the wrangler.jsonc pull request (stage 11), then set the secrets with pnpm wrangler secret put")
 fi
 pause "Press Enter for the last stage."
 
-# ── 11 ────────────────────────────────────────────────────────────────────
+# ── 10 ────────────────────────────────────────────────────────────────────
 stage "Save the settings in the repository"
-say "$CONFIG now holds $TARGET's database ID and Access settings. None of them is secret."
+say "$CONFIG now holds $TARGET's database ID. It isn't secret."
 say "They go in through a pull request, so every later deploy from GitHub uses them."
 git --no-pager diff --stat -- "$CONFIG"
 if git diff --quiet -- "$CONFIG"; then
@@ -506,7 +488,7 @@ elif confirm "Open a pull request with these $CONFIG changes?"; then
   branch="setup/$TARGET-$(date +%Y%m%d)"
   git switch -c "$branch"
   git add "$CONFIG"
-  git commit -m "Set the $TARGET database and Cloudflare Access settings (scripts/setup-environment.sh)"
+  git commit -m "Set the $TARGET database in wrangler.jsonc (scripts/setup-environment.sh)"
   git push -u origin "$branch"
   gh pr create --repo "$REPO" --fill --base main
 else

@@ -18,7 +18,7 @@ function routingPath(pathname: string): string | null {
   }
 }
 
-/** Paths that exist only on the staff admin host, which Cloudflare Access guards (ADR-0015). */
+/** Paths that exist only on the staff admin host, where staff sign in (ADR-0016). */
 const isAdminPath = (path: string) => path === "/admin" || path.startsWith("/admin/") || path === "/admin.data";
 
 /**

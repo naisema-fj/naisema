@@ -6,11 +6,11 @@ How to run, deploy, recover and look after NAISEMA v1 (ADR-0015). The reasons ar
 
 There is one Cloudflare Worker (React Router 8) serving two hosts:
 - the public site, `naisema.com`
-- the staff site, `admin.naisema.com`, behind Cloudflare Access
+- the staff site, `admin.naisema.com`, where staff sign in with an emailed link (ADR-0016)
 
-Storage is one D1 database (nine tables, `db/schema.ts`) and one R2 bucket (`naisema-<env>-media`). The bucket holds media under `media/`, Rights Record evidence under `evidence/` and weekly exports under `backups/`.
+Storage is one D1 database (eleven tables, `db/schema.ts`) and one R2 bucket (`naisema-<env>-media`). The bucket holds media under `media/`, Rights Record evidence under `evidence/` and weekly exports under `backups/`.
 
-The Worker also uses Cloudflare Images (re-encoding images on delivery), Email Service (form notifications), Turnstile and a rate limit (public forms). There are no crons, queues or containers.
+The Worker also uses Cloudflare Images (re-encoding images on delivery), Email Service (staff sign-in links and form notifications), Turnstile and a rate limit (public forms). There are no crons, queues or containers.
 
 ## Run locally
 
@@ -22,7 +22,7 @@ pnpm dev
 ```
 
 - The public site is at `http://localhost:5173` and the staff site at `http://admin.localhost:5173/admin`.
-- There is no Cloudflare Access locally. Send your address in the `X-Dev-Staff-Email` header, for example with a browser extension that sets request headers. Only `ENVIRONMENT = "development"` with no Access settings accepts the header (`app/lib/staff.server.ts`).
+- Sign in at `http://admin.localhost:5173/admin/sign-in`. Nothing is emailed locally, so the page shows the sign-in link itself. Tests can also name a staff member with the `X-Dev-Staff-Email` header, which only development accepts (`app/lib/staff.server.ts`).
 
 ## Checks
 
@@ -42,13 +42,7 @@ pnpm test:e2e --trace off
 
 1. **D1:** `pnpm wrangler d1 create naisema-v1-staging --location oc`. Put its ID in `wrangler.jsonc` under `env.staging`. v1 starts from migration 0000 on a fresh database, so don't reuse a Phase 1a database.
 2. **R2:** `pnpm wrangler r2 bucket create naisema-staging-media --location oc`. It stays private: the Worker serves files itself.
-3. **Cloudflare Access:** in Zero Trust, add a self-hosted application for `admin.staging.naisema.com`:
-   - Use the One-time PIN (email code) login.
-   - Add a policy allowing only the staff addresses.
-   - Put the team domain (`<team>.cloudflareaccess.com`) in `ACCESS_TEAM_DOMAIN` and the application's Audience (AUD) tag in `ACCESS_AUD`, in `wrangler.jsonc`.
-
-   Every staff request is then checked twice: Access lets the address in, and the Worker checks Access's signed JWT and the `staff` table.
-4. **Secrets:**
+3. **Secrets:**
    ```bash
    pnpm wrangler secret put TURNSTILE_SECRET_KEY --env staging
    pnpm wrangler secret put PREVIEW_SECRET --env staging
@@ -57,18 +51,18 @@ pnpm test:e2e --trace off
    - `PREVIEW_SECRET` is a long random string.
    - `NOTIFY_EMAILS` is the comma-separated addresses that hear about new enquiries and offers.
    - Production also needs its real Turnstile site key in `wrangler.jsonc`.
-5. **Email Service:** verify `naisema.com` as a sending domain, so `no-reply@naisema.com` can send.
-6. **The first administrator:**
+4. **Email Service:** verify `naisema.com` as a sending domain, so `no-reply@naisema.com` can send. Staff can't sign in without it.
+5. **The first administrator:**
    ```bash
    pnpm staff:grant staging founder@example.org "Name" admin,editor
    ```
-   Add later staff at `/admin/staff` (audited), and to the Access allowlist.
-7. **GitHub:**
+   They sign in at `https://admin.staging.naisema.com/admin/sign-in`. Add later staff at `/admin/staff` (audited).
+6. **GitHub:**
    - Set the repository variable `CLOUDFLARE_ACCOUNT_ID`.
    - Give the `staging` and `production` environments `CLOUDFLARE_API_TOKEN`: Workers deploy, D1 edit and R2 edit for that environment only.
    - Give `production` a required reviewer.
-8. **Uptime:** in UptimeRobot (free), check `https://naisema.com/` and `https://naisema.com/health` every 5 minutes. Email the technical owner (ADR-0012). `/health` answers `ok` only after reading D1.
-9. **Billing:** set Cloudflare billing notifications at 50% and 80% of AUD 100 a month.
+7. **Uptime:** in UptimeRobot (free), check `https://naisema.com/` and `https://naisema.com/health` every 5 minutes. Email the technical owner (ADR-0012). `/health` answers `ok` only after reading D1.
+8. **Billing:** set Cloudflare billing notifications at 50% and 80% of AUD 100 a month.
 
 ## Deploy
 
@@ -85,10 +79,11 @@ pnpm test:e2e --trace off
 
 ## Staff sign-in and roles
 
-- Cloudflare Access decides who reaches the admin host. The `staff` table decides what they may do (`app/lib/roles.ts`).
-- To stop someone, remove them from the Access policy **and** untick them at `/admin/staff`. Either alone is enough to lock them out.
-- **Sign out:** `/cdn-cgi/access/logout`.
-- Access's session length is set on the Access application (24 hours is a good start).
+- **Signing in (ADR-0016):** staff type their address at `/admin/sign-in` and get a link by email. It works once, for 15 minutes, and opens a 14-day session. Only addresses on the staff list get a link, and the page says the same thing either way.
+- **Roles:** the `staff` table decides what each person may do (`app/lib/roles.ts`).
+- **To stop someone:** tick "No longer works on NAISEMA" at `/admin/staff`. That signs them out everywhere at once.
+- **Sign out:** the button at the top of every staff page.
+- **Two-factor:** anyone who can read a staff member's email can sign in as them, so ask every staff member to turn on two-factor for that email account.
 
 ## Publishing, in one paragraph
 
@@ -156,7 +151,7 @@ Before launch, restore staging once from Time Travel and once from an export, an
 
 ## Incidents
 
-1. **Contain:** withdraw the item, or the Rights Record. Either takes effect on the next request. For a compromised staff account, remove it from Access and untick it at `/admin/staff`.
+1. **Contain:** withdraw the item, or the Rights Record. Either takes effect on the next request. For a compromised staff account, tick "No longer works on NAISEMA" at `/admin/staff`, which signs it out everywhere, and have them secure their email account.
 2. **Keep the evidence:** export the database (`pnpm db:export production`) and note the audit events (`/admin/audit`).
 3. **Assess what was exposed, and tell the privacy contact.** They decide on notification duties.
 4. **Recover** from Time Travel if data was damaged, then write down what happened and what changes.

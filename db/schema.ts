@@ -15,14 +15,14 @@ import type { PermittedUse } from "../app/lib/rights-rules";
 import type { Role } from "../app/lib/roles";
 
 /**
- * The v1 data model (ADR-0015): nine tables. Content is a Content Item with write-once Revisions;
+ * The v1 data model (ADR-0015, ADR-0016): eleven tables. Content is a Content Item with write-once Revisions;
  * Review Approvals and Rights Records decide, on every request, whether a Revision is public
  * (ADR-0003, ADR-0007). A Video's Learning Layer lives inside its Revision.
  */
 
 const createdAt = () => integer("created_at", { mode: "timestamp_ms" }).notNull().default(sql`(unixepoch() * 1000)`);
 
-/** People who work on the admin host, behind Cloudflare Access. Their email is what Access vouches for. */
+/** People who work on the admin host. Only these addresses can ask for a sign-in link (ADR-0016). */
 export const staff = sqliteTable("staff", {
   email: text("email").primaryKey(),
   name: text("name").notNull(),
@@ -212,4 +212,32 @@ export const auditEvent = sqliteTable(
     createdAt: createdAt(),
   },
   (table) => [index("audit_subject").on(table.subjectType, table.subjectId)],
+);
+
+/**
+ * A sign-in link emailed to a staff member (ADR-0016). Only a hash of its token is kept, it works
+ * once, and it lasts 15 minutes.
+ */
+export const signInLink = sqliteTable(
+  "sign_in_link",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    email: text("email").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    usedAt: integer("used_at", { mode: "timestamp_ms" }),
+    createdAt: createdAt(),
+  },
+  (table) => [index("sign_in_link_email").on(table.email, table.createdAt)],
+);
+
+/** A signed-in staff member's session, named by a hash of its cookie. Signing out deletes it. */
+export const staffSession = sqliteTable(
+  "staff_session",
+  {
+    idHash: text("id_hash").primaryKey(),
+    email: text("email").notNull(),
+    expiresAt: integer("expires_at", { mode: "timestamp_ms" }).notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index("staff_session_email").on(table.email)],
 );

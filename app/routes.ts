@@ -29,10 +29,13 @@ export default [
   // A public Video's Learning Layer, for the player's tracks and help.
   route("videos/:itemId/captions/:language", "routes/public/captions.ts"),
   route("videos/:itemId/english/:segmentId", "routes/public/english-line.ts"),
-  // Staff tools, served only on the admin host behind Cloudflare Access (workers/app.ts, ADR-0015).
+  // Staff tools, served only on the admin host; staff sign in with an emailed link (ADR-0016).
   ...prefix("admin", [
     layout("routes/admin/layout.tsx", [
       index("routes/admin/home.tsx"),
+      route("sign-in", "routes/admin/sign-in.tsx"),
+      route("sign-in/link", "routes/admin/sign-in-link.tsx"),
+      route("sign-out", "routes/admin/sign-out.ts"),
       route("items", "routes/admin/items.tsx"),
       route("items/:id", "routes/admin/item.tsx"),
       route("items/:id/layer", "routes/admin/layer.tsx"),

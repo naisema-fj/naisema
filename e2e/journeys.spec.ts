@@ -23,10 +23,15 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   await expectNoAxeViolations(page);
 
   const steps = page.getByRole("navigation", { name: "Steps", exact: true });
+  // The player's progress appears once its script has started. Touching the page before then is
+  // undone when the script takes over, so each step waits for it before using the player.
+  const playerReady = () =>
+    expect(page.getByRole("complementary", { name: "Your progress" }).getByRole("status")).toBeVisible();
   await steps.getByRole("link", { name: /English and context support/ }).click();
   await expect(page.getByRole("heading", { name: "Step 4 of 8: English and context support" })).toBeVisible();
   await expect(page.locator(".transcript-english").first()).toHaveText("Hello there");
   await expect(page.getByText("Markets open early on Saturday mornings.")).toBeVisible();
+  await playerReady();
   await page.getByRole("button", { name: "ika", exact: true }).click();
   await expect(page.getByRole("dialog", { name: "Meaning of ika" })).toContainText("fish, at the market stall");
   await page.keyboard.press("Escape");
@@ -34,6 +39,7 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
 
   await steps.getByRole("link", { name: /Respond/ }).click();
   await expect(page.getByRole("heading", { name: /Step 7 of 8/ })).toBeVisible();
+  await playerReady();
   // A wrong answer still counts as trying it: right answers aren't needed to complete.
   await page.getByRole("radio", { name: "Taro" }).check();
   await page.getByRole("button", { name: "Check my answer" }).click();
@@ -91,4 +97,22 @@ test.describe("the staff site", () => {
     await expect(page.getByRole("heading", { name: "Learning Layer for Talanoa at the market" })).toBeVisible();
     await expect(page.getByRole("textbox", { name: "Title" })).toHaveValue("Greetings at the market");
   });
+});
+
+test("a staff member signs in with an emailed link and signs out", async ({ page }) => {
+  await page.goto(`${ADMIN}/admin/items`);
+  await expect(page.getByRole("heading", { name: "Sign in to NAISEMA staff" })).toBeVisible();
+  await expectNoAxeViolations(page);
+  await page.getByLabel("Your email address").fill(EDITOR);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+  await expectNoAxeViolations(page);
+  // Development sends no email, so the page offers the link itself.
+  await page.getByRole("link", { name: "open the sign-in link" }).click();
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByRole("heading", { name: "Bula, E2E Editor" })).toBeVisible();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page.getByRole("heading", { name: "Sign in to NAISEMA staff" })).toBeVisible();
+  await page.goto(`${ADMIN}/admin`);
+  await expect(page.getByRole("heading", { name: "Sign in to NAISEMA staff" })).toBeVisible();
 });

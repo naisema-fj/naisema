@@ -1,7 +1,7 @@
 /**
  * What staff may upload (TECH-02, ADR-0015): an allowlist checked before an upload starts, and a
  * check that the file's first bytes are what its name and type claim. Everything else is refused.
- * Only staff upload, behind Cloudflare Access, so there is no quarantine or virus scan in v1.
+ * Only signed-in staff upload, so there is no quarantine or virus scan in v1.
  * Shared by the media library and Rights Record evidence.
  */
 

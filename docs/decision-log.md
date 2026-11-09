@@ -193,6 +193,9 @@ The founder decided to launch now, with video Learn, on a rewrite to the simples
   - the Vosa dictionary pages
 - **Second copy of video masters (#64):** with clips of two minutes or less, the founder keeps the original files outside Cloudflare (the NAISEMA Drive) as part of uploading them. That settles #64 by process.
 
+- **Staff sign-in (9 November 2026):** the founder found Cloudflare Access too complicated and chose a plain emailed sign-in link (ADR-0016). Staff are asked to turn on two-factor for the email account they sign in with.
+- **Component approvals (#3):** Cloudflare Access is no longer used, so it is no longer on the list to approve.
+
 ## Agreed amendments to the Founding Developer Agreement / MOU
 
 1. **§3 scope:** "NAISEMA Overall Web App PRD v5.0 (28 September 2026), Phase 1a as defined in ADR-0002, together with ADRs 0001 onward." Phase 1b needs a separate written change note.

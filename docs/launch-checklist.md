@@ -9,11 +9,10 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 - [ ] Cloudflare Workers paid plan active; account holder recorded in `docs/handover/vendors-and-accounts.md`.
 - [ ] D1 databases `naisema-v1-staging` and `naisema-v1-production` created fresh (the v1 schema starts again at migration 0000), with their IDs set in `wrangler.jsonc`.
 - [ ] R2 buckets `naisema-staging-media` and `naisema-production-media` created.
-- [ ] Cloudflare Access application on `admin.staging.naisema.com` and `admin.naisema.com`, with an email one-time-code login and an allowlist of staff addresses. Its team domain and audience tag set as `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`.
-- [ ] The first administrator added with `pnpm staff:grant <env> <email> "<Name>" admin,editor`; everyone else at `/admin/staff`, and on the Access allowlist.
+- [ ] The first administrator added with `pnpm staff:grant <env> <email> "<Name>" admin,editor`; everyone else at `/admin/staff`. Everyone turns on two-factor for the email account they sign in with.
 - [ ] Real Turnstile keys: `TURNSTILE_SITE_KEY` var and `TURNSTILE_SECRET_KEY` secret.
 - [ ] `PREVIEW_SECRET` set (signs preview links for Knowledge Holders), and `NOTIFY_EMAILS` (who hears about new forms).
-- [ ] Email Service sends from `no-reply@naisema.com`, and a form notification arrives in a real inbox.
+- [ ] Email Service sends from `no-reply@naisema.com`: a staff sign-in link and a form notification each arrive in a real inbox.
 - [ ] Buttondown's embed form address set as `NEWSLETTER_FORM_URL`.
 - [ ] UptimeRobot (free) checks `https://naisema.com/` and `/health` every 5 minutes and emails the technical owner.
 - [ ] Cloudflare billing alerts at 50% and 80% of AUD 100 a month.
@@ -32,7 +31,7 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 
 - [ ] `main` is green in CI and staging has deployed from it.
 - [ ] Smoke test on staging, on a phone:
-  - sign in through Access
+  - sign in with the emailed link
   - publish a reviewed item
   - submit a form and receive its notification email
   - play a Learning Layer through all eight stages
