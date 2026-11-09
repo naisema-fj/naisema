@@ -36,10 +36,13 @@ export async function readPreviewToken(
 ): Promise<{ ok: true; revisionId: string; expiresAt: Date } | { ok: false; reason: "invalid" | "expired" }> {
   const [revisionId, expires, signature] = token.split(".");
   if (!revisionId || !expires || !signature || !/^\d+$/.test(expires)) return { ok: false, reason: "invalid" };
-  const expected = toBase64url(await crypto.subtle.sign("HMAC", await key(secret), encoder.encode(`${revisionId}.${expires}`)));
+  const expected = toBase64url(
+    await crypto.subtle.sign("HMAC", await key(secret), encoder.encode(`${revisionId}.${expires}`)),
+  );
   if (expected.length !== signature.length) return { ok: false, reason: "invalid" };
   let difference = 0;
-  for (let index = 0; index < expected.length; index++) difference |= expected.charCodeAt(index) ^ signature.charCodeAt(index);
+  for (let index = 0; index < expected.length; index++)
+    difference |= expected.charCodeAt(index) ^ signature.charCodeAt(index);
   if (difference) return { ok: false, reason: "invalid" };
   if (Number(expires) < now) return { ok: false, reason: "expired" };
   return { ok: true, revisionId, expiresAt: new Date(Number(expires)) };

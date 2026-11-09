@@ -1,9 +1,9 @@
 import { inArray } from "drizzle-orm";
 import { media, topic } from "~db/schema";
-import { embeddedItemIds } from "./article-body";
 import { AREA_NAMES, isPrimaryArea } from "./areas";
-import { itemPath, KINDS, reviewLabels } from "./content-rules";
+import { embeddedItemIds } from "./article-body";
 import { type PublicItem, publicItemsById } from "./content.server";
+import { itemPath, KINDS, reviewLabels } from "./content-rules";
 import type { Database } from "./db.server";
 import { languageName } from "./language-variety";
 import { LAYER_LANGUAGE_VARIETY, LAYER_LEVELS } from "./learning-layer-fields";
@@ -68,16 +68,16 @@ export async function publicView(db: Database, found: PublicItem) {
   const mediaIds = revision.mediaIds;
   const [files, topics, embedded] = await Promise.all([
     mediaIds.length ? db.select().from(media).where(inArray(media.id, mediaIds)) : Promise.resolve([]),
-    revision.topics.length
-      ? db.select().from(topic).where(inArray(topic.slug, revision.topics))
-      : Promise.resolve([]),
+    revision.topics.length ? db.select().from(topic).where(inArray(topic.slug, revision.topics)) : Promise.resolve([]),
     publicItemsById(db, [...embeddedItemIds(revision.body), ...(fields.sampleItemId ? [fields.sampleItemId] : [])]),
   ]);
   const file = (id: string | undefined) => (id ? files.find((row) => row.id === id) : undefined);
   const embeds = Object.fromEntries(
     [...embedded.entries()].map(([id, shown]) => [id, { title: shown.revision.title, href: itemPath(shown.item) }]),
   );
-  const languageNameShown = languageName(LAYER_LANGUAGE_VARIETY);
+  // A language approval is for one Language Variety, which its label names in full.
+  const languageNameShown =
+    LAYER_LANGUAGE_VARIETY === "standard-fijian" ? "Standard Fijian" : languageName(LAYER_LANGUAGE_VARIETY);
   const audio = file(fields.audioMediaId);
   const document = file(fields.fileMediaId);
   const footage = file(fields.videoMediaId);
@@ -98,7 +98,11 @@ export async function publicView(db: Database, found: PublicItem) {
     embeds,
     topics: topics.map((row) => ({ slug: row.slug, name: row.name })),
     cover: fields.coverMediaId
-      ? { src: imagePath(fields.coverMediaId), srcSet: srcSet(fields.coverMediaId), alt: file(fields.coverMediaId)?.alt ?? "" }
+      ? {
+          src: imagePath(fields.coverMediaId),
+          srcSet: srcSet(fields.coverMediaId),
+          alt: file(fields.coverMediaId)?.alt ?? "",
+        }
       : null,
     episode:
       item.kind === "episode"

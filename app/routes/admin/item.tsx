@@ -1,20 +1,8 @@
 import { data, Form, redirect } from "react-router";
-import { topic } from "~db/schema";
 import { BodyEditor } from "~/components/body-editor";
-import { type ArticleBody, parseArticleBody } from "~/lib/article-body";
 import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
+import { type ArticleBody, parseArticleBody } from "~/lib/article-body";
 import { cloudflareContext } from "~/lib/cloudflare";
-import {
-  CONTENT_FLAGS,
-  FLAG_NAMES,
-  isContentFlag,
-  itemPath,
-  KINDS,
-  type KindFields,
-  REVIEW_TYPE_NAMES,
-  type ReviewType,
-  reviewStanding,
-} from "~/lib/content-rules";
 import {
   itemForStaff,
   mayEdit,
@@ -26,11 +14,23 @@ import {
   saveRevision,
   unpublish,
 } from "~/lib/content.server";
+import {
+  CONTENT_FLAGS,
+  FLAG_NAMES,
+  isContentFlag,
+  itemPath,
+  KINDS,
+  type KindFields,
+  REVIEW_TYPE_NAMES,
+  type ReviewType,
+  reviewStanding,
+} from "~/lib/content-rules";
 import { getDb } from "~/lib/db.server";
 import { listMedia } from "~/lib/media.server";
 import { previewToken } from "~/lib/preview.server";
 import { can } from "~/lib/roles";
 import { requireStaff } from "~/lib/staff.server";
+import { topic } from "~db/schema";
 import type { Route } from "./+types/item";
 
 const MEDIA_KIND_OF = { audio: "audio", image: "image", video: "video", document: "document" } as const;
@@ -41,7 +41,10 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   const db = getDb(env.DB);
   const found = await itemForStaff(db, params.id);
   if (!found) throw new Response("Not found", { status: 404 });
-  if (!mayEdit(actor, found.item.kind) && !(["editorial", "language", "knowledge-holder", "safeguarding"] as const).some((type) => mayReview(actor, type)))
+  if (
+    !mayEdit(actor, found.item.kind) &&
+    !(["editorial", "language", "knowledge-holder", "safeguarding"] as const).some((type) => mayReview(actor, type))
+  )
     throw new Response("Your roles don't include this item.", { status: 403 });
   const [files, topics, published] = await Promise.all([
     listMedia(db),
@@ -73,7 +76,10 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       publishes: can(actor, "content.publish"),
       rights: can(actor, "rights.manage"),
     },
-    origin: new URL(request.url).origin.replace(`//${env.ADMIN_HOSTNAME}`, `//${env.ADMIN_HOSTNAME.replace(/^admin\./, "")}`),
+    origin: new URL(request.url).origin.replace(
+      `//${env.ADMIN_HOSTNAME}`,
+      `//${env.ADMIN_HOSTNAME.replace(/^admin\./, "")}`,
+    ),
   };
 }
 
@@ -109,7 +115,11 @@ export async function action({ params, request, context }: Route.ActionArgs) {
           type: field("type") as ReviewType,
           decision: field("decision") === "approved" ? "approved" : "changes-requested",
           notes: field("notes"),
-          knowledgeHolder: { name: field("holderName"), how: field("holderHow"), conditions: field("holderConditions") },
+          knowledgeHolder: {
+            name: field("holderName"),
+            how: field("holderHow"),
+            conditions: field("holderConditions"),
+          },
         });
         return redirect(`/admin/items/${params.id}`);
       }
@@ -118,7 +128,13 @@ export async function action({ params, request, context }: Route.ActionArgs) {
         return redirect(`/admin/items/${params.id}?published=1`);
       case "withdraw":
       case "archive":
-        await unpublish(db, actor, params.id, field("intent") === "archive" ? "archived" : "withdrawn", field("reason"));
+        await unpublish(
+          db,
+          actor,
+          params.id,
+          field("intent") === "archive" ? "archived" : "withdrawn",
+          field("reason"),
+        );
         return redirect(`/admin/items/${params.id}`);
       case "preview": {
         if (!can(actor, "content.edit")) throw new Refused("Only editors share previews.", 403);
@@ -154,7 +170,9 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
         {item.state === "published" && (
           <>
             {" · "}
-            <a href={`${loaderData.origin}${loaderData.publicPath}`}>Published{isPublishedVersion ? "" : " (an earlier version)"}</a>
+            <a href={`${loaderData.origin}${loaderData.publicPath}`}>
+              Published{isPublishedVersion ? "" : " (an earlier version)"}
+            </a>
           </>
         )}
         {item.state === "withdrawn" && " · Withdrawn"}
@@ -251,7 +269,9 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
                     <>
                       <label htmlFor={`holder-name-${entry.type}`}>Knowledge Holder's name</label>
                       <input id={`holder-name-${entry.type}`} name="holderName" maxLength={200} />
-                      <label htmlFor={`holder-how-${entry.type}`}>How they approved (in person, by phone, by email...)</label>
+                      <label htmlFor={`holder-how-${entry.type}`}>
+                        How they approved (in person, by phone, by email...)
+                      </label>
                       <input id={`holder-how-${entry.type}`} name="holderHow" maxLength={300} />
                       <label htmlFor={`holder-conditions-${entry.type}`}>Their conditions, if any</label>
                       <input id={`holder-conditions-${entry.type}`} name="holderConditions" maxLength={1000} />
@@ -291,7 +311,13 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
                 <div key={spec.name}>
                   <label htmlFor={id}>{spec.label}</label>
                   {spec.hint && <p className="hint">{spec.hint}</p>}
-                  <input id={id} name={id} type={spec.type === "url" ? "url" : "text"} defaultValue={value} maxLength={500} />
+                  <input
+                    id={id}
+                    name={id}
+                    type={spec.type === "url" ? "url" : "text"}
+                    defaultValue={value}
+                    maxLength={500}
+                  />
                 </div>
               );
             if (spec.type === "textarea")
@@ -335,7 +361,12 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
               <legend>Topics</legend>
               {topics.map((row) => (
                 <label key={row.slug} className="checkbox">
-                  <input type="checkbox" name="topics" value={row.slug} defaultChecked={latest.topics.includes(row.slug)} />{" "}
+                  <input
+                    type="checkbox"
+                    name="topics"
+                    value={row.slug}
+                    defaultChecked={latest.topics.includes(row.slug)}
+                  />{" "}
                   {row.name}
                 </label>
               ))}
@@ -348,4 +379,3 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
     </main>
   );
 }
-

@@ -40,8 +40,8 @@ export default function Newsletter({ loaderData }: Route.ComponentProps) {
           </>
         ) : (
           <p className="not-open">
-            <span className="from-label">Not open yet</span> The newsletter starts soon. Until then, new pieces appear on
-            the home page.
+            <span className="from-label">Not open yet</span> The newsletter starts soon. Until then, new pieces appear
+            on the home page.
           </p>
         )}
       </article>

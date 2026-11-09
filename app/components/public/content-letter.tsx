@@ -52,7 +52,13 @@ export function ContentLetter({ item }: { item: PublicView }) {
       )}
 
       {item.cover && (
-        <img className="cover" src={item.cover.src} srcSet={item.cover.srcSet} sizes="(min-width: 48rem) 48rem, 100vw" alt={item.cover.alt} />
+        <img
+          className="cover"
+          src={item.cover.src}
+          srcSet={item.cover.srcSet}
+          sizes="(min-width: 48rem) 48rem, 100vw"
+          alt={item.cover.alt}
+        />
       )}
       {item.resource && <ResourceDetails resource={item.resource} />}
       {item.video && <StoryVideo title={item.title} video={item.video} />}

@@ -33,10 +33,7 @@ export async function uploadFile(
     throw new Refused("Your roles don't allow uploading.", 403);
   }
   const size = Number(request.headers.get("Content-Length") ?? "0");
-  const declared = checkDeclared(
-    { name: facts.name, type: request.headers.get("Content-Type") ?? "", size },
-    purpose,
-  );
+  const declared = checkDeclared({ name: facts.name, type: request.headers.get("Content-Type") ?? "", size }, purpose);
   if (!declared.ok) throw new Refused(declared.error, 415);
   if (!request.body) throw new Refused("That file is empty.");
   const id = crypto.randomUUID();

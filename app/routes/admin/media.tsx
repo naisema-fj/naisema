@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { acceptedExtensions, checkDeclared, formatBytes } from "~/lib/media-rules";
 import { listMedia } from "~/lib/media.server";
-import { formatTimecode } from "~/lib/segment-rules";
-import type { RouteHandle } from "~/lib/route-handle";
+import { acceptedExtensions, checkDeclared, formatBytes } from "~/lib/media-rules";
 import { can } from "~/lib/roles";
+import type { RouteHandle } from "~/lib/route-handle";
+import { formatTimecode } from "~/lib/segment-rules";
 import { requireStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/media";
 
@@ -65,7 +66,8 @@ function Uploader({ accept }: { accept: string }) {
     if (!file) return setStatus("Choose a file first.");
     const declared = checkDeclared(file, "media");
     if (!declared.ok) return setStatus(declared.error);
-    if (file.type.startsWith("image/") && !alt.trim()) return setStatus("Describe the image for people who can't see it.");
+    if (file.type.startsWith("image/") && !alt.trim())
+      return setStatus("Describe the image for people who can't see it.");
     setBusy(true);
     setStatus(`Uploading ${file.name}…`);
     try {
@@ -114,7 +116,7 @@ export default function Media({ loaderData }: Route.ComponentProps) {
       <Uploader accept={loaderData.accept} />
       <h2 id="files-heading">Files</h2>
       {files.length ? (
-        <div className="table-scroll" role="region" aria-labelledby="files-heading" tabIndex={0}>
+        <TableScroll label="Media files">
           <table>
             <caption className="visually-hidden">Media files, newest first</caption>
             <thead>
@@ -130,7 +132,9 @@ export default function Media({ loaderData }: Route.ComponentProps) {
               {files.map((file) => (
                 <tr key={file.id}>
                   <td>
-                    <a href={file.kind === "image" ? `/media/images/${file.id}/640` : `/media/files/${file.id}`}>{file.filename}</a>
+                    <a href={file.kind === "image" ? `/media/images/${file.id}/640` : `/media/files/${file.id}`}>
+                      {file.filename}
+                    </a>
                   </td>
                   <td>{KIND_NAMES[file.kind]}</td>
                   <td>{formatBytes(file.bytes)}</td>
@@ -148,7 +152,7 @@ export default function Media({ loaderData }: Route.ComponentProps) {
               ))}
             </tbody>
           </table>
-        </div>
+        </TableScroll>
       ) : (
         <p>Nothing uploaded yet.</p>
       )}

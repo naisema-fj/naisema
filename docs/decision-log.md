@@ -188,7 +188,7 @@ The founder decided to launch now, with video Learn, on a rewrite to the simples
   - the encrypted backup, the deletion ledger and the restore lock
   - the in-app monitor and the cost report
   - the exports screens, bulk actions, the schedule page and staff search
-  - several Learning Layers per Video, Excerpts, and fingerprint carry-forward
+  - several Learning Layers per Video, and fingerprint carry-forward
   - Analytics Engine events
   - the Vosa dictionary pages
 - **Second copy of video masters (#64):** with clips of two minutes or less, the founder keeps the original files outside Cloudflare (the NAISEMA Drive) as part of uploading them. That settles #64 by process.

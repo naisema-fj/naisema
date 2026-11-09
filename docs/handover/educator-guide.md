@@ -1,30 +1,30 @@
 # Educator authoring guide
 
-For Educators. This guide takes you from a Video to a Learning Layer that is submitted for review. It uses the staff site as it looks today, and names each page and button as the screen shows it. You do not need to type any commands.
+For Educators. This guide takes you from a clip to a Learning Layer that is ready for review, on the v1 staff site (ADR-0015). It names each page and button as the screen shows it. You don't need to type any commands, apart from the one that prepares a clip.
 
-A Learning Layer is the teaching that sits on top of a Video: **Segments** (short stretches of the video with the Fijian words and an English translation), **Annotations** (what particular words mean), **Activities** (practice for learners) and the **Completion Rule** (what a learner must do to finish). Learners see it only after it has been reviewed and published. You never publish; editors do.
+A Learning Layer is the teaching on top of a Video:
+- **Segments**: short stretches of the video, with the Fijian words and an English translation
+- **Annotations**: what particular words mean
+- **Activities**: practice for learners
+- **The Completion Rule**: what a learner must do to finish
 
-Your role decides what you see. You can open only the Videos and Learning Layers an editor has assigned you to.
+Learners see a Learning Layer only after it has been reviewed and published. You never publish; editors do.
 
-## Open a Video
+## Prepare and upload the clip
 
-1. Sign in to the staff site the same way as in the admin guide (`docs/handover/admin-guide.md`, "Sign in").
-2. Press **Learning Layers** in the menu. The page lists **Learning Layers assigned to you** and, below them, **Videos you can add Learning Layers to**.
-3. Press the Video's title. The page is called **Learning Layers on** and the Video's name.
+1. Keep the original file in the NAISEMA Drive.
+2. Make a copy that plays everywhere: H.264, 720p, two minutes at most, under 95 MB. The technical owner can do this for you, with the command in the runbook ("Media").
+3. Sign in (`docs/handover/admin-guide.md`, "Sign in"), open **Media library**, choose the file and press **Upload**. Its length and shape are read as it uploads.
 
-If both lists say **None yet.**, ask an editor to assign you. An editor does this with **Assign an Educator** on the Video's page or on a Learning Layer's page.
+## Make the Video
 
-## Add a Learning Layer
-
-1. On **Learning Layers on** the Video, find **Add a Learning Layer**.
-2. Fill in **Title**, choose a **Level** (Beginner, Intermediate or Advanced), and say what it is **Built on**: the whole video, or an Excerpt with an **In time** and **Out time** such as `0:10.000` and `0:45.500`.
-3. Press **Add the Learning Layer**. The editor opens. The language is Standard Fijian.
-
-The first time you open the editor, the **Preview** shows the video. If it says the video can't be previewed yet, the video is still being processed. Wait a few minutes and reload.
+1. Open **Content**. Under **Add something**, choose "Video in Learn", type a title, and press **Add and start writing**.
+2. Choose the clip under **Footage (MP4, H.264)**, add a summary, and press **Save as version N**.
+3. Press **Learning Layer**. The editor opens. The language is Standard Fijian.
 
 ## The editor
 
-The page has the video **Preview** on one side and the form on the other. Everything you change stays on the page until you press **Save a new revision** at the bottom. Each save makes a new revision and the earlier ones are kept, so nothing is lost.
+The page has the video **Preview** on one side and the form on the other. Everything you change stays on the page until you press **Save a new revision** at the bottom. Each save makes a new version of the Video, and the earlier ones are kept, so nothing is lost. A new version needs its reviews again.
 
 Under **Show as** you can look at the preview as **Landscape** or **Vertical (phone)**. **Playhead** shows where the video is.
 
@@ -90,43 +90,39 @@ For the video itself, use **Replay** on Segments, and the caption text and annot
 
 If a heading says **N things to fix**, **Annotations and notes to check** or **Activities to check**, the page lists what is wrong, with links to the field. Fix these before you save. Some problems stop the save, and the page shows the same list again with links to the fields.
 
-## Submit for review
+## When it's ready for review
 
-1. Press **Save a new revision**. The page says **Saved as revision N.**
-2. Press **Review and publishing for revision N** near the top.
-3. Under **Review and publishing**, the section **Before revision N can be published** lists what is missing. A Segment still marked as an unreviewed draft, a retimed Segment, an Annotation that lost its place and no required Activity all show here in plain words. You can submit with these open, but the revision cannot be published until they are fixed, so clear them first.
-4. Press **Submit revision N for review**. The page says **Submitted for review.**
+1. Press **Save a new revision**, then **Back to** the Video.
+2. **Where it stands** lists, in plain words, what is still missing. That includes a Segment still marked as an unreviewed draft, a retimed Segment, an Annotation that lost its place, or no required Activity. Clear these first.
+3. Once you've saved, reviewers see the version on their staff home, under **Waiting for your review**. Tell the editor it's ready.
 
-You cannot approve your own revision. Someone else always does.
+You can't approve your own version. Someone else always does.
 
 ## A worked example
 
 You are assigned to a 40-second video of a family greeting each other.
 
-1. **Learning Layers**, then the Video's title, then **Add a Learning Layer**. Title it "Greeting an elder", Level **Beginner**, **Built on** the whole video. Press **Add the Learning Layer**.
+1. Upload the clip and make the Video (above), then press **Learning Layer**. Title it "Greeting an elder", Level **Beginner**, **Built on** the whole video.
 2. Press **Add a Segment** three times. Play the video, and at the start of the first greeting press **Set start at playhead**, then at its end **Set end at playhead**. Type the Fijian and the English translation. Do the same for the other two.
 3. In Segment 1, press the word *Bula*, press **Annotate “Bula”**, pick the existing Expression, and type "A warm hello to someone older" in **What it means here**. Tick **Add to the vocabulary list** and press **Add the Annotation**.
 4. Under **Activities**, choose **Listen and repeat**, press **Add an Activity**, and set **Practises** to Segment 1. Tick **Required for completion**, write the **Prompt** and the **Feedback**. Add a **Comprehension (multiple choice)** Activity on the whole clip with two choices and mark one correct.
 5. Press **Preview as a learner** on each, do them, and read **In your preview: the Learning Layer is complete.**
-6. Press **Save a new revision**, then **Review and publishing for revision 2**, then **Submit revision 2 for review**.
+6. Press **Save a new revision**, and tell the editor it's ready for review.
 
 ## What review looks like
 
-The section **Required reviews** on the revision's page lists what the revision needs and where each stands: **Waiting for review**, **Approved** or **Rejected**. Every Learning Layer needs **Language review** in Standard Fijian by a qualified reviewer. A Learning Layer you marked culturally sensitive also needs **Knowledge Holder Approval**.
+**Where it stands** on the Video's page lists the reviews the version needs, and each one's state: not done yet, approved, or changes asked for.
 
-- **Language review**: an editor assigns a reviewer, who reads the Fijian and translations and presses **Record decision**, choosing **Approve** or **Reject**. A reviewer checks the words, the translations, the Annotations and Expressions, and that Activities have correct answers. Under **Your reviews** in the menu, reviewers see what is waiting for them.
-- **Knowledge Holder Approval**: an editor sends the Knowledge Holder a private Review Link so they can see the Learning Layer without an account, and then records their approval in their words, with any conditions they set. You do not contact them yourself unless an editor asks you to.
-- An editor publishes once all reviews are approved and the Video's rights are recorded. Learners then see the revision.
+- **Language review:** every Learning Layer needs one, in Standard Fijian, by a qualified Language Reviewer. They check:
+  - the words and translations
+  - the Annotations and Expressions
+  - that the Activities have correct answers
+- **Knowledge Holder Approval:** a Learning Layer you marked culturally sensitive also needs one. An editor sends the Knowledge Holder a preview link, so they can see the words without an account, and records their approval with any conditions. Don't contact them yourself unless an editor asks you to.
+- **Publishing:** an editor publishes once every review is approved and the Video's rights are recorded.
 
-If something is **Rejected**, the reviewer must say what needs to change, and you see it under **All decisions on this revision**. A rejected revision is never changed. To answer it:
-
-1. Open the Learning Layer (**Learning Layers**, then its title) and make the changes it asks for.
-2. Press **Save a new revision**. This makes a new revision, which starts with no decisions.
-3. Open **Review and publishing for revision N** for the new revision and press **Submit revision N for review**.
-
-If you disagree with a rejection or are not sure what it means, ask the reviewer or an editor before you change anything.
+If a reviewer asks for changes, their note shows on the Video's page. Make the changes in the Learning Layer and save. The new version starts with no decisions. If you disagree, or aren't sure what a note means, ask the reviewer or an editor before you change anything.
 
 ## Where to go for help
 
 - Wording of the staff pages and the founder's tasks: `docs/handover/admin-guide.md`.
-- Something stuck, such as a video that never finishes processing: tell the technical owner. The runbook (`docs/handover/runbook.md`) is theirs.
+- Something stuck, such as a clip that won't upload or play: tell the technical owner. The runbook (`docs/handover/runbook.md`) is theirs.

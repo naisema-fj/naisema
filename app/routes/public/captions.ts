@@ -16,5 +16,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   if (found.kind !== "shown") throw new Response("Not found", { status: 404 });
   const { layer } = found;
   const vtt = toWebVtt(layer.segments, params.language, { offsetMs: layer.excerpt?.sourceStartMs ?? 0 });
-  return new Response(vtt, { headers: { "Content-Type": "text/vtt; charset=utf-8", "Cache-Control": PRIVATE_NO_STORE } });
+  return new Response(vtt, {
+    headers: { "Content-Type": "text/vtt; charset=utf-8", "Cache-Control": PRIVATE_NO_STORE },
+  });
 }

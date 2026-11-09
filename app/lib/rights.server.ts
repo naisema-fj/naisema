@@ -3,8 +3,8 @@ import { rightsRecord } from "~db/schema";
 import { audit } from "./audit.server";
 import { Refused } from "./content.server";
 import type { Database } from "./db.server";
-import { can, type Staff } from "./roles";
 import { isPermittedUse, type PermittedUse } from "./rights-rules";
+import { can, type Staff } from "./roles";
 
 /**
  * Rights Records on Content Items and media files (ADR-0007). They are added and withdrawn, never
@@ -66,10 +66,16 @@ export async function withdrawRights(db: Database, actor: Staff, recordId: strin
   if (record.withdrawnAt) return record;
   await db.batch([
     db.update(rightsRecord).set({ withdrawnAt: new Date() }).where(eq(rightsRecord.id, recordId)),
-    audit(db, actor.email, "rights.withdrawn", { type: record.subjectType, id: record.subjectId }, {
-      record: recordId,
-      reason: reason.trim().slice(0, 500),
-    }),
+    audit(
+      db,
+      actor.email,
+      "rights.withdrawn",
+      { type: record.subjectType, id: record.subjectId },
+      {
+        record: recordId,
+        reason: reason.trim().slice(0, 500),
+      },
+    ),
   ]);
   return record;
 }

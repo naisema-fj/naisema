@@ -13,7 +13,9 @@ import "~/styles/staff.css";
  */
 export async function loader({ request, context }: Route.LoaderArgs) {
   const person = await getStaff(context.get(cloudflareContext).env, request);
-  return person ? { email: person.email, groups: staffNav(person), roles: person.roles.map((role) => ROLE_NAMES[role]) } : null;
+  return person
+    ? { email: person.email, groups: staffNav(person), roles: person.roles.map((role) => ROLE_NAMES[role]) }
+    : null;
 }
 
 type NavGroup = { name: string; items: { label: string; href: string }[] };

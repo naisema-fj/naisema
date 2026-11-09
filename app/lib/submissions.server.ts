@@ -11,7 +11,13 @@ import { can, type Staff } from "./roles";
  * §4). The person is told it arrived only once it is stored. The email names the form and links to
  * the inbox, and never carries what was sent, so nothing personal sits in a mailbox.
  */
-export async function receiveSubmission(env: Env, db: Database, form: FormKey, values: FormValues, adminOrigin: string) {
+export async function receiveSubmission(
+  env: Env,
+  db: Database,
+  form: FormKey,
+  values: FormValues,
+  adminOrigin: string,
+) {
   const id = crypto.randomUUID();
   const { name, email, ...fields } = values;
   await db.insert(submission).values({
@@ -53,7 +59,12 @@ export function readableForms(actor: Staff): FormKey[] {
 export function listSubmissions(db: Database, actor: Staff) {
   const forms = readableForms(actor);
   if (!forms.length) return Promise.resolve([]);
-  return db.select().from(submission).where(inArray(submission.form, forms)).orderBy(desc(submission.createdAt)).limit(200);
+  return db
+    .select()
+    .from(submission)
+    .where(inArray(submission.form, forms))
+    .orderBy(desc(submission.createdAt))
+    .limit(200);
 }
 
 /** One Submission, for someone who may read its form; opening it is audited. */

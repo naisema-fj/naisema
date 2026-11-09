@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
-import { media, revision } from "~db/schema";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { downloadName } from "~/lib/media-rules";
 import { serveObject } from "~/lib/media.server";
+import { downloadName } from "~/lib/media-rules";
 import { readPreviewToken } from "~/lib/preview.server";
+import { media, revision } from "~db/schema";
 import type { Route } from "./+types/preview-media";
 
 /**
@@ -25,11 +25,19 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
     const original = await env.MEDIA.get(row.key);
     if (!original) throw new Response("Not found", { status: 404 });
     const width = Math.min(1440, Math.max(320, Number(params.width) || 960));
-    const result = await env.IMAGES.input(original.body).transform({ width, fit: "scale-down" }).output({ format: "image/webp" });
+    const result = await env.IMAGES.input(original.body)
+      .transform({ width, fit: "scale-down" })
+      .output({ format: "image/webp" });
     return new Response(result.response().body, { headers: { ...headers, "Content-Type": "image/webp" } });
   }
   if (params.type === "files" && row.kind !== "image") {
-    const response = await serveObject(env, request, row.key, row.contentType, row.kind === "document" ? downloadName(row.filename) : undefined);
+    const response = await serveObject(
+      env,
+      request,
+      row.key,
+      row.contentType,
+      row.kind === "document" ? downloadName(row.filename) : undefined,
+    );
     response.headers.set("Cache-Control", "private, no-store");
     return response;
   }

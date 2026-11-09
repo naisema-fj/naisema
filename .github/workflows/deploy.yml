@@ -41,8 +41,8 @@ jobs:
           cache: pnpm
       - name: Check the staging D1 database ID is configured
         run: |
-          if grep -q REPLACE_WITH_STAGING wrangler.jsonc; then
-            echo "::error::Set the staging database_id in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
+          if grep -Eq "REPLACE_WITH_(STAGING|ACCESS_TEAM)" wrangler.jsonc; then
+            echo "::error::Set the staging database_id and Access settings in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
           fi
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
@@ -78,8 +78,8 @@ jobs:
           fi
       - name: Check the production D1 database ID is configured
         run: |
-          if grep -q REPLACE_WITH_PRODUCTION wrangler.jsonc; then
-            echo "::error::Set the production database_id in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
+          if grep -Eq "REPLACE_WITH_(PRODUCTION|ACCESS_TEAM|TURNSTILE)" wrangler.jsonc; then
+            echo "::error::Set the production database_id, Access settings and Turnstile site key in wrangler.jsonc (docs/handover/runbook.md, provisioning)."; exit 1
           fi
       - run: pnpm install --frozen-lockfile
       - run: pnpm build

@@ -1,8 +1,9 @@
 import { data, Form, redirect } from "react-router";
+import { TableScroll } from "~/components/table-scroll";
 import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { CONTENT_KINDS, type ContentKind, isContentKind, KINDS, type Place } from "~/lib/content-rules";
 import { createItem, listItems, mayEdit, Refused } from "~/lib/content.server";
+import { CONTENT_KINDS, type ContentKind, isContentKind, KINDS, type Place } from "~/lib/content-rules";
 import { getDb } from "~/lib/db.server";
 import { requireStaff } from "~/lib/staff.server";
 import type { Route } from "./+types/items";
@@ -97,7 +98,7 @@ export default function Items({ loaderData, actionData }: Route.ComponentProps) 
           <button type="submit">Show</button>
         </form>
         {items.length ? (
-          <div className="table-scroll" role="region" aria-labelledby="list-heading" tabIndex={0}>
+          <TableScroll label="Content">
             <table>
               <caption className="visually-hidden">Content, most recently changed first</caption>
               <thead>
@@ -121,7 +122,7 @@ export default function Items({ loaderData, actionData }: Route.ComponentProps) 
                 ))}
               </tbody>
             </table>
-          </div>
+          </TableScroll>
         ) : (
           <p>Nothing here yet.</p>
         )}

@@ -96,7 +96,12 @@ export type KindFields = Record<string, string>;
 export const MEDIA_FIELD_TYPES: readonly FieldType[] = ["audio", "image", "video", "document"];
 
 /** Content Flags an editor sets on each Revision; they decide the reviews it needs. */
-export const CONTENT_FLAGS = ["language-instruction", "sensitive-cultural", "identifiable-children", "opinion"] as const;
+export const CONTENT_FLAGS = [
+  "language-instruction",
+  "sensitive-cultural",
+  "identifiable-children",
+  "opinion",
+] as const;
 export type ContentFlag = (typeof CONTENT_FLAGS)[number];
 export const FLAG_NAMES: Record<ContentFlag, string> = {
   "language-instruction": "Teaches language",

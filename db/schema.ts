@@ -1,7 +1,14 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import type { ArticleBody } from "../app/lib/article-body";
-import type { ContentFlag, ContentKind, ItemState, KindFields, ReviewDecision, ReviewType } from "../app/lib/content-rules";
+import type {
+  ContentFlag,
+  ContentKind,
+  ItemState,
+  KindFields,
+  ReviewDecision,
+  ReviewType,
+} from "../app/lib/content-rules";
 import type { LearningLayer } from "../app/lib/learning-layer-fields";
 import type { MediaKind } from "../app/lib/media-rules";
 import type { PermittedUse } from "../app/lib/rights-rules";
@@ -48,7 +55,10 @@ export const contentItem = sqliteTable(
     createdAt: createdAt(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [uniqueIndex("content_item_address").on(table.area, table.slug), index("content_item_state").on(table.state)],
+  (table) => [
+    uniqueIndex("content_item_address").on(table.area, table.slug),
+    index("content_item_state").on(table.state),
+  ],
 );
 
 /** A write-once snapshot of a Content Item. An edit is always a new Revision (ADR-0015). */

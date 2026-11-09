@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
 import { data, Form, redirect } from "react-router";
-import { topic } from "~db/schema";
 import { audit } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { slugify } from "~/lib/slug";
 import { requireStaff } from "~/lib/staff.server";
+import { topic } from "~db/schema";
 import type { Route } from "./+types/topics";
 
 /** /admin/topics: the Topics editors file items under, with at most one level of subtopics. */
@@ -20,17 +20,27 @@ export async function action({ request, context }: Route.ActionArgs) {
   const actor = await requireStaff(env, request, "content.edit");
   const db = getDb(env.DB);
   const form = await request.formData();
-  const name = String(form.get("name") ?? "").trim().slice(0, 100);
+  const name = String(form.get("name") ?? "")
+    .trim()
+    .slice(0, 100);
   const parent = String(form.get("parent") ?? "") || null;
   const slug = slugify(name);
   if (!slug) return data({ error: "Enter the Topic's name." }, { status: 400 });
-  if (await db.query.topic.findFirst({ where: eq(topic.slug, slug) })) return data({ error: "That Topic already exists." }, { status: 400 });
+  if (await db.query.topic.findFirst({ where: eq(topic.slug, slug) }))
+    return data({ error: "That Topic already exists." }, { status: 400 });
   if (parent) {
     const above = await db.query.topic.findFirst({ where: eq(topic.slug, parent) });
     if (!above || above.parent) return data({ error: "A subtopic goes under a top-level Topic." }, { status: 400 });
   }
   await db.batch([
-    db.insert(topic).values({ slug, name, description: String(form.get("description") ?? "").trim().slice(0, 500), parent }),
+    db.insert(topic).values({
+      slug,
+      name,
+      description: String(form.get("description") ?? "")
+        .trim()
+        .slice(0, 500),
+      parent,
+    }),
     audit(db, actor.email, "topic.added", { type: "topic", id: slug }),
   ]);
   return redirect("/admin/topics");
@@ -61,7 +71,11 @@ export default function Topics({ loaderData, actionData }: Route.ComponentProps)
       </ul>
       <Form method="post" aria-labelledby="add-heading">
         <h2 id="add-heading">Add a Topic</h2>
-        {actionData?.error && <p role="alert" className="error">{actionData.error}</p>}
+        {actionData?.error && (
+          <p role="alert" className="error">
+            {actionData.error}
+          </p>
+        )}
         <label htmlFor="name">Name</label>
         <input id="name" name="name" required maxLength={100} />
         <label htmlFor="description">Description</label>

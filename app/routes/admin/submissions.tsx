@@ -2,8 +2,8 @@ import { Form, redirect } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { FORMS, type FormKey } from "~/lib/forms";
-import { listSubmissions, markDone, openSubmission } from "~/lib/submissions.server";
 import { requireStaff } from "~/lib/staff.server";
+import { listSubmissions, markDone, openSubmission } from "~/lib/submissions.server";
 import type { Route } from "./+types/submissions";
 
 /**
@@ -76,7 +76,8 @@ export default function Submissions({ loaderData }: Route.ComponentProps) {
         <ul>
           {list.map((row) => (
             <li key={row.id}>
-              <a href={`/admin/submissions/${row.id}`}>{formTitle(row.form)}</a>, {new Date(row.createdAt).toLocaleDateString("en-AU")}
+              <a href={`/admin/submissions/${row.id}`}>{formTitle(row.form)}</a>,{" "}
+              {new Date(row.createdAt).toLocaleDateString("en-AU")}
               {row.done ? " (dealt with)" : ""}
             </li>
           ))}

@@ -1,8 +1,8 @@
-import { and, desc, eq, inArray, isNull, lte, ne, gte } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lte, ne } from "drizzle-orm";
 import { contentItem, review, revision, rightsRecord, submission } from "~db/schema";
 import { fijiToday } from "./calendar";
-import { REVIEW_TYPE_NAMES, requiredReviews, reviewStanding, type Place } from "./content-rules";
-import { eligibilityOf, mayReview, type ItemRow, type RevisionRow } from "./content.server";
+import { eligibilityOf, type ItemRow, mayReview, type RevisionRow } from "./content.server";
+import { type Place, REVIEW_TYPE_NAMES, requiredReviews, reviewStanding } from "./content-rules";
 import type { Database } from "./db.server";
 import { can, type Staff } from "./roles";
 import { readableForms } from "./submissions.server";
@@ -20,7 +20,15 @@ export async function attention(db: Database, actor: Staff) {
     .orderBy(desc(contentItem.updatedAt))
     .limit(200);
   const latest = items.length
-    ? await db.select().from(revision).where(inArray(revision.itemId, items.map((item) => item.id)))
+    ? await db
+        .select()
+        .from(revision)
+        .where(
+          inArray(
+            revision.itemId,
+            items.map((item) => item.id),
+          ),
+        )
     : [];
   const newest = new Map<string, RevisionRow>();
   for (const rev of latest) if ((newest.get(rev.itemId)?.number ?? 0) < rev.number) newest.set(rev.itemId, rev);
@@ -30,7 +38,15 @@ export async function attention(db: Database, actor: Staff) {
     .filter(({ item, revision: rev }) => rev && rev.id !== item.publishedRevisionId && rev.number > 1);
   const decided = await eligibilityOf(db, pending);
   const reviews = pending.length
-    ? await db.select().from(review).where(inArray(review.revisionId, pending.map((row) => row.revision.id)))
+    ? await db
+        .select()
+        .from(review)
+        .where(
+          inArray(
+            review.revisionId,
+            pending.map((row) => row.revision.id),
+          ),
+        )
     : [];
 
   const toReview: { item: ItemRow; types: string[] }[] = [];
@@ -59,7 +75,11 @@ export async function attention(db: Database, actor: Staff) {
         .select()
         .from(rightsRecord)
         .where(
-          and(isNull(rightsRecord.withdrawnAt), gte(rightsRecord.expiresOn, today), lte(rightsRecord.expiresOn, inThirtyDays)),
+          and(
+            isNull(rightsRecord.withdrawnAt),
+            gte(rightsRecord.expiresOn, today),
+            lte(rightsRecord.expiresOn, inThirtyDays),
+          ),
         )
     : [];
   const forms = readableForms(actor);

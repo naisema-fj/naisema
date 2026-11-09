@@ -54,7 +54,11 @@ const facts = (item: ItemRow, rev: RevisionRow) => ({
   flags: rev.flags,
   fields: rev.fields,
   hasLayer: rev.layer !== null,
-  layerReady: rev.layer ? layerReadinessProblems(rev.layer) : item.kind === "video" ? ["It has no Learning Layer yet."] : [],
+  layerReady: rev.layer
+    ? layerReadinessProblems(rev.layer)
+    : item.kind === "video"
+      ? ["It has no Learning Layer yet."]
+      : [],
   authorEmail: rev.authorEmail,
 });
 
@@ -62,7 +66,11 @@ const facts = (item: ItemRow, rev: RevisionRow) => ({
  * Whether each Revision may be public today, worked out for many at once: the reviews on each
  * exact Revision and the Rights Records on its item and every media file it shows.
  */
-export async function eligibilityOf(db: Database, pairs: { item: ItemRow; revision: RevisionRow }[], today = fijiToday()) {
+export async function eligibilityOf(
+  db: Database,
+  pairs: { item: ItemRow; revision: RevisionRow }[],
+  today = fijiToday(),
+) {
   const revisionIds = pairs.map((pair) => pair.revision.id);
   const itemIds = pairs.map((pair) => pair.item.id);
   const mediaIds = [...new Set(pairs.flatMap((pair) => pair.revision.mediaIds))];
@@ -113,7 +121,11 @@ export async function latestRevision(db: Database, itemId: string) {
 }
 
 /** A new Content Item with an empty first Revision, at a free address in its place. */
-export async function createItem(db: Database, actor: Staff, input: { kind: ContentKind; place: Place; title: string }) {
+export async function createItem(
+  db: Database,
+  actor: Staff,
+  input: { kind: ContentKind; place: Place; title: string },
+) {
   if (!mayEdit(actor, input.kind)) throw new Refused("Your roles don't allow adding this kind of item.", 403);
   if (!KINDS[input.kind].places.includes(input.place)) throw new Refused(`A ${KINDS[input.kind].name} can't go there.`);
   const title = input.title.trim();
@@ -159,21 +171,31 @@ export type RevisionInput = {
  * Saves an edit as a new Revision (never changing an earlier one), from the Revision the editor
  * started on, so two people saving at once can't silently overwrite each other.
  */
-export async function saveRevision(db: Database, actor: Staff, itemId: string, baseRevisionId: string, input: RevisionInput) {
+export async function saveRevision(
+  db: Database,
+  actor: Staff,
+  itemId: string,
+  baseRevisionId: string,
+  input: RevisionInput,
+) {
   const item = await db.query.contentItem.findFirst({ where: eq(contentItem.id, itemId) });
   if (!item) throw new Refused("That item doesn't exist.", 404);
   if (!mayEdit(actor, item.kind)) throw new Refused("Your roles don't allow editing this item.", 403);
   if (item.state === "archived") throw new Refused("An archived item can't be edited.");
   const latest = await latestRevision(db, itemId);
   if (!latest || latest.id !== baseRevisionId) {
-    throw new Refused("Someone saved a newer version while you were editing. Open the latest one and make your change again.", 409);
+    throw new Refused(
+      "Someone saved a newer version while you were editing. Open the latest one and make your change again.",
+      409,
+    );
   }
   const title = input.title.trim();
   if (!title) throw new Refused("Enter a title.");
   const fields: KindFields = {};
   for (const spec of KINDS[item.kind].fields) {
     const value = input.fields[spec.name]?.trim() ?? "";
-    if (spec.type === "url" && value && !/^https:\/\//.test(value)) throw new Refused(`${spec.label} must start with https://.`);
+    if (spec.type === "url" && value && !/^https:\/\//.test(value))
+      throw new Refused(`${spec.label} must start with https://.`);
     if (value) fields[spec.name] = value.slice(0, spec.type === "textarea" ? 100_000 : 500);
   }
   const id = crypto.randomUUID();
@@ -208,7 +230,11 @@ export async function itemForStaff(db: Database, itemId: string) {
   const published = item.publishedRevisionId
     ? await db.query.revision.findFirst({ where: eq(revision.id, item.publishedRevisionId) })
     : null;
-  const reviews = await db.select().from(review).where(eq(review.revisionId, latest.id)).orderBy(desc(review.createdAt));
+  const reviews = await db
+    .select()
+    .from(review)
+    .where(eq(review.revisionId, latest.id))
+    .orderBy(desc(review.createdAt));
   const decided = (await eligibilityOf(db, [{ item, revision: latest }])).get(latest.id) as {
     eligible: boolean;
     reasons: string[];
@@ -269,10 +295,16 @@ export async function recordReview(
       notes: input.notes.trim().slice(0, 4000),
       knowledgeHolder,
     }),
-    audit(db, actor.email, `review.${input.decision}`, { type: "content_item", id: rev.itemId }, {
-      revision: rev.number,
-      reviewType: input.type,
-    }),
+    audit(
+      db,
+      actor.email,
+      `review.${input.decision}`,
+      { type: "content_item", id: rev.itemId },
+      {
+        revision: rev.number,
+        reviewType: input.type,
+      },
+    ),
   ]);
   return id;
 }
@@ -300,9 +332,11 @@ export async function publish(db: Database, actor: Staff, itemId: string, revisi
   if (!can(actor, "content.publish")) throw new Refused("Only editors publish.", 403);
   const found = await itemForStaff(db, itemId);
   if (!found) throw new Refused("That item doesn't exist.", 404);
-  if (found.latest.id !== revisionId) throw new Refused("A newer version was saved. Publish that one once it is ready.", 409);
+  if (found.latest.id !== revisionId)
+    throw new Refused("A newer version was saved. Publish that one once it is ready.", 409);
   if (found.item.state === "archived") throw new Refused("An archived item can't be published.");
-  if (!found.eligibility.eligible) throw new Refused(`It can't be published yet. ${found.eligibility.reasons.join(" ")}`);
+  if (!found.eligibility.eligible)
+    throw new Refused(`It can't be published yet. ${found.eligibility.reasons.join(" ")}`);
   const now = new Date();
   await db.batch([
     db
@@ -320,7 +354,13 @@ export async function publish(db: Database, actor: Staff, itemId: string, revisi
 }
 
 /** Takes an item off the public site (withdrawn) or out of use (archived), with a reason. */
-export async function unpublish(db: Database, actor: Staff, itemId: string, to: "withdrawn" | "archived", reason: string) {
+export async function unpublish(
+  db: Database,
+  actor: Staff,
+  itemId: string,
+  to: "withdrawn" | "archived",
+  reason: string,
+) {
   if (!can(actor, "content.publish")) throw new Refused("Only editors withdraw or archive.", 403);
   const item = await db.query.contentItem.findFirst({ where: eq(contentItem.id, itemId) });
   if (!item) throw new Refused("That item doesn't exist.", 404);
@@ -382,7 +422,15 @@ export async function publicItems(
     ? await db
         .select()
         .from(review)
-        .where(and(inArray(review.revisionId, shown.map((row) => row.revision.id)), eq(review.decision, "approved")))
+        .where(
+          and(
+            inArray(
+              review.revisionId,
+              shown.map((row) => row.revision.id),
+            ),
+            eq(review.decision, "approved"),
+          ),
+        )
     : [];
   return shown.map((row) => ({ ...row, approvals: approvals.filter((a) => a.revisionId === row.revision.id) }));
 }
@@ -393,7 +441,9 @@ export async function findPublicItem(
   place: string,
   slug: string,
 ): Promise<({ kind: "shown" } & PublicItem) | { kind: "gone" } | { kind: "missing" }> {
-  const item = await db.query.contentItem.findFirst({ where: and(eq(contentItem.area, place), eq(contentItem.slug, slug)) });
+  const item = await db.query.contentItem.findFirst({
+    where: and(eq(contentItem.area, place), eq(contentItem.slug, slug)),
+  });
   if (!item) return { kind: "missing" };
   if (item.state !== "published" || !item.publishedRevisionId)
     return item.publishedAt ? { kind: "gone" } : { kind: "missing" };

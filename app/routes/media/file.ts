@@ -1,10 +1,10 @@
 import { eq } from "drizzle-orm";
-import { media } from "~db/schema";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
-import { downloadName } from "~/lib/media-rules";
 import { mediaIsPublic, serveObject } from "~/lib/media.server";
+import { downloadName } from "~/lib/media-rules";
 import { getStaff } from "~/lib/staff.server";
+import { media } from "~db/schema";
 import type { Route } from "./+types/file";
 
 /**
@@ -20,5 +20,11 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
   const allowed = onAdminHost ? Boolean(await getStaff(env, request)) : await mediaIsPublic(db, row.id);
   if (!allowed) throw new Response("Not found", { status: 404 });
-  return serveObject(env, request, row.key, row.contentType, row.kind === "document" ? downloadName(row.filename) : undefined);
+  return serveObject(
+    env,
+    request,
+    row.key,
+    row.contentType,
+    row.kind === "document" ? downloadName(row.filename) : undefined,
+  );
 }

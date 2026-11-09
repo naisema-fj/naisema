@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { Annotation, ExpressionDetails } from "~/lib/annotations";
 import { NOTE_KINDS } from "~/lib/annotations";
+import { loadLayer, localDevice, saveLayer, savePreferences } from "~/lib/device-store";
 import {
   IMMERSION_STAGES,
   type LearnerView,
@@ -15,7 +16,6 @@ import {
   stageNeighbours,
   stageText,
 } from "~/lib/immersion";
-import { loadLayer, localDevice, saveLayer, savePreferences } from "~/lib/device-store";
 import {
   captionsFor,
   DEFAULT_PREFERENCES,

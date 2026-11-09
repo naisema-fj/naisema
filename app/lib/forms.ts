@@ -101,7 +101,8 @@ export const FORMS = {
   },
   "suggest-translation": {
     title: "Propose a Fijian expression",
-    intro: "How would you say an idea in Fijian? Share your wording and why it fits. None becomes an approved term automatically.",
+    intro:
+      "How would you say an idea in Fijian? Share your wording and why it fits. None becomes an approved term automatically.",
     handler: "team",
     needsEmail: false,
     fields: [
@@ -133,7 +134,10 @@ export type FormErrors = Record<string, string>;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** What a form sent, checked: the values to keep, or each problem by field. */
-export function readForm(spec: FormSpec, input: FormValues): { ok: true; values: FormValues } | { ok: false; errors: FormErrors } {
+export function readForm(
+  spec: FormSpec,
+  input: FormValues,
+): { ok: true; values: FormValues } | { ok: false; errors: FormErrors } {
   const errors: FormErrors = {};
   const values: FormValues = {};
   const name = (input.name ?? "").trim();

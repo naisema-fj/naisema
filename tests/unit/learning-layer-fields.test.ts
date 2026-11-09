@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  type LearningLayerSnapshot,
-  readLayerDetails,
-  withDefaults,
-} from "~/lib/learning-layer-fields";
+import { readLayerDetails } from "~/lib/learning-layer-fields";
 
 const form = (fields: Partial<Record<"title" | "level" | "clip" | "sourceStart" | "sourceEnd", string>> = {}) => ({
   title: "Greetings at the market",

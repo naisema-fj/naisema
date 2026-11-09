@@ -23,10 +23,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData) return [{ title: "NAISEMA" }];
-  return [
-    { title: `${loaderData.item.title} · NAISEMA` },
-    { name: "description", content: loaderData.item.summary },
-  ];
+  return [{ title: `${loaderData.item.title} · NAISEMA` }, { name: "description", content: loaderData.item.summary }];
 }
 
 export default function Item({ loaderData }: Route.ComponentProps) {

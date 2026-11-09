@@ -1,5 +1,4 @@
 import { eq } from "drizzle-orm";
-import { contentItem, revision } from "~db/schema";
 import { ContentLetter } from "~/components/public/content-letter";
 import { NOTE_KINDS } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -8,6 +7,7 @@ import { PRIVATE_NO_STORE } from "~/lib/http";
 import { readPreviewToken } from "~/lib/preview.server";
 import { publicView } from "~/lib/public-view.server";
 import type { RouteHandle } from "~/lib/route-handle";
+import { contentItem, revision } from "~db/schema";
 import type { Route } from "./+types/preview";
 
 export const handle: RouteHandle = { hydrate: false, noindex: true };
@@ -32,7 +32,9 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const view = await publicView(db, { item, revision: rev, approvals: [] });
   // Media addresses go through this link rather than the public delivery, which asks for rights.
   const viaLink = JSON.parse(
-    JSON.stringify(view).replaceAll('"/media/', `"/preview/${params.token}/media/`).replaceAll(" /media/", ` /preview/${params.token}/media/`),
+    JSON.stringify(view)
+      .replaceAll('"/media/', `"/preview/${params.token}/media/`)
+      .replaceAll(" /media/", ` /preview/${params.token}/media/`),
   ) as typeof view;
   return {
     state: "ok" as const,

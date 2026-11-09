@@ -1,12 +1,11 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { data, redirect } from "react-router";
-import { expression, media } from "~db/schema";
 import { TimelineEditor } from "~/components/timeline-editor";
 import { activityProblems, readActivities } from "~/lib/activities";
 import { annotationProblems, noteProblems, readAnnotations, readNewExpressions, readNotes } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
-import { type ContentFlag, isContentFlag } from "~/lib/content-rules";
 import { itemForStaff, mayEdit, Refused, saveRevision } from "~/lib/content.server";
+import { type ContentFlag, isContentFlag } from "~/lib/content-rules";
 import { getDb } from "~/lib/db.server";
 import {
   LAYER_LANGUAGE_VARIETY,
@@ -18,6 +17,7 @@ import {
 import { orientation } from "~/lib/public-view.server";
 import { clipDuration, readSegments, segmentProblems } from "~/lib/segment-rules";
 import { requireStaff } from "~/lib/staff.server";
+import { expression, media } from "~db/schema";
 import type { Route } from "./+types/layer";
 
 /**
@@ -29,7 +29,7 @@ async function loadVideo(env: Env, request: Request, itemId: string) {
   const actor = await requireStaff(env, request);
   const db = getDb(env.DB);
   const found = await itemForStaff(db, itemId);
-  if (!found || found.item.kind !== "video") throw new Response("Not found", { status: 404 });
+  if (found?.item.kind !== "video") throw new Response("Not found", { status: 404 });
   if (!mayEdit(actor, "video")) throw new Response("Your roles don't include Learning Layers.", { status: 403 });
   const footageId = found.latest.fields.videoMediaId;
   const footage = footageId ? await db.query.media.findFirst({ where: eq(media.id, footageId) }) : null;
@@ -45,7 +45,10 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
     itemId: found.item.id,
     title: found.latest.title,
     baseRevisionId: found.latest.id,
-    layer: { ...layer, flags: found.latest.flags.includes("sensitive-cultural") ? (["sensitiveCultural"] as const) : [] },
+    layer: {
+      ...layer,
+      flags: found.latest.flags.includes("sensitive-cultural") ? (["sensitiveCultural"] as const) : [],
+    },
     footage: footage
       ? {
           src: `/media/files/${footage.id}`,
@@ -69,9 +72,14 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   const { env } = context.get(cloudflareContext);
   const { actor, db, found, footage } = await loadVideo(env, request, params.id);
   if (!footage?.durationMs) {
-    return data({ error: "Choose the Video's footage, with its length, before writing its Learning Layer." } satisfies LayerRefusal, {
-      status: 400,
-    });
+    return data(
+      {
+        error: "Choose the Video's footage, with its length, before writing its Learning Layer.",
+      } satisfies LayerRefusal,
+      {
+        status: 400,
+      },
+    );
   }
   const form = await request.formData();
   const field = (name: string) => String(form.get(name) ?? "");
@@ -95,19 +103,27 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   const notes = readNotes(field("notes"));
   const activities = readActivities(field("activities"));
   const created = readNewExpressions(field("newExpressions"));
-  for (const read of [segments, annotations, notes, activities, created]) if (!read.ok) return refuse({ error: read.error });
-  if (!segments.ok || !annotations.ok || !notes.ok || !activities.ok || !created.ok) return refuse({ error: "Try again." });
+  for (const read of [segments, annotations, notes, activities, created])
+    if (!read.ok) return refuse({ error: read.error });
+  if (!segments.ok || !annotations.ok || !notes.ok || !activities.ok || !created.ok)
+    return refuse({ error: "Try again." });
   const clipMs = clipDuration(details.details.excerpt, footage.durationMs);
   const problems = segmentProblems(segments.segments, clipMs);
   if (problems.length) return refuse({ error: "Some Segments need fixing before saving.", problems });
-  const activityTrouble = activityProblems(activities.items, segments.segments).filter((problem) => !problem.revalidate);
-  if (activityTrouble.length) return refuse({ error: "Some Activities need fixing before saving.", activityProblems: activityTrouble });
+  const activityTrouble = activityProblems(activities.items, segments.segments).filter(
+    (problem) => !problem.revalidate,
+  );
+  if (activityTrouble.length)
+    return refuse({ error: "Some Activities need fixing before saving.", activityProblems: activityTrouble });
 
   // New Expressions join the library (unless they are already there, word for word); every
   // Expression an Annotation uses is copied into the layer, so it records exactly what was reviewed.
   const usedIds = [...new Set(annotations.items.map((annotation) => annotation.expressionId))];
   const existing = usedIds.length
-    ? await db.select().from(expression).where(and(eq(expression.variety, LAYER_LANGUAGE_VARIETY), inArray(expression.id, usedIds)))
+    ? await db
+        .select()
+        .from(expression)
+        .where(and(eq(expression.variety, LAYER_LANGUAGE_VARIETY), inArray(expression.id, usedIds)))
     : [];
   const expressions: LearningLayer["expressions"] = {};
   for (const row of existing) {
@@ -136,7 +152,9 @@ export async function action({ params, request, context }: Route.ActionArgs) {
     expressions,
     activities: activities.items,
   };
-  const flags: ContentFlag[] = found.latest.flags.filter((flag) => flag !== "sensitive-cultural" && isContentFlag(flag));
+  const flags: ContentFlag[] = found.latest.flags.filter(
+    (flag) => flag !== "sensitive-cultural" && isContentFlag(flag),
+  );
   if (details.details.flags.includes("sensitiveCultural")) flags.push("sensitive-cultural");
   try {
     if (added.length) {

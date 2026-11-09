@@ -1,11 +1,11 @@
 import { eq, isNull } from "drizzle-orm";
 import { Link } from "react-router";
-import { topic } from "~db/schema";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { publicItems } from "~/lib/content.server";
 import { getDb } from "~/lib/db.server";
 import { publicHeaders } from "~/lib/http";
 import { itemCard } from "~/lib/public-view.server";
+import { topic } from "~db/schema";
 import type { Route } from "./+types/topic";
 
 export const handle = { hydrate: false };

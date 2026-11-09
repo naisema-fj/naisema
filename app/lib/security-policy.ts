@@ -13,11 +13,7 @@ import { TURNSTILE_ORIGIN } from "./turnstile";
 export function applySecurityHeaders(
   headers: Headers,
   nonce: string | null,
-  {
-    allowIndexing,
-    turnstile = false,
-    video = false,
-  }: { allowIndexing: boolean; turnstile?: boolean; video?: boolean },
+  { allowIndexing, turnstile = false, video = false }: { allowIndexing: boolean; turnstile?: boolean; video?: boolean },
 ) {
   const scripts = [...(nonce ? ["'self'", `'nonce-${nonce}'`] : []), ...(turnstile ? [TURNSTILE_ORIGIN] : [])];
   headers.set(

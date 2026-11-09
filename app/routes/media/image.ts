@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
-import { media } from "~db/schema";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { mediaIsPublic } from "~/lib/media.server";
 import { getStaff } from "~/lib/staff.server";
+import { media } from "~db/schema";
 import type { Route } from "./+types/image";
 
 const WIDTHS = [320, 640, 960, 1440];
@@ -19,7 +19,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   if (!WIDTHS.includes(width)) throw new Response("Not found", { status: 404 });
   const db = getDb(env.DB);
   const row = await db.query.media.findFirst({ where: eq(media.id, params.id) });
-  if (!row || row.kind !== "image") throw new Response("Not found", { status: 404 });
+  if (row?.kind !== "image") throw new Response("Not found", { status: 404 });
   const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
   const allowed = onAdminHost ? Boolean(await getStaff(env, request)) : await mediaIsPublic(db, row.id);
   if (!allowed) throw new Response("Not found", { status: 404 });

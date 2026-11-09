@@ -1,12 +1,19 @@
 import { data, Form, Link } from "react-router";
-import { FormAlert, type Errors, NoticeField, TextField, TurnstileField, type Values } from "~/components/public/form-fields";
+import {
+  type Errors,
+  FormAlert,
+  NoticeField,
+  TextField,
+  TurnstileField,
+  type Values,
+} from "~/components/public/form-fields";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { guardForm } from "~/lib/form-guard.server";
 import { FIELD_LIMITS, FORMS, type FormSpec, isFormKey, readForm } from "~/lib/forms";
 import { PRIVATE_NO_STORE } from "~/lib/http";
-import { receiveSubmission } from "~/lib/submissions.server";
 import type { RouteHandle } from "~/lib/route-handle";
+import { receiveSubmission } from "~/lib/submissions.server";
 import type { Route } from "./+types/form";
 
 export const handle: RouteHandle = { hydrate: false, turnstile: true };
@@ -28,7 +35,8 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   const form = await request.formData();
   const input = Object.fromEntries([...form.entries()].map(([key, value]) => [key, String(value)]));
   const guard = await guardForm(env, request, form, params.form);
-  if (!guard.ok) return data({ sent: false as const, errors: { form: guard.error }, values: input }, { status: guard.status });
+  if (!guard.ok)
+    return data({ sent: false as const, errors: { form: guard.error }, values: input }, { status: guard.status });
   const spec: FormSpec = FORMS[params.form];
   const read = readForm(spec, input);
   if (!read.ok) return data({ sent: false as const, errors: read.errors, values: input }, { status: 400 });

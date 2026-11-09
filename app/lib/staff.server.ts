@@ -22,7 +22,10 @@ type Jwk = JsonWebKey & { kid: string };
 let keyCache: { team: string; fetchedAt: number; keys: Map<string, CryptoKey> } | null = null;
 
 const base64url = (text: string) => {
-  const padded = text.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(text.length / 4) * 4, "=");
+  const padded = text
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(text.length / 4) * 4, "=");
   return Uint8Array.from(atob(padded), (char) => char.charCodeAt(0));
 };
 

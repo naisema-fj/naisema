@@ -39,6 +39,7 @@ export function VideoPreview({
   }, [videoRef]);
   return (
     <div className={className}>
+      {/* biome-ignore lint/a11y/useMediaCaption: the caption tracks come from the page, which always has a full transcript as well. */}
       <video
         ref={video}
         style={aspectRatio ? { aspectRatio } : undefined}

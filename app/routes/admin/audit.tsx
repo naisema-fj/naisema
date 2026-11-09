@@ -1,8 +1,9 @@
 import { desc } from "drizzle-orm";
-import { auditEvent } from "~db/schema";
+import { TableScroll } from "~/components/table-scroll";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { requireStaff } from "~/lib/staff.server";
+import { auditEvent } from "~db/schema";
 import type { Route } from "./+types/audit";
 
 /** /admin/audit: the latest 500 audit events, for administrators. Older ones: `pnpm db:export`. */
@@ -20,7 +21,7 @@ export default function Audit({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
       <h1>Audit log</h1>
-      <div className="table-scroll" role="region" aria-labelledby="audit-caption" tabIndex={0}>
+      <TableScroll label="Audit events">
         <table>
           <caption id="audit-caption">The latest 500 events, newest first</caption>
           <thead>
@@ -46,7 +47,7 @@ export default function Audit({ loaderData }: Route.ComponentProps) {
             ))}
           </tbody>
         </table>
-      </div>
+      </TableScroll>
     </main>
   );
 }

@@ -10,7 +10,8 @@ import type { Route } from "./+types/english-line";
  */
 export async function loader({ params, context }: Route.LoaderArgs) {
   const found = await findPublicLayerById(getDb(context.get(cloudflareContext).env.DB), params.itemId);
-  const line = found.kind === "shown" ? found.layer.segments.find((segment) => segment.id === params.segmentId) : undefined;
+  const line =
+    found.kind === "shown" ? found.layer.segments.find((segment) => segment.id === params.segmentId) : undefined;
   const headers = { "Cache-Control": PRIVATE_NO_STORE };
   if (!line) return Response.json({ error: "This line isn't available." }, { status: 404, headers });
   return Response.json({ english: line.english }, { headers });

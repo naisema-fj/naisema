@@ -23,7 +23,12 @@ export async function loader({ params, context }: Route.LoaderArgs) {
   const db = getDb(context.get(cloudflareContext).env.DB);
   if (isPrimaryArea(params.area)) {
     const items = await publicItems(db, { area: params.area, limit: AREA_LIMIT + 1 });
-    return { kind: "area" as const, area: params.area, items: items.slice(0, AREA_LIMIT).map(itemCard), more: items.length > AREA_LIMIT };
+    return {
+      kind: "area" as const,
+      area: params.area,
+      items: items.slice(0, AREA_LIMIT).map(itemCard),
+      more: items.length > AREA_LIMIT,
+    };
   }
   const found = await findPublicItem(db, "pages", params.area);
   if (found.kind === "shown") return { kind: "page" as const, page: await publicView(db, found) };
