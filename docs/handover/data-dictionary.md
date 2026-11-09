@@ -4,7 +4,7 @@ Every table and column in the NAISEMA database. This file is generated from `db/
 
 Types are SQLite's. Dates are stored as integer milliseconds since 1970 (UTC). Columns marked "JSON" hold JSON text. The full-text search table `search_fts` is created by a migration (`migrations/0006_search.sql`) rather than the schema, so it is not listed here.
 
-63 tables.
+65 tables.
 
 ## Tables
 
@@ -18,6 +18,8 @@ Types are SQLite's. Dates are stored as integer milliseconds since 1970 (UTC). C
 - [`content_hold`](#content_hold)
 - [`content_item`](#content_item)
 - [`contributor`](#contributor)
+- [`dictionary_entry`](#dictionary_entry)
+- [`dictionary_source`](#dictionary_source)
 - [`email_failure`](#email_failure)
 - [`email_outbox`](#email_outbox)
 - [`expression`](#expression)
@@ -233,6 +235,43 @@ Anyone whose story, recording or knowledge appears in content: a rights and cred
 | `notes` | text | yes |  |  |  |
 | `created_by` | text | no |  |  |  |
 | `created_at` | integer | no |  |  |  |
+
+## dictionary_entry
+
+A word, term or saying imported from the Vosa dictionary as a draft. It is never public and is not an Expression: Annotations can't point to it. It waits for language (and, where it needs it, cultural) review. `appsStatus` is what the apps site said about it, which is not a NAISEMA Review Approval. `details` keeps the rest of its record as the apps site had it.
+
+| Column | Type | Can be empty | Default | References | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| `id` | text (primary key) | no |  |  |  |
+| `kind` | text | no |  |  |  |
+| `headword` | text | no |  |  |  |
+| `headword_key` | text | no |  |  |  |
+| `meaning` | text | no |  |  |  |
+| `literal_meaning` | text | yes |  |  |  |
+| `part_of_speech` | text | no | `""` |  |  |
+| `themes` | text (JSON) | no |  |  |  |
+| `source_ids` | text (JSON) | no |  |  |  |
+| `apps_status` | text | no | `""` |  |  |
+| `review_state` | text | no | `"needs_review"` |  |  |
+| `details` | text (JSON) | no |  |  |  |
+| `import_batch` | text | no |  |  |  |
+| `imported_at` | integer | no |  |  |  |
+
+## dictionary_source
+
+A source the Vosa dictionary cites: a scanned dictionary, a book, a web page. Kept so each can be cleared with a Rights Record before anything taken from it is published.
+
+| Column | Type | Can be empty | Default | References | Purpose |
+| --- | --- | --- | --- | --- | --- |
+| `id` | text (primary key) | no |  |  |  |
+| `name` | text | no |  |  |  |
+| `kind` | text | no | `""` |  |  |
+| `role` | text | no | `""` |  |  |
+| `coverage` | text | no | `""` |  |  |
+| `pages` | integer | yes |  |  |  |
+| `web_url` | text | yes |  |  |  |
+| `import_batch` | text | no |  |  |  |
+| `imported_at` | integer | no |  |  |  |
 
 ## email_failure
 

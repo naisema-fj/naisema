@@ -96,6 +96,10 @@ export default [
       route("videos/:id/learning-layers", "routes/admin/learning-layers/video.tsx"),
       route("expressions", "routes/admin/expressions/index.tsx"),
       route("expressions/:id", "routes/admin/expressions/expression.tsx"),
+      // The Vosa dictionary's drafts from apps.naisema.com: never public (app/lib/dictionary.server.ts).
+      route("dictionary", "routes/admin/dictionary/index.tsx"),
+      route("dictionary/sources", "routes/admin/dictionary/sources.tsx"),
+      route("dictionary/:id", "routes/admin/dictionary/entry.tsx"),
       route("media/uploads", "routes/admin/media/uploads.ts"),
       route("media/uploads/:id", "routes/admin/media/upload.ts"),
       route("media/uploads/:id/parts/:number", "routes/admin/media/upload-part.ts"),

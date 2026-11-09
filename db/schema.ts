@@ -1071,6 +1071,51 @@ export const expression = sqliteTable(
   (table) => [index("expression_headword_idx").on(table.languageVariety, table.headwordKey)],
 );
 
+// --- The Vosa dictionary's drafts (apps.naisema.com; app/lib/dictionary.server.ts) ---
+
+/**
+ * A source the Vosa dictionary cites: a scanned dictionary, a book, a web page. Kept so each can be
+ * cleared with a Rights Record before anything taken from it is published.
+ */
+export const dictionarySource = sqliteTable("dictionary_source", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  kind: text("kind").notNull().default(""),
+  role: text("role").notNull().default(""),
+  coverage: text("coverage").notNull().default(""),
+  pages: integer("pages"),
+  webUrl: text("web_url"),
+  importBatch: text("import_batch").notNull(),
+  importedAt: integer("imported_at", { mode: "timestamp_ms" }).notNull(),
+});
+
+/**
+ * A word, term or saying imported from the Vosa dictionary as a draft. It is never public and is not
+ * an Expression: Annotations can't point to it. It waits for language (and, where it needs it,
+ * cultural) review. `appsStatus` is what the apps site said about it, which is not a NAISEMA
+ * Review Approval. `details` keeps the rest of its record as the apps site had it.
+ */
+export const dictionaryEntry = sqliteTable(
+  "dictionary_entry",
+  {
+    id: text("id").primaryKey(),
+    kind: text("kind").$type<"word" | "saying">().notNull(),
+    headword: text("headword").notNull(),
+    headwordKey: text("headword_key").notNull(),
+    meaning: text("meaning").notNull(),
+    literalMeaning: text("literal_meaning"),
+    partOfSpeech: text("part_of_speech").notNull().default(""),
+    themes: text("themes", { mode: "json" }).$type<string[]>().notNull(),
+    sourceIds: text("source_ids", { mode: "json" }).$type<string[]>().notNull(),
+    appsStatus: text("apps_status").notNull().default(""),
+    reviewState: text("review_state").$type<"needs_review">().notNull().default("needs_review"),
+    details: text("details", { mode: "json" }).$type<Record<string, unknown>>().notNull(),
+    importBatch: text("import_batch").notNull(),
+    importedAt: integer("imported_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [index("dictionary_entry_headword_idx").on(table.headwordKey)],
+);
+
 // --- Learner Accounts (#33, ADR-0005, ADR-0006, docs/phase-1a-defaults.md §8) ---
 
 /**
