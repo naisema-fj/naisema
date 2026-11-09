@@ -38,6 +38,8 @@ pnpm test:e2e --trace off
 
 ## One-time provisioning, per environment (staging, then production)
 
+`bash scripts/setup-environment.sh staging` (then `production`) walks you through every step below. It opens each page, says what to click, captures the values, fills them into `wrangler.jsonc`, sets the Worker and GitHub secrets, deploys, and opens a pull request with the settings. It is safe to re-run. It retires the Phase 1a Worker of the same name first, which can't be updated in place because it ran the ClamAV container. The steps by hand:
+
 1. **D1:** `pnpm wrangler d1 create naisema-v1-staging --location oc`. Put its ID in `wrangler.jsonc` under `env.staging`. v1 starts from migration 0000 on a fresh database, so don't reuse a Phase 1a database.
 2. **R2:** `pnpm wrangler r2 bucket create naisema-staging-media --location oc`. It stays private: the Worker serves files itself.
 3. **Cloudflare Access:** in Zero Trust, add a self-hosted application for `admin.staging.naisema.com`:

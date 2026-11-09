@@ -15,3 +15,6 @@ worker-configuration.d.ts
 # Design-tool lock files (Affinity)
 *~lock~
 e2e/seed.sql
+
+# The environment setup wizard remembers values it was given here (scripts/setup-environment.sh).
+.wizard-*.env
