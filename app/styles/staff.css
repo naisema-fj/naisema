@@ -620,3 +620,390 @@
   font-weight: 600;
   overflow-wrap: anywhere;
 }
+
+/*
+ * --- Layout system for every staff page (docs: #55) ---
+ * The staff pages are plain label-then-control markup, so the layout lives here, once: fields
+ * stack with their label above, choices are 44px rows, a page's sections are paper cards on the
+ * Shell ground, and rows of controls (filters, withdraw, a time and its buttons) sit on one line.
+ * Everything is inside :where() so an editor's own class rule (the timeline, the activities) wins.
+ */
+.staff {
+  --kesa: #d2603f;
+  --radius-card: 14px;
+}
+
+/* The woven mark on the Ink header: Shell strands for the N, Kesa for the weave. */
+.staff .woven-mark {
+  --mark-n: var(--shell);
+  --mark-ground: var(--kesa);
+  display: block;
+  flex: none;
+}
+
+.staff .woven-mark .strand-n {
+  fill: var(--mark-n);
+}
+
+.staff .woven-mark .strand-ground {
+  fill: var(--mark-ground);
+}
+
+/* A field: the label sits above its control, with the gap between fields larger than inside one. */
+:where(.staff main label) {
+  display: block;
+  margin: 1.1rem 0 0.3rem;
+  font-size: 0.98rem;
+}
+
+:where(.staff main :is(legend, h2, h3, p, .hint) + label) {
+  margin-top: 0;
+}
+
+:where(.staff main :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea)) {
+  display: block;
+  width: 100%;
+  max-width: 42rem;
+}
+
+:where(.staff main textarea) {
+  min-height: 5.5rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+:where(.staff main :is(input, select, textarea):focus-visible) {
+  border-color: var(--ink);
+}
+
+:where(.staff main input[type="file"]) {
+  display: block;
+  max-width: 100%;
+}
+
+:where(.staff main .hint) {
+  margin: 0.15rem 0 0.4rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* A choice (checkbox or radio): the whole row is the target, with the box and its words aligned. */
+:where(.staff main label.checkbox, .staff main label:has(> input:is([type="checkbox"], [type="radio"]))) {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  min-height: 2.75rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+:where(.staff main label > input:is([type="checkbox"], [type="radio"])) {
+  flex: none;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+/* Rows of controls that belong on one line. */
+:where(
+  .staff :is(.inline-form, .filters, .alt-form, .activity-choice, .excerpt-times, .segment-actions, .segment-toolbar)
+) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+:where(.staff .filters) {
+  margin: 0.75rem 0;
+}
+
+:where(.staff :is(.inline-form, .filters, .alt-form, .activity-choice, .excerpt-times) label) {
+  margin: 0;
+}
+
+:where(
+  .staff
+    :is(.inline-form, .filters, .activity-choice, .excerpt-times)
+    :is(input:not([type="checkbox"], [type="radio"]), select)
+) {
+  width: auto;
+  flex: 1 1 12rem;
+  max-width: 24rem;
+}
+
+/* Buttons: a quiet outline unless it submits (those are the Ink buttons above). */
+:where(.staff main button:not([type="submit"])) {
+  border: 1px solid var(--muted);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+:where(.staff main button:not([type="submit"]):hover:not(:disabled)) {
+  background: var(--sand);
+}
+
+:where(.staff main button:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* A button that ends a form or fieldset sits clear of the field above it, and apart from its neighbour. */
+:where(
+  .staff
+    main
+    :is(form, fieldset, section, div, p):not(
+      .inline-form,
+      .filters,
+      .alt-form,
+      .activity-choice,
+      .segment-actions,
+      .segment-toolbar,
+      .excerpt-times,
+      .time-field,
+      .staff-signout
+    )
+    > button
+) {
+  margin-top: 1.25rem;
+}
+
+:where(.staff main :is(form, fieldset, section, div, p) > button:has(+ button)) {
+  margin-right: 0.5rem;
+}
+
+:where(
+  .staff main :is(form, fieldset, section, div, p) > button:has(+ button),
+  .staff main :is(form, fieldset, section, div, p) > button + button
+) {
+  margin-bottom: 0.5rem;
+}
+
+:where(
+  .staff main :is(.inline-form, .filters, .alt-form, .activity-choice, .segment-actions, .segment-toolbar) > button
+) {
+  margin: 0;
+}
+
+/* --- Sections are cards: paper on the Shell ground, one idea each. --- */
+:where(
+  .staff main > section:not(.segment-problems),
+  .staff main > form:not(.inline-form, .filters),
+  .staff .timeline-preview,
+  .staff .timeline-form
+) {
+  margin: 1.25rem 0;
+  padding: clamp(1rem, 0.7rem + 1.2vw, 1.6rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--paper);
+}
+
+:is(
+  .staff main > section:not(.segment-problems) > :is(h2, h3):first-child,
+  .staff main > form > h2:first-child,
+  .staff :is(.timeline-form, .timeline-preview) > h2:first-child
+) {
+  margin-top: 0;
+}
+
+:where(.staff main > section > :last-child, .staff main > form > :last-child) {
+  margin-bottom: 0;
+}
+
+/* Inside a card, the lesser groupings are Shell, so each level reads one step down. */
+:where(.staff main fieldset) {
+  margin: 1.1rem 0 0;
+  padding: 0.5rem 1rem 0.9rem;
+  border-color: var(--line);
+  border-radius: 10px;
+  background: var(--shell);
+}
+
+:where(.staff main fieldset > legend) {
+  padding: 0 0.5rem;
+  font-size: 0.95rem;
+}
+
+:where(.staff main :is(.segment, .activity, .note)) {
+  margin: 0 0 0.9rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--shell);
+}
+
+:where(.staff main :is(.segment, .activity) fieldset) {
+  background: var(--paper);
+}
+
+:where(.staff main :is(.segment-list, .activity-list)) {
+  margin: 0.75rem 0;
+}
+
+/* Several checkboxes with nothing else between them: columns on a wide screen. */
+:where(.staff main fieldset.choice-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  column-gap: 1.5rem;
+}
+
+:where(.staff main fieldset.choice-grid > legend) {
+  grid-column: 1 / -1;
+}
+
+/* Time fields: a short control above its label-less partners. */
+:where(.staff .segment-times) {
+  gap: 0.5rem 1rem;
+}
+
+:where(.staff .time-field label) {
+  margin: 0 0 0.3rem;
+}
+
+:where(.staff .time-field input) {
+  width: 8rem;
+}
+
+/* The video beside the editor: framed, and nothing else on its card is cramped. */
+:where(.staff .layout-frame) {
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+/* Preview and details are one workspace on a wide screen, so their cards share a rhythm. */
+:where(.staff .timeline-layout) {
+  gap: 1.25rem;
+}
+
+:where(.staff .timeline-form) {
+  margin: 0;
+}
+
+/* Status and attention on the staff home. */
+:where(.staff .attention-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+:where(.staff .attention-grid > section) {
+  margin: 0;
+}
+
+:where(.staff .attention-grid ul) {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+:where(.staff .attention-grid li) {
+  margin: 0.45rem 0;
+}
+
+:where(.staff .attention-empty) {
+  padding: 1.25rem 1.5rem;
+  border: 1px dashed var(--muted);
+  border-radius: var(--radius-card);
+  background: var(--paper);
+}
+
+:where(.staff .attention-empty > p) {
+  margin: 0;
+}
+
+/* Page head: the title, then its small print, then breathing room before the first card. */
+:where(.staff main > h1) {
+  margin-bottom: 0.4rem;
+}
+
+:where(.staff main > h1 + p, .staff main > h1 + .meta) {
+  color: var(--muted);
+}
+
+:where(.staff .back-link) {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
+
+/* Messages and tables sit inside their cards without doubling the margin. */
+:where(.staff main section > .table-scroll:first-child) {
+  margin-top: 0.5rem;
+}
+
+:where(.staff .table-scroll) {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+:where(.staff .table-scroll table) {
+  min-width: 36rem;
+}
+
+:where(.staff tbody tr:last-child :is(th, td)) {
+  border-bottom: 0;
+}
+
+:where(.staff tbody tr:hover) {
+  background: rgb(15 43 53 / 0.03);
+}
+
+/* The sign-in page is one card, centred, on every width. */
+.staff-body:not(.staff-body-nav) .page {
+  padding-top: clamp(1.5rem, 6vw, 4rem);
+}
+
+/* A label for something that is not one control (the Body editor): same look as a field label. */
+:where(.staff main .label) {
+  margin: 1.1rem 0 0.3rem;
+  font-weight: 600;
+  font-size: 0.98rem;
+}
+
+:where(.staff .body-toolbar) {
+  gap: 0.5rem;
+  margin: 0 0 0.6rem;
+}
+
+/* One person on the Staff page: the card is the frame, so the fieldset only names it. */
+.staff .person-form > fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.staff .person-form > fieldset > legend {
+  padding: 0;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+
+/* On a phone the header keeps the wordmark, the menu and sign out on one line. */
+@media (max-width: 30rem) {
+  .staff-header-inner {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .staff-wordmark {
+    font-size: 1.05rem;
+    min-width: 0;
+  }
+
+  .staff-wordmark svg {
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+
+  .staff-header button,
+  .staff-signout a,
+  .staff-menu summary {
+    padding-inline: 0.7rem;
+  }
+}

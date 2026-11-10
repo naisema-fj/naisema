@@ -1010,6 +1010,8 @@ html:has(.public) {
 
   .areas {
     grid-column: 3 / span 3;
+    /* So the area tiles fill the cell the tall welcome tile sets, with no gap under them. */
+    display: grid;
   }
 
   .tile-latest {
@@ -1024,7 +1026,24 @@ html:has(.public) {
 
   .area-tiles {
     grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr);
-    grid-auto-rows: minmax(9.5rem, auto);
+    grid-template-rows: minmax(9.5rem, auto) repeat(2, minmax(9.5rem, 1fr));
+  }
+
+  /* A quiet tile with room to spare fills it with its own strands, as the tall tiles do. */
+  .tile-latest {
+    display: flex;
+    flex-direction: column;
+    --tile-strand: var(--line);
+  }
+
+  .tile-latest::after {
+    content: "";
+    flex: 1 1 0;
+    min-height: 36px;
+    margin-top: 1.25rem;
+    background-color: var(--tile-strand);
+    -webkit-mask: var(--strand-mask) center / 36px 36px round space;
+    mask: var(--strand-mask) center / 36px 36px round space;
   }
 
   .areas {
@@ -1826,8 +1845,10 @@ blockquote.notice-wording {
 }
 
 .public .speed-choice label {
-  display: block;
-  min-height: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.75rem;
 }
 
 .public .replay-status {
@@ -2140,7 +2161,9 @@ blockquote.notice-wording {
 }
 
 .public .learner-settings .checkbox {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   min-height: 2.75rem;
 }
 
@@ -2228,4 +2251,158 @@ blockquote.notice-wording {
 
 .public .danger-zone .form-choice {
   margin: 0.75rem 0;
+}
+
+/*
+ * --- Layout pass over the inner pages ---
+ * The video, the forms' consent plates, the apps list and the learner player, each brought onto
+ * the same column and rhythm as the pages around them.
+ */
+
+/* A story's <video> carries the class itself; the player wraps its video in one. Both fill their frame. */
+.public video.public-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  background: var(--ink-deep);
+  border-radius: var(--plate-radius);
+}
+
+.public .video-frame video {
+  border-radius: var(--plate-radius);
+}
+
+.public .explore-language > h3 {
+  margin-bottom: 0.5rem;
+}
+
+/* A consent: the notice's words on a Sand plate, with the box that agrees to them directly under. */
+.public .form-consent {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  background: var(--sand);
+  border-radius: var(--plate-radius);
+}
+
+.public .form-consent > .notice-wording {
+  margin: 0;
+  color: var(--ink);
+}
+
+.public .form-consent .form-choice {
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.public .form-consent .form-choice input[type="checkbox"] {
+  margin: 0;
+}
+
+.public .form-consent .form-choice > label {
+  cursor: pointer;
+}
+
+/* The apps: what each is, whether it is open, then the ways to help it grow, as pills. */
+.public .piece-list .app-preview a {
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-decoration: underline;
+  text-decoration-color: var(--kesa);
+  text-underline-offset: 0.2em;
+}
+
+.public .piece-list .app-forms {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.public .piece-list .app-forms li {
+  display: block;
+  padding: 0;
+  border: 0;
+}
+
+.public .piece-list .app-forms a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.public .piece-list .app-forms a:hover {
+  background: var(--ink);
+  color: var(--shell);
+  text-decoration: none;
+}
+
+/* The learner player sits in one centred column, as every other page does. */
+.public main.player-page {
+  max-width: calc(56rem + 2 * var(--gutter));
+}
+
+.public .player-page h1 {
+  font-size: var(--step-4);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  margin: 0.5rem 0 0;
+}
+
+.public .player-controls {
+  align-items: stretch;
+}
+
+.public .player-controls fieldset {
+  margin: 0;
+  min-width: 0;
+  background: var(--paper);
+}
+
+.public .player-controls legend {
+  padding: 0 0.4rem;
+  font-weight: 600;
+  font-size: var(--step--1);
+}
+
+.public .speed-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.public .speed-choice input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.public .help-control {
+  margin-top: 0;
+}
+
+.public .learner-settings .checkbox input {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+.public .learner-progress ul {
+  margin: 0.5rem 0;
+  padding-left: 1.1rem;
 }
