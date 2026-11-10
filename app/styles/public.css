@@ -28,6 +28,8 @@
   --font-display: "Bricolage Grotesque Variable", "Arial Narrow", system-ui, sans-serif;
   --font-text: "Jost Variable", "Century Gothic", "Avenir Next", system-ui, sans-serif;
   --step--1: 0.8125rem;
+  /* Small: sentence-case text a step under Body (hints, errors, form labels, fact lines, breadcrumbs). */
+  --step-small: 0.95rem;
   --step-0: 1.0625rem;
   --step-1: 1.3rem;
   --step-2: clamp(1.5rem, 1.25rem + 1vw, 2rem);
@@ -193,7 +195,7 @@ html:has(.public) {
   flex-wrap: wrap;
   gap: 0.25rem 1.6rem;
   font-weight: 500;
-  font-size: 1.0625rem;
+  font-size: var(--step-0);
 }
 
 .public .area-links a {
@@ -274,7 +276,7 @@ html:has(.public) {
 .site-menu .area-links {
   flex-direction: column;
   gap: 0;
-  font-size: 1.2rem;
+  font-size: var(--step-1);
 }
 
 .site-menu .area-links a {
@@ -304,7 +306,7 @@ html:has(.public) {
   }
 
   .public .wordmark {
-    font-size: 1.2rem;
+    font-size: var(--step-1);
     gap: 0.5rem;
   }
 
@@ -449,7 +451,7 @@ html:has(.public) {
   flex-wrap: wrap;
   gap: 0.5rem 1.5rem;
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
@@ -500,7 +502,7 @@ html:has(.public) {
 
 .no-review {
   margin-top: 0.4rem;
-  font-size: 1rem;
+  font-size: var(--step-small);
   color: var(--muted);
 }
 
@@ -547,7 +549,7 @@ html:has(.public) {
   background: var(--paper);
   box-shadow: inset 0 0 0 2px var(--voivoi);
   border-radius: var(--plate-radius);
-  font-size: 1.2rem;
+  font-size: var(--step-1);
   line-height: 1.6;
 }
 
@@ -593,7 +595,7 @@ html:has(.public) {
 
 .sources {
   white-space: pre-line;
-  font-size: 1rem;
+  font-size: var(--step-small);
   color: var(--muted);
 }
 
@@ -602,7 +604,7 @@ html:has(.public) {
 .breadcrumb {
   max-width: 48rem;
   margin: 0 auto 1rem;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
 }
 
 .breadcrumb ol {
@@ -628,7 +630,7 @@ html:has(.public) {
 
 .public .primary-link {
   font-weight: 600;
-  font-size: 1.0625rem;
+  font-size: var(--step-0);
   background: var(--ink);
   color: var(--shell);
   text-decoration: none;
@@ -706,7 +708,7 @@ html:has(.public) {
 
 .welcome-statement {
   max-width: 34rem;
-  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem);
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.3rem);
   line-height: 1.5;
   color: #d5dfe2;
 }
@@ -743,7 +745,7 @@ html:has(.public) {
 
 .signature {
   font-weight: 500;
-  font-size: 1rem;
+  font-size: var(--step-small);
   letter-spacing: 0.08em;
   color: var(--mist);
 }
@@ -873,7 +875,7 @@ html:has(.public) {
 .tile-text {
   display: grid;
   gap: 0.6rem;
-  font-size: 1.0625rem;
+  font-size: var(--step-0);
   line-height: 1.45;
   max-width: 22rem;
 }
@@ -1163,7 +1165,7 @@ html:has(.public) {
 
 /* What isn't open yet: said plainly, on a Sand plate. */
 .not-open {
-  font-size: 1rem;
+  font-size: var(--step-0);
   line-height: 1.5;
   color: var(--ink);
   background: var(--sand);
@@ -1204,7 +1206,7 @@ html:has(.public) {
 
 .public .footer-wordmark {
   color: var(--shell);
-  font-size: 1.3rem;
+  font-size: var(--step-1);
 }
 
 .footer-wordmark .woven-mark {
@@ -1238,7 +1240,7 @@ html:has(.public) {
 
 .footer-note {
   max-width: 60ch;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   line-height: 1.6;
   color: var(--mist);
 }
@@ -1283,7 +1285,7 @@ html:has(.public) {
 .public-form legend {
   font-family: var(--font-text);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--ink);
 }
 
@@ -1294,7 +1296,7 @@ html:has(.public) {
 
 .public-form .hint {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--muted);
 }
 
@@ -1359,7 +1361,7 @@ html:has(.public) {
 
 .notice-wording {
   margin: 0.5rem 0 0 2rem;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--muted);
 }
 
@@ -1374,7 +1376,7 @@ blockquote.notice-wording {
   margin: 0;
   font-family: var(--font-text);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--kesa-deep);
 }
 
@@ -1395,7 +1397,7 @@ blockquote.notice-wording {
   justify-self: start;
   font-family: var(--font-text);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--step-0);
   background: var(--ink);
   color: var(--paper);
   border: 0;
@@ -1416,7 +1418,7 @@ blockquote.notice-wording {
 
 .report-problem {
   font-family: var(--font-text);
-  font-size: 0.95rem;
+  font-size: var(--step-small);
 }
 
 .fixed-routes {
@@ -1448,7 +1450,7 @@ blockquote.notice-wording {
 .search-filters legend {
   font-family: var(--font-text);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--ink);
 }
 
@@ -1478,7 +1480,7 @@ blockquote.notice-wording {
 .public .search-form button {
   font-family: var(--font-text);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--step-0);
   background: var(--ink);
   color: var(--paper);
   border: 0;
@@ -1603,7 +1605,7 @@ blockquote.notice-wording {
 .public .report-link button {
   font: inherit;
   font-family: var(--font-text);
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   background: none;
   border: 0;
   padding: 0.5rem 0;
@@ -1743,7 +1745,7 @@ blockquote.notice-wording {
 /* Sponsorship and editorial features, always disclosed in the same plain voice. */
 .disclosure {
   font-family: var(--font-text);
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   color: var(--kesa-deep);
 }
 

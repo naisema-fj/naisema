@@ -71,6 +71,11 @@ typography:
     fontSize: "1.125rem"
     fontWeight: 400
     lineHeight: 1.75
+  small:
+    fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
+    fontSize: "0.95rem"
+    fontWeight: 400
+    lineHeight: 1.5
   label:
     fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
     fontSize: "0.8125rem"
@@ -277,10 +282,11 @@ The NAISEMA brand palette, used as solid fields: deep teal Ink, burnt-orange Kes
 - **Tile Name** (800, 2.4rem; 2rem inside the desktop mat, 0.92, -0.025em): the area name on each homepage tile.
 - **Title** (700, clamp(1.5rem, 1.25rem + 1vw, 2rem), 1): h2 section headings and quiet-tile headings.
 - **Title Small** (700, 1.3rem, 1.2): h3, piece titles in ruled lists, panel headings inside Sand tiles.
-- **Wordmark** (Bricolage 700, 1.5rem, 0.05em tracking): NAISEMA beside the mark in header (1.2rem at 24rem and below) and footer (1.3rem).
+- **Wordmark** (Bricolage 700, 1.5rem, 0.05em tracking): NAISEMA beside the mark in header (1.3rem at 24rem and below) and footer (1.3rem).
 - **Lede** (Jost 400, 1.3rem, 1.5, max 40rem): the summary under a head tile.
 - **Body** (Jost 400, 1.0625rem, 1.65): the site default, tile text (1.45 leading), nav links (500).
 - **Body Reading** (Jost 400, 1.125rem, 1.75, 66ch measure): Article bodies; headings get less space below than above.
+- **Small** (Jost 400, 0.95rem, 1.5): sentence-case text a step under Body: hints, field errors, form labels (600), fact lines (500), the breadcrumb, notice wording, footer notes, report links and disclosures. On the staff site, also table text, field labels and the header's controls.
 - **Label** (Jost 600, 0.8125rem, 0.10 to 0.14em tracking, uppercase): field and fact labels (From, Topics, Review Labels, definition terms, search filter legends), datelines, list marks and tile notes, in Kesa Deep or Muted.
 
 ### Named Rules
