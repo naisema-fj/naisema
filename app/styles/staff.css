@@ -187,14 +187,16 @@
 }
 
 :where(.staff) fieldset {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.75rem 1rem;
+  min-width: 0;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  border: 0;
 }
 
 :where(.staff) legend {
-  padding: 0 0.4rem;
-  font-weight: 600;
+  padding: 0;
+  margin-bottom: 0.35rem;
+  font-weight: 700;
 }
 
 :where(.staff main) button {
@@ -249,7 +251,6 @@
   padding: 0.6rem 0.9rem;
   border-radius: 10px;
   background: var(--sand);
-  box-shadow: inset 4px 0 0 var(--ink);
 }
 
 :where(.staff main) [role="alert"] {
@@ -312,7 +313,7 @@
   padding: 0.6rem 1rem;
   border-radius: 10px;
   background: var(--sand);
-  box-shadow: inset 4px 0 0 var(--voivoi);
+  box-shadow: inset 0 0 0 2px var(--voivoi);
 }
 
 .missing h3 {
@@ -814,32 +815,7 @@
   margin-bottom: 0;
 }
 
-/* Inside a card, the lesser groupings are Shell, so each level reads one step down. */
-:where(.staff main fieldset) {
-  margin: 1.1rem 0 0;
-  padding: 0.5rem 1rem 0.9rem;
-  border-color: var(--line);
-  border-radius: 10px;
-  background: var(--shell);
-}
-
-:where(.staff main fieldset > legend) {
-  padding: 0 0.5rem;
-  font-size: 0.95rem;
-}
-
-:where(.staff main :is(.segment, .activity, .note)) {
-  margin: 0 0 0.9rem;
-  padding: 0.9rem 1rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--shell);
-}
-
-:where(.staff main :is(.segment, .activity) fieldset) {
-  background: var(--paper);
-}
-
+/* Inside a card, a group is named by its legend and set apart by space and a rule, never boxed again. */
 :where(.staff main :is(.segment-list, .activity-list)) {
   margin: 0.75rem 0;
 }
@@ -971,9 +947,6 @@
 /* One person on the Staff page: the card is the frame, so the fieldset only names it. */
 .staff .person-form > fieldset {
   margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
 }
 
 .staff .person-form > fieldset > legend {
@@ -1006,4 +979,9 @@
   .staff-menu summary {
     padding-inline: 0.7rem;
   }
+}
+
+/* Long hints keep the reading measure: about 75 characters, set in em because Jost runs narrow. */
+:where(.staff main .hint) {
+  max-width: 32em;
 }
