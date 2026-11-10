@@ -347,7 +347,7 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
               </div>
             );
           })}
-          <fieldset>
+          <fieldset className="choice-grid">
             <legend>Content Flags (they decide the reviews it needs)</legend>
             {CONTENT_FLAGS.map((flag) => (
               <label key={flag} className="checkbox">
@@ -357,7 +357,7 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
             ))}
           </fieldset>
           {topics.length > 0 && (
-            <fieldset>
+            <fieldset className="choice-grid">
               <legend>Topics</legend>
               {topics.map((row) => (
                 <label key={row.slug} className="checkbox">

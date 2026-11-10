@@ -42,13 +42,13 @@ export default function Apps() {
               <p className="not-open">
                 <span className="from-label">Not open yet</span> {app.notYetOpen}
               </p>
-              <p>
+              <p className="app-preview">
                 <a href={app.href} rel="noopener">
                   Try the preview on apps.naisema.com
                 </a>
               </p>
               {app.forms.length > 0 && (
-                <ul aria-label={`Help ${app.name} grow`}>
+                <ul className="app-forms" aria-label={`Help ${app.name} grow`}>
                   {app.forms.map((key) => (
                     <li key={key}>
                       <Link to={`/forms/${key}`}>{FORMS[key].title}</Link>

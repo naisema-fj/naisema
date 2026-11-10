@@ -126,7 +126,7 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
         <input type="hidden" name="intent" value="add" />
         <label htmlFor="holder">Who holds the rights</label>
         <input id="holder" name="holder" required maxLength={300} />
-        <fieldset>
+        <fieldset className="choice-grid">
           <legend>What they permit</legend>
           {PERMITTED_USES.map((use) => (
             <label key={use} className="checkbox">

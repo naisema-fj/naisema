@@ -27,11 +27,11 @@ body {
   top: 1rem;
   padding: 0.5rem 1rem;
   background: #fff;
-  outline: 3px solid #0b4f5c;
+  outline: 3px solid #1b3f4c;
 }
 
 a {
-  color: #0b4f5c;
+  color: #1b3f4c;
 }
 
 .visually-hidden {
@@ -76,7 +76,7 @@ a {
 }
 
 .field-error {
-  color: #a4161a;
+  color: #a9472a;
   margin: 0.25rem 0 0;
 }
 
@@ -89,7 +89,7 @@ a {
 }
 
 .body-toolbar button[aria-pressed="true"] {
-  background: #0b4f5c;
+  background: #1b3f4c;
   color: #fff;
 }
 
@@ -121,7 +121,7 @@ a {
 }
 
 .body-editor-content:focus {
-  outline: 3px solid #0b4f5c;
+  outline: 3px solid #1b3f4c;
 }
 
 .ProseMirror {
@@ -140,7 +140,7 @@ a {
 }
 
 .ProseMirror-selectednode {
-  outline: 2px solid #0b4f5c;
+  outline: 2px solid #1b3f4c;
 }
 
 .ProseMirror-gapcursor {
@@ -160,7 +160,7 @@ a {
 
 /* Blocks shared by the editor and the rendered body */
 .callout {
-  border-left: 4px solid #0b4f5c;
+  border-left: 4px solid #1b3f4c;
   background: #eef5f6;
   padding: 0.5rem 1rem;
   margin: 1rem 0;
@@ -206,7 +206,7 @@ a {
 
 .hint {
   margin: 0.25rem 0;
-  color: #4a4a4a;
+  color: #56686e;
 }
 
 .upload-form button[type="submit"] {
@@ -224,7 +224,7 @@ a {
 }
 
 .table-scroll:focus-visible {
-  outline: 3px solid #0b4f5c;
+  outline: 3px solid #1b3f4c;
 }
 
 .media-table {
@@ -249,7 +249,7 @@ a {
 
 .media-table .reason {
   display: block;
-  color: #a4161a;
+  color: #a9472a;
 }
 
 .media-table .video-state {
@@ -277,7 +277,7 @@ a {
 /* A Video Asset's page (app/routes/admin/media/video.tsx). */
 .state-reason {
   display: block;
-  color: #a4161a;
+  color: #a9472a;
 }
 
 .video-preview {
@@ -314,7 +314,7 @@ a {
 /* Lists of Learning Layers and Videos, and a page's small print. */
 .meta {
   display: block;
-  color: #4a4740;
+  color: #56686e;
   font-size: 0.875rem;
 }
 
@@ -330,15 +330,15 @@ a {
   display: inline-block;
   margin-left: 0.5rem;
   padding: 0 0.4rem;
-  border: 1px solid #4a4740;
+  border: 1px solid #56686e;
   border-radius: 0.25rem;
   font-size: 0.8rem;
   font-weight: 400;
 }
 
 .badge-warning {
-  border-color: #a4161a;
-  color: #a4161a;
+  border-color: #a9472a;
+  color: #a9472a;
 }
 
 /* The timeline editor (app/components/timeline-editor.tsx). */
@@ -403,7 +403,7 @@ a {
 }
 
 .segment-problems {
-  border-left: 4px solid #a4161a;
+  border-left: 4px solid #a9472a;
   padding-left: 0.75rem;
 }
 
@@ -472,8 +472,8 @@ a {
 }
 
 .token[aria-pressed="true"] {
-  border-color: #1d3557;
-  background: #1d3557;
+  border-color: #1b3f4c;
+  background: #1b3f4c;
   color: #fff;
 }
 
@@ -539,7 +539,7 @@ a {
 }
 
 .activity-alternative {
-  border-left: 4px solid #1d3557;
+  border-left: 4px solid #1b3f4c;
   padding-left: 0.75rem;
 }
 
@@ -549,13 +549,13 @@ a {
 
 /* A Review Link (app/routes/public/review-link.tsx): watermarked as a draft throughout. */
 .review-link-page {
-  background-image: repeating-linear-gradient(-30deg, transparent 0 9rem, rgb(164 22 26 / 0.06) 9rem 9.5rem);
+  background-image: repeating-linear-gradient(-30deg, transparent 0 9rem, rgb(169 71 42 / 0.06) 9rem 9.5rem);
 }
 
 .draft-watermark {
   padding: 0.5rem 0.75rem;
-  border: 2px solid #a4161a;
-  color: #a4161a;
+  border: 2px solid #a9472a;
+  color: #a9472a;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -584,7 +584,7 @@ a {
 }
 
 .segment-english {
-  color: #4a4a4a;
+  color: #56686e;
 }
 
 /* A player's error, over its dark frame (app/components/video-preview.tsx). */
@@ -592,5 +592,5 @@ figure > p[role="alert"] {
   margin: 0;
   padding: 0.5rem 0.75rem;
   background: #fff;
-  color: #a4161a;
+  color: #a9472a;
 }
