@@ -568,7 +568,6 @@ html:has(.public) {
 }
 
 .public .callout {
-  border-left: 0;
   background: var(--sand);
   border-radius: var(--plate-radius);
   padding: 1rem 1.25rem;
@@ -2153,11 +2152,18 @@ blockquote.notice-wording {
   font-size: var(--step-1);
 }
 
+/* Inside the progress panel, the settings are named by their legend and set apart by space, not boxed again. */
 .public .learner-settings {
-  margin-top: 0.75rem;
-  border: 1px solid var(--line);
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--plate-radius);
+  min-width: 0;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.public .learner-settings legend {
+  padding: 0;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
 }
 
 .public .learner-settings .checkbox {
@@ -2203,7 +2209,14 @@ blockquote.notice-wording {
 
 .public .form-consent > .notice-wording {
   margin: 0;
+  /* Jost runs narrow, so the measure is set in em: about 75 characters a line. */
+  max-width: 32em;
   color: var(--ink);
+}
+
+/* A form's opening sentence keeps the same measure as the notice under it. */
+.public .standfirst {
+  max-width: 32em;
 }
 
 .public .form-consent .form-choice {

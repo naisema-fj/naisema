@@ -138,7 +138,8 @@ function StoryVideo({ title, video }: { title: string; video: NonNullable<Public
               <Link to={video.layer.path} reloadDocument>
                 {video.layer.title}
               </Link>
-              <p className="list-mark">{`${video.layer.level} · Fijian captions, a transcript, word meanings and practice`}</p>
+              <p>Fijian captions, a transcript, word meanings and practice.</p>
+              <p className="list-mark">{video.layer.level}</p>
             </li>
           </ul>
         </section>
