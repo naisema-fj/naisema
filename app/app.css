@@ -3,8 +3,8 @@
   color-scheme: light;
   font-family: system-ui, sans-serif;
   line-height: 1.5;
-  color: #1a1a1a;
-  background: #fbfaf7;
+  color: #0f2b35;
+  background: #f6f5f2;
 }
 
 body {
@@ -114,7 +114,7 @@ a {
 .body-editor-content {
   min-height: 12rem;
   padding: 0.5rem 1rem;
-  border: 1px solid #767676;
+  border: 1px solid #56686e;
   background: #fff;
   white-space: pre-wrap;
   word-wrap: break-word;
@@ -167,7 +167,7 @@ a {
 }
 
 .embedded-item {
-  border: 1px dashed #767676;
+  border: 1px dashed #56686e;
   padding: 0.5rem 1rem;
   margin: 1rem 0;
 }
@@ -178,22 +178,6 @@ a {
 }
 
 /* Comparing revisions */
-.body-diff {
-  list-style: none;
-  padding: 0;
-}
-
-.body-diff li {
-  padding: 0.15rem 0.5rem;
-}
-
-.body-diff .added {
-  background: #e6f4ea;
-}
-
-.body-diff .removed {
-  background: #fce8e6;
-}
 
 .sources {
   white-space: pre-line;
@@ -244,7 +228,7 @@ a {
   text-align: left;
   vertical-align: top;
   padding: 0.5rem;
-  border-bottom: 1px solid #d6d3cc;
+  border-bottom: 1px solid #d6d2c8;
 }
 
 .media-table .reason {
@@ -288,7 +272,7 @@ a {
   display: block;
   width: 100%;
   max-height: 70vh;
-  background: #000;
+  background: #0a1d24;
 }
 
 .video-facts {
@@ -331,7 +315,7 @@ a {
   margin-left: 0.5rem;
   padding: 0 0.4rem;
   border: 1px solid #56686e;
-  border-radius: 0.25rem;
+  border-radius: 8px;
   font-size: var(--step--1);
   font-weight: 400;
 }
@@ -362,7 +346,7 @@ a {
 .layout-frame {
   position: relative;
   margin: 0 auto 0.5rem;
-  background: #000;
+  background: #0a1d24;
 }
 
 .layout-landscape {
@@ -392,14 +376,14 @@ a {
   display: inline-block;
   margin: 0;
   padding: 0.2rem 0.5rem;
-  background: rgb(0 0 0 / 0.75);
+  background: rgb(10 29 36 / 0.8);
   color: #fff;
 }
 
 .caption-english {
   display: block;
   font-size: var(--step-small);
-  color: #e6e1d6;
+  color: #d5dfe2;
 }
 
 .segment-problems {
@@ -463,8 +447,8 @@ a {
 
 .token {
   padding: 0.1rem 0.4rem;
-  border: 1px solid #d6d3cc;
-  border-radius: 0.25rem;
+  border: 1px solid #d6d2c8;
+  border-radius: 8px;
   background: #fff;
   font: inherit;
 }
@@ -536,8 +520,8 @@ a {
 .activity-preview {
   margin-top: 0.75rem;
   padding: 0.75rem;
-  border: 1px solid #d6d3cc;
-  border-radius: 0.25rem;
+  border: 1px solid #d6d2c8;
+  border-radius: 10px;
   background: #fff;
 }
 
@@ -578,7 +562,7 @@ a {
   font-size: clamp(1.3rem, 6vw, 2.4rem);
   font-weight: 700;
   text-transform: uppercase;
-  text-shadow: 0 0 0.5rem rgb(0 0 0 / 0.6);
+  text-shadow: 0 0 0.5rem rgb(10 29 36 / 0.6);
   pointer-events: none;
   transform: rotate(-20deg);
 }
