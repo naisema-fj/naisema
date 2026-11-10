@@ -21,6 +21,12 @@
   --muted: #56686e;
   --font-display: "Bricolage Grotesque Variable", system-ui, sans-serif;
   --font-text: "Jost Variable", system-ui, sans-serif;
+  /* The public site's type ramp (DESIGN.md), so staff text sits on the same steps. */
+  --step--1: 0.8125rem;
+  --step-small: 0.95rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.3rem;
+  --step-2: clamp(1.5rem, 1.25rem + 1vw, 2rem);
 
   min-height: 100vh;
   display: flex;
@@ -28,7 +34,7 @@
   background: var(--shell);
   color: var(--ink);
   font-family: var(--font-text);
-  font-size: 1.0625rem;
+  font-size: var(--step-0);
   line-height: 1.55;
 }
 
@@ -59,17 +65,17 @@
 
 :where(.staff) h1 {
   margin: 0.5rem 0 1rem;
-  font-size: clamp(1.7rem, 1.4rem + 1.2vw, 2.3rem);
+  font-size: var(--step-2);
 }
 
 :where(.staff) h2 {
   margin: 2rem 0 0.5rem;
-  font-size: 1.4rem;
+  font-size: var(--step-1);
 }
 
 :where(.staff) h3 {
   margin: 1.5rem 0 0.4rem;
-  font-size: 1.15rem;
+  font-size: 1.125rem;
 }
 
 :where(.staff) :is(p, li, dd) {
@@ -95,7 +101,7 @@
   width: 100%;
   border-collapse: collapse;
   margin: 1rem 0;
-  font-size: 0.98rem;
+  font-size: var(--step-small);
   /* Stays a real table on screens wide enough for it; long words break to fit. */
   overflow-wrap: anywhere;
 }
@@ -354,7 +360,7 @@
   color: inherit;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1.2rem;
+  font-size: var(--step-1);
   letter-spacing: 0.04em;
   text-decoration: none;
 }
@@ -389,7 +395,7 @@
 
 .staff-user {
   display: none;
-  font-size: 0.9rem;
+  font-size: var(--step-small);
   opacity: 0.85;
 }
 
@@ -403,7 +409,7 @@
   background: transparent;
   color: var(--shell);
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--step-small);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -512,7 +518,7 @@
   margin: 1rem 0 0.2rem;
   padding: 0 0.6rem;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--step--1);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -546,7 +552,7 @@
   margin-top: auto;
   border-top: 1px solid var(--line);
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--step-small);
 }
 
 .staff-footer p {
@@ -566,7 +572,7 @@
 
 .staff-attention strong {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.125rem;
 }
 
 /* --- Search: one box in the header of every staff page, and its results. --- */
@@ -654,7 +660,7 @@
 :where(.staff main label) {
   display: block;
   margin: 1.1rem 0 0.3rem;
-  font-size: 0.98rem;
+  font-size: var(--step-small);
 }
 
 :where(.staff main :is(legend, h2, h3, p, .hint) + label) {
@@ -685,7 +691,7 @@
 :where(.staff main .hint) {
   margin: 0.15rem 0 0.4rem;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--step-small);
 }
 
 /* A choice (checkbox or radio): the whole row is the target, with the box and its words aligned. */
@@ -936,7 +942,7 @@
 :where(.staff main .label) {
   margin: 1.1rem 0 0.3rem;
   font-weight: 600;
-  font-size: 0.98rem;
+  font-size: var(--step-small);
 }
 
 :where(.staff .body-toolbar) {
@@ -953,7 +959,7 @@
   padding: 0;
   margin-bottom: 0.25rem;
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: var(--step-1);
 }
 
 /* On a phone the header keeps the wordmark, the menu and sign out on one line. */
@@ -965,7 +971,7 @@
   }
 
   .staff-wordmark {
-    font-size: 1.05rem;
+    font-size: var(--step-0);
     min-width: 0;
   }
 
