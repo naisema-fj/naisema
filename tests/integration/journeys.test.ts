@@ -423,3 +423,70 @@ describe("the health check", () => {
     expect(await response.text()).toBe("ok");
   });
 });
+
+describe("the guide to using NAISEMA", () => {
+  it("tells a first-time visitor the areas and all eight steps, in the player's own words, without needing JavaScript", async () => {
+    const response = await visit("/how-it-works");
+    expect(response.status).toBe(200);
+    const page = await response.text();
+    expect(page).toContain("How NAISEMA works");
+    for (const area of ["Learn", "Voices", "Discover", "Connect", "E-zine", "Resources"]) expect(page).toContain(area);
+    // The steps are the player's own text, so the two can't disagree.
+    for (const step of ["Watch naturally", "Fijian captions", "Explore the words", "Use it with someone"])
+      expect(page).toContain(step);
+    expect(page).toContain("Your progress stays on your device");
+    // Plain server-rendered words: no script of its own.
+    expect(page).not.toMatch(/<script[^>]*src=["'][^"']*how-it-works/);
+
+    // It is found from the home page, the footer and the sitemap.
+    expect(await (await visit("/")).text()).toContain('href="/how-it-works"');
+    expect(await (await visit("/sitemap.xml")).text()).toContain("/how-it-works");
+  });
+});
+
+describe("help on the staff site", () => {
+  const page = async (email: string, path: string) => {
+    const response = await as(email, path);
+    expect(response.status, path).toBe(200);
+    return response.text();
+  };
+
+  it("explains each page where the work is done", async () => {
+    const article = await createItem(EDITOR, "article|ezine", "Help article");
+    const video = await createItem(EDITOR, "video|learn", "Help video");
+    const expected: [string, string][] = [
+      ["/admin", "How this page works"],
+      ["/admin/items", "How adding and editing works"],
+      [`/admin/items/${article}`, "What do the flags do?"],
+      [`/admin/items/${article}`, "What does this mean?"],
+      [`/admin/items/${video}/layer`, "How this editor works"],
+      [`/admin/rights/item/${article}`, "What are Rights Records?"],
+      ["/admin/media", "Preparing and using files"],
+      ["/admin/topics", "What are Topics?"],
+      ["/admin/submissions", "Who sees what"],
+      ["/admin/staff", "What do the roles allow?"],
+      ["/admin/audit", "What is this?"],
+    ];
+    for (const [path, summary] of expected) expect(await page(EDITOR, path), path).toContain(summary);
+  });
+
+  it("tells each person what their own roles allow, and no one else's", async () => {
+    const educator = await page(EDUCATOR, "/admin");
+    expect(educator).toContain("Writes Videos and their Learning Layers");
+    expect(educator).toContain("Never publishes");
+    expect(educator).not.toContain("only person who reads reports");
+    expect(await page(SAFEGUARDING, "/admin")).toContain("only person who reads reports");
+  });
+
+  it("explains every permitted use beside the rights form", async () => {
+    const article = await createItem(EDITOR, "article|ezine", "Rights help article");
+    const rights = await page(EDITOR, `/admin/rights/item/${article}`);
+    for (const meaning of [
+      "Show it on NAISEMA",
+      "Use just a part of it",
+      "Turn it into teaching material",
+      "train AI systems",
+    ])
+      expect(rights).toContain(meaning);
+  });
+});

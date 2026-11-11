@@ -1,5 +1,6 @@
 import { data, Form, redirect } from "react-router";
 import { TableScroll } from "~/components/table-scroll";
+import { WhatsThis } from "~/components/whats-this";
 import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { createItem, listItems, mayEdit, Refused } from "~/lib/content.server";
@@ -57,6 +58,19 @@ export default function Items({ loaderData, actionData }: Route.ComponentProps) 
   return (
     <main id="main" className="page">
       <h1>Content</h1>
+      <WhatsThis summary="How adding and editing works">
+        <ol>
+          <li>
+            Choose what it is and where it goes, give it a title, and press <strong>Add and start writing</strong>.
+          </li>
+          <li>Fill in the page and save. Every save is a new version, and each new version needs its reviews again.</li>
+          <li>The item's page says what it is still missing and, once it has everything, lets an editor publish it.</li>
+        </ol>
+        <p>
+          <strong>State</strong> in the list: <em>Not published</em> (written, not live), <em>Published</em> (live),{" "}
+          <em>Withdrawn</em> (taken down, and can be published again) or <em>Archived</em> (out of use for good).
+        </p>
+      </WhatsThis>
       <section aria-labelledby="add-heading">
         <h2 id="add-heading">Add something</h2>
         <Form method="post">

@@ -1,5 +1,6 @@
 import { desc } from "drizzle-orm";
 import { TableScroll } from "~/components/table-scroll";
+import { WhatsThis } from "~/components/whats-this";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { requireStaff } from "~/lib/staff.server";
@@ -21,6 +22,12 @@ export default function Audit({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
       <h1>Audit log</h1>
+      <WhatsThis summary="What is this?">
+        <p>
+          A record of what anyone did on the staff site: who, what, on which item, when, and why where a reason was
+          given. It shows the latest 500 events, and nothing in it can be changed.
+        </p>
+      </WhatsThis>
       <TableScroll label="Audit events">
         <table>
           <caption id="audit-caption">The latest 500 events, newest first</caption>

@@ -2,7 +2,9 @@ import { Link } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { DateMark, Postmarks } from "~/components/public/postmarks";
 import { TranscriptParagraphs } from "~/components/transcript-paragraphs";
+import { WhatsThis } from "~/components/whats-this";
 import type { PublicView } from "~/lib/public-view.server";
+import { meaningsOfLabels } from "~/lib/review-label-help";
 
 /**
  * A published item as a letter: who it is from, when, what it was reviewed for (only the Review
@@ -48,6 +50,19 @@ export function ContentLetter({ item }: { item: PublicView }) {
           ) : (
             <p className="no-review">{`This ${name} has none.`}</p>
           )}
+          <WhatsThis summary="What do these labels mean?">
+            <p>Labels say exactly what a person checked for the version you're reading, and nothing more.</p>
+            {meaningsOfLabels(item.labels).length > 0 && (
+              <ul>
+                {meaningsOfLabels(item.labels).map((label) => (
+                  <li key={label.name}>
+                    <strong>{label.name}:</strong> {label.meaning}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p>If a label isn't here, that kind of review hasn't happened.</p>
+          </WhatsThis>
         </section>
       )}
 

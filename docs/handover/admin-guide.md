@@ -4,6 +4,8 @@ This guide is for the founder. It shows how to sign in, publish something, take 
 
 Your roles decide what you see. The menu only lists pages you may use, so a page missing from your menu isn't an error.
 
+Most pages also have a short help link near the top, such as **How this page works** or **What does this mean?**. Press it to open a plain explanation of that page, and press it again to close it. It is the same advice as this guide, next to the thing it is about.
+
 ## Sign in
 
 1. Open `admin.naisema.com`. On **Sign in to NAISEMA staff**, type your email address and press **Email me a sign-in link**.

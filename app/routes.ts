@@ -7,6 +7,7 @@ export default [
     index("routes/public/home.tsx"),
     route("search", "routes/public/search.tsx"),
     route("apps", "routes/public/apps.tsx"),
+    route("how-it-works", "routes/public/how-it-works.tsx"),
     route("topics", "routes/public/topic.tsx", { id: "topics" }),
     route("topics/:slug", "routes/public/topic.tsx", { id: "topic" }),
     route("forms/:form", "routes/public/form.tsx"),

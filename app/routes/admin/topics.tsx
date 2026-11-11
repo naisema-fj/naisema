@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { data, Form, redirect } from "react-router";
+import { WhatsThis } from "~/components/whats-this";
 import { audit } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
@@ -55,6 +56,13 @@ export default function Topics({ loaderData, actionData }: Route.ComponentProps)
   return (
     <main id="main" className="page">
       <h1>Topics</h1>
+      <WhatsThis summary="What are Topics?">
+        <p>
+          A Topic is a subject that items are tagged with. Each has its own page on the public site and gathers items
+          from every area. A Topic can sit under one broader Topic, one level only. You tag an item with Topics on its
+          own page.
+        </p>
+      </WhatsThis>
       <ul>
         {top.map((row) => (
           <li key={row.slug}>

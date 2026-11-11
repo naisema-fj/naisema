@@ -34,6 +34,7 @@ import { importWebVtt, parseWebVtt, type SegmentLanguage } from "~/lib/webvtt";
 import { ActivitiesEditor } from "./activities-editor";
 import { type ExpressionChoice, NotesEditor, SegmentAnnotations } from "./segment-annotations";
 import { VideoPreview } from "./video-preview";
+import { WhatsThis } from "./whats-this";
 
 /**
  * The timeline editor for a Learning Layer's Segments (VCMS-02/04, docs/phase-1a-defaults.md §2):
@@ -513,6 +514,25 @@ export function TimelineEditor({
           </fieldset>
 
           <h2 id="segments-heading">Segments</h2>
+          <WhatsThis summary="How Segments work">
+            <ul>
+              <li>
+                <strong>Set start at playhead</strong> and <strong>Set end at playhead</strong> take the time from the
+                video. Or type a time, or use the arrow keys.
+              </li>
+              <li>
+                Times that overlap are flagged. Tick <strong>Overlaps the Segment before on purpose</strong> only when
+                two people really do speak at once.
+              </li>
+              <li>
+                Text imported from WebVTT is an <strong>Unreviewed draft</strong>. Read it, then press{" "}
+                <strong>I've checked this text</strong>. Until you do, the Learning Layer can't be published.
+              </li>
+              <li>
+                A Segment marked <strong>Retimed</strong> no longer fits the new times. Check it.
+              </li>
+            </ul>
+          </WhatsThis>
           <p className="hint">
             Times are from the start of the Excerpt, or of the video. In a time field, the up and down arrow keys move
             it 100 ms.
@@ -739,6 +759,17 @@ export function TimelineEditor({
               Practice and comprehension for learners, each on a Segment or the whole clip. Speaking is never required:
               every Activity has a text alternative, and nothing records anyone.
             </p>
+            <WhatsThis summary="What counts as complete?">
+              <p>
+                A learner completes the Learning Layer once they have tried every <strong>required</strong> Activity and
+                seen its feedback. Watching alone never completes it, and a real-world prompt can't be required.
+              </p>
+              <p>
+                If the Completion Rule says <strong>Nothing is required yet</strong>, tick{" "}
+                <strong>Required for completion</strong> on at least one Activity. Without that, it can't be published.
+                Use <strong>Preview as a learner</strong> to try an Activity as a learner sees it; nothing is saved.
+              </p>
+            </WhatsThis>
             <ActivitiesEditor
               activities={activities}
               segments={segments}

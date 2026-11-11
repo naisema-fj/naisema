@@ -13,6 +13,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const items = await publicItems(getDb(context.get(cloudflareContext).env.DB), { limit: 2000 });
   const urls = [
     `${origin}/`,
+    `${origin}/how-it-works`,
     ...PRIMARY_AREAS.map((area) => `${origin}/${area}`),
     ...items.map(({ item }) => `${origin}${itemPath(item)}`),
   ];

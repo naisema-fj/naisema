@@ -11,6 +11,11 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   await page.getByRole("link", { name: "Talanoa at the market" }).click();
   await expect(page.getByRole("heading", { name: "Talanoa at the market", level: 1 })).toBeVisible();
   await expect(page.getByText("Language reviewed · Standard Fijian")).toBeVisible();
+  // The labels explain themselves, on tap, with no hover needed.
+  const labelHelp = page.getByText("What do these labels mean?");
+  await labelHelp.click();
+  await expect(page.getByText("someone who knows that form of Fijian checked the language")).toBeVisible();
+  await expectNoAxeViolations(page);
   await expectReflow(page);
 
   await page.getByRole("link", { name: "Greetings at the market" }).click();
@@ -20,6 +25,8 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   await expect
     .poll(() => page.locator("video").evaluate((element: HTMLVideoElement) => element.readyState))
     .toBeGreaterThan(0);
+  await page.getByText("What do these controls do?").click();
+  await expect(page.getByText("slow the video down to catch each word")).toBeVisible();
   await expectNoAxeViolations(page);
 
   const steps = page.getByRole("navigation", { name: "Steps", exact: true });
@@ -64,6 +71,26 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   }
 });
 
+test("a first-time visitor finds how NAISEMA works from the home page, and reaches the steps from the player", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "See how NAISEMA works" }).click();
+  await expect(page.getByRole("heading", { name: "How NAISEMA works", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learn from a video", level: 2 })).toBeVisible();
+  // All eight steps are listed, and the page is usable by everyone.
+  await expect(page.locator(".guide-steps li")).toHaveCount(8);
+  await expectNoAxeViolations(page);
+  await expectReflow(page);
+
+  // From a step in the player, the same guide is one link away.
+  await page.goto("/learn");
+  await page.getByRole("link", { name: "Talanoa at the market" }).click();
+  await page.getByRole("link", { name: "Greetings at the market" }).click();
+  await page.getByRole("link", { name: "How the steps work" }).click();
+  await expect(page).toHaveURL(/\/how-it-works#learn$/);
+});
+
 test("someone sends a message through a public form", async ({ page }) => {
   await stubTurnstile(page);
   await page.goto("/forms/enquiry");
@@ -85,6 +112,9 @@ test.describe("the staff site", () => {
   test("an editor sees what needs them and opens the Video's Learning Layer", async ({ page }) => {
     await page.goto(`${ADMIN}/admin`);
     await expect(page.getByRole("heading", { name: "Bula, E2E Editor" })).toBeVisible();
+    // Help sits on the page, opens on tap, and says what the person's own roles allow.
+    await page.getByText("How this page works").click();
+    await expect(page.getByText("Adds and edits content")).toBeVisible();
     await expectNoAxeViolations(page);
     // On a phone the navigation is inside the Menu disclosure; the page is the same either way.
     await page.goto(`${ADMIN}/admin/items`);
@@ -92,6 +122,10 @@ test.describe("the staff site", () => {
     await expectReflow(page);
     await page.getByRole("link", { name: "Talanoa at the market" }).click();
     await expect(page.getByText("This version is published.")).toBeVisible();
+    await page.getByText("What does this mean?").click();
+    await expect(page.getByText("Nobody can approve a version they wrote")).toBeVisible();
+    await page.getByText("What do the flags do?").click();
+    await expect(page.getByText("Adds a Knowledge Holder Approval")).toBeVisible();
     await expectNoAxeViolations(page);
     await page.getByRole("link", { name: "Learning Layer" }).click();
     await expect(page.getByRole("heading", { name: "Learning Layer for Talanoa at the market" })).toBeVisible();

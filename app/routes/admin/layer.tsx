@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { data, redirect } from "react-router";
 import { TimelineEditor } from "~/components/timeline-editor";
+import { WhatsThis } from "~/components/whats-this";
 import { activityProblems, readActivities } from "~/lib/activities";
 import { annotationProblems, noteProblems, readAnnotations, readNewExpressions, readNotes } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -201,6 +202,30 @@ export default function LayerEditor({ loaderData, actionData }: Route.ComponentP
         <a href={`/admin/items/${loaderData.itemId}`}>Back to {loaderData.title}</a>
       </p>
       <h1>Learning Layer for {loaderData.title}</h1>
+      <WhatsThis summary="How this editor works">
+        <ol>
+          <li>
+            <strong>Segments:</strong> short stretches of the video, each with the Fijian words and the English
+            translation.
+          </li>
+          <li>
+            <strong>Annotations:</strong> press a word in a Segment to say what it means there.
+          </li>
+          <li>
+            <strong>Activities:</strong> practice for learners. Mark at least one as required, or learners can never
+            complete it.
+          </li>
+          <li>
+            <strong>Save a new revision</strong> at the bottom. Nothing is kept until you press it, and each save is a
+            new version of the Video that needs its reviews again.
+          </li>
+        </ol>
+        <p>
+          If a heading says <strong>things to fix</strong>, the list links to each problem. When you're done, go back to
+          the Video: <strong>Where it stands</strong> says what is still missing, and reviewers then see it under{" "}
+          <strong>Waiting for your review</strong>. You never publish; an editor does.
+        </p>
+      </WhatsThis>
       {footage?.durationMs ? (
         <TimelineEditor
           layerId={loaderData.itemId}

@@ -991,3 +991,39 @@
 :where(.staff main .hint) {
   max-width: 32em;
 }
+
+/* "What's this?" help: a native disclosure beside the thing it explains (no hover, works on a phone). */
+.staff .whats-this {
+  margin: 0.5rem 0 1rem;
+  max-width: 44rem;
+  font-size: var(--step-small);
+}
+
+.staff .whats-this > summary {
+  display: inline-block;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--kesa-deep);
+  text-underline-offset: 0.2em;
+}
+
+.staff .whats-this-body {
+  margin-top: 0.4rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-card, 10px);
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.staff .whats-this-body > * + * {
+  margin-top: 0.6rem;
+}
+
+.staff .whats-this-body :is(ul, ol) {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.2rem;
+}

@@ -35,6 +35,7 @@ import {
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
 import { ActivityCard } from "./activity-card";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
+import { WhatsThis } from "./whats-this";
 
 /**
  * The immersion player for one Learning Layer (VID-02–09, VID-12, §05A). It guides a learner
@@ -373,6 +374,12 @@ export function LearnerPlayer(props: Props) {
           Step {stageAt + 1} of {IMMERSION_STAGES.length}: {text.name}
         </h2>
         <p>{text.guide}</p>
+        <p className="stage-reassure">
+          Any step can be skipped or revisited, and nothing is graded.{" "}
+          <Link to="/how-it-works#learn" reloadDocument>
+            How the steps work
+          </Link>
+        </p>
       </section>
 
       <div className="player-stage">
@@ -451,6 +458,29 @@ export function LearnerPlayer(props: Props) {
             </p>
           )}
           {status && <p role="status">{status}</p>}
+
+          <WhatsThis className="controls-help" summary="What do these controls do?">
+            <ul>
+              <li>
+                <strong>Captions:</strong> words on the video, in {language.name}
+                {props.tracks.english ? " and in English" : ""}. Switch each on or off.
+              </li>
+              <li>
+                <strong>Speed:</strong> slow the video down to catch each word.
+              </li>
+              <li>
+                <strong>Replay and Loop</strong> (in the transcript): hear one line again, once or over and over.
+              </li>
+              {annotations.length > 0 && (
+                <li>
+                  <strong>Underlined words:</strong> tap one to see what it means here.
+                </li>
+              )}
+              <li>
+                <strong>Need help?</strong> shows what's hidden in this step, whenever you want it.
+              </li>
+            </ul>
+          </WhatsThis>
 
           <div className="help-control">
             <button
