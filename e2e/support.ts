@@ -11,14 +11,22 @@ export const EDITOR = "e2e-editor@naisema.test";
  * Turnstile's script comes from Cloudflare, which the test machine may not reach. This stands in
  * for its test site key's widget: it adds the always-passing token to the form, as the real one
  * would (app/lib/turnstile.ts).
+ *
+ * React hoists the async script into <head>, in the page's first streamed chunk, while the widget
+ * comes in a later one. Fulfilled at once, the stub can run before that chunk arrives, so like the
+ * real script it waits for the document to be parsed before it looks for widgets.
  */
-const TURNSTILE_STUB = `for (const widget of document.querySelectorAll(".cf-turnstile")) {
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "cf-turnstile-response";
-  input.value = "XXXX.DUMMY.TOKEN.XXXX";
-  widget.append(input);
-}`;
+const TURNSTILE_STUB = `function render() {
+  for (const widget of document.querySelectorAll(".cf-turnstile")) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = "cf-turnstile-response";
+    input.value = "XXXX.DUMMY.TOKEN.XXXX";
+    widget.append(input);
+  }
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", render);
+else render();`;
 
 export async function stubTurnstile(page: Page) {
   await page.route("https://challenges.cloudflare.com/turnstile/v0/api.js", (route) =>
