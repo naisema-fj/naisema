@@ -71,6 +71,7 @@ pnpm test:e2e --trace off
   ```bash
   git tag v1.0.0 && git push origin v1.0.0
   ```
+- **From GitHub, without a terminal:** Actions > Deploy > Run workflow. Pick the branch or tag, choose `staging` or `production`, and run. CI runs first, and production still waits for approval. Production only deploys a commit that is on `main`, so a feature branch is refused.
 - The deploy refuses to run while `wrangler.jsonc` still has `REPLACE_WITH_` placeholders for that environment.
 
 ## Roll back
