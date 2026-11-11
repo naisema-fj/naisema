@@ -2,7 +2,7 @@
 // roles comma-separated from admin, editor, educator, reviewer, safeguarding (app/lib/roles.ts). A
 // reviewer reviews Standard Fijian. They also need adding to the Cloudflare Access allowlist.
 // Used for the first administrator; after that, administrators use /admin/staff, which is audited.
-import { execFileSync } from "node:child_process";
+import { wrangler } from "./wrangler.mjs";
 
 const ROLES = ["admin", "editor", "educator", "reviewer", "safeguarding"];
 const [target, email, name, roleList] = process.argv.slice(2);
@@ -22,5 +22,5 @@ const sql = `INSERT INTO staff (email, name, roles, language_variety) VALUES (${
 ON CONFLICT(email) DO UPDATE SET name = excluded.name, roles = excluded.roles, language_variety = excluded.language_variety, active = 1;
 INSERT INTO audit_event (id, actor_email, action, subject_type, subject_id, details) VALUES (${q(crypto.randomUUID())}, 'staff:grant script', 'staff.granted', 'staff', ${q(email.toLowerCase())}, ${q(JSON.stringify({ roles }))});`;
 const where = target === "local" ? ["--local"] : ["--remote", "--env", target];
-execFileSync("pnpm", ["wrangler", "d1", "execute", "DB", ...where, "--command", sql], { stdio: "inherit" });
+wrangler(["d1", "execute", "DB", ...where, "--command", sql]);
 console.log(`${email} now holds: ${roles.join(", ")}`);
