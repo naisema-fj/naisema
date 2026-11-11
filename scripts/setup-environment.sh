@@ -473,7 +473,7 @@ if confirm "Build and deploy $TARGET now, from this computer?"; then
   fi
   say "Now sign in: open https://$ADMIN_HOST/admin/sign-in and ask for a link for $ADMIN_EMAIL."
 else
-  SKIPPED+=("First deploy: merge the wrangler.jsonc pull request (stage 11), then set the secrets with pnpm wrangler secret put")
+  SKIPPED+=("First deploy: merge the wrangler.jsonc pull request (stage 10), then set the secrets with pnpm wrangler secret put")
 fi
 pause "Press Enter for the last stage."
 
