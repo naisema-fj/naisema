@@ -3,6 +3,9 @@ name: Deploy
 # Staging: every push to the default branch, after CI passes.
 # Production: a pushed `v*` tag, gated by the `production` GitHub environment
 # (configure required reviewers on that environment for manual approval).
+# Manual: Actions > Deploy > Run workflow, then pick staging or production and a
+# branch or tag. The same gates apply: CI, the production approval, and production
+# only ever deploys a commit that is on the default branch.
 # Both jobs stay skipped until the repository variable CLOUDFLARE_ACCOUNT_ID
 # is set, so CI stays green before Cloudflare is provisioned (docs/handover/runbook.md).
 # Staging is also skipped, with a warning, while wrangler.jsonc still has its
@@ -13,19 +16,30 @@ on:
     # The repository's default branch. Update this if the default branch is renamed.
     branches: ["main"]
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Where to deploy the selected branch or tag
+        type: choice
+        options: [staging, production]
+        default: staging
+        required: true
 
 permissions:
   contents: read
 
 jobs:
   ci:
-    if: github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch
+    if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag' || github.ref_name == github.event.repository.default_branch
     uses: ./.github/workflows/ci.yml
 
   staging:
     name: Deploy to staging
     needs: ci
-    if: github.ref_type == 'branch' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    if: >-
+      vars.CLOUDFLARE_ACCOUNT_ID != '' &&
+      ((github.event_name == 'push' && github.ref_type == 'branch') ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'staging'))
     runs-on: ubuntu-latest
     environment: staging
     concurrency: deploy-staging
@@ -66,7 +80,10 @@ jobs:
   production:
     name: Deploy to production
     needs: ci
-    if: github.ref_type == 'tag' && vars.CLOUDFLARE_ACCOUNT_ID != ''
+    if: >-
+      vars.CLOUDFLARE_ACCOUNT_ID != '' &&
+      ((github.event_name == 'push' && github.ref_type == 'tag') ||
+      (github.event_name == 'workflow_dispatch' && inputs.environment == 'production'))
     runs-on: ubuntu-latest
     environment: production
     concurrency: deploy-production
