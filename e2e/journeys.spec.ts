@@ -112,6 +112,9 @@ test.describe("the staff site", () => {
   test("an editor sees what needs them and opens the Video's Learning Layer", async ({ page }) => {
     await page.goto(`${ADMIN}/admin`);
     await expect(page.getByRole("heading", { name: "Bula, E2E Editor" })).toBeVisible();
+    // Help sits on the page, opens on tap, and says what the person's own roles allow.
+    await page.getByText("How this page works").click();
+    await expect(page.getByText("Adds and edits content")).toBeVisible();
     await expectNoAxeViolations(page);
     // On a phone the navigation is inside the Menu disclosure; the page is the same either way.
     await page.goto(`${ADMIN}/admin/items`);
@@ -119,6 +122,10 @@ test.describe("the staff site", () => {
     await expectReflow(page);
     await page.getByRole("link", { name: "Talanoa at the market" }).click();
     await expect(page.getByText("This version is published.")).toBeVisible();
+    await page.getByText("What does this mean?").click();
+    await expect(page.getByText("Nobody can approve a version they wrote")).toBeVisible();
+    await page.getByText("What do the flags do?").click();
+    await expect(page.getByText("Adds a Knowledge Holder Approval")).toBeVisible();
     await expectNoAxeViolations(page);
     await page.getByRole("link", { name: "Learning Layer" }).click();
     await expect(page.getByRole("heading", { name: "Learning Layer for Talanoa at the market" })).toBeVisible();

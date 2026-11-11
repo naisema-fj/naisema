@@ -1,10 +1,12 @@
 import { eq } from "drizzle-orm";
 import { data, Form, redirect } from "react-router";
+import { WhatsThis } from "~/components/whats-this";
 import { audit } from "~/lib/audit.server";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { isRole, ROLE_NAMES, ROLES } from "~/lib/roles";
 import { endSessions, requireStaff } from "~/lib/staff.server";
+import { ROLE_DOES } from "~/lib/staff-help";
 import { staff } from "~db/schema";
 import type { Route } from "./+types/staff";
 
@@ -92,6 +94,20 @@ export default function Staff({ loaderData, actionData }: Route.ComponentProps) 
   return (
     <main id="main" className="page">
       <h1>Staff</h1>
+      <WhatsThis summary="What do the roles allow?">
+        <p>Tick every role a person needs; one person can hold several.</p>
+        <ul>
+          {ROLES.map((role) => (
+            <li key={role}>
+              <strong>{ROLE_NAMES[role]}:</strong> {ROLE_DOES[role]}
+            </li>
+          ))}
+        </ul>
+        <p>
+          Ticking <strong>No longer works on NAISEMA</strong> signs them out everywhere at once. A Language Reviewer's
+          language is set on their staff record.
+        </p>
+      </WhatsThis>
       <p className="hint">
         Someone added here signs in at the staff site with their email address. Ask them to turn on two-factor for that
         email account, since anyone who can read it can sign in as them.

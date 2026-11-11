@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { TableScroll } from "~/components/table-scroll";
+import { WhatsThis } from "~/components/whats-this";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { listMedia } from "~/lib/media.server";
@@ -113,6 +114,24 @@ export default function Media({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
       <h1>Media library</h1>
+      <WhatsThis summary="Preparing and using files">
+        <ul>
+          <li>
+            <strong>A clip for a Video:</strong> MP4, H.264, 720p, two minutes at most and under 95 MB, so it plays
+            everywhere. Keep the original in the NAISEMA Drive too.
+          </li>
+          <li>
+            <strong>Its length and shape</strong> are read as it uploads. You choose it on the Video's page afterwards.
+          </li>
+          <li>
+            <strong>Rights:</strong> a file can't be shown publicly until it has its own Rights Record that grants
+            Publish. Use <strong>Rights Records</strong> beside the file.
+          </li>
+          <li>
+            <strong>Images:</strong> add a line saying what each one shows, for people who can't see it.
+          </li>
+        </ul>
+      </WhatsThis>
       <Uploader accept={loaderData.accept} />
       <h2 id="files-heading">Files</h2>
       {files.length ? (

@@ -34,8 +34,8 @@ import {
 } from "~/lib/player-rules";
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
 import { ActivityCard } from "./activity-card";
-import { WhatsThis } from "./public/whats-this";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
+import { WhatsThis } from "./whats-this";
 
 /**
  * The immersion player for one Learning Layer (VID-02–09, VID-12, §05A). It guides a learner

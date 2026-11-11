@@ -443,3 +443,50 @@ describe("the guide to using NAISEMA", () => {
     expect(await (await visit("/sitemap.xml")).text()).toContain("/how-it-works");
   });
 });
+
+describe("help on the staff site", () => {
+  const page = async (email: string, path: string) => {
+    const response = await as(email, path);
+    expect(response.status, path).toBe(200);
+    return response.text();
+  };
+
+  it("explains each page where the work is done", async () => {
+    const article = await createItem(EDITOR, "article|ezine", "Help article");
+    const video = await createItem(EDITOR, "video|learn", "Help video");
+    const expected: [string, string][] = [
+      ["/admin", "How this page works"],
+      ["/admin/items", "How adding and editing works"],
+      [`/admin/items/${article}`, "What do the flags do?"],
+      [`/admin/items/${article}`, "What does this mean?"],
+      [`/admin/items/${video}/layer`, "How this editor works"],
+      [`/admin/rights/item/${article}`, "What are Rights Records?"],
+      ["/admin/media", "Preparing and using files"],
+      ["/admin/topics", "What are Topics?"],
+      ["/admin/submissions", "Who sees what"],
+      ["/admin/staff", "What do the roles allow?"],
+      ["/admin/audit", "What is this?"],
+    ];
+    for (const [path, summary] of expected) expect(await page(EDITOR, path), path).toContain(summary);
+  });
+
+  it("tells each person what their own roles allow, and no one else's", async () => {
+    const educator = await page(EDUCATOR, "/admin");
+    expect(educator).toContain("Writes Videos and their Learning Layers");
+    expect(educator).toContain("Never publishes");
+    expect(educator).not.toContain("only person who reads reports");
+    expect(await page(SAFEGUARDING, "/admin")).toContain("only person who reads reports");
+  });
+
+  it("explains every permitted use beside the rights form", async () => {
+    const article = await createItem(EDITOR, "article|ezine", "Rights help article");
+    const rights = await page(EDITOR, `/admin/rights/item/${article}`);
+    for (const meaning of [
+      "Show it on NAISEMA",
+      "Use just a part of it",
+      "Turn it into teaching material",
+      "train AI systems",
+    ])
+      expect(rights).toContain(meaning);
+  });
+});

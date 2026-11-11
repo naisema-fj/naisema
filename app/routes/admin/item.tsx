@@ -1,5 +1,6 @@
 import { data, Form, redirect } from "react-router";
 import { BodyEditor } from "~/components/body-editor";
+import { WhatsThis } from "~/components/whats-this";
 import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
 import { type ArticleBody, parseArticleBody } from "~/lib/article-body";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -30,6 +31,7 @@ import { listMedia } from "~/lib/media.server";
 import { previewToken } from "~/lib/preview.server";
 import { can } from "~/lib/roles";
 import { requireStaff } from "~/lib/staff.server";
+import { FLAG_HELP, REVIEW_HELP } from "~/lib/staff-help";
 import { topic } from "~db/schema";
 import type { Route } from "./+types/item";
 
@@ -210,6 +212,30 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
             </li>
           ))}
         </ul>
+        <WhatsThis summary="What does this mean?">
+          <p>
+            A version can be public once every review it needs is approved, the rights are recorded and every required
+            field is filled in. This lists what is missing, and each fix is its own step.
+          </p>
+          <ul>
+            {standing.map((entry) => (
+              <li key={entry.type}>
+                <strong>{entry.name}:</strong> {REVIEW_HELP[entry.type]}
+              </li>
+            ))}
+          </ul>
+          <p>
+            Nobody can approve a version they wrote. Saving a change makes a new version, and its reviews start again.
+          </p>
+          <p>
+            A <strong>preview link</strong> shows one exact version, with its media, to someone without an account, such
+            as a Knowledge Holder. It works for 14 days.
+          </p>
+          <p>
+            <strong>Withdraw from the site</strong> takes it off the site, search and sitemap at once, and it can be
+            published again. <strong>Archive</strong> takes it out of use for good.
+          </p>
+        </WhatsThis>
         {actor.publishes && eligibility.eligible && !isPublishedVersion && item.state !== "archived" && (
           <Form method="post">
             <input type="hidden" name="intent" value="publish" />
@@ -256,6 +282,12 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
       {standing.some((entry) => entry.mine) && (
         <section aria-labelledby="review-heading">
           <h2 id="review-heading">Your review of version {latest.number}</h2>
+          <WhatsThis summary="How to review">
+            <p>
+              Read this exact version, add any notes, then <strong>Approve</strong> or <strong>Ask for changes</strong>.
+              Asking for changes needs a note saying what.
+            </p>
+          </WhatsThis>
           {standing
             .filter((entry) => entry.mine)
             .map((entry) => (
@@ -349,6 +381,19 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
           })}
           <fieldset className="choice-grid">
             <legend>Content Flags (they decide the reviews it needs)</legend>
+            <WhatsThis summary="What do the flags do?" className="fieldset-help">
+              <p>
+                Every item needs an editorial review. Anything in Learn, and every Learning Layer, also needs a language
+                review.
+              </p>
+              <ul>
+                {CONTENT_FLAGS.map((flag) => (
+                  <li key={flag}>
+                    <strong>{FLAG_NAMES[flag]}:</strong> {FLAG_HELP[flag]}
+                  </li>
+                ))}
+              </ul>
+            </WhatsThis>
             {CONTENT_FLAGS.map((flag) => (
               <label key={flag} className="checkbox">
                 <input type="checkbox" name="flags" value={flag} defaultChecked={latest.flags.includes(flag)} />{" "}

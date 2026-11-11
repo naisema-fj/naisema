@@ -1,4 +1,5 @@
 import { Form, redirect } from "react-router";
+import { WhatsThis } from "~/components/whats-this";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { FORMS, type FormKey } from "~/lib/forms";
@@ -72,6 +73,22 @@ export default function Submissions({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
       <h1>Messages and reports</h1>
+      <WhatsThis summary="Who sees what">
+        <ul>
+          <li>
+            <strong>Reports</strong> about something harmful, wrong or used without permission go only to the
+            Safeguarding Lead.
+          </li>
+          <li>
+            <strong>Requests about people's own information</strong> go only to administrators.
+          </li>
+          <li>Other messages go to administrators and editors.</li>
+        </ul>
+        <p>
+          You see only the ones your roles allow. Opening one is recorded in the audit log. Reply by email, then press{" "}
+          <strong>Mark as dealt with</strong>. Nothing sent here is ever published.
+        </p>
+      </WhatsThis>
       {list?.length ? (
         <ul>
           {list.map((row) => (

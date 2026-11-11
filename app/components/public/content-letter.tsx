@@ -1,8 +1,8 @@
 import { Link } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
 import { DateMark, Postmarks } from "~/components/public/postmarks";
-import { WhatsThis } from "~/components/public/whats-this";
 import { TranscriptParagraphs } from "~/components/transcript-paragraphs";
+import { WhatsThis } from "~/components/whats-this";
 import type { PublicView } from "~/lib/public-view.server";
 import { meaningsOfLabels } from "~/lib/review-label-help";
 

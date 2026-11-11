@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { data, Form, redirect } from "react-router";
+import { WhatsThis } from "~/components/whats-this";
 import { fijiToday } from "~/lib/calendar";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { Refused } from "~/lib/content.server";
@@ -8,6 +9,7 @@ import { storeEvidence } from "~/lib/media.server";
 import { addRights, rightsFor, withdrawRights } from "~/lib/rights.server";
 import { formatDay, isCurrent, PERMITTED_USE_NAMES, PERMITTED_USES } from "~/lib/rights-rules";
 import { requireStaff } from "~/lib/staff.server";
+import { PERMITTED_USE_HELP } from "~/lib/staff-help";
 import { contentItem, media } from "~db/schema";
 import type { Route } from "./+types/rights";
 
@@ -80,6 +82,21 @@ export default function Rights({ loaderData, actionData }: Route.ComponentProps)
         <a href={subject.back}>Back to {subject.name}</a>
       </p>
       <h1>Rights Records: {subject.name}</h1>
+      <WhatsThis summary="What are Rights Records?">
+        <p>
+          A Rights Record says who holds the rights to this, what they permit and until when, with the signed permission
+          kept as evidence. Nothing is public unless a current record grants what it needs, and a record that is
+          withdrawn or past its last day takes the item down at once.
+        </p>
+        <p>Each use is granted separately; none implies another.</p>
+        <ul>
+          {PERMITTED_USES.map((use) => (
+            <li key={use}>
+              <strong>{PERMITTED_USE_NAMES[use]}:</strong> {PERMITTED_USE_HELP[use]}
+            </li>
+          ))}
+        </ul>
+      </WhatsThis>
       {actionData?.error && (
         <p role="alert" className="error">
           {actionData.error}
