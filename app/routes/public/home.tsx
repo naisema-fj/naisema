@@ -49,6 +49,9 @@ export default function Home({ loaderData }: Route.ComponentProps) {
               {first ? "Read the latest" : "Explore the areas"}
             </Link>
           </p>
+          <p className="welcome-guide">
+            New here? <Link to="/how-it-works">See how NAISEMA works</Link>
+          </p>
           <p className="sign-off">
             <span className="signature">NAISEMA</span>
           </p>

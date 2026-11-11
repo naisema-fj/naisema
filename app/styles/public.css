@@ -733,6 +733,17 @@ html:has(.public) {
   order: 2;
 }
 
+/* The way in for someone new: a quiet line under the main action, in the welcome's own colours. */
+.welcome-guide {
+  font-size: var(--step-0);
+  color: var(--shell-dim);
+}
+
+.public .welcome-guide a {
+  color: var(--shell);
+  text-underline-offset: 0.2em;
+}
+
 .public .tile-welcome .primary-link {
   background: var(--voivoi);
   color: var(--ink);
@@ -1942,6 +1953,49 @@ blockquote.notice-wording {
   color: var(--ink);
 }
 
+/* How NAISEMA works (/how-it-works): sections in reading order, the steps as a numbered list. */
+.guide-section {
+  margin-top: 2.25rem;
+}
+
+.guide-section h2 {
+  margin-bottom: 0.75rem;
+}
+
+.guide-areas {
+  display: grid;
+  gap: 0.9rem;
+  margin: 1.25rem 0 0;
+}
+
+.guide-areas dt {
+  font-family: var(--font-text);
+  font-weight: 700;
+}
+
+.guide-areas dd {
+  margin: 0.1rem 0 0;
+}
+
+.guide-steps {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0;
+  padding-left: 1.5rem;
+}
+
+.guide-reassure,
+.guide-links {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1.25rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.guide-section .not-open {
+  margin-top: 1.25rem;
+}
+
 /* The immersion route around the player (app/components/learner-player.tsx). */
 .public .stage-pager a,
 .public .stage-help a,
@@ -2009,6 +2063,12 @@ blockquote.notice-wording {
 
 .public .stage-intro p {
   margin: 0;
+}
+
+.public .stage-intro .stage-reassure {
+  margin-top: 0.5rem;
+  font-size: var(--step-small);
+  color: var(--muted);
 }
 
 .public .help-control {

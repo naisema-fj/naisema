@@ -423,3 +423,23 @@ describe("the health check", () => {
     expect(await response.text()).toBe("ok");
   });
 });
+
+describe("the guide to using NAISEMA", () => {
+  it("tells a first-time visitor the areas and all eight steps, in the player's own words, without needing JavaScript", async () => {
+    const response = await visit("/how-it-works");
+    expect(response.status).toBe(200);
+    const page = await response.text();
+    expect(page).toContain("How NAISEMA works");
+    for (const area of ["Learn", "Voices", "Discover", "Connect", "E-zine", "Resources"]) expect(page).toContain(area);
+    // The steps are the player's own text, so the two can't disagree.
+    for (const step of ["Watch naturally", "Fijian captions", "Explore the words", "Use it with someone"])
+      expect(page).toContain(step);
+    expect(page).toContain("Your progress stays on your device");
+    // Plain server-rendered words: no script of its own.
+    expect(page).not.toMatch(/<script[^>]*src=["'][^"']*how-it-works/);
+
+    // It is found from the home page, the footer and the sitemap.
+    expect(await (await visit("/")).text()).toContain('href="/how-it-works"');
+    expect(await (await visit("/sitemap.xml")).text()).toContain("/how-it-works");
+  });
+});

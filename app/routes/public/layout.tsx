@@ -62,6 +62,11 @@ function SiteFooter() {
         </p>
         <nav aria-label="About NAISEMA">
           <ul className="footer-links">
+            <li>
+              <Link reloadDocument to="/how-it-works">
+                How it works
+              </Link>
+            </li>
             {INFO_PAGES.map((page) => (
               <li key={page.path}>
                 <Link reloadDocument to={`/${page.path}`}>

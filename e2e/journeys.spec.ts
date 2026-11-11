@@ -64,6 +64,26 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   }
 });
 
+test("a first-time visitor finds how NAISEMA works from the home page, and reaches the steps from the player", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "See how NAISEMA works" }).click();
+  await expect(page.getByRole("heading", { name: "How NAISEMA works", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Learn from a video", level: 2 })).toBeVisible();
+  // All eight steps are listed, and the page is usable by everyone.
+  await expect(page.locator(".guide-steps li")).toHaveCount(8);
+  await expectNoAxeViolations(page);
+  await expectReflow(page);
+
+  // From a step in the player, the same guide is one link away.
+  await page.goto("/learn");
+  await page.getByRole("link", { name: "Talanoa at the market" }).click();
+  await page.getByRole("link", { name: "Greetings at the market" }).click();
+  await page.getByRole("link", { name: "How the steps work" }).click();
+  await expect(page).toHaveURL(/\/how-it-works#learn$/);
+});
+
 test("someone sends a message through a public form", async ({ page }) => {
   await stubTurnstile(page);
   await page.goto("/forms/enquiry");

@@ -108,6 +108,9 @@ function Area({ area, items, more }: { area: PrimaryArea; items: ReturnType<type
           <nav aria-label="Learn sections" className="area-sections">
             <ul>
               <li>
+                <Link to="/how-it-works">New here? How learning on NAISEMA works</Link>
+              </li>
+              <li>
                 <Link to="/apps">Fijian apps: the dictionary, lessons and community translation</Link>
               </li>
             </ul>

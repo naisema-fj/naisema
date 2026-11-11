@@ -373,6 +373,12 @@ export function LearnerPlayer(props: Props) {
           Step {stageAt + 1} of {IMMERSION_STAGES.length}: {text.name}
         </h2>
         <p>{text.guide}</p>
+        <p className="stage-reassure">
+          Any step can be skipped or revisited, and nothing is graded.{" "}
+          <Link to="/how-it-works#learn" reloadDocument>
+            How the steps work
+          </Link>
+        </p>
       </section>
 
       <div className="player-stage">
