@@ -637,7 +637,7 @@
  */
 .staff {
   --kesa: #d2603f;
-  --radius-card: 14px;
+  --radius-card: 10px;
 }
 
 /* The woven mark on the Ink header: Shell strands for the N, Kesa for the weave. */
