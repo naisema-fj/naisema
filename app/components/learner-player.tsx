@@ -34,6 +34,7 @@ import {
 } from "~/lib/player-rules";
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
 import { ActivityCard } from "./activity-card";
+import { WhatsThis } from "./public/whats-this";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
 
 /**
@@ -457,6 +458,29 @@ export function LearnerPlayer(props: Props) {
             </p>
           )}
           {status && <p role="status">{status}</p>}
+
+          <WhatsThis className="controls-help" summary="What do these controls do?">
+            <ul>
+              <li>
+                <strong>Captions:</strong> words on the video, in {language.name}
+                {props.tracks.english ? " and in English" : ""}. Switch each on or off.
+              </li>
+              <li>
+                <strong>Speed:</strong> slow the video down to catch each word.
+              </li>
+              <li>
+                <strong>Replay and Loop</strong> (in the transcript): hear one line again, once or over and over.
+              </li>
+              {annotations.length > 0 && (
+                <li>
+                  <strong>Underlined words:</strong> tap one to see what it means here.
+                </li>
+              )}
+              <li>
+                <strong>Need help?</strong> shows what's hidden in this step, whenever you want it.
+              </li>
+            </ul>
+          </WhatsThis>
 
           <div className="help-control">
             <button

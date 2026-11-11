@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { AREA_INFO, AREA_NAMES, PRIMARY_AREAS } from "~/lib/areas";
 import { publicHeaders } from "~/lib/http";
 import { IMMERSION_STAGES, stageText } from "~/lib/immersion";
+import { ALL_LABEL_MEANINGS } from "~/lib/review-label-help";
 
 export const handle = { hydrate: false };
 export const headers = publicHeaders;
@@ -124,16 +125,11 @@ export default function HowItWorks() {
             really recorded for the version you're reading, never added by hand.
           </p>
           <ul className="guide-reassure">
-            <li>
-              <strong>Language reviewed</strong> means someone who knows that form of Fijian checked the language.
-            </li>
-            <li>
-              <strong>Cultural context reviewed</strong> means a person with standing to speak for that knowledge
-              approved how it is told.
-            </li>
-            <li>
-              <strong>Opinion</strong> marks a personal view or experience rather than a settled account.
-            </li>
+            {ALL_LABEL_MEANINGS.map((label) => (
+              <li key={label.name}>
+                <strong>{label.name}</strong> means {label.meaning}
+              </li>
+            ))}
           </ul>
           <p>If something hasn't been reviewed for a thing, we don't say it has.</p>
         </section>

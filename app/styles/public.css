@@ -506,6 +506,45 @@ html:has(.public) {
   color: var(--muted);
 }
 
+/* "What's this?" help: a native disclosure beside the thing it explains (no JavaScript, no hover). */
+.whats-this {
+  margin-top: 0.6rem;
+  font-size: var(--step-small);
+}
+
+.public .whats-this > summary {
+  display: inline-block;
+  padding: 0.35rem 0;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--kesa-deep);
+  text-underline-offset: 0.2em;
+}
+
+.whats-this-body {
+  margin-top: 0.4rem;
+  padding: 0.8rem 1rem;
+  border-radius: var(--plate-radius);
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.whats-this-body > * + * {
+  margin-top: 0.6rem;
+}
+
+.whats-this-body ul {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.1rem;
+}
+
+.controls-help {
+  flex-basis: 100%;
+}
+
 /* A dateline: one flat fact. */
 .dateline {
   font-weight: 600;

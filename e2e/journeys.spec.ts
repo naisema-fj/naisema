@@ -11,6 +11,11 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   await page.getByRole("link", { name: "Talanoa at the market" }).click();
   await expect(page.getByRole("heading", { name: "Talanoa at the market", level: 1 })).toBeVisible();
   await expect(page.getByText("Language reviewed · Standard Fijian")).toBeVisible();
+  // The labels explain themselves, on tap, with no hover needed.
+  const labelHelp = page.getByText("What do these labels mean?");
+  await labelHelp.click();
+  await expect(page.getByText("someone who knows that form of Fijian checked the language")).toBeVisible();
+  await expectNoAxeViolations(page);
   await expectReflow(page);
 
   await page.getByRole("link", { name: "Greetings at the market" }).click();
@@ -20,6 +25,8 @@ test("a visitor finds a Video and learns from its Learning Layer through all eig
   await expect
     .poll(() => page.locator("video").evaluate((element: HTMLVideoElement) => element.readyState))
     .toBeGreaterThan(0);
+  await page.getByText("What do these controls do?").click();
+  await expect(page.getByText("slow the video down to catch each word")).toBeVisible();
   await expectNoAxeViolations(page);
 
   const steps = page.getByRole("navigation", { name: "Steps", exact: true });
