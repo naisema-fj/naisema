@@ -126,6 +126,19 @@ export const NOTICE = {
     "NAISEMA keeps what you send, and your name and email address if you give them, to reply to you and act on it. Only the people who handle this form can read it. It is stored by Cloudflare, which may process it outside Australia and Fiji. We keep it for 12 months after we last reply, then delete it. You can ask to see or delete it at any time.",
 } as const;
 
+/**
+ * How long a Submission is kept once it is dealt with: the notice's "12 months after we last
+ * reply". `deleteExpiredSubmissions` (submissions.server.ts) keeps the promise.
+ */
+export const RETENTION_MONTHS = 12;
+
+/** The day a Submission dealt with at `doneAt` is deleted. */
+export function deleteAfter(doneAt: Date) {
+  const day = new Date(doneAt);
+  day.setUTCMonth(day.getUTCMonth() + RETENTION_MONTHS);
+  return day;
+}
+
 export const FIELD_LIMITS = { short: 300, long: 5000, name: 120, email: 254 } as const;
 
 export type FormValues = Record<string, string>;

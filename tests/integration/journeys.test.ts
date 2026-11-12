@@ -323,6 +323,104 @@ async function publishedArticle(title: string) {
   return { id, path: `/discover/${slug}` };
 }
 
+describe("what the privacy notice promises about form submissions", () => {
+  const month = 30 * 86_400_000;
+  async function stored(form: string, fields: Record<string, unknown>, done: { at: number } | null = null) {
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO submission (id, form, name, email, fields, notice_version, done, done_at, created_at) VALUES (?, ?, ?, ?, ?, '2026-11-v1', ?, ?, ?)",
+    )
+      .bind(
+        id,
+        form,
+        "Mere",
+        (fields.email as string) ?? null,
+        JSON.stringify({ message: "Bula" }),
+        done ? 1 : 0,
+        done?.at ?? null,
+        Date.now() - 24 * month,
+      )
+      .run();
+    return id;
+  }
+  const exists = async (id: string) => (await one("SELECT id FROM submission WHERE id = ?", id)) !== null;
+
+  it("deletes each one 12 months after it is dealt with, and keeps the rest", async () => {
+    const old = await stored("enquiry", {}, { at: Date.now() - 13 * month });
+    const recent = await stored("enquiry", {}, { at: Date.now() - 11 * month });
+    const open = await stored("enquiry", {});
+    expect((await as(EDITOR, "/admin/submissions")).status).toBe(200);
+    expect(await exists(old)).toBe(false);
+    expect(await exists(recent)).toBe(true);
+    expect(await exists(open)).toBe(true);
+    expect(await one("SELECT actor_email, action FROM audit_event WHERE subject_id = ?", old)).toEqual({
+      actor_email: "retention (12 months after it was dealt with)",
+      action: "submission.deleted",
+    });
+
+    // Sending a form deletes what has expired too, since nothing runs on a schedule.
+    const another = await stored("report", {}, { at: Date.now() - 13 * month });
+    expect((await sendForm("enquiry", { name: "Mere", email: "mere@example.org", message: "Bula" })).status).toBe(200);
+    expect(await exists(another)).toBe(false);
+  });
+
+  it("counts the 12 months from when it is marked as dealt with, and says when it goes", async () => {
+    const id = await stored("enquiry", {});
+    expect((await as(EDITOR, `/admin/submissions/${id}`, { form: { done: "yes" } })).status).toBe(302);
+    const { done_at } = await one<{ done_at: number }>("SELECT done_at FROM submission WHERE id = ?", id);
+    expect(Date.now() - done_at).toBeLessThan(60_000);
+    expect(await (await as(EDITOR, `/admin/submissions/${id}`)).text()).toContain("Dealt with, so it is deleted on");
+    expect((await as(EDITOR, `/admin/submissions/${id}`, { form: { done: "no" } })).status).toBe(302);
+    expect(await one("SELECT done, done_at FROM submission WHERE id = ?", id)).toEqual({ done: 0, done_at: null });
+  });
+
+  it("lets the privacy contact find and delete everything one person sent", async () => {
+    const address = "losana@example.org";
+    const enquiry = await stored("enquiry", { email: address });
+    const request = await stored("privacy-request", { email: address });
+    const report = await stored("report", { email: address });
+    const someoneElse = await stored("enquiry", { email: "other@example.org" });
+
+    // EDITOR is also an administrator, the privacy contact; reports stay with the Safeguarding Lead.
+    const found = await (await as(EDITOR, `/admin/submissions?email=${encodeURIComponent(address)}`)).text();
+    expect(found).toContain(`/admin/submissions/${enquiry}`);
+    expect(found).toContain(`/admin/submissions/${request}`);
+    expect(found).not.toContain(`/admin/submissions/${report}`);
+    expect(found).not.toContain(`/admin/submissions/${someoneElse}`);
+
+    const remove = (email: string, id: string, form: Record<string, string>) =>
+      as(email, `/admin/submissions/${id}`, { form: { intent: "delete", ...form } });
+    // An editor can read an enquiry but not delete it, and nobody deletes without a reason and a tick.
+    expect((await remove(SECOND_EDITOR, enquiry, { reason: "Asked", confirm: "yes" })).status).toBe(404);
+    expect((await remove(EDITOR, enquiry, { reason: "", confirm: "yes" })).status).toBe(400);
+    expect((await remove(EDITOR, enquiry, { reason: "Asked" })).status).toBe(400);
+    expect(await exists(enquiry)).toBe(true);
+    expect(await (await as(SECOND_EDITOR, `/admin/submissions/${enquiry}`)).text()).not.toContain("Delete for good");
+
+    expect(await (await as(EDITOR, `/admin/submissions/${enquiry}`)).text()).toContain("Delete for good");
+    const deleted = await remove(EDITOR, enquiry, { reason: "Privacy request", confirm: "yes" });
+    expect(deleted.status).toBe(302);
+    expect(deleted.headers.get("Location")).toBe("/admin/submissions?deleted=1");
+    expect(await exists(enquiry)).toBe(false);
+    expect((await remove(EDITOR, report, { reason: "Privacy request", confirm: "yes" })).status).toBe(404);
+    expect((await remove(SAFEGUARDING, report, { reason: "Privacy request", confirm: "yes" })).status).toBe(302);
+    expect(await exists(report)).toBe(false);
+    expect(await exists(someoneElse)).toBe(true);
+
+    const events = await env.DB.prepare(
+      "SELECT actor_email, json_extract(details, '$.reason') AS reason FROM audit_event WHERE subject_id IN (?, ?) AND action = 'submission.deleted'",
+    )
+      .bind(enquiry, report)
+      .all();
+    expect(events.results).toEqual(
+      expect.arrayContaining([
+        { actor_email: EDITOR, reason: "Privacy request" },
+        { actor_email: SAFEGUARDING, reason: "Privacy request" },
+      ]),
+    );
+  });
+});
+
 describe("a report about an item", () => {
   const hold = (email: string, id: string, reason = "Report about a photo used without permission") =>
     as(email, `/admin/items/${id}`, { form: { intent: "hold", reason } });

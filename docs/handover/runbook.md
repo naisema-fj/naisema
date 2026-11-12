@@ -118,6 +118,8 @@ An editor makes one from an item's page. It shows that exact version, with its m
   - privacy requests go to administrators
 - Read and close them at `/admin/submissions`. Opening one is audited.
 - A changed privacy notice needs a new `NOTICE.version` in `app/lib/forms.ts`.
+- **Retention:** the notice promises deletion 12 months after the team last replies. A Submission is deleted 12 months after it is marked as dealt with (`deleteExpiredSubmissions` in `app/lib/submissions.server.ts`, audited as `retention`). Nothing runs on a schedule, so this happens whenever a form is sent or the inbox is opened. One never marked as dealt with is kept.
+- **Privacy requests:** administrators find everything from one address at `/admin/submissions?email=` and delete each one, with a reason. The Safeguarding Lead deletes reports. The steps are in the admin guide, "When someone asks to see or delete their information".
 
 ## Backups and restoring
 
