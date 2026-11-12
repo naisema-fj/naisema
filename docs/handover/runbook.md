@@ -38,7 +38,9 @@ pnpm test:e2e --trace off
 
 ## One-time provisioning, per environment (staging, then production)
 
-`bash scripts/setup-environment.sh staging` (then `production`) walks you through every step below. It opens each page, says what to click, captures the values, fills them into `wrangler.jsonc`, sets the Worker and GitHub secrets, deploys, and opens a pull request with the settings. It is safe to re-run. It retires the Phase 1a Worker of the same name first, which can't be updated in place because it ran the ClamAV container. The steps by hand:
+Production doesn't need this section's steps 1 to 3, 5 or the wrangler.jsonc pull request any more: its first run of **Deploy to production** creates the database and bucket, makes `PREVIEW_SECRET` and can add the first administrator (see "Deploy"). Steps 4, 6, 7 and 8 still apply to production.
+
+`bash scripts/setup-environment.sh staging` (then `production`, if you'd rather) walks you through every step below. It opens each page, says what to click, captures the values, fills them into `wrangler.jsonc`, sets the Worker and GitHub secrets, deploys, and opens a pull request with the settings. It is safe to re-run. It retires the Phase 1a Worker of the same name first, which can't be updated in place because it ran the ClamAV container. The steps by hand:
 
 1. **D1:** `pnpm wrangler d1 create naisema-v1-staging --location oc`. Put its ID in `wrangler.jsonc` under `env.staging`. v1 starts from migration 0000 on a fresh database, so don't reuse a Phase 1a database.
 2. **R2:** `pnpm wrangler r2 bucket create naisema-staging-media --location oc`. It stays private: the Worker serves files itself.
@@ -67,13 +69,19 @@ pnpm test:e2e --trace off
 
 ## Deploy
 
-- **Staging:** every push to `main` deploys there after CI passes (`.github/workflows/deploy.yml`). Migrations apply first.
-- **Production:** push a tag and approve the `production` deployment:
-  ```bash
-  git tag v1.0.0 && git push origin v1.0.0
-  ```
-- **From GitHub, without a terminal:** Actions > Deploy > Run workflow. Pick the branch or tag, choose `staging` or `production`, and run. CI runs first, and production still waits for approval. Production only deploys a commit that is on `main`, so a feature branch is refused.
-- The deploy refuses to run while `wrangler.jsonc` still has `REPLACE_WITH_` placeholders for that environment.
+- **Staging:** every push to `main` deploys there after CI passes (`.github/workflows/deploy.yml`). Migrations apply first. To redeploy it, run **Actions > Deploy to staging > Run workflow**.
+- **Production:** one button. Go to **Actions > Deploy to production > Run workflow**, keep "Use workflow from" on `main`, and run it (`.github/workflows/deploy-production.yml`). It runs CI, then deploys the latest `main`, which is what staging already runs. If the `production` environment has a required reviewer, approve the deploy when GitHub asks. There are no tags to make.
+- **The first production deploy** sets production up by itself (`scripts/prepare-production.mjs`). It creates the `naisema-v1-production` database and the private `naisema-production-media` bucket in Oceania, applies every migration and makes a random `PREVIEW_SECRET`. If you fill in the run's "first administrator" boxes, it also adds them as admin and editor. Later deploys reuse all of it; `wrangler.jsonc` keeps placeholders, and the deploy fills them in on GitHub's machine.
+- **What the first deploy needs, once.** Set these in **Settings > Environments > production**; a missing one stops the run, naming it:
+  | Name | Kind | What it is |
+  | --- | --- | --- |
+  | `CLOUDFLARE_API_TOKEN` | Secret | Cloudflare token: Workers Scripts Edit, D1 Edit, Workers R2 Storage Edit, Cloudflare Images Edit, Account Settings Read; Workers Routes Edit and DNS Edit on naisema.com |
+  | `TURNSTILE_SITE_KEY` | Variable | From a Turnstile widget for `naisema.com` (Cloudflare > Turnstile > Add widget, Managed) |
+  | `TURNSTILE_SECRET_KEY` | Secret | The same widget's secret key |
+  | `NOTIFY_EMAILS` | Secret | Comma-separated addresses that hear about new enquiries and offers |
+
+  The repository variable `CLOUDFLARE_ACCOUNT_ID` is already set for staging. Under **Deployment branches and tags**, allow `main` (or choose "No restriction"); production used to deploy from tags only.
+- **If the old Phase 1a production Worker is still there,** the deploy stops and says so, without deleting anything. Delete the `naisema-production` Worker and the `naisema-production-upload-scans` queue in the Cloudflare dashboard (Phase 1a production held no real data), then run it again.
 
 ## Roll back
 
