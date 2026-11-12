@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, like, or } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, like, or } from "drizzle-orm";
 import { contentItem, media, review, revision, rightsRecord } from "~db/schema";
 import { EMPTY_ARTICLE_BODY } from "./article-body";
 import { audit } from "./audit.server";
@@ -108,6 +108,7 @@ export async function eligibilityOf(
           name: names.has(id) ? `the file ${names.get(id)}` : "a media file that no longer exists",
           records: recordsOf("media", id),
         })),
+        held: item.heldAt !== null,
         today,
       }),
     ]),
@@ -372,6 +373,75 @@ export async function unpublish(
       .where(eq(contentItem.id, itemId)),
     audit(db, actor.email, `item.${to}`, { type: "content_item", id: itemId }, { reason: reason.trim().slice(0, 500) }),
   ]);
+}
+
+/**
+ * Holds an item off the public site while a Report about it is looked into (CONTEXT.md, Report).
+ * Only the Safeguarding Lead holds and releases. The item stays published, so nothing else about
+ * it changes, and it shows again when the hold is released, if it is still eligible then.
+ */
+export async function holdItem(db: Database, actor: Staff, itemId: string, reason: string) {
+  if (!can(actor, "content.hold")) throw new Refused("Only the Safeguarding Lead holds an item.", 403);
+  const item = await db.query.contentItem.findFirst({ where: eq(contentItem.id, itemId) });
+  if (!item) throw new Refused("That item doesn't exist.", 404);
+  const why = reason.trim().slice(0, 500);
+  if (!why) throw new Refused("Say why it is held, such as which report it is about.");
+  if (item.heldAt) throw new Refused("It is already held.", 409);
+  const now = new Date();
+  await db.batch([
+    db
+      .update(contentItem)
+      .set({ heldAt: now, heldBy: actor.email, heldReason: why, updatedAt: now })
+      .where(eq(contentItem.id, itemId)),
+    audit(db, actor.email, "item.held", { type: "content_item", id: itemId }, { reason: why }),
+  ]);
+}
+
+/** Ends a hold. The item is public again at once if its published Revision is still eligible. */
+export async function releaseItem(db: Database, actor: Staff, itemId: string, reason: string) {
+  if (!can(actor, "content.hold")) throw new Refused("Only the Safeguarding Lead releases a hold.", 403);
+  const item = await db.query.contentItem.findFirst({ where: eq(contentItem.id, itemId) });
+  if (!item) throw new Refused("That item doesn't exist.", 404);
+  if (!item.heldAt) throw new Refused("It isn't held.", 409);
+  await db.batch([
+    db
+      .update(contentItem)
+      .set({ heldAt: null, heldBy: null, heldReason: null, updatedAt: new Date() })
+      .where(eq(contentItem.id, itemId)),
+    audit(
+      db,
+      actor.email,
+      "item.released",
+      { type: "content_item", id: itemId },
+      { reason: reason.trim().slice(0, 500) },
+    ),
+  ]);
+}
+
+/** Every item on hold, oldest hold first, so none is forgotten. */
+export const heldItems = (db: Database) =>
+  db.select().from(contentItem).where(isNotNull(contentItem.heldAt)).orderBy(contentItem.heldAt);
+
+/**
+ * The item a Report's "where is it" answer names, when it is a NAISEMA address: a path such as
+ * `/voices/talanoa` (the report link on every page fills one in) or a full URL to one.
+ */
+export async function itemAtAddress(db: Database, address: string) {
+  let path = address.trim();
+  try {
+    if (/^https?:\/\//i.test(path)) path = new URL(path).pathname;
+  } catch {
+    return null;
+  }
+  const parts = path.split(/[?#]/)[0].split("/").filter(Boolean);
+  if (parts.length === 3 && parts[2] === "language") parts.pop();
+  const [place, slug] = parts.length === 1 ? ["pages", parts[0]] : parts.length === 2 ? parts : [];
+  if (!place || !slug) return null;
+  return (
+    (await db.query.contentItem.findFirst({
+      where: and(eq(contentItem.area, place.toLowerCase()), eq(contentItem.slug, slug.toLowerCase())),
+    })) ?? null
+  );
 }
 
 /** Staff lists: every item, newest change first, optionally of one kind or matching words. */

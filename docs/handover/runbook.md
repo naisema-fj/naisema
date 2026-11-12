@@ -152,7 +152,7 @@ Before launch, restore staging once from Time Travel and once from an export, an
 
 ## Incidents
 
-1. **Contain:** withdraw the item, or the Rights Record. Either takes effect on the next request. For a compromised staff account, tick "No longer works on NAISEMA" at `/admin/staff`, which signs it out everywhere, and have them secure their email account.
+1. **Contain:** withdraw the item, or the Rights Record. Either takes effect on the next request. While a report is still being looked into, the Safeguarding Lead can hold the item instead, which they alone release (admin guide, "Take it down"). For a compromised staff account, tick "No longer works on NAISEMA" at `/admin/staff`, which signs it out everywhere, and have them secure their email account.
 2. **Keep the evidence:** export the database (`pnpm db:export production`) and note the audit events (`/admin/audit`).
 3. **Assess what was exposed, and tell the privacy contact.** They decide on notification duties.
 4. **Recover** from Time Travel if data was damaged, then write down what happened and what changes.

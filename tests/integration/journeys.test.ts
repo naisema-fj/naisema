@@ -301,6 +301,101 @@ describe("public forms", () => {
   });
 });
 
+/** Sends a public form, from its own address so the rate limit doesn't count it with others. */
+const sendForm = (form: string, fields: Record<string, string>) =>
+  visit(`/forms/${form}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "CF-Connecting-IP": `10.1.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
+    },
+    body: new URLSearchParams({ "cf-turnstile-response": "test-token", notice: "2026-11-v1", ...fields }),
+  });
+
+/** A published, eligible Article, and its public address. */
+async function publishedArticle(title: string) {
+  const id = await createItem(EDITOR, "article|discover", title);
+  expect((await save(EDITOR, id, { title })).status).toBe(302);
+  expect((await review(SECOND_EDITOR, id, "editorial")).status).toBe(302);
+  expect((await addRights(EDITOR, "item", id, ["publish"])).status).toBe(302);
+  expect((await publish(EDITOR, id)).status).toBe(302);
+  const { slug } = await one<{ slug: string }>("SELECT slug FROM content_item WHERE id = ?", id);
+  return { id, path: `/discover/${slug}` };
+}
+
+describe("a report about an item", () => {
+  const hold = (email: string, id: string, reason = "Report about a photo used without permission") =>
+    as(email, `/admin/items/${id}`, { form: { intent: "hold", reason } });
+  const release = (email: string, id: string) =>
+    as(email, `/admin/items/${id}`, { form: { intent: "release", reason: "Permission confirmed" } });
+
+  it("lets the Safeguarding Lead hold the item off the site while they look into it, and release it", async () => {
+    const { id, path } = await publishedArticle("Weaving with Bulou");
+    expect((await visit(path)).status).toBe(200);
+
+    // The report link on the page fills in the item's address, which links the report to the item.
+    expect((await sendForm("report", { address: path, message: "That's my photo." })).status).toBe(200);
+    const report = await one<{ id: string }>(
+      "SELECT id FROM submission WHERE form = 'report' AND json_extract(fields, '$.address') = ?",
+      path,
+    );
+    const reportPage = await (await as(SAFEGUARDING, `/admin/submissions/${report.id}`)).text();
+    expect(reportPage).toContain(`href="/admin/items/${id}"`);
+    expect(reportPage).toContain("You can hold it off the site from its page.");
+
+    // Only the Safeguarding Lead holds, and says why.
+    expect((await hold(EDITOR, id)).status).toBe(403);
+    expect((await hold(SAFEGUARDING, id, " ")).status).toBe(400);
+    expect((await hold(SAFEGUARDING, id)).status).toBe(302);
+    expect((await hold(SAFEGUARDING, id)).status).toBe(409);
+
+    // Held, it leaves the site, search and the sitemap on the next request, and can't be republished.
+    expect((await visit(path)).status).toBe(410);
+    expect(await (await visit("/search?q=weaving")).text()).not.toContain(path);
+    expect(await (await visit("/sitemap.xml")).text()).not.toContain(path);
+    const refused = await publish(EDITOR, id);
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("It is held while a report about it is looked into.");
+    const itemPage = await (await as(EDITOR, `/admin/items/${id}`)).text();
+    expect(itemPage).toContain("Held off the site");
+    expect(itemPage).toContain("Only the Safeguarding Lead can release it.");
+    const inbox = await (await as(SAFEGUARDING, "/admin/submissions")).text();
+    expect(inbox).toContain("Held off the site");
+    expect(inbox).toContain(`href="/admin/items/${id}"`);
+
+    // Nobody else releases it; when the Safeguarding Lead does, it is back at once, still published.
+    expect((await release(EDITOR, id)).status).toBe(403);
+    expect((await release(SAFEGUARDING, id)).status).toBe(302);
+    expect((await visit(path)).status).toBe(200);
+    expect((await release(SAFEGUARDING, id)).status).toBe(409);
+
+    const events = await env.DB.prepare(
+      "SELECT action, json_extract(details, '$.reason') AS reason FROM audit_event WHERE subject_id = ? AND action LIKE 'item.%' ORDER BY created_at",
+    )
+      .bind(id)
+      .all();
+    expect(events.results.slice(-2)).toEqual([
+      { action: "item.held", reason: "Report about a photo used without permission" },
+      { action: "item.released", reason: "Permission confirmed" },
+    ]);
+  });
+
+  it("finds the item from a full address, or a Learning Layer's, and not from words", async () => {
+    const { id, path } = await publishedArticle("Lali drums");
+    const linked = async (address: string) => {
+      expect((await sendForm("report", { address, message: "A concern." })).status).toBe(200);
+      const row = await one<{ id: string }>(
+        "SELECT id FROM submission WHERE json_extract(fields, '$.address') = ? ORDER BY created_at DESC",
+        address,
+      );
+      return (await (await as(SAFEGUARDING, `/admin/submissions/${row.id}`)).text()).includes(`/admin/items/${id}`);
+    };
+    expect(await linked(`https://naisema.com${path}?ref=share#top`)).toBe(true);
+    expect(await linked(`${path}/language`)).toBe(true);
+    expect(await linked("The page about lali drums")).toBe(false);
+  });
+});
+
 describe("a Video and its Learning Layer", () => {
   const SEGMENT = "6f1c2a7e-1111-4a5b-8c9d-000000000001";
   const ACTIVITY = "0b7c8d9e-2222-4a5b-8c9d-000000000001";

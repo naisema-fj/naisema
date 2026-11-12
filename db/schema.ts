@@ -52,6 +52,13 @@ export const contentItem = sqliteTable(
     /** The published Revision's words, lower-cased, for search. Empty while nothing is published. */
     searchText: text("search_text").notNull().default(""),
     publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    /**
+     * Set while the Safeguarding Lead holds the item off the public site, because of a Report
+     * about it. It stays published, so releasing the hold puts it back if it is still eligible.
+     */
+    heldAt: integer("held_at", { mode: "timestamp_ms" }),
+    heldBy: text("held_by"),
+    heldReason: text("held_reason"),
     createdAt: createdAt(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },

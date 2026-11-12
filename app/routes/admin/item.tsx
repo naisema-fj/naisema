@@ -5,6 +5,7 @@ import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
 import { type ArticleBody, parseArticleBody } from "~/lib/article-body";
 import { cloudflareContext } from "~/lib/cloudflare";
 import {
+  holdItem,
   itemForStaff,
   mayEdit,
   mayReview,
@@ -12,6 +13,7 @@ import {
   publish,
   Refused,
   recordReview,
+  releaseItem,
   saveRevision,
   unpublish,
 } from "~/lib/content.server";
@@ -45,6 +47,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
   if (!found) throw new Response("Not found", { status: 404 });
   if (
     !mayEdit(actor, found.item.kind) &&
+    !can(actor, "content.hold") &&
     !(["editorial", "language", "knowledge-holder", "safeguarding"] as const).some((type) => mayReview(actor, type))
   )
     throw new Response("Your roles don't include this item.", { status: 403 });
@@ -77,6 +80,7 @@ export async function loader({ params, request, context }: Route.LoaderArgs) {
       edits: mayEdit(actor, found.item.kind),
       publishes: can(actor, "content.publish"),
       rights: can(actor, "rights.manage"),
+      holds: can(actor, "content.hold"),
     },
     origin: new URL(request.url).origin.replace(
       `//${env.ADMIN_HOSTNAME}`,
@@ -138,6 +142,12 @@ export async function action({ params, request, context }: Route.ActionArgs) {
           field("reason"),
         );
         return redirect(`/admin/items/${params.id}`);
+      case "hold":
+        await holdItem(db, actor, params.id, field("reason"));
+        return redirect(`/admin/items/${params.id}`);
+      case "release":
+        await releaseItem(db, actor, params.id, field("reason"));
+        return redirect(`/admin/items/${params.id}`);
       case "preview": {
         if (!can(actor, "content.edit")) throw new Refused("Only editors share previews.", 403);
         const { token, expiresAt } = await previewToken(env.PREVIEW_SECRET, field("revisionId"));
@@ -178,6 +188,7 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
           </>
         )}
         {item.state === "withdrawn" && " · Withdrawn"}
+        {item.heldAt && " · Held"}
         {item.state === "archived" && " · Archived"}
       </p>
       {error && (
@@ -188,6 +199,13 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
 
       <section aria-labelledby="status-heading" className="status-panel">
         <h2 id="status-heading">Where it stands</h2>
+        {item.heldAt && (
+          <p role="note" className="held-note">
+            <strong>Held off the site</strong> by {item.heldBy} since{" "}
+            {new Date(item.heldAt).toLocaleDateString("en-AU", { dateStyle: "long" })}: {item.heldReason} Only the
+            Safeguarding Lead can release it.
+          </p>
+        )}
         {eligibility.eligible ? (
           <p role="status">{isPublishedVersion ? "This version is published." : "This version can be published."}</p>
         ) : (
@@ -235,6 +253,11 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
             <strong>Withdraw from the site</strong> takes it off the site, search and sitemap at once, and it can be
             published again. <strong>Archive</strong> takes it out of use for good.
           </p>
+          <p>
+            The Safeguarding Lead can <strong>hold</strong> an item off the site while a report about it is looked into.
+            It stays published underneath, and comes back when they release the hold, if it is still ready then. Nobody
+            else can release it.
+          </p>
         </WhatsThis>
         {actor.publishes && eligibility.eligible && !isPublishedVersion && item.state !== "archived" && (
           <Form method="post">
@@ -252,6 +275,21 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
             </button>
             <button type="submit" name="intent" value="archive">
               Archive
+            </button>
+          </Form>
+        )}
+        {actor.holds && (
+          <Form method="post" className="inline-form">
+            <label htmlFor="hold-reason">{item.heldAt ? "Why it can go back (optional)" : "Why it is held"}</label>
+            <input
+              id="hold-reason"
+              name="reason"
+              required={!item.heldAt}
+              maxLength={500}
+              placeholder={item.heldAt ? undefined : "The report it is about, and what is being checked"}
+            />
+            <button type="submit" name="intent" value={item.heldAt ? "release" : "hold"}>
+              {item.heldAt ? "Release the hold" : "Hold it off the site"}
             </button>
           </Form>
         )}
