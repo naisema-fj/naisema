@@ -14,3 +14,12 @@ const entry = join(dirname(manifest), typeof bin === "string" ? bin : bin.wrangl
 export function wrangler(args) {
   execFileSync(process.execPath, [entry, ...args], { stdio: "inherit" });
 }
+
+/** Runs `wrangler <args>` and returns what it printed, for commands asked for `--json`. */
+export function wranglerOutput(args) {
+  return execFileSync(process.execPath, [entry, ...args], {
+    stdio: ["ignore", "pipe", "inherit"],
+    encoding: "utf8",
+    maxBuffer: 64 * 1024 * 1024,
+  });
+}

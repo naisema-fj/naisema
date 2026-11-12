@@ -67,13 +67,31 @@ On the item's page, **Where it stands** says either "This version can be publish
 
 On the item's page, type a reason and press **Withdraw from the site**. It leaves the site, search and the sitemap at once. **Archive** takes it out of use for good. To publish it again after withdrawing, publish a version.
 
+### Hold it while a report is looked into (Safeguarding Lead)
+
+A report about an item links to the item when it names its address, which the **Report a concern** link on every page fills in. On the item's page, say why and press **Hold it off the site**. It leaves the site, search and the sitemap at once, as a withdrawal does, but it stays published underneath, and nobody can publish it until the hold ends. Editors see that it is held, by whom and why. Only the Safeguarding Lead can press **Release the hold**, and then it is back at once, if it is still ready to be public.
+
+**Messages and reports** lists every item on hold, so none is forgotten. If the report is upheld, ask an editor to withdraw or archive the item, then release the hold.
+
 ## Messages and reports
 
 **Messages and reports** lists what people sent through the public forms:
-- Reports go only to the Safeguarding Lead.
+- Reports go only to the Safeguarding Lead, who can hold the item they are about (above).
 - Requests about people's own information go only to administrators.
 
-Open one to read it and reply by email. Press **Mark as dealt with** when it's done.
+Open one to read it and reply by email. Press **Mark as dealt with** when it's done. That starts the 12 months the privacy notice promises: each one is deleted 12 months after it was marked as dealt with, and its page says on which day. One still not dealt with is kept, so mark each one once you've replied.
+
+### When someone asks to see or delete their information (administrators)
+
+A privacy request arrives as **Ask about your information**, and only administrators read it. Reply within 30 days.
+
+1. Open the request and press **everything from this address** beside their email. It lists everything they sent that you can read. Reports are only for the Safeguarding Lead, so ask them to look too.
+2. **To see it:** copy what each one says into your reply.
+3. **To delete it:** open each one, write why (such as "Their privacy request of 12 November"), tick the box and press **Delete for good**. The Safeguarding Lead deletes reports the same way. The request itself can go last, once you've replied.
+4. Check the other places a person can appear: as a credit or a Contributor in published content, and as the holder of a Rights Record. Those are editors' changes, and a Rights Record is withdrawn, not deleted, because it is the record of what they agreed to.
+5. Tell them it's done. Deleted things are gone from the staff site at once. The weekly backups hold copies for up to 35 days, after which they are gone too.
+
+The audit log keeps that each one was deleted, by whom and why, but never what it said.
 
 ## The audit log
 

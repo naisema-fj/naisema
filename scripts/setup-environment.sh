@@ -436,6 +436,59 @@ else
   SKIPPED+=("CLOUDFLARE_API_TOKEN on the $TARGET GitHub environment")
 fi
 unset CLOUDFLARE_API_TOKEN
+if [[ "$TARGET" == "production" ]]; then
+  say ""
+  say "The weekly backup (.github/workflows/backup.yml) runs in an environment of its own,"
+  say "production-backup, with no required reviewer, so it doesn't wait for a deploy approval."
+  say "Its token can only read, and the backup is encrypted before it leaves the runner."
+  if [[ "$(_existing BACKUP_SET_UP || true)" == "yes" ]] && ! confirm "The backup was set up on an earlier run. Set it up again?"; then
+    note "Leaving the backup as it is."
+  else
+    if gh api -X PUT "repos/$REPO/environments/production-backup" >/dev/null 2>&1; then
+      printf '  %s✓%s GitHub environment production-backup exists\n' "$GREEN" "$RESET"
+    else
+      SKIPPED+=("GitHub environment production-backup (Settings → Environments → New environment)")
+      warn "couldn't create the production-backup environment on GitHub"
+    fi
+    open_url "https://github.com/$REPO/settings/environments"
+    step "Open production-backup. Leave Required reviewers empty. Under Deployment branches and tags,"
+    step "  choose Selected branches and tags, and add the rule: main."
+    pause "Press Enter once that's saved."
+    open_url "https://dash.cloudflare.com/profile/api-tokens"
+    step "Create Token → Create Custom Token. Name it: NAISEMA production backups."
+    step "Permissions (Account): D1 Edit (Cloudflare's export needs it), Workers R2 Storage Read."
+    step "Account resources: the NAISEMA account. No zone permissions."
+    step "Continue to summary → Create Token, then copy the token."
+    ask_secret BACKUP_API_TOKEN "Paste the backup token:"
+    if [[ -n "$BACKUP_API_TOKEN" ]] &&
+      printf '%s' "$BACKUP_API_TOKEN" | gh secret set CLOUDFLARE_API_TOKEN --env production-backup --repo "$REPO" >/dev/null 2>&1; then
+      WRITTEN_SECRET+=("CLOUDFLARE_API_TOKEN (production-backup environment)")
+      printf '  %s✓ set%s the backup token\n' "$GREEN" "$RESET"
+    else
+      SKIPPED+=("CLOUDFLARE_API_TOKEN on the production-backup environment")
+    fi
+    unset BACKUP_API_TOKEN
+    say ""
+    say "The backup is encrypted with a passphrase. Without it, no one can read a backup:"
+    say "not GitHub, not anyone who downloads one, and not NAISEMA either. Here it is:"
+    passphrase=$(openssl rand -base64 36)
+    printf '\n      %s%s%s\n\n' "$BOLD" "$passphrase" "$RESET"
+    step "Save it in the NAISEMA password manager now, as \"NAISEMA backup passphrase\"."
+    step "A new passphrase only covers backups made after it; keep old ones while their backups last (35 days)."
+    while ! confirm "Is it saved in the password manager?"; do
+      warn "Save it first: without it the backups can't be restored."
+    done
+    if printf '%s' "$passphrase" | gh secret set BACKUP_PASSPHRASE --env production-backup --repo "$REPO" >/dev/null 2>&1; then
+      WRITTEN_SECRET+=("BACKUP_PASSPHRASE (production-backup environment)")
+      printf '  %s✓ set%s BACKUP_PASSPHRASE\n' "$GREEN" "$RESET"
+      write_env BACKUP_SET_UP yes
+    else
+      SKIPPED+=("BACKUP_PASSPHRASE on the production-backup environment (gh secret set BACKUP_PASSPHRASE --env production-backup)")
+    fi
+    unset passphrase
+    _clear
+  fi
+fi
 pause "Press Enter for the next stage."
 
 # ── 9 ────────────────────────────────────────────────────────────────────

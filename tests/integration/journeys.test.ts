@@ -301,6 +301,199 @@ describe("public forms", () => {
   });
 });
 
+/** Sends a public form, from its own address so the rate limit doesn't count it with others. */
+const sendForm = (form: string, fields: Record<string, string>) =>
+  visit(`/forms/${form}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "CF-Connecting-IP": `10.1.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}`,
+    },
+    body: new URLSearchParams({ "cf-turnstile-response": "test-token", notice: "2026-11-v1", ...fields }),
+  });
+
+/** A published, eligible Article, and its public address. */
+async function publishedArticle(title: string) {
+  const id = await createItem(EDITOR, "article|discover", title);
+  expect((await save(EDITOR, id, { title })).status).toBe(302);
+  expect((await review(SECOND_EDITOR, id, "editorial")).status).toBe(302);
+  expect((await addRights(EDITOR, "item", id, ["publish"])).status).toBe(302);
+  expect((await publish(EDITOR, id)).status).toBe(302);
+  const { slug } = await one<{ slug: string }>("SELECT slug FROM content_item WHERE id = ?", id);
+  return { id, path: `/discover/${slug}` };
+}
+
+describe("what the privacy notice promises about form submissions", () => {
+  const month = 30 * 86_400_000;
+  async function stored(form: string, fields: Record<string, unknown>, done: { at: number } | null = null) {
+    const id = crypto.randomUUID();
+    await env.DB.prepare(
+      "INSERT INTO submission (id, form, name, email, fields, notice_version, done, done_at, created_at) VALUES (?, ?, ?, ?, ?, '2026-11-v1', ?, ?, ?)",
+    )
+      .bind(
+        id,
+        form,
+        "Mere",
+        (fields.email as string) ?? null,
+        JSON.stringify({ message: "Bula" }),
+        done ? 1 : 0,
+        done?.at ?? null,
+        Date.now() - 24 * month,
+      )
+      .run();
+    return id;
+  }
+  const exists = async (id: string) => (await one("SELECT id FROM submission WHERE id = ?", id)) !== null;
+
+  it("deletes each one 12 months after it is dealt with, and keeps the rest", async () => {
+    const old = await stored("enquiry", {}, { at: Date.now() - 13 * month });
+    const recent = await stored("enquiry", {}, { at: Date.now() - 11 * month });
+    const open = await stored("enquiry", {});
+    expect((await as(EDITOR, "/admin/submissions")).status).toBe(200);
+    expect(await exists(old)).toBe(false);
+    expect(await exists(recent)).toBe(true);
+    expect(await exists(open)).toBe(true);
+    expect(await one("SELECT actor_email, action FROM audit_event WHERE subject_id = ?", old)).toEqual({
+      actor_email: "retention (12 months after it was dealt with)",
+      action: "submission.deleted",
+    });
+
+    // Sending a form deletes what has expired too, since nothing runs on a schedule.
+    const another = await stored("report", {}, { at: Date.now() - 13 * month });
+    expect((await sendForm("enquiry", { name: "Mere", email: "mere@example.org", message: "Bula" })).status).toBe(200);
+    expect(await exists(another)).toBe(false);
+  });
+
+  it("counts the 12 months from when it is marked as dealt with, and says when it goes", async () => {
+    const id = await stored("enquiry", {});
+    expect((await as(EDITOR, `/admin/submissions/${id}`, { form: { done: "yes" } })).status).toBe(302);
+    const { done_at } = await one<{ done_at: number }>("SELECT done_at FROM submission WHERE id = ?", id);
+    expect(Date.now() - done_at).toBeLessThan(60_000);
+    expect(await (await as(EDITOR, `/admin/submissions/${id}`)).text()).toContain("Dealt with, so it is deleted on");
+    expect((await as(EDITOR, `/admin/submissions/${id}`, { form: { done: "no" } })).status).toBe(302);
+    expect(await one("SELECT done, done_at FROM submission WHERE id = ?", id)).toEqual({ done: 0, done_at: null });
+  });
+
+  it("lets the privacy contact find and delete everything one person sent", async () => {
+    const address = "losana@example.org";
+    const enquiry = await stored("enquiry", { email: address });
+    const request = await stored("privacy-request", { email: address });
+    const report = await stored("report", { email: address });
+    const someoneElse = await stored("enquiry", { email: "other@example.org" });
+
+    // EDITOR is also an administrator, the privacy contact; reports stay with the Safeguarding Lead.
+    const found = await (await as(EDITOR, `/admin/submissions?email=${encodeURIComponent(address)}`)).text();
+    expect(found).toContain(`/admin/submissions/${enquiry}`);
+    expect(found).toContain(`/admin/submissions/${request}`);
+    expect(found).not.toContain(`/admin/submissions/${report}`);
+    expect(found).not.toContain(`/admin/submissions/${someoneElse}`);
+
+    const remove = (email: string, id: string, form: Record<string, string>) =>
+      as(email, `/admin/submissions/${id}`, { form: { intent: "delete", ...form } });
+    // An editor can read an enquiry but not delete it, and nobody deletes without a reason and a tick.
+    expect((await remove(SECOND_EDITOR, enquiry, { reason: "Asked", confirm: "yes" })).status).toBe(404);
+    expect((await remove(EDITOR, enquiry, { reason: "", confirm: "yes" })).status).toBe(400);
+    expect((await remove(EDITOR, enquiry, { reason: "Asked" })).status).toBe(400);
+    expect(await exists(enquiry)).toBe(true);
+    expect(await (await as(SECOND_EDITOR, `/admin/submissions/${enquiry}`)).text()).not.toContain("Delete for good");
+
+    expect(await (await as(EDITOR, `/admin/submissions/${enquiry}`)).text()).toContain("Delete for good");
+    const deleted = await remove(EDITOR, enquiry, { reason: "Privacy request", confirm: "yes" });
+    expect(deleted.status).toBe(302);
+    expect(deleted.headers.get("Location")).toBe("/admin/submissions?deleted=1");
+    expect(await exists(enquiry)).toBe(false);
+    expect((await remove(EDITOR, report, { reason: "Privacy request", confirm: "yes" })).status).toBe(404);
+    expect((await remove(SAFEGUARDING, report, { reason: "Privacy request", confirm: "yes" })).status).toBe(302);
+    expect(await exists(report)).toBe(false);
+    expect(await exists(someoneElse)).toBe(true);
+
+    const events = await env.DB.prepare(
+      "SELECT actor_email, json_extract(details, '$.reason') AS reason FROM audit_event WHERE subject_id IN (?, ?) AND action = 'submission.deleted'",
+    )
+      .bind(enquiry, report)
+      .all();
+    expect(events.results).toEqual(
+      expect.arrayContaining([
+        { actor_email: EDITOR, reason: "Privacy request" },
+        { actor_email: SAFEGUARDING, reason: "Privacy request" },
+      ]),
+    );
+  });
+});
+
+describe("a report about an item", () => {
+  const hold = (email: string, id: string, reason = "Report about a photo used without permission") =>
+    as(email, `/admin/items/${id}`, { form: { intent: "hold", reason } });
+  const release = (email: string, id: string) =>
+    as(email, `/admin/items/${id}`, { form: { intent: "release", reason: "Permission confirmed" } });
+
+  it("lets the Safeguarding Lead hold the item off the site while they look into it, and release it", async () => {
+    const { id, path } = await publishedArticle("Weaving with Bulou");
+    expect((await visit(path)).status).toBe(200);
+
+    // The report link on the page fills in the item's address, which links the report to the item.
+    expect((await sendForm("report", { address: path, message: "That's my photo." })).status).toBe(200);
+    const report = await one<{ id: string }>(
+      "SELECT id FROM submission WHERE form = 'report' AND json_extract(fields, '$.address') = ?",
+      path,
+    );
+    const reportPage = await (await as(SAFEGUARDING, `/admin/submissions/${report.id}`)).text();
+    expect(reportPage).toContain(`href="/admin/items/${id}"`);
+    expect(reportPage).toContain("You can hold it off the site from its page.");
+
+    // Only the Safeguarding Lead holds, and says why.
+    expect((await hold(EDITOR, id)).status).toBe(403);
+    expect((await hold(SAFEGUARDING, id, " ")).status).toBe(400);
+    expect((await hold(SAFEGUARDING, id)).status).toBe(302);
+    expect((await hold(SAFEGUARDING, id)).status).toBe(409);
+
+    // Held, it leaves the site, search and the sitemap on the next request, and can't be republished.
+    expect((await visit(path)).status).toBe(410);
+    expect(await (await visit("/search?q=weaving")).text()).not.toContain(path);
+    expect(await (await visit("/sitemap.xml")).text()).not.toContain(path);
+    const refused = await publish(EDITOR, id);
+    expect(refused.status).toBe(400);
+    expect(await refused.text()).toContain("It is held while a report about it is looked into.");
+    const itemPage = await (await as(EDITOR, `/admin/items/${id}`)).text();
+    expect(itemPage).toContain("Held off the site");
+    expect(itemPage).toContain("Only the Safeguarding Lead can release it.");
+    const inbox = await (await as(SAFEGUARDING, "/admin/submissions")).text();
+    expect(inbox).toContain("Held off the site");
+    expect(inbox).toContain(`href="/admin/items/${id}"`);
+
+    // Nobody else releases it; when the Safeguarding Lead does, it is back at once, still published.
+    expect((await release(EDITOR, id)).status).toBe(403);
+    expect((await release(SAFEGUARDING, id)).status).toBe(302);
+    expect((await visit(path)).status).toBe(200);
+    expect((await release(SAFEGUARDING, id)).status).toBe(409);
+
+    const events = await env.DB.prepare(
+      "SELECT action, json_extract(details, '$.reason') AS reason FROM audit_event WHERE subject_id = ? AND action LIKE 'item.%' ORDER BY created_at",
+    )
+      .bind(id)
+      .all();
+    expect(events.results.slice(-2)).toEqual([
+      { action: "item.held", reason: "Report about a photo used without permission" },
+      { action: "item.released", reason: "Permission confirmed" },
+    ]);
+  });
+
+  it("finds the item from a full address, or a Learning Layer's, and not from words", async () => {
+    const { id, path } = await publishedArticle("Lali drums");
+    const linked = async (address: string) => {
+      expect((await sendForm("report", { address, message: "A concern." })).status).toBe(200);
+      const row = await one<{ id: string }>(
+        "SELECT id FROM submission WHERE json_extract(fields, '$.address') = ? ORDER BY created_at DESC",
+        address,
+      );
+      return (await (await as(SAFEGUARDING, `/admin/submissions/${row.id}`)).text()).includes(`/admin/items/${id}`);
+    };
+    expect(await linked(`https://naisema.com${path}?ref=share#top`)).toBe(true);
+    expect(await linked(`${path}/language`)).toBe(true);
+    expect(await linked("The page about lali drums")).toBe(false);
+  });
+});
+
 describe("a Video and its Learning Layer", () => {
   const SEGMENT = "6f1c2a7e-1111-4a5b-8c9d-000000000001";
   const ACTIVITY = "0b7c8d9e-2222-4a5b-8c9d-000000000001";
@@ -412,6 +605,138 @@ describe("a Video and its Learning Layer", () => {
     });
     expect((await visit(`/learn/${slug}/language`)).status).toBe(410);
     expect((await visit(`/media/files/${mediaId}`)).status).toBe(404);
+  });
+});
+
+describe("media uploads", () => {
+  // The upload checks stand in for Phase 1a's quarantine and virus scan (ADR-0015), so a refused
+  // file must leave nothing behind, in the bucket or the library.
+  const png = new Uint8Array(2048);
+  png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const program = new Uint8Array(2048);
+  program.set([0x4d, 0x5a, 0x90, 0x00]);
+
+  const upload = (email: string, name: string, bytes: Uint8Array<ArrayBuffer>, type: string) =>
+    as(email, `/admin/media/upload?name=${encodeURIComponent(name)}&alt=${encodeURIComponent("A reef")}`, {
+      method: "PUT",
+      body: bytes,
+      headers: { "Content-Type": type, "Content-Length": String(bytes.length) },
+    });
+
+  const stored = async (prefix: string) => (await env.MEDIA.list({ prefix })).objects.map((object) => object.key);
+  const libraryCount = async () => (await one<{ n: number }>("SELECT count(*) AS n FROM media")).n;
+
+  it("keeps a file whose name, type and first bytes agree, in the library and the bucket", async () => {
+    const response = await upload(EDUCATOR, "reef.png", png, "image/png");
+    expect(response.status).toBe(200);
+    const { id } = (await response.json()) as { id: string };
+    const row = await one<{ kind: string; key: string; content_type: string; bytes: number; alt: string }>(
+      "SELECT kind, key, content_type, bytes, alt FROM media WHERE id = ?",
+      id,
+    );
+    expect(row).toEqual({ kind: "image", key: `media/${id}`, content_type: "image/png", bytes: 2048, alt: "A reef" });
+    expect(await stored(`media/${id}`)).toEqual([`media/${id}`]);
+    expect(await one("SELECT action FROM audit_event WHERE subject_id = ?", id)).toEqual({ action: "media.uploaded" });
+  });
+
+  it("refuses a renamed program and deletes what it stored", async () => {
+    const [before, count] = [await stored("media/"), await libraryCount()];
+    for (const name of ["clip.mp4", "reef.png", "guide.pdf", "talanoa.mp3"]) {
+      const type = { mp4: "video/mp4", png: "image/png", pdf: "application/pdf", mp3: "audio/mpeg" }[
+        name.split(".")[1] as "mp4"
+      ];
+      const response = await upload(EDUCATOR, name, program, type);
+      expect(response.status, name).toBe(415);
+      expect(await response.json()).toEqual({
+        error: "The file's contents don't match its type. It may be renamed or damaged, so it wasn't accepted.",
+      });
+    }
+    expect(await stored("media/")).toEqual(before);
+    expect(await libraryCount()).toBe(count);
+  });
+
+  it("refuses a file not on the allowlist, or whose type and name disagree, before storing any of it", async () => {
+    const [before, count] = [await stored("media/"), await libraryCount()];
+    const exe = await upload(EDUCATOR, "setup.exe", program, "application/x-msdownload");
+    expect(exe.status).toBe(415);
+    expect(await exe.json()).toEqual({ error: "Upload an MP4, MP3, M4A, PDF, JPEG, PNG or WebP file." });
+    const svg = await upload(EDUCATOR, "reef.svg", png, "image/svg+xml");
+    expect(svg.status).toBe(415);
+    const disagree = await upload(EDUCATOR, "reef.png", png, "text/html");
+    expect(disagree.status).toBe(415);
+    expect(await disagree.json()).toEqual({
+      error: "The file's name and type don't agree. Check it is the right file.",
+    });
+    expect(await stored("media/")).toEqual(before);
+    expect(await libraryCount()).toBe(count);
+  });
+
+  it("takes uploads only from signed-in staff whose roles allow them, by PUT, from the staff site", async () => {
+    expect((await upload(REVIEWER, "reef.png", png, "image/png")).status).toBe(403);
+    expect((await upload(SAFEGUARDING, "reef.png", png, "image/png")).status).toBe(403);
+    const anonymous = await upload("", "reef.png", png, "image/png");
+    expect(anonymous.status).toBe(302);
+    expect(anonymous.headers.get("Location")).toBe("/admin/sign-in");
+    const post = await SELF.fetch(`${ADMIN}/admin/media/upload?name=reef.png`, {
+      method: "POST",
+      body: png,
+      headers: { "X-Dev-Staff-Email": EDUCATOR, Origin: ADMIN, "Content-Type": "image/png" },
+      redirect: "manual",
+    });
+    expect(post.status).toBe(405);
+    const crossSite = await SELF.fetch(`${ADMIN}/admin/media/upload?name=reef.png`, {
+      method: "PUT",
+      body: png,
+      headers: { "X-Dev-Staff-Email": EDUCATOR, Origin: "https://example.org", "Content-Type": "image/png" },
+      redirect: "manual",
+    });
+    expect(crossSite.status).toBe(403);
+    const onPublicSite = await SELF.fetch(`${PUBLIC}/admin/media/upload?name=reef.png`, {
+      method: "PUT",
+      body: png,
+      headers: { "X-Dev-Staff-Email": EDUCATOR, "Content-Type": "image/png" },
+    });
+    expect(onPublicSite.status).toBe(404);
+  });
+
+  it("checks Rights Record evidence the same way, and keeps it privately for editors", async () => {
+    const response = await upload(EDITOR, "reef.png", png, "image/png");
+    const { id: mediaId } = (await response.json()) as { id: string };
+    const send = (name: string, bytes: Uint8Array<ArrayBuffer>, type: string) => {
+      const form = new FormData();
+      form.set("intent", "add");
+      form.set("holder", "Mere Tuilagi");
+      form.append("uses", "publish");
+      form.set("evidence", new File([bytes], name, { type }));
+      return SELF.fetch(`${ADMIN}/admin/rights/media/${mediaId}`, {
+        method: "POST",
+        body: form,
+        headers: { "X-Dev-Staff-Email": EDITOR, Origin: ADMIN },
+        redirect: "manual",
+      });
+    };
+    const before = await stored("evidence/");
+    expect((await send("signed.pdf", program, "application/pdf")).status).toBe(415);
+    expect((await send("signed.mp4", program, "video/mp4")).status).toBe(415);
+    expect(await stored("evidence/")).toEqual(before);
+    expect(await one("SELECT count(*) AS n FROM rights_record WHERE subject_id = ?", mediaId)).toEqual({ n: 0 });
+
+    const pdf = new Uint8Array(512);
+    pdf.set(new TextEncoder().encode("%PDF-1.7"));
+    expect((await send("signed.pdf", pdf, "application/pdf")).status).toBe(302);
+    const record = await one<{ id: string; evidence_key: string }>(
+      "SELECT id, evidence_key FROM rights_record WHERE subject_id = ?",
+      mediaId,
+    );
+    expect(record.evidence_key).toMatch(/^evidence\//);
+    expect((await stored("evidence/")).length).toBe(before.length + 1);
+    // Evidence is never in the public media library, and only editors can download it.
+    expect((await visit(`/media/files/${record.evidence_key.split("/")[1]}`)).status).toBe(404);
+    expect((await as(EDUCATOR, `/admin/rights/evidence/${record.id}`)).status).toBe(403);
+    const download = await as(EDITOR, `/admin/rights/evidence/${record.id}`);
+    expect(download.status).toBe(200);
+    expect(download.headers.get("Content-Disposition")).toBe('attachment; filename="evidence"');
+    expect(download.headers.get("Cache-Control")).toBe("private, no-store");
   });
 });
 

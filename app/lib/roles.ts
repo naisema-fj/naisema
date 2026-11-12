@@ -21,6 +21,7 @@ export type Permission =
   | "content.edit"
   | "video.edit"
   | "content.publish"
+  | "content.hold"
   | "review.editorial"
   | "review.language"
   | "review.knowledge-holder"
@@ -47,7 +48,8 @@ const GRANTS: Record<Role, readonly Permission[]> = {
   // Educators author Videos and their Learning Layers, and submit them; they don't publish.
   educator: ["video.edit", "media.upload"],
   reviewer: ["review.language"],
-  safeguarding: ["review.safeguarding", "reports.read"],
+  // The Safeguarding Lead holds an item off the site while a report about it is looked into.
+  safeguarding: ["review.safeguarding", "reports.read", "content.hold"],
 };
 
 export type Staff = { email: string; name: string; roles: Role[]; languageVariety: string | null };

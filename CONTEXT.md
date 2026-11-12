@@ -172,8 +172,12 @@ The privacy wording shown on every public form, kept as numbered versions. New w
 _Avoid_: Privacy policy (the Privacy page is a Page, not a Notice)
 
 **Report**:
-A Submission about something on NAISEMA that is harmful, wrong or used without permission; read only by the Safeguarding Lead, who can have the item withdrawn. It can be anonymous.
+A Submission about something on NAISEMA that is harmful, wrong or used without permission; read only by the Safeguarding Lead, who can put the item on Hold and have it withdrawn. It can be anonymous.
 _Avoid_: Case (Phase 1a's workflow record), ticket
+
+**Hold**:
+The Safeguarding Lead keeping a Content Item off the public site while a Report about it is looked into. The item stays published, and nothing can be published, until they release it; then it is public again if it is still eligible.
+_Avoid_: Suspension, takedown (a takedown is a withdrawal)
 
 ## Discovery
 

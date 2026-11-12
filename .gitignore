@@ -18,3 +18,7 @@ e2e/seed.sql
 
 # The environment setup wizard remembers values it was given here (scripts/setup-environment.sh).
 .wizard-*.env
+
+# Decrypted backups (docs/handover/runbook.md, "Backups and restoring") hold personal data.
+/restore/
+*.tar.gz.gpg

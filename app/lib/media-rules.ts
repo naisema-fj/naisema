@@ -40,8 +40,8 @@ export const EVIDENCE_MAX_BYTES = 10 * MB;
 type Family = "iso-video" | "iso-audio" | "quicktime" | "mp3" | "pdf" | "jpeg" | "png" | "webp";
 
 const TYPES: Record<UploadType, { kind: UploadKind; extensions: string[]; aliases: string[]; families: Family[] }> = {
-  // MP4 and MOV share the ISO media layout, and both are video masters for the same pipeline, so
-  // either brand is accepted for either; older QuickTime files open with a bare atom instead.
+  // An MP4 opens with an `ftyp` box naming a video brand (a QuickTime brand included, as some
+  // encoders write one). Older QuickTime files that open with a bare atom are refused, as is MOV.
   "video/mp4": { kind: "video", extensions: ["mp4", "m4v"], aliases: [], families: ["iso-video"] },
   "audio/mpeg": { kind: "audio", extensions: ["mp3"], aliases: ["audio/mp3"], families: ["mp3"] },
   "audio/mp4": { kind: "audio", extensions: ["m4a"], aliases: ["audio/x-m4a", "audio/m4a"], families: ["iso-audio"] },

@@ -1,9 +1,20 @@
-name: Weekly database export
+name: Weekly backup
 
-# The portable copy beside D1 Time Travel's 30 days (ADR-0015): every Monday at 14:20 UTC (02:20
-# Tuesday in Fiji), production's database is exported to SQL and kept privately in its media
-# bucket under backups/, which nothing in the app serves. Stays skipped until the repository
-# variable CLOUDFLARE_ACCOUNT_ID is set. The token needs D1 read and R2 write.
+# The copy beside D1 Time Travel's 30 days (ADR-0015), kept outside Cloudflare so that losing the
+# Cloudflare account doesn't lose the backups too. Every Monday at 14:20 UTC (02:20 Tuesday in
+# Fiji), production's database, its media and its Rights Record evidence are copied out
+# (scripts/backup.mjs), encrypted with BACKUP_PASSPHRASE, and kept as this run's artifact for 35
+# days, then GitHub deletes it.
+#
+# The repository is public, so anyone can download an artifact: it is only ever uploaded
+# encrypted, and the job refuses to run without the passphrase. Without the passphrase, which is
+# in the NAISEMA password manager, a backup can't be read by anyone, NAISEMA included.
+#
+# It runs in its own `production-backup` environment, which has no required reviewer, so the
+# weekly run doesn't wait for a deploy approval. Its CLOUDFLARE_API_TOKEN can only read: D1 Edit
+# (Cloudflare's export needs it) and R2 read, never deploy (docs/handover/runbook.md). Stays
+# skipped until the repository variable CLOUDFLARE_ACCOUNT_ID is set. GitHub emails whoever last
+# changed this schedule if a run fails.
 
 on:
   schedule:
@@ -13,26 +24,36 @@ on:
 permissions:
   contents: read
 
+concurrency: backup-production
+
 jobs:
-  export:
+  backup:
     if: vars.CLOUDFLARE_ACCOUNT_ID != ''
     runs-on: ubuntu-latest
-    environment: production
-    timeout-minutes: 15
+    environment: production-backup
+    timeout-minutes: 30
     env:
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
     steps:
       - uses: actions/checkout@v7
-      # Until production is set up for v1, there's no database to export: skip with a warning.
+      # Until production is set up for v1, there's nothing to back up: skip with a warning.
       - name: Check production is set up in wrangler.jsonc
         id: config
         run: |
           if grep -q "REPLACE_WITH_PRODUCTION" wrangler.jsonc; then
-            echo "::warning::Production isn't set up for v1 yet, so there's nothing to export."
+            echo "::warning::Production isn't set up for v1 yet, so there's nothing to back up."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check the backup can be encrypted
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          if [ "${#BACKUP_PASSPHRASE}" -lt 32 ]; then
+            echo "::error::Set BACKUP_PASSPHRASE (at least 32 characters) on the production-backup environment (docs/handover/runbook.md, \"Backups and restoring\"). Nothing was backed up."
+            exit 1
           fi
       - if: steps.config.outputs.ready == 'true'
         uses: pnpm/action-setup@v6
@@ -43,9 +64,26 @@ jobs:
           cache: pnpm
       - if: steps.config.outputs.ready == 'true'
         run: pnpm install --frozen-lockfile
-      - name: Export the production database
+      - name: Copy the database, media and evidence out of Cloudflare
         if: steps.config.outputs.ready == 'true'
-        run: pnpm db:export production export.sql
-      - name: Keep it in the production media bucket
+        run: node scripts/backup.mjs production "$RUNNER_TEMP/backup"
+      - name: Encrypt it
         if: steps.config.outputs.ready == 'true'
-        run: pnpm wrangler r2 object put "naisema-production-media/backups/$(date -u +%F).sql" --remote --file export.sql --content-type application/sql
+        id: encrypt
+        run: |
+          name="naisema-production-$(date -u +%F)"
+          tar -czf "$RUNNER_TEMP/backup.tar.gz" -C "$RUNNER_TEMP/backup" .
+          rm -rf "$RUNNER_TEMP/backup"
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --symmetric --cipher-algo AES256 \
+            --output "$RUNNER_TEMP/$name.tar.gz.gpg" "$RUNNER_TEMP/backup.tar.gz" <<< "$BACKUP_PASSPHRASE"
+          rm -f "$RUNNER_TEMP/backup.tar.gz"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Keep it for 35 days
+        if: steps.config.outputs.ready == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.encrypt.outputs.name }}
+          path: ${{ runner.temp }}/${{ steps.encrypt.outputs.name }}.tar.gz.gpg
+          retention-days: 35
+          compression-level: 0
+          if-no-files-found: error

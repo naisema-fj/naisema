@@ -52,6 +52,13 @@ export const contentItem = sqliteTable(
     /** The published Revision's words, lower-cased, for search. Empty while nothing is published. */
     searchText: text("search_text").notNull().default(""),
     publishedAt: integer("published_at", { mode: "timestamp_ms" }),
+    /**
+     * Set while the Safeguarding Lead holds the item off the public site, because of a Report
+     * about it. It stays published, so releasing the hold puts it back if it is still eligible.
+     */
+    heldAt: integer("held_at", { mode: "timestamp_ms" }),
+    heldBy: text("held_by"),
+    heldReason: text("held_reason"),
     createdAt: createdAt(),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
@@ -182,7 +189,10 @@ export const topic = sqliteTable("topic", {
   parent: text("parent"),
 });
 
-/** What someone sent through a public form. Never published; the right person is emailed. */
+/**
+ * What someone sent through a public form. Never published; the right person is emailed. Kept for
+ * 12 months after it is dealt with, then deleted, as the privacy notice says.
+ */
 export const submission = sqliteTable(
   "submission",
   {
@@ -194,9 +204,11 @@ export const submission = sqliteTable(
     /** The version of the privacy notice the form showed when it was sent. */
     noticeVersion: text("notice_version").notNull(),
     done: integer("done", { mode: "boolean" }).notNull().default(false),
+    /** When it was marked as dealt with; it is deleted 12 months after (`deleteExpiredSubmissions`). */
+    doneAt: integer("done_at", { mode: "timestamp_ms" }),
     createdAt: createdAt(),
   },
-  (table) => [index("submission_created").on(table.createdAt)],
+  (table) => [index("submission_created").on(table.createdAt), index("submission_done").on(table.done, table.doneAt)],
 );
 
 /** Who did what, append-only (migration 0000 refuses updates and deletes). */

@@ -17,7 +17,8 @@ export const ROLE_DOES: Record<Role, string> = {
     "Adds and edits content, makes preview links, does editorial review, records Knowledge Holder Approvals, manages Rights Records and media, reads messages, and publishes and withdraws.",
   educator: "Writes Videos and their Learning Layers and uploads media. Never publishes.",
   reviewer: "Reviews the language of items and Learning Layers, for the one Language Variety on their staff record.",
-  safeguarding: "Does safeguarding reviews, and is the only person who reads reports.",
+  safeguarding:
+    "Does safeguarding reviews, is the only person who reads reports, and can hold an item off the site while a report about it is looked into.",
 };
 
 /** What ticking each Content Flag changes. */
