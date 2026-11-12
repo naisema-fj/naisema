@@ -1,402 +1,367 @@
 ---
 name: NAISEMA
-description: Woven mat. Everything NAISEMA offers laid out as tiles in the weave of its own mark, on the NAISEMA brand.
+description: "The front room. The family's vale: a Shell ground, Sand mats, soft cushions in the area colours, and one Lucide line icon beside every word that needs one."
 colors:
   ink: "#0f2b35"
   ink-deep: "#0a1d24"
   ink-2: "#1b3f4c"
+  ink-soft: "#dde6e8"
   kesa: "#d2603f"
   kesa-deep: "#a9472a"
+  kesa-soft: "#f6dfd5"
   voivoi: "#e9be5b"
   voivoi-light: "#f1cd78"
+  voivoi-soft: "#f8eccb"
   shell: "#f6f5f2"
+  shell-dim: "#d5dfe2"
   sand: "#e8e5de"
+  sand-deep: "#dcd8cf"
   paper: "#ffffff"
   line: "#d6d2c8"
+  line-soft: "#e3dfd6"
+  line-faint: "#ece9e2"
   muted: "#56686e"
   mist: "#a9bcc2"
-  shell-dim: "#d5dfe2"
-  kesa-strand: "#b95334"
-  voivoi-strand: "#ddad45"
-  ink-2-strand: "#24505f"
+  green: "#1d5b45"
+  green-soft: "#e3efe8"
 typography:
   display:
     fontFamily: "Bricolage Grotesque Variable, Arial Narrow, system-ui, sans-serif"
-    fontSize: "clamp(3.1rem, 2rem + 5vw, 6rem)"
+    fontSize: "clamp(3.2rem, 2rem + 5vw, 6rem)"
     fontWeight: 800
-    lineHeight: 0.88
+    lineHeight: 0.9
     letterSpacing: "-0.035em"
   headline:
     fontFamily: "Bricolage Grotesque Variable, Arial Narrow, system-ui, sans-serif"
-    fontSize: "clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem)"
+    fontSize: "clamp(2.6rem, 1.8rem + 3.4vw, 4.75rem)"
     fontWeight: 800
     lineHeight: 0.95
-    letterSpacing: "-0.025em"
-  tile-name:
-    fontFamily: "Bricolage Grotesque Variable, Arial Narrow, system-ui, sans-serif"
-    fontSize: "2.4rem"
-    fontWeight: 800
-    lineHeight: 0.92
-    letterSpacing: "-0.025em"
+    letterSpacing: "-0.03em"
   title:
     fontFamily: "Bricolage Grotesque Variable, Arial Narrow, system-ui, sans-serif"
-    fontSize: "clamp(1.5rem, 1.25rem + 1vw, 2rem)"
+    fontSize: "clamp(1.6rem, 1.3rem + 1.1vw, 2.25rem)"
     fontWeight: 700
-    lineHeight: 1
+    lineHeight: 1.05
     letterSpacing: "-0.02em"
   title-small:
     fontFamily: "Bricolage Grotesque Variable, Arial Narrow, system-ui, sans-serif"
     fontSize: "1.3rem"
     fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "-0.01em"
-  wordmark:
-    fontFamily: "Bricolage Grotesque Variable, Arial Narrow, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 700
-    lineHeight: 1
-    letterSpacing: "0.05em"
-  lede:
-    fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
-    fontSize: "1.3rem"
-    fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.05
+    letterSpacing: "-0.02em"
   body:
     fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
     fontSize: "1.0625rem"
     fontWeight: 400
-    lineHeight: 1.65
+    lineHeight: 1.6
   body-reading:
     fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 400
     lineHeight: 1.75
-  small:
-    fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
-    fontSize: "0.95rem"
-    fontWeight: 400
-    lineHeight: 1.5
   label:
     fontFamily: "Jost Variable, Century Gothic, Avenir Next, system-ui, sans-serif"
-    fontSize: "0.8125rem"
-    fontWeight: 600
-    lineHeight: 1.65
-    letterSpacing: "0.12em"
+    fontSize: "0.95rem"
+    fontWeight: 500
+    lineHeight: 1.45
 rounded:
-  strand: "2px"
-  input: "8px"
-  plate: "10px"
-  tile: "18px"
+  mat: "28px"
+  panel: "24px"
+  plate: "18px"
+  control: "14px"
   pill: "999px"
+  seat: "50%"
 spacing:
-  strand-inset: "clamp(0.35rem, 0.2rem + 0.5vw, 0.7rem)"
-  weave-gap: "clamp(0.6rem, 0.4rem + 0.8vw, 1rem)"
-  gutter: "clamp(1rem, 0.6rem + 2vw, 3.5rem)"
-  plate-pad: "0.9rem 1.1rem"
-  tile-pad: "clamp(1.25rem, 0.9rem + 1.4vw, 2rem)"
-  head-pad: "clamp(1.4rem, 1rem + 2vw, 2.5rem)"
-  welcome-pad: "clamp(1.6rem, 1rem + 3vw, 3.25rem)"
+  gutter: "clamp(1rem, 0.6rem + 2vw, 3rem)"
+  measure: "66ch"
+  page-max: "80rem"
+  pane: "48rem"
+  target: "44px"
+  control-height: "52px"
 components:
   button-primary:
     backgroundColor: "{colors.ink}"
     textColor: "{colors.shell}"
     typography: "{typography.body}"
-    rounded: "{rounded.plate}"
-    padding: "0.8rem 1.6rem"
-    height: "48px"
+    rounded: "{rounded.control}"
+    padding: "0 1.4rem"
+    height: "52px"
   button-primary-hover:
     backgroundColor: "{colors.ink-deep}"
     textColor: "{colors.shell}"
-  button-on-ink:
-    backgroundColor: "{colors.voivoi}"
+  button-soft:
+    backgroundColor: "{colors.sand}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.plate}"
-    padding: "0.8rem 1.6rem"
-    height: "48px"
-  button-on-ink-hover:
-    backgroundColor: "{colors.voivoi-light}"
+    rounded: "{rounded.control}"
+    padding: "0 1.4rem"
+    height: "52px"
+  button-soft-hover:
+    backgroundColor: "{colors.sand-deep}"
     textColor: "{colors.ink}"
-  button-form:
+  back-link:
+    backgroundColor: "{colors.sand}"
+    textColor: "{colors.ink}"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "0 1rem 0 0.75rem"
+    height: "44px"
+  nav-link-current:
     backgroundColor: "{colors.ink}"
-    textColor: "{colors.paper}"
-    rounded: "{rounded.input}"
-    padding: "0 1.6rem"
+    textColor: "{colors.shell}"
+    rounded: "{rounded.pill}"
+    padding: "0 0.8rem"
     height: "44px"
-  button-form-hover:
-    backgroundColor: "{colors.ink-deep}"
-  input-field:
+  search-pill:
     backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    rounded: "{rounded.input}"
-    padding: "0.55rem 0.75rem"
-    height: "44px"
-  menu-toggle:
-    backgroundColor: "{colors.shell}"
     textColor: "{colors.ink}"
     rounded: "{rounded.pill}"
-    padding: "0.5rem 1.1rem"
-    height: "44px"
-  menu-toggle-open:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.shell}"
-  tile-welcome:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.shell}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.welcome-pad}"
-  tile-learn:
-    backgroundColor: "{colors.kesa}"
-    textColor: "{colors.ink}"
-    typography: "{typography.tile-name}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-voices:
-    backgroundColor: "{colors.voivoi}"
-    textColor: "{colors.ink}"
-    typography: "{typography.tile-name}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-ezine:
-    backgroundColor: "{colors.voivoi}"
-    textColor: "{colors.ink}"
-    typography: "{typography.tile-name}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-discover:
-    backgroundColor: "{colors.paper}"
-    textColor: "{colors.ink}"
-    typography: "{typography.tile-name}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-connect:
-    backgroundColor: "{colors.ink}"
-    textColor: "{colors.shell}"
-    typography: "{typography.tile-name}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-resources:
-    backgroundColor: "{colors.ink-2}"
-    textColor: "{colors.shell}"
-    typography: "{typography.tile-name}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-quiet:
+    padding: "0 1.1rem 0 0.9rem"
+    width: "9rem"
+  welcome-mat:
     backgroundColor: "{colors.sand}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  tile-updates:
-    backgroundColor: "{colors.voivoi}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.tile-pad}"
-  head-tile:
+    rounded: "{rounded.mat}"
+  page-head:
     backgroundColor: "{colors.sand}"
     textColor: "{colors.ink}"
-    typography: "{typography.headline}"
-    rounded: "{rounded.tile}"
-    padding: "{spacing.head-pad}"
-  shell-plate:
+    rounded: "{rounded.mat}"
+    padding: "clamp(1.5rem, 1rem + 2vw, 2.75rem)"
+  head-plate:
     backgroundColor: "{colors.shell}"
     textColor: "{colors.ink}"
     rounded: "{rounded.plate}"
-    padding: "0.75rem 0.9rem"
-  sand-plate:
+    padding: "1.1rem 1.3rem"
+  cushion-learn:
+    backgroundColor: "{colors.kesa}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.panel}"
+    padding: "clamp(1.1rem, 0.9rem + 0.8vw, 1.65rem)"
+  cushion-voices:
+    backgroundColor: "{colors.voivoi-soft}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.panel}"
+  cushion-discover:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.panel}"
+  cushion-connect:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.shell}"
+    rounded: "{rounded.panel}"
+  cushion-resources:
+    backgroundColor: "{colors.ink-2}"
+    textColor: "{colors.shell}"
+    rounded: "{rounded.panel}"
+  seat:
+    backgroundColor: "{colors.shell}"
+    textColor: "{colors.kesa-deep}"
+    rounded: "{rounded.seat}"
+    size: "3.5rem"
+  shelf:
+    backgroundColor: "{colors.paper}"
+    rounded: "{rounded.panel}"
+    padding: "0.5rem"
+  shelf-item-hover:
+    backgroundColor: "{colors.shell}"
+    rounded: "{rounded.plate}"
+  review-labels:
+    backgroundColor: "{colors.paper}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.panel}"
+    padding: "1.25rem 1.4rem"
+  notice:
     backgroundColor: "{colors.sand}"
     textColor: "{colors.ink}"
     rounded: "{rounded.plate}"
-    padding: "{spacing.plate-pad}"
-  nav-link:
+    padding: "1rem 1.15rem"
+  input-text:
+    backgroundColor: "{colors.paper}"
     textColor: "{colors.ink}"
-    typography: "{typography.body}"
-    padding: "0.4rem 0"
+    rounded: "{rounded.control}"
+    padding: "0.75rem 1rem"
+    height: "52px"
+  footer:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.shell}"
+  staff-state-live:
+    backgroundColor: "{colors.green-soft}"
+    textColor: "{colors.green}"
+    rounded: "{rounded.seat}"
 ---
 
 # Design System: NAISEMA
 
 ## Overview
 
-**Creative North Star: "The Woven Mat"**
+**Creative North Star: "The Front Room"**
 
-The public site is an ibe, a woven mat. Everything NAISEMA offers is laid out as rounded tiles set in the weave of its own mark: each tile is a strand, alternately upright and sideways, and the alternation stays visible at every width. The brand is the material. Ink, Kesa, Voivoi and Shell are the four colours of the woven N, Sand and Ink-2 are the quiet strands between them, and the mark's own 11 by 15 strand shape is reused as fact bullets, the sign-off strand, the masked weave inside tall tiles and the woven strip that runs above the Ink footer.
+NAISEMA is the family's front room, the vale: you come in, someone says Bula, and everything is within reach. The ground is Shell; quieter groupings (the welcome, the ways to join in, search, form intros, notices, plain page heads) sit on Sand mats; the things you can open are soft cushions in their area's colour, resting on a low, warm, Ink-tinted shadow. Few things share a screen, and each is plainly signed with one Lucide line icon on a round seat and a word.
 
-Density is generous and flat. Tiles rest on a Shell ground with a narrow weave gap between them, carry one heavy Bricolage Grotesque name each, and let any slack fill with their own strands rather than an empty field. Reading pages are calm: a coloured head tile, then Jost on Shell at a 66ch measure, with facts and Review Labels set as flat lines led by woven strands, never as badges. The system refuses the category default of a photo hero over a grid of image cards, and the identity is binding: the woven N mark, the four brand colours and the Bricolage and Jost pairing are fixed by the NAISEMA brand.
+Bricolage Grotesque speaks, in warm sentence-case greetings at large sizes; Jost is read. The woven strip, the brand's approved artwork, is the hem of the welcome mat and the top of the footer, and the woven N mark sits in the header, the welcome and the footer. Everything is server-rendered; the only "interaction" on public pages is CSS and native disclosures. The world rejects both a photo hero over image cards and the loud tile mosaic it replaced.
 
-Motion is one gesture: a tile pulls taut under the pointer or keyboard focus, its inset relaxing to flush as it lifts. Everything works without JavaScript and without inline styles; colour reaches the mark and the strands through custom properties and classes only.
+The staff site is the same room set for work: white cushions on Shell at 24px corners, thumb-sized controls, an icon beside each page, action and state, and one extra state colour (green) that the public site never uses.
 
 **Key Characteristics:**
-- Rounded tiles (18px) in the four brand colours plus Sand, white and Ink-2, on a Shell ground.
-- Every tile alternates upright and sideways: an inset on phones, the strands' own shapes on tablets and desktops.
-- One colour per area, shared by its homepage tile and its pages' head tile.
-- Bricolage Grotesque ExtraBold speaks; Jost is read.
-- Woven-strand bullets, masked strand bands and the woven strip carry the mark's geometry through the whole site.
-- Flat at rest; soft lift only as a response to the pointer.
+- Shell ground, Sand mats, cushions in the six area tones; depth from soft corners and one warm shadow pair.
+- One Lucide line icon (1.75 stroke) beside every area, kind, fact, form, stage and action, always with its word.
+- Round seats behind icons; icons never stand alone, never replace a word.
+- Bricolage for greetings and headings, Jost for everything read; sentence case throughout.
+- The woven strip as hem, the woven N mark as the only emblem.
+- No client JavaScript on public pages, no inline styles; native `<details>` for menus and help.
 
 ## Colors
 
-The NAISEMA brand palette, used as solid fields: deep teal Ink, burnt-orange Kesa and golden Voivoi on an off-white Shell, with Sand and Ink-2 as the quiet tiles.
+A warm, quiet palette: the four binding brand colours, their soft tints for icon seats, and a family of sand and line neutrals that make the room feel lived in rather than white.
 
 ### Primary
-- **Ink** (#0f2b35): the brand's deep teal. All body text and headings on light grounds, the welcome tile, the Connect tile, the footer field, primary buttons, form borders, the open menu toggle and the N strands of the mark on light grounds.
-- **Ink Deep** (#0a1d24): hover state of every Ink button, and the letterbox behind video.
+- **Ink** (`ink`): text, the main button, the current menu item, the Connect cushion and the footer field. **Ink Deep** (`ink-deep`) is its hover and the video frame; **Ink Two** (`ink-2`) is the Resources cushion and the seat inside Connect.
+- **Ink Mist** (`ink-soft`): the soft seat tint for Connect and Resources pieces on the shelf.
 
 ### Secondary
-- **Kesa** (#d2603f): the brand's burnt orange. The Learn tile and Learn head, link underlines, the current-page nav rule, odd fact-line bullets, the sign-off strand and the ground strands of the mark. Ink on Kesa reaches only 3.87:1, so Kesa carries display type and nothing smaller.
-- **Kesa Deep** (#a9472a): Kesa deepened for small text (5.3:1 on Shell, 4.6:1 on Sand). Uppercase labels, list markers, field errors, the invalid-field border, disclosure lines, the form alert edge and the default focus ring.
-- **Kesa Strand** (#b95334): the strands woven into the Learn tile's slack.
+- **Kesa** (`kesa`): the Learn cushion and Learn page heads, link underlines and the woven strip. It is a large-field colour only.
+- **Kesa Deep** (`kesa-deep`, 5.3:1 on Shell): small text, icons on light grounds, list markers, error edges and the focus ring.
+- **Kesa Blush** (`kesa-soft`): the seat behind Review Label icons, Learn pieces on the shelf, the current item in the phone menu, staff warning tints.
 
 ### Tertiary
-- **Voivoi** (#e9be5b): the brand's gold. Voices and E-zine tiles and heads (shared), the Updates tile, the welcome button, nav hover rule, footer link underlines, text selection, the playing transcript line, blockquote edges and the focus ring on Ink grounds.
-- **Voivoi Light** (#f1cd78): hover state of the Voivoi button on Ink.
-- **Voivoi Strand** (#ddad45): the strands in Voices and E-zine slack.
+- **Voivoi** (`voivoi`): the updates panel, text selection, the seat inside Voices and E-zine cushions, icons on Ink (Connect seat, current nav icon), footer link hover and focus.
+- **Voivoi Light** (`voivoi-light`): a lighter Voivoi kept for the language player.
+- **Voivoi Cream** (`voivoi-soft`): the Voices and E-zine cushions, quotations in reading text, Voices pieces on the shelf.
 
 ### Neutral
-- **Shell** (#f6f5f2): the page ground, the header, the plate small text rides on Kesa, and text on Ink and Ink-2.
-- **Sand** (#e8e5de): quiet tiles (Recently published, Ways to take part), the default head tile, callouts, the not-open plate, notice wording, Discover's strands.
-- **Paper** (#ffffff): the Discover tile and head (with a 2px Line edge), form fields, blockquotes and embedded items.
-- **Ink-2** (#1b3f4c): the Resources tile and head, and the strands woven into the welcome and Connect tiles.
-- **Ink-2 Strand** (#24505f): the strands in the Resources tile.
-- **Line** (#d6d2c8): 1px rules (header base, piece lists, review labels, form consents, page foot) and the 2px inset edge of white tiles.
-- **Muted** (#56686e): secondary text on light grounds: datelines, list marks, hints, sources, optional markers, breadcrumb current page.
-- **Mist** (#a9bcc2): secondary text on Ink: the sign-off name, the welcome dateline, the footer note.
-- **Shell Dim** (#d5dfe2): the welcome statement on Ink.
+- **Shell** (`shell`): the ground of every page, seats on coloured cushions, the plate that carries small text over Kesa.
+- **Sand** (`sand`): mats, the soft button, the back pill, notices, fact seats, "What's this?" bodies. **Sand Pressed** (`sand-deep`) is the hover of every Sand button and pill.
+- **Paper** (`paper`): the shelf, the Discover cushion, forms, the Review Labels panel, the search pill, the phone menu.
+- **Line** (`line`), **Line Soft** (`line-soft`), **Line Faint** (`line-faint`): header rule and Discover edge; inset 1px edges of white panels; dividers between shelf rows and label lines.
+- **Muted** (`muted`): secondary text, meta, arrows at rest. **Mist** (`mist`) and **Shell Dim** (`shell-dim`): quiet text on Ink (footer notes, sub-lines on Connect and Resources).
+
+### Staff only
+- **Garden Green** (`green`) and **Green Wash** (`green-soft`): "published / approved / live" state on the staff site (success messages, the ready-to-publish seat, the live step of the progress tracker). Never on public pages.
 
 ### Named Rules
-**The Shell Plate Rule.** Small text never sits on Kesa. On a Kesa tile anything smaller than the tile name rides a Shell plate (10px radius) in Ink, with Kesa Deep for its label; on a Kesa head tile only the heading sits on the colour.
+**The Kesa Floor Rule.** Small text never sits on Kesa. Anything smaller than a heading on a Kesa field rides a Shell plate (the Learn cushion's words, the Learn page head's lede).
 
-**The One Colour Per Area Rule.** Each area owns one tile colour, shared by its homepage tile and the head tile of its pages: Learn Kesa, Voices and E-zine Voivoi, Discover white with a Line edge, Connect Ink, Resources Ink-2. A page without an area takes a Sand head.
+**The Area Tone Rule.** Each area owns one tone, shared by its menu seat, its homepage cushion, its page head and the seats of its pieces: Learn Kesa, Voices and E-zine Voivoi Cream with Voivoi seats, Discover Paper with a Line edge, Connect Ink with Voivoi icons, Resources Ink Two. Pages with no area use Sand with Kesa Deep icons.
 
-**The Deep For Small Rule.** Kesa fills, underlines and bullets; Kesa Deep is the only orange for text below display size, for errors and for the focus ring on light grounds.
+**The Staff Green Rule.** Green means "this is live or approved" and lives only on the staff site; the public site states review with words and the icon of what was reviewed, never colour alone.
 
 ## Typography
 
-**Display Font:** Bricolage Grotesque Variable (with Arial Narrow, system-ui), self-hosted via @fontsource-variable
-**Body Font:** Jost Variable (with Century Gothic, Avenir Next, system-ui), self-hosted via @fontsource-variable
+**Display Font:** Bricolage Grotesque Variable (with Arial Narrow, system-ui)
+**Body Font:** Jost Variable (with Century Gothic, Avenir Next, system-ui)
 
-**Character:** Bricolage Grotesque speaks, Jost is read. A heavy, slightly quirky grotesque at very tight leading for names and headings, against a clean geometric sans for everything a visitor reads, labels and buttons included.
+**Character:** Bricolage is the host saying Bula: heavy, tight, slightly irregular at display sizes. Jost is calm geometric reading text, set large (17px base) for phones.
 
 ### Hierarchy
-- **Display** (800, clamp(3.1rem, 2rem + 5vw, 6rem), 0.88, -0.035em): the welcome greeting on the Ink tile only, held to 6ch so it stacks.
-- **Headline** (800, clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem), 0.95, -0.025em): every page h1, set inside its head tile.
-- **Tile Name** (800, 2.4rem; 2rem inside the desktop mat, 0.92, -0.025em): the area name on each homepage tile.
-- **Title** (700, clamp(1.5rem, 1.25rem + 1vw, 2rem), 1): h2 section headings and quiet-tile headings.
-- **Title Small** (700, 1.3rem, 1.2): h3, piece titles in ruled lists, panel headings inside Sand tiles.
-- **Wordmark** (Bricolage 700, 1.5rem, 0.05em tracking): NAISEMA beside the mark in header (1.3rem at 24rem and below) and footer (1.3rem).
-- **Lede** (Jost 400, 1.3rem, 1.5, max 40rem): the summary under a head tile.
-- **Body** (Jost 400, 1.0625rem, 1.65): the site default, tile text (1.45 leading), nav links (500).
-- **Body Reading** (Jost 400, 1.125rem, 1.75, 66ch measure): Article bodies; headings get less space below than above.
-- **Small** (Jost 400, 0.95rem, 1.5): sentence-case text a step under Body: hints, field errors, form labels (600), fact lines (500), the breadcrumb, notice wording, footer notes, report links and disclosures. On the staff site, also table text, field labels and the header's controls.
-- **Label** (Jost 600, 0.8125rem, 0.10 to 0.14em tracking, uppercase): field and fact labels (From, Topics, Review Labels, definition terms, search filter legends), datelines, list marks and tile notes, in Kesa Deep or Muted.
+- **Display** (800, step-5, 0.9, -0.035em): the welcome greeting only ("Bula vinaka").
+- **Headline** (800, step-4, 0.95, -0.03em): page `h1` in the page head, held to 18ch.
+- **Title** (700, step-2, 1.05, -0.02em): section `h2`. Cushion names run 700 at clamp(1.45rem to 1.9rem); the Learn cushion's name runs 800 at clamp(2.5rem to 3.75rem).
+- **Title Small** (700, step-1): `h3`, shelf titles (700, clamp(1.15rem to 1.35rem), 1.2).
+- **Body** (400, step-0 at 1.0625rem, 1.6): everything read. Reading columns (`body-reading`, 1.125rem, 1.75) hold a 66ch measure.
+- **Label** (500 to 600, step-small at 0.95rem): meta, datelines, back pill, hints. Numbers use tabular figures.
 
 ### Named Rules
-**The Speaks And Reads Rule.** Bricolage Grotesque is for headings, tile names, the wordmark and piece titles; Jost is for everything read, including form labels, buttons, labels and facts. No system display face stands in for Bricolage.
+**The Sentence Case Rule.** Every heading, label, column name and button is sentence case. No uppercase labels, no tracked-out small caps, no eyebrow line above a heading; the only tracked type is the NAISEMA wordmark itself.
 
-**The Label Names A Fact Rule.** The uppercase tracked label names the field or fact it sits beside (From, Topics, Review Labels, Published, a format). It never floats above a heading as decoration.
+**The Greeting Rule.** Display size is for the greeting. Anything else that wants to be big becomes a cushion name.
 
 ## Layout
 
-The page column is 80rem inside one fluid gutter (clamp(1rem, 0.6rem + 2vw, 3.5rem)), shared edge to edge by header, main and footer. Reading panes are 48rem (42rem narrow) and centred; the Article body holds a 66ch measure.
+The page column is 80rem plus a fluid gutter (clamp(1rem, 0.6rem + 2vw, 3rem)), shared by the header, main and footer. Content pages sit in a centred pane (48rem; narrow 44rem; wide 80rem) with 1.75rem between blocks; reading text holds a 66ch measure, and headings keep less space below than above.
 
-The homepage is the mat: a grid of tiles with a weave gap of clamp(0.6rem, 0.4rem + 0.8vw, 1rem).
-- **Desktop (80rem and up):** five columns. The Ink welcome spans two; the six areas span three, in a four-track grid (1.7fr 1fr 1fr 1.7fr) laid in the strands' own shapes: Learn and Voices sideways across the head, two tracks wide; Discover and Connect upright at either edge, two rows tall; E-zine and Resources sideways between them. Recently published spans three columns and two rows beneath the welcome; Ways to take part and Updates stack beside it.
-- **Tablet and laptop (40 to 80rem):** two columns. Learn crosses the head; Voices, E-zine and Resources stand upright, two rows tall; Discover and Connect lie sideways. The left column reads before the right, in area order.
-- **Phones (below 40rem):** one column. The weave survives as an inset: alternate tiles are inset sideways or upright by clamp(0.35rem, 0.2rem + 0.5vw, 0.7rem).
+The homepage stacks the welcome mat, "Where would you like to go?", and the close of the room, with clamp(3rem to 4.75rem) between them. The rooms grid is two columns with Learn spanning the top on phones and tablets; from 64rem it is a 1.25fr + 3 x 1fr grid with Learn the tall cushion at the left spanning two rows and cushions at least 13rem tall. Below 30rem the smaller cushions show their name and seat only.
 
-The header nav becomes a native disclosure menu at 56rem and below; the wordmark and menu tighten at 24rem so 320px and 200% zoom fit one row. Definition lists stack at 34rem; search filters and fact grids stack at 40rem.
+The close of the room is a 7fr / 5fr split from 64rem: the shelf of newest pieces beside the ways to join in and the updates panel.
 
-### Named Rules
-**The Weave Rule.** Area tiles alternate upright and sideways at every width: by shape (two rows tall or two tracks wide) where the grid allows, by an upright or sideways inset where it does not.
+**The Short Shelf Rule.** When the shelf holds one piece or none, it runs the full width and the two side panels sit side by side beneath it, so the room never shows an empty corner.
 
-**The Strand Band Rule.** A tall tile never shows an empty field: the slack between its heading and its words fills with its own strands, a 36px masked weave repeat tinted per tile, never shorter than one whole repeat and repeating whole strands only. It is decorative and appears only where tiles are tall (the welcome, Discover and Connect on desktop; Voices, E-zine and Resources on tablet).
+**The 75rem Menu Rule.** Below 75rem the header's area links give way to a native `<details>` menu: an Ink pill that opens a Paper panel of 60px rows with seats. At 24rem and below the wordmark and mark shrink so header and menu fit one row at 320px.
+
+Targets are at least 44px; buttons and fields are 52px.
 
 ## Elevation & Depth
 
-The mat is flat. Tiles are solid colour fields separated by the weave gap; white tiles and plates take a 2px inset edge instead of a border. Depth appears only as lift in response to the pointer, plus a soft drop beneath the open phone menu and the primary button.
+Depth is soft and warm: rounded corners, tonal grounds (Shell under Sand under Paper and the area tones) and one Ink-tinted shadow pair. White panels carry a 1px inset edge instead of a border. Mats (Sand) are flat; cushions rest on a shadow and lift on approach.
 
 ### Shadow Vocabulary
-- **Tile lift** (`box-shadow: 0 18px 30px -18px rgb(10 29 36 / 0.55)` with `translateY(-2px)`): an area tile under hover or keyboard focus.
-- **Button rest** (`box-shadow: 0 8px 18px -12px rgb(10 29 36 / 0.7)`): the primary link button; it rises 1px on hover.
-- **Menu drop** (`box-shadow: 0 16px 32px -20px rgb(15 43 53 / 0.45)`): the open phone menu panel under the header.
-- **Inset edge** (`box-shadow: inset 0 0 0 2px <colour>`): Line on white tiles and embedded items, Voivoi on blockquotes, Kesa Deep on form alerts.
+- **Rest** (`--shadow-rest`): every homepage cushion at rest.
+- **Lift** (`--shadow-lift`): a cushion under pointer or keyboard focus.
+- **Shelf** (inset Line Soft edge plus `0 10px 24px -20px rgb(15 43 53 / 0.35)`): the shelf, public forms, staff cards.
+- **Button** (`0 10px 20px -14px rgb(10 29 36 / 0.8)`): the Ink button only; the soft button is flat.
+- **Menu** (Line Soft ring plus `0 24px 40px -22px rgb(15 43 53 / 0.55)`): the phone menu panel.
 
 ### Named Rules
-**The Flat Mat Rule.** Tiles rest flat. Shadows are soft, Ink-tinted and negative-spread, and they mean lift; there are no hard offset shadows.
+**The Mats Lie Flat Rule.** Sand mats, notices and plates never carry a shadow; only things you can open or press do.
 
 ## Shapes
 
-Everything is rounded like the mark's strands, in three steps: tiles and head tiles at 18px, plates (Shell plate, Sand plate, callouts, blockquotes, images, primary buttons) at 10px, form fields and form buttons at 8px. The strand itself (11 by 15, 1.6 radius in a 100-unit mark) recurs at 2px radius as the fact-line bullets and sign-off strand, alternating upright (Kesa, 0.5 by 0.7rem) and sideways (Ink, 0.7 by 0.5rem). The menu toggle is the one pill (999px). Ruled 1px Line rules are the only unrounded divisions: piece lists, review labels, consents, page feet.
-
-### Named Rules
-**The Strand Corner Rule.** Three radii only: 18px for tiles, 10px for plates and buttons, 8px for fields. A container never has square corners.
+Everything is soft, in four radii from large to small: the mat (28px) for the welcome mat, page heads and forms; the panel (24px) for cushions, the shelf, Review Labels, updates and staff cards; the plate (18px) for shelf rows, notices, quotations, images and plates; the control (14px) for buttons, fields and join links. Pills (999px) are for the back link, nav links, search, subtopics and radio pills. Seats are circles. The welcome mat's lower corners drop to 8px so the woven strip can run edge to edge as its hem. Shelf-row icon tiles are rounded squares at the plate radius, not circles, so a piece's kind reads differently from an area.
 
 ## Components
 
+### Icons and seats
+The icon is the system's signature. Lucide line icons, 1.75 stroke, drawn on the server as inline SVG, `aria-hidden`, always beside their word. One icon per area (Learn BookOpen, Voices Mic, Discover Compass, Connect Users, E-zine Newspaper, Resources Library), per piece kind, per public form and per player stage, from one shared map.
+- **Seat:** a round tint behind the icon: 2.75rem small, 3.5rem default, 3.75rem medium, 4.75rem large. On a cushion the seat takes the cushion's seat tone; on light grounds it is Shell or a soft tint with Kesa Deep or Ink icons.
+- **Fact seat:** 2.25rem Sand circle leading each fact line ("what a piece is"), as flat lines, never badges.
+
 ### Buttons
-Solid, heavy-thumbed and plain.
-- **Shape:** gently rounded (10px) for link buttons, 8px for form buttons; at least 48px (link) or 44px (form) tall.
-- **Primary:** Ink with Shell text, Jost 600 at 1.0625rem, 0.8rem 1.6rem padding, resting on the button shadow.
-- **Hover / Focus:** Ink Deep and a 1px rise over 200ms; focus is the site ring (3px Kesa Deep, 3px offset).
-- **On Ink:** inside the welcome tile the button turns Voivoi with Ink text, hovering to Voivoi Light; focus rings on Ink grounds are Voivoi.
-- **Form:** Ink with white text, 8px, 0 1.6rem padding; disabled at 60% opacity.
+- **Shape:** gently rounded (14px), 52px tall, icon beside the word with a 0.6rem gap.
+- **Primary:** Ink with Shell text, weight 600, a soft dark shadow; hover goes Ink Deep and rises 1px.
+- **Soft:** Sand with Ink text, flat; hover Sand Pressed. On the Sand welcome mat the soft button is Shell, hovering to Paper.
+- **Back link:** a Sand pill, 44px, left arrow and the place's name.
 
-### Area Tiles (signature)
-- **Corner Style:** 18px.
-- **Background:** the area's colour (see The One Colour Per Area Rule); white tiles carry a 2px Line inset edge.
-- **Content:** the area name in Tile Name, then the description in Body (max 22rem), with an uppercase "not open yet" label when parts are closed. On Learn the text rides a Shell plate.
-- **Hover / Focus, "pulls taut":** the tile's upright or sideways inset relaxes to flush, it rises 2px and takes the tile lift shadow, over 320ms on the ease-out curve (cubic-bezier(0.16, 1, 0.3, 1)). Focus outline is Ink. Under reduced motion the transition and the rise are removed.
+### Cushions (the rooms)
+- **Corner Style:** 24px.
+- **Background:** the area tone; seat, arrow and sub-line take the tone's paired colours.
+- **Shadow Strategy:** Rest, then Lift.
+- **Signature interaction:** under pointer or keyboard focus a cushion lifts 2px, its shadow deepens to Lift, its seat swells (scale 1.06) and its arrow steps 3px forward, all on 320ms of `ease-out`. Seats rest already filled. Reduced motion removes every transform and transition.
+- **Learn:** the largest cushion; its words ride a Shell plate.
 
-### Welcome Tile
-Ink, padded wider (clamp(1.6rem, 1rem + 3vw, 3.25rem)). Display greeting at top left, the mark large at top right (Shell N strands on Kesa ground, 4.5 to 8.5rem), the statement in Shell Dim, the Voivoi button, then the strand band, then a quiet sign-off (a Kesa strand and NAISEMA in Mist) and the dateline.
+### The shelf
+A Paper panel of rows, each led by its kind's icon on a rounded-square tile in its area's soft tint, then a Bricolage title, a line, and meta with icons. The title is the row's one link, stretched over the row; hover tints the row Shell and steps the arrow forward; focus outlines the whole row in Kesa Deep.
 
-### Head Tiles
-Every page opens on a tile. An Article or area page's head takes its area colour with only the h1 on it; the lede, byline and facts follow on Shell. Any page whose h1 opens bare (forms, info pages, errors) gets the Sand head tile automatically. Padding clamp(1.4rem, 1rem + 2vw, 2.5rem), headline at 0.95 leading.
+### Page head
+A 28px mat in the area tone (Sand when none) with a large seat and the `h1`; anything smaller rides a Shell plate beside it.
 
-### Cards / Containers
-- **Quiet tiles:** Sand (Recently published, Ways to take part) or Voivoi (Updates), 18px, tile padding.
-- **Sand tiles for details:** Resource details and Episodes sit on Sand at 18px.
-- **Plates:** 10px; Sand for callouts, not-open notices, notice wording and stage intros; white with an inset edge for blockquotes (Voivoi), embedded items (Line) and form alerts (Kesa Deep).
+### Review Labels
+A Paper panel, one line per Review Label, each led by a Kesa Blush seat with the icon of what was reviewed (Languages for language, HandHeart for cultural, MessageCircle for opinion, Tag otherwise). Never a tick, a check or a seal.
 
-### Fact Lines
-Flat lines, never badges. Jost 500 at 0.95rem with tabular numerals, each led by a woven strand: odd items a Kesa upright strand, even items an Ink sideways strand. Review Labels sit under their own Kesa Deep label, one per line, below a Line rule.
-
-### Piece Lists
-Ruled lines (1px Line top and bottom). Each title in Title Small (Bricolage 700) with no underline until hover (Kesa); then the summary in Body and a Muted uppercase list mark (area or format, then the date).
+### Notices and help
+- **Not open yet:** a Sand plate beside a clock seat, said plainly.
+- **"What's this?":** a native disclosure styled as an underlined link; its body is a Sand plate.
 
 ### Inputs / Fields
-- **Style:** white field, 1px Ink border, 8px radius, 0.55rem 0.75rem padding, at least 44px tall; labels in Jost 600 at 0.95rem, hints Muted.
-- **Focus:** the site focus ring.
-- **Error:** 2px Kesa Deep border, a Kesa Deep message in Jost 600; a form-level alert is a white plate with a 2px Kesa Deep inset edge.
-- **Choices:** 1.25rem checkboxes and radios in Ink accent; consents each their own box with the notice's words beside them.
+- **Style:** Paper, 1px Ink edge, 14px, 52px tall, Jost at body size. Labels 600 above.
+- **Error:** a 2px Kesa Deep edge.
+- **Forms:** an intro on a Sand mat beside the fields on a white 28px cushion.
 
 ### Navigation
-- **Header:** Shell, 1px Line base. The woven mark (Ink N on Kesa ground, 2.6rem) and Bricolage wordmark at left; six areas and Search (set off by a Line divider) in Jost 500 at right.
-- **States:** a 3px rule beneath the link, Voivoi on hover and Kesa for the current page (which also turns 600).
-- **Mobile:** at 56rem and below, a native disclosure: an Ink-outlined pill toggle with three drawn strands, turning solid Ink when open; the panel drops beneath the header with links on Line rules.
-- **Links:** Ink text with a 2px Kesa underline at 0.24em, thickening to 3px and tucking to 0.18em on hover over 160ms.
-- **Breadcrumb:** 0.95rem, "/" separators and the current page in Muted.
+- **Header:** Shell with a Line rule; mark and wordmark left, six area links (icon in Kesa Deep plus name) as 44px pills that hover Sand, the current one Ink with a Voivoi icon; a Paper search pill with an inset Line edge at the end.
+- **Footer:** the woven strip, then an Ink field in four short columns; Shell links underlined in Voivoi, turning Voivoi on hover.
 
-### Woven Mark and Weave Strip
-The mark is an N woven from 25 strands on a 5 by 5 weave, coloured by its ground through two custom properties: N strands (`--mark-n`) and ground strands (`--mark-ground`). Ink on Kesa on Shell; Shell on Kesa on Ink. The favicon is the mark on a Shell rounded square. Above the Ink footer runs the brand's woven strip, a 36px band of Ink, Kesa and Voivoi strands on Shell; the footer below is Ink with Shell links underlined in Voivoi.
+### Video without a still
+When a video has no poster, it shows a drawn one: an Ink Deep frame in the footage's own shape with a Voivoi play seat and an Ink triangle, as a `data:` SVG. Video is never cropped and never taller than 80vh.
+
+### Staff progress steps
+On a staff piece, where it stands is three Shell steps (16px corners), each with a round mark and words: done is Ink with a Voivoi icon, now is Voivoi Cream, live is Green with a white icon on a Green Wash step.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** lay new surfaces out as tiles on the Shell ground: 18px corners, a weave gap between them, and the upright or sideways alternation visible at every width.
-- **Do** give an area's pages its tile colour on the head tile, and a Sand head tile to any page without an area.
-- **Do** put any text smaller than the tile name on a Shell plate when it sits on Kesa (The Shell Plate Rule).
-- **Do** set facts and Review Labels as flat lines with woven-strand bullets (Kesa upright, Ink sideways, 2px radius).
-- **Do** use Kesa Deep (#a9472a) for small orange text and the focus ring on light grounds, and switch the ring to Voivoi on Ink.
-- **Do** fill the slack in tall tiles with their own masked strands, in whole 36px repeats only.
-- **Do** keep buttons, menu links and form controls at least 44px tall, and give every hover a matching keyboard focus state.
-- **Do** colour the woven mark only through `--mark-n` and `--mark-ground`.
+- **Do** put one Lucide line icon (1.75 stroke) beside every area, kind, fact, form, stage and action, with its word, `aria-hidden`.
+- **Do** seat icons on round tints; use the area's tone pair from the Area Tone Rule.
+- **Do** give Review Labels the icon of what was reviewed.
+- **Do** put small text on a Shell plate whenever the ground is Kesa.
+- **Do** lift cushions 2px with the Lift shadow, swell the seat to 1.06 and step the arrow, and remove all of it under reduced motion.
+- **Do** use the woven strip only as a hem (welcome mat, footer) and the woven N mark as the only emblem.
+- **Do** keep targets at least 44px and buttons and fields at 52px.
+- **Do** use native `<details>` for menus and help; public pages ship no client JavaScript and no inline styles.
 
 ### Don't:
-- **Don't** set small text on Kesa: Ink on Kesa is 3.87:1, good only for display sizes.
-- **Don't** turn facts, formats or Review Labels into badges, pills or chips, and never show a generic "verified" mark.
-- **Don't** open a page with a photo hero over a grid of image cards.
-- **Don't** redraw, recolour outside its two properties, or crop the woven mark or the woven strip; both are approved brand artwork.
-- **Don't** use glyph icons; draw the device from strands, as the menu toggle does.
-- **Don't** float an uppercase label above a heading as a kicker; a label names the fact beside it.
-- **Don't** give a container square corners or a hard offset shadow; ruled 1px Line rules are the only unrounded division.
-- **Don't** use inline styles; colour and geometry reach components through classes and custom properties only.
+- **Don't** let an icon stand in for a word, or use a glyph or emoji where a Lucide icon belongs.
+- **Don't** use a tick, check, seal or shield on anything public that describes review; no generic "verified" badge.
+- **Don't** set small text on Kesa, or use Kesa for small text (use Kesa Deep).
+- **Don't** use green on the public site.
+- **Don't** set uppercase or tracked labels, or an eyebrow line above a heading.
+- **Don't** put shadows on Sand mats, notices or plates.
+- **Don't** return to a photo hero over image cards, or to the tile mosaic this world replaced.
+- **Don't** invent cultural imagery; placeholders are labelled as placeholders.
