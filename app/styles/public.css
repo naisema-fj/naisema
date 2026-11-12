@@ -1364,6 +1364,17 @@ html:has(.public) {
   .home-close {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
   }
+
+  /* A short shelf (one piece, or none yet) runs the full width, with the ways to join in and the
+     newsletter side by side beneath it, so the room never shows an empty corner. */
+  .home-close:has(.shelf-item:only-child, .shelf-empty) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-close:has(.shelf-item:only-child, .shelf-empty) .home-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
 }
 
 /* --- The shelf: pieces as rows, each led by its kind's icon in its area's colour. --- */

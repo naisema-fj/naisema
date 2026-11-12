@@ -157,6 +157,22 @@ export function ContentLetter({ item }: { item: PublicView }) {
   );
 }
 
+/**
+ * What a Video shows before it plays when it has no still of its own: an Ink-deep frame in the
+ * footage's own shape with a Voivoi play seat, drawn rather than invented, so the browser's grey
+ * box never shows. A data: image, which the CSP allows.
+ */
+function noPoster(width: number | null | undefined, height: number | null | undefined) {
+  const w = width && width > 0 ? width : 16;
+  const h = height && height > 0 ? height : 9;
+  const r = Math.min(w, h) * 0.12;
+  const cx = w / 2;
+  const cy = h / 2;
+  const t = r * 0.42;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#0a1d24"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="#e9be5b"/><path d="M${cx - t * 0.7} ${cy - t}L${cx + t} ${cy}L${cx - t * 0.7} ${cy + t}Z" fill="#0f2b35"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 /** A Video's footage in its own shape, and the way into its Learning Layer. Nothing plays until pressed. */
 function StoryVideo({ title, video }: { title: string; video: NonNullable<PublicView["video"]> }) {
   return (
@@ -170,7 +186,7 @@ function StoryVideo({ title, video }: { title: string; video: NonNullable<Public
           controls
           preload="none"
           playsInline
-          poster={video.poster ?? undefined}
+          poster={video.poster ?? noPoster(video.width, video.height)}
           className="public-video"
           aria-label={title}
           width={video.width}

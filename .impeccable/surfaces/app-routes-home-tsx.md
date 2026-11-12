@@ -13,7 +13,7 @@ The whole interface: the public site (header, menu, footer, homepage, area pages
 
 THESIS: NAISEMA is the family's front room (the vale): you come in, someone says Bula, and everything is within reach. It refuses both the photo hero over image cards and the loud tile mosaic it replaces: few things per screen, each one plainly labelled with an icon and a word.
 
-OWN-WORLD: Shell ground with Sand "mats" laid under each group; soft cushion panels (24px corners) in the area colours, resting with a low, warm Ink-tinted shadow. Every area, format, fact and action carries one Lucide line icon (1.75 stroke) in a round coloured seat. Bricolage speaks in warm sentence-case greetings; Jost reads. The woven strip is the hem of the welcome mat and of the footer. Small text never sits on Kesa.
+OWN-WORLD: Shell ground with Sand "mats" under the welcome, the ways to join in, search, form intros, notices and quiet page heads; soft cushion panels (24px corners) in the area colours, resting with a low, warm Ink-tinted shadow. Every area, format, fact and action carries one Lucide line icon (1.75 stroke) in a round coloured seat. Bricolage speaks in warm sentence-case greetings; Jost reads. The woven strip is the hem of the welcome mat and of the footer. Small text never sits on Kesa.
 
 STORY: A visitor is greeted, sees six clearly signed rooms, the newest pieces on the shelf and the ways to join in on the notice board. Opening anything, they always see where they are, who it is from, and exactly what it was reviewed for, as plain icon lines. Staff are greeted by name and see what needs them, then the next step.
 
