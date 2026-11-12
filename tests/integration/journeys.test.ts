@@ -415,6 +415,138 @@ describe("a Video and its Learning Layer", () => {
   });
 });
 
+describe("media uploads", () => {
+  // The upload checks stand in for Phase 1a's quarantine and virus scan (ADR-0015), so a refused
+  // file must leave nothing behind, in the bucket or the library.
+  const png = new Uint8Array(2048);
+  png.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const program = new Uint8Array(2048);
+  program.set([0x4d, 0x5a, 0x90, 0x00]);
+
+  const upload = (email: string, name: string, bytes: Uint8Array<ArrayBuffer>, type: string) =>
+    as(email, `/admin/media/upload?name=${encodeURIComponent(name)}&alt=${encodeURIComponent("A reef")}`, {
+      method: "PUT",
+      body: bytes,
+      headers: { "Content-Type": type, "Content-Length": String(bytes.length) },
+    });
+
+  const stored = async (prefix: string) => (await env.MEDIA.list({ prefix })).objects.map((object) => object.key);
+  const libraryCount = async () => (await one<{ n: number }>("SELECT count(*) AS n FROM media")).n;
+
+  it("keeps a file whose name, type and first bytes agree, in the library and the bucket", async () => {
+    const response = await upload(EDUCATOR, "reef.png", png, "image/png");
+    expect(response.status).toBe(200);
+    const { id } = (await response.json()) as { id: string };
+    const row = await one<{ kind: string; key: string; content_type: string; bytes: number; alt: string }>(
+      "SELECT kind, key, content_type, bytes, alt FROM media WHERE id = ?",
+      id,
+    );
+    expect(row).toEqual({ kind: "image", key: `media/${id}`, content_type: "image/png", bytes: 2048, alt: "A reef" });
+    expect(await stored(`media/${id}`)).toEqual([`media/${id}`]);
+    expect(await one("SELECT action FROM audit_event WHERE subject_id = ?", id)).toEqual({ action: "media.uploaded" });
+  });
+
+  it("refuses a renamed program and deletes what it stored", async () => {
+    const [before, count] = [await stored("media/"), await libraryCount()];
+    for (const name of ["clip.mp4", "reef.png", "guide.pdf", "talanoa.mp3"]) {
+      const type = { mp4: "video/mp4", png: "image/png", pdf: "application/pdf", mp3: "audio/mpeg" }[
+        name.split(".")[1] as "mp4"
+      ];
+      const response = await upload(EDUCATOR, name, program, type);
+      expect(response.status, name).toBe(415);
+      expect(await response.json()).toEqual({
+        error: "The file's contents don't match its type. It may be renamed or damaged, so it wasn't accepted.",
+      });
+    }
+    expect(await stored("media/")).toEqual(before);
+    expect(await libraryCount()).toBe(count);
+  });
+
+  it("refuses a file not on the allowlist, or whose type and name disagree, before storing any of it", async () => {
+    const [before, count] = [await stored("media/"), await libraryCount()];
+    const exe = await upload(EDUCATOR, "setup.exe", program, "application/x-msdownload");
+    expect(exe.status).toBe(415);
+    expect(await exe.json()).toEqual({ error: "Upload an MP4, MP3, M4A, PDF, JPEG, PNG or WebP file." });
+    const svg = await upload(EDUCATOR, "reef.svg", png, "image/svg+xml");
+    expect(svg.status).toBe(415);
+    const disagree = await upload(EDUCATOR, "reef.png", png, "text/html");
+    expect(disagree.status).toBe(415);
+    expect(await disagree.json()).toEqual({
+      error: "The file's name and type don't agree. Check it is the right file.",
+    });
+    expect(await stored("media/")).toEqual(before);
+    expect(await libraryCount()).toBe(count);
+  });
+
+  it("takes uploads only from signed-in staff whose roles allow them, by PUT, from the staff site", async () => {
+    expect((await upload(REVIEWER, "reef.png", png, "image/png")).status).toBe(403);
+    expect((await upload(SAFEGUARDING, "reef.png", png, "image/png")).status).toBe(403);
+    const anonymous = await upload("", "reef.png", png, "image/png");
+    expect(anonymous.status).toBe(302);
+    expect(anonymous.headers.get("Location")).toBe("/admin/sign-in");
+    const post = await SELF.fetch(`${ADMIN}/admin/media/upload?name=reef.png`, {
+      method: "POST",
+      body: png,
+      headers: { "X-Dev-Staff-Email": EDUCATOR, Origin: ADMIN, "Content-Type": "image/png" },
+      redirect: "manual",
+    });
+    expect(post.status).toBe(405);
+    const crossSite = await SELF.fetch(`${ADMIN}/admin/media/upload?name=reef.png`, {
+      method: "PUT",
+      body: png,
+      headers: { "X-Dev-Staff-Email": EDUCATOR, Origin: "https://example.org", "Content-Type": "image/png" },
+      redirect: "manual",
+    });
+    expect(crossSite.status).toBe(403);
+    const onPublicSite = await SELF.fetch(`${PUBLIC}/admin/media/upload?name=reef.png`, {
+      method: "PUT",
+      body: png,
+      headers: { "X-Dev-Staff-Email": EDUCATOR, "Content-Type": "image/png" },
+    });
+    expect(onPublicSite.status).toBe(404);
+  });
+
+  it("checks Rights Record evidence the same way, and keeps it privately for editors", async () => {
+    const response = await upload(EDITOR, "reef.png", png, "image/png");
+    const { id: mediaId } = (await response.json()) as { id: string };
+    const send = (name: string, bytes: Uint8Array<ArrayBuffer>, type: string) => {
+      const form = new FormData();
+      form.set("intent", "add");
+      form.set("holder", "Mere Tuilagi");
+      form.append("uses", "publish");
+      form.set("evidence", new File([bytes], name, { type }));
+      return SELF.fetch(`${ADMIN}/admin/rights/media/${mediaId}`, {
+        method: "POST",
+        body: form,
+        headers: { "X-Dev-Staff-Email": EDITOR, Origin: ADMIN },
+        redirect: "manual",
+      });
+    };
+    const before = await stored("evidence/");
+    expect((await send("signed.pdf", program, "application/pdf")).status).toBe(415);
+    expect((await send("signed.mp4", program, "video/mp4")).status).toBe(415);
+    expect(await stored("evidence/")).toEqual(before);
+    expect(await one("SELECT count(*) AS n FROM rights_record WHERE subject_id = ?", mediaId)).toEqual({ n: 0 });
+
+    const pdf = new Uint8Array(512);
+    pdf.set(new TextEncoder().encode("%PDF-1.7"));
+    expect((await send("signed.pdf", pdf, "application/pdf")).status).toBe(302);
+    const record = await one<{ id: string; evidence_key: string }>(
+      "SELECT id, evidence_key FROM rights_record WHERE subject_id = ?",
+      mediaId,
+    );
+    expect(record.evidence_key).toMatch(/^evidence\//);
+    expect((await stored("evidence/")).length).toBe(before.length + 1);
+    // Evidence is never in the public media library, and only editors can download it.
+    expect((await visit(`/media/files/${record.evidence_key.split("/")[1]}`)).status).toBe(404);
+    expect((await as(EDUCATOR, `/admin/rights/evidence/${record.id}`)).status).toBe(403);
+    const download = await as(EDITOR, `/admin/rights/evidence/${record.id}`);
+    expect(download.status).toBe(200);
+    expect(download.headers.get("Content-Disposition")).toBe('attachment; filename="evidence"');
+    expect(download.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+});
+
 describe("the health check", () => {
   it("answers from the database, never from a cache", async () => {
     const response = await visit("/health");
