@@ -2,25 +2,25 @@
 version: 1
 slug: "app-routes-home-tsx"
 primary_target: "app/routes/home.tsx"
-related_targets: ["app/root.tsx","app/styles/public.css","app/routes/public/layout.tsx"]
+related_targets: ["app/root.tsx","app/styles/public.css","app/routes/public/layout.tsx","app/styles/staff.css","app/routes/admin/layout.tsx"]
 ---
 
 ## Scope
 
-The public site shell (issue #18): header and mobile menu, footer, homepage, the six area pages and the Article reading page, plus every other public page that shares their components. Visitor mode: Read. Audience and constraints: see PRODUCT.md. Redesigned in October 2026 onto the NAISEMA brand identity (the user's "NAISEMA Brand" canvas, Ibe system), replacing "Letters home".
+The whole interface: the public site (header, menu, footer, homepage, area pages, the Article and Video pages, search, forms, info pages, the learner player) and the staff site on the admin host. Public visitor mode: Read. Staff mode: Operate. Audience and constraints: see PRODUCT.md. Redesigned in November 2026 at the user's request ("simple and easy to use, beautiful and homely, with an icon library"), replacing the "Woven mat" tile layout while keeping the brand identity (mark, Ink, Kesa, Voivoi, Shell, Bricolage Grotesque, Jost, the woven strip). Icon library: Lucide, server-rendered inline SVG.
 
 ## Direction contract
 
-THESIS: The site is an ibe, a woven mat: everything NAISEMA offers is laid out as tiles set in the weave of its own mark, alternating upright and sideways. It refuses the category default of a photo hero over a grid of image cards.
+THESIS: NAISEMA is the family's front room (the vale): you come in, someone says Bula, and everything is within reach. It refuses both the photo hero over image cards and the loud tile mosaic it replaces: few things per screen, each one plainly labelled with an icon and a word.
 
-OWN-WORLD: The NAISEMA brand, pinned: Ink #0F2B35, Kesa #D2603F, Voivoi #E9BE5B, Shell #F6F5F2 ground, with Sand #E8E5DE and Ink-2 #1B3F4C as quiet tiles. Bricolage Grotesque ExtraBold for display, Jost for everything read. Tiles are rounded like the mark's strands (18px), each inset upright or sideways so the grid reads as a weave. The woven N mark heads every page; the brand's woven strip (approved artwork) runs above the Ink footer. Each area takes a tile colour from the four brand colours plus white and Ink-2 (Voices and E-zine share Voivoi), and that colour heads its pages. Small text never sits on Kesa: it rides a Shell plate. Facts and Review Labels are flat lines with woven strand bullets, never badges.
+OWN-WORLD: Shell ground with Sand "mats" laid under each group; soft cushion panels (24px corners) in the area colours, resting with a low, warm Ink-tinted shadow. Every area, format, fact and action carries one Lucide line icon (1.75 stroke) in a round coloured seat. Bricolage speaks in warm sentence-case greetings; Jost reads. The woven strip is the hem of the welcome mat and of the footer. Small text never sits on Kesa.
 
-STORY: The visitor sees the whole mat at once: the welcome, every area, what is new and what isn't open yet. They open an area or an Article, whose head tile carries its area's colour, and read who it is from, when, and exactly what it was reviewed for.
+STORY: A visitor is greeted, sees six clearly signed rooms, the newest pieces on the shelf and the ways to join in on the notice board. Opening anything, they always see where they are, who it is from, and exactly what it was reviewed for, as plain icon lines. Staff are greeted by name and see what needs them, then the next step.
 
-FIRST VIEWPORT: Shell header with the woven mark and NAISEMA wordmark at left, the six areas and Search inline (a menu on phones). Below, the mat: an Ink welcome tile ("Bula vinaka" at display size, the welcome statement, a quiet NAISEMA sign-off, a Voivoi "Read the latest" button, the mark large at top right) beside the six area tiles woven in the strands' own shapes: Learn and Voices sideways across the head, Discover and Connect upright and two rows tall at either edge, E-zine and Resources sideways between them; any slack in a tile fills with its own strands. On tablets and laptops below the full mat the areas weave in two columns (Learn across the head; Voices, E-zine and Resources upright; Discover and Connect sideways). Closing the mat: the latest pieces as a dated listing on Sand, beside the ways to take part on Sand and the newsletter on Voivoi.
+FIRST VIEWPORT: Shell header (mark and wordmark left; six areas each with an icon; a soft search pill right). The welcome mat: Sand panel, "Bula vinaka" at display size, one sentence, two buttons (Start learning, See what's new), the large woven mark, the woven strip as its hem. Beneath, "Where would you like to go?": six cushions in two rows, each an icon seat, the area name and one line.
 
-SIGNATURE INTERACTION: Without JavaScript, a tile pulls taut on hover and keyboard focus: its upright or sideways inset relaxes to flush and it lifts, so the weave tightens under the pointer; reduced motion keeps it still. The mobile menu is a native disclosure.
+SIGNATURE INTERACTION: A cushion settles under the pointer or keyboard focus: it lifts 2px, its shadow deepens and its icon seat fills with the area colour; reduced motion keeps it still. No JavaScript; the phone menu is a native disclosure.
 
-FORM: Ibe mats; position 1 on the ordered list (ibe mats, the Fijian school primer, masi bands, the Fijian hymnal, radio listings, sevusevu sequence, reef charts); seed key 6df34c93 (degraded roll, no challengers; the user chose this direction over the assigned programme guide after seeing both mocked up).
+FORM: The front room (vale); position 1 on the ordered list (the front room, the school primer, the sevusevu welcome, the community hall noticeboard, the gathering programme, the radio programme guide, the care parcel home); seed key 8defb04f (the user chose IMPECCABLE'S PICK over the dealt programme; challengers declined, their kept disciplines: review state drawn as marks, never colour alone; one reading column at a fixed measure).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
