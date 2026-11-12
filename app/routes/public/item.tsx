@@ -1,6 +1,5 @@
-import { Link } from "react-router";
 import { ContentLetter } from "~/components/public/content-letter";
-import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
+import { isPrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { findPublicItem } from "~/lib/content.server";
 import { getDb } from "~/lib/db.server";
@@ -30,19 +29,6 @@ export default function Item({ loaderData }: Route.ComponentProps) {
   const { item } = loaderData;
   return (
     <main id="main" className="article-page">
-      {item.area && (
-        <nav aria-label="Breadcrumb" className="breadcrumb">
-          <ol>
-            <li>
-              <Link to="/">Home</Link>
-            </li>
-            <li>
-              <Link to={`/${item.area}`}>{AREA_NAMES[item.area]}</Link>
-            </li>
-            <li aria-current="page">{item.title}</li>
-          </ol>
-        </nav>
-      )}
       <ContentLetter item={item} />
     </main>
   );

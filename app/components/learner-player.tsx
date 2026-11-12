@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight, CircleHelp, Languages, Lock, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import type { Annotation, ExpressionDetails } from "~/lib/annotations";
@@ -34,6 +35,7 @@ import {
 } from "~/lib/player-rules";
 import { formatTimecode, type Segment } from "~/lib/segment-rules";
 import { ActivityCard } from "./activity-card";
+import { Icon, STAGE_ICONS } from "./icons";
 import { type CaptionTrack, VideoPreview } from "./video-preview";
 import { WhatsThis } from "./whats-this";
 
@@ -346,12 +348,18 @@ export function LearnerPlayer(props: Props) {
 
   return (
     <div className="learner-player">
-      <p>
-        <Link to={props.storyPath} reloadDocument>
+      <p className="back">
+        <Link to={props.storyPath} reloadDocument className="back-link">
+          <Icon icon={ArrowLeft} size={18} />
           Back to the story: {props.videoTitle}
         </Link>
       </p>
-      <h1>{props.title}</h1>
+      <div className="player-title">
+        <span className="seat seat-large tone-learn">
+          <Icon icon={Languages} size={34} />
+        </span>
+        <h1>{props.title}</h1>
+      </div>
 
       <nav aria-label="Steps" className="stage-steps">
         <ol>
@@ -360,7 +368,12 @@ export function LearnerPlayer(props: Props) {
             return (
               <li key={id} className={id === stage ? "current" : visited ? "visited" : undefined}>
                 <Link to={stagePath(id)} reloadDocument aria-current={id === stage ? "step" : undefined}>
-                  <span className="step-number">{index + 1}</span> {nameOf(id)}
+                  <span className="step-icon">
+                    <Icon icon={STAGE_ICONS[id]} size={22} />
+                  </span>
+                  <span className="step-name">
+                    <span className="step-number">{index + 1}</span> {nameOf(id)}
+                  </span>
                   {visited && <span className="visually-hidden"> (visited)</span>}
                 </Link>
               </li>
@@ -492,6 +505,7 @@ export function LearnerPlayer(props: Props) {
                 setHelpOpen(!helpOpen);
               }}
             >
+              <Icon icon={CircleHelp} />
               Need help?
             </button>
             <div id="stage-help" hidden={!helpOpen} className="stage-help">
@@ -748,13 +762,15 @@ export function LearnerPlayer(props: Props) {
 
       <nav aria-label="Next and previous steps" className="stage-pager">
         {previous && (
-          <Link to={stagePath(previous)} reloadDocument>
+          <Link to={stagePath(previous)} reloadDocument className="button button-soft">
+            <Icon icon={ArrowLeft} size={18} />
             Previous step: {nameOf(previous)}
           </Link>
         )}
         {next && (
-          <Link to={stagePath(next)} reloadDocument>
+          <Link to={stagePath(next)} reloadDocument className="button">
             Next step: {nameOf(next)}
+            <Icon icon={ArrowRight} size={18} />
           </Link>
         )}
       </nav>
@@ -797,11 +813,15 @@ export function LearnerPlayer(props: Props) {
           Completing it means trying each needed Activity and seeing its feedback. Watching alone doesn't complete it,
           and right answers aren't needed.
         </p>
-        <p className="meta">
+        <p className="meta meta-private">
+          <Icon icon={Lock} size={18} />
           Your progress is kept only on this device, in this browser. Nothing about it is sent to NAISEMA.
         </p>
         <fieldset className="learner-settings">
-          <legend>Your settings</legend>
+          <legend>
+            <Icon icon={SlidersHorizontal} size={18} />
+            Your settings
+          </legend>
           <label className="checkbox">
             <input
               type="checkbox"

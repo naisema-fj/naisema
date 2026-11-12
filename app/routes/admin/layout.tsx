@@ -1,4 +1,18 @@
+import {
+  FileText,
+  House,
+  Image,
+  Inbox,
+  LogOut,
+  type LucideIcon,
+  Menu,
+  ScrollText,
+  Tags,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { Form, isRouteErrorResponse, Outlet, useLocation, useRouteError, useRouteLoaderData } from "react-router";
+import { Icon } from "~/components/icons";
 import { WovenMark } from "~/components/public/woven-mark";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { can, ROLE_NAMES, type Staff } from "~/lib/roles";
@@ -49,6 +63,17 @@ function staffNav(person: Staff): NavGroup[] {
 
 type Shell = Route.ComponentProps["loaderData"];
 
+/** Each staff page's icon, beside its name in the menu. */
+const NAV_ICONS: Record<string, LucideIcon> = {
+  "/admin": House,
+  "/admin/items": FileText,
+  "/admin/media": Image,
+  "/admin/topics": Tags,
+  "/admin/submissions": Inbox,
+  "/admin/staff": Users,
+  "/admin/audit": ScrollText,
+};
+
 function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
   const { pathname } = useLocation();
   const current = (href: string) => (href === "/admin" ? pathname === href : pathname.startsWith(href));
@@ -57,6 +82,7 @@ function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
       <ul className="staff-nav-groups">
         <li>
           <a href="/admin" aria-current={current("/admin") ? "page" : undefined}>
+            <Icon icon={House} />
             Staff home
           </a>
         </li>
@@ -67,6 +93,7 @@ function StaffNav({ groups, label }: { groups: NavGroup[]; label: string }) {
               {group.items.map((item) => (
                 <li key={item.href}>
                   <a href={item.href} aria-current={current(item.href) ? "page" : undefined}>
+                    <Icon icon={NAV_ICONS[item.href] ?? FileText} />
                     {item.label}
                   </a>
                 </li>
@@ -86,18 +113,27 @@ function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNo
         <div className="staff-header-inner">
           <a href={shell ? "/admin" : "/admin/sign-in"} className="staff-wordmark">
             <WovenMark />
-            NAISEMA <span>staff</span>
+            NAISEMA <span className="staff-tag">Staff</span>
           </a>
           {shell && (
             <>
               {/* A native disclosure, so the menu works on phones without any JavaScript. */}
               <details className="staff-menu">
-                <summary>Menu</summary>
+                <summary>
+                  <Icon icon={Menu} />
+                  Menu
+                </summary>
                 <StaffNav groups={shell.groups} label="Staff menu" />
               </details>
               <Form method="post" action="/admin/sign-out" className="staff-signout">
-                <span className="staff-user">{shell.email}</span>
-                <button type="submit">Sign out</button>
+                <span className="staff-user">
+                  <Icon icon={UserRound} size={18} />
+                  {shell.email}
+                </span>
+                <button type="submit">
+                  <Icon icon={LogOut} size={18} />
+                  Sign out
+                </button>
               </Form>
             </>
           )}
@@ -108,7 +144,10 @@ function StaffFrame({ shell, children }: { shell: Shell; children: React.ReactNo
         {children}
       </div>
       <footer className="staff-footer">
-        <p>NAISEMA staff site. What you do here is recorded in the audit log.</p>
+        <p>
+          <Icon icon={ScrollText} size={16} />
+          NAISEMA staff site. What you do here is recorded in the audit log.
+        </p>
       </footer>
     </div>
   );

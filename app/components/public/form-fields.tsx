@@ -1,3 +1,4 @@
+import { CircleAlert, Lock } from "lucide-react";
 import { NOTICE } from "~/lib/forms";
 import { TURNSTILE_SCRIPT } from "~/lib/turnstile";
 
@@ -15,6 +16,7 @@ const describedBy = (...ids: (string | false | undefined)[]) => ids.filter(Boole
 function FieldError({ name, errors }: { name: string; errors: Errors }) {
   return errors[name] ? (
     <p id={`${name}-error`} className="field-error">
+      <CircleAlert size={18} strokeWidth={2} aria-hidden="true" focusable="false" className="icon" />
       {errors[name]}
     </p>
   ) : null;
@@ -118,7 +120,8 @@ export function NoticeField({ values, errors }: { values: Values; errors: Errors
   return (
     <div className="form-consent">
       <p id="notice-wording" className="notice-wording">
-        {NOTICE.wording}
+        <Lock size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" className="icon" />
+        <span>{NOTICE.wording}</span>
       </p>
       <div className="form-choice">
         <input
@@ -197,6 +200,7 @@ export function FormAlert({ errors }: { errors: Errors }) {
   if (!Object.keys(errors).length) return null;
   return (
     <div role="alert" className="form-alert">
+      <CircleAlert size={22} strokeWidth={1.75} aria-hidden="true" focusable="false" className="icon" />
       <p>{errors.form ?? "Nothing was sent. Check the answers marked below."}</p>
     </div>
   );

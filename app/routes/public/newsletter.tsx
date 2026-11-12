@@ -1,3 +1,6 @@
+import { Bell, ExternalLink } from "lucide-react";
+import { Icon } from "~/components/icons";
+import { BackLink, NotOpen, PageHead } from "~/components/public/parts";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { publicHeaders } from "~/lib/http";
 import type { Route } from "./+types/newsletter";
@@ -23,8 +26,13 @@ export default function Newsletter({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main">
       <article className="pane pane-narrow">
-        <h1>Newsletter</h1>
-        <p className="standfirst">News of new stories, recordings, classes and consultations, now and then.</p>
+        <BackLink to="/">Home</BackLink>
+        <PageHead
+          tone="none"
+          icon={Bell}
+          title="Newsletter"
+          plate={<p className="lede">News of new stories, recordings, classes and consultations, now and then.</p>}
+        />
         {loaderData.formUrl ? (
           <>
             <p>
@@ -32,17 +40,15 @@ export default function Newsletter({ loaderData }: Route.ComponentProps) {
               a link to stop it.
             </p>
             <p>
-              <a className="primary-link" href={loaderData.formUrl} rel="external noopener">
+              <a className="button" href={loaderData.formUrl} rel="external noopener">
+                <Icon icon={ExternalLink} size={18} />
                 Sign up on Buttondown
               </a>{" "}
               (another website)
             </p>
           </>
         ) : (
-          <p className="not-open">
-            <span className="from-label">Not open yet</span> The newsletter starts soon. Until then, new pieces appear
-            on the home page.
-          </p>
+          <NotOpen>The newsletter starts soon. Until then, new pieces appear on the home page.</NotOpen>
         )}
       </article>
     </main>

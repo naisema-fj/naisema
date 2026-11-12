@@ -93,7 +93,7 @@
 }
 
 .staff-header :focus-visible {
-  outline-color: var(--voivoi);
+  outline-color: var(--kesa-deep);
 }
 
 /* --- Tables: the same everywhere, and scrollable sideways inside themselves on a phone. --- */
@@ -349,8 +349,9 @@
 
 /* --- Shell --- */
 .staff-header {
-  background: var(--ink);
-  color: var(--shell);
+  background: var(--paper);
+  color: var(--ink);
+  border-bottom: 1px solid var(--line-soft);
 }
 
 .staff-header-inner {
@@ -361,6 +362,12 @@
   max-width: 80rem;
   margin: 0 auto;
   padding: 0.6rem 1rem;
+}
+
+@media (min-width: 56rem) {
+  .staff-header-inner {
+    padding-inline: 1.5rem;
+  }
 }
 
 .staff-wordmark {
@@ -381,9 +388,14 @@
   height: 1.9rem;
 }
 
-.staff-wordmark span {
-  font-weight: 400;
-  opacity: 0.8;
+.staff-wordmark .staff-tag {
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: var(--sand);
+  font-family: var(--font-text);
+  font-size: var(--step-small);
+  font-weight: 600;
+  letter-spacing: 0;
 }
 
 .staff-header a,
@@ -406,28 +418,42 @@
 
 .staff-user {
   display: none;
+  align-items: center;
+  gap: 0.4rem;
   font-size: var(--step-small);
-  opacity: 0.85;
+  color: var(--muted);
 }
 
 .staff-header button,
 .staff-signout a,
 .staff-menu summary {
   box-sizing: border-box;
-  padding: 0.4rem 0.9rem;
-  border: 1px solid rgb(246 245 242 / 0.55);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--shell);
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper);
+  color: var(--ink);
   font: inherit;
   font-size: var(--step-small);
+  font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  gap: 0.45rem;
 }
 
 .staff-header button:hover,
 .staff-signout a:hover,
+.staff-menu summary:hover {
+  background: var(--shell);
+}
+
+.staff-menu summary {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--shell);
+}
+
 .staff-menu summary:hover {
   background: var(--ink-2);
 }
@@ -494,7 +520,7 @@
   }
 
   .staff-user {
-    display: inline;
+    display: inline-flex;
   }
 }
 
@@ -507,16 +533,21 @@
 .staff-nav a {
   display: flex;
   align-items: center;
-  padding: 0.3rem 0.6rem;
-  min-height: 2.75rem;
-  border-radius: 8px;
-  color: var(--ink-2);
+  gap: 0.75rem;
+  padding: 0.3rem 0.85rem;
+  min-height: 2.9rem;
+  border-radius: 14px;
+  color: var(--ink);
+  font-weight: 500;
   text-decoration: none;
 }
 
+.staff-nav a .icon {
+  color: var(--kesa-deep);
+}
+
 .staff-nav a:hover {
-  background: rgb(15 43 53 / 0.07);
-  text-decoration: underline;
+  background: var(--sand);
 }
 
 .staff-nav a[aria-current="page"] {
@@ -525,14 +556,16 @@
   font-weight: 600;
 }
 
+.staff-nav a[aria-current="page"] .icon {
+  color: var(--voivoi);
+}
+
 .staff-nav-group {
-  margin: 1rem 0 0.2rem;
-  padding: 0 0.6rem;
+  margin: 1.1rem 0 0.25rem;
+  padding: 0 0.85rem;
   color: var(--muted);
-  font-size: var(--step--1);
+  font-size: var(--step-small);
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
 /* --- Footer-free pages keep their breathing room on phones --- */
@@ -567,9 +600,13 @@
 }
 
 .staff-footer p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   max-width: 80rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 1.1rem 1rem;
 }
 
 /* Home: what needs attention */
@@ -648,12 +685,12 @@
  */
 .staff {
   --kesa: #d2603f;
-  --radius-card: 10px;
+  --radius-card: 24px;
 }
 
 /* The woven mark on the Ink header: Shell strands for the N, Kesa for the weave. */
 .staff .woven-mark {
-  --mark-n: var(--shell);
+  --mark-n: var(--ink);
   --mark-ground: var(--kesa);
   display: block;
   flex: none;
@@ -1037,4 +1074,424 @@
   display: grid;
   gap: 0.4rem;
   padding-left: 1.2rem;
+}
+
+/*
+ * --- The front room, on the staff site (.impeccable/surfaces/app-routes-home-tsx.md) ---
+ * The same soft world as the public site, set for work: white cushions on the Shell ground, 24px
+ * corners, thumb-sized controls, and a Lucide icon beside each page, action and state. Everything
+ * stays inside :where() so an editor's own class rule (the timeline, the activities) still wins.
+ */
+.staff {
+  --line-soft: #e3dfd6;
+  /* Sand pressed: the hover of every Sand button and pill. */
+  --sand-deep: #dcd8cf;
+  --line-faint: #ece9e2;
+  --kesa-soft: #f6dfd5;
+  --voivoi-soft: #f8eccb;
+  --green: #1d5b45;
+  --green-soft: #e3efe8;
+  --ink-deep: #0a1d24;
+}
+
+.staff .icon {
+  flex: none;
+  display: block;
+}
+
+.staff ::selection {
+  background: var(--voivoi);
+  color: var(--ink);
+}
+
+:where(.staff) h1 {
+  font-weight: 800;
+  font-size: clamp(2rem, 1.6rem + 1.6vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
+:where(.staff) :is(h2, h3) {
+  letter-spacing: -0.01em;
+}
+
+:where(.staff) a {
+  color: var(--ink);
+  text-decoration-color: var(--kesa);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.22em;
+}
+
+:where(.staff main) a:hover {
+  color: var(--kesa-deep);
+}
+
+:where(.staff main > h1 + p, .staff main > h1 + .meta, .staff .page-lede) {
+  margin-top: 0;
+  font-size: 1.1rem;
+  color: var(--muted);
+}
+
+/* Cards: white cushions with a soft edge and a low, warm shadow. */
+:where(
+  .staff main > section:not(.segment-problems),
+  .staff main > form:not(.inline-form, .filters),
+  .staff .timeline-preview,
+  .staff .timeline-form
+) {
+  border: 0;
+  border-radius: var(--radius-card);
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    0 10px 24px -20px rgb(15 43 53 / 0.35);
+}
+
+/* Fields: taller and softer, with an Ink edge when they have the focus. */
+:where(.staff) :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea) {
+  min-height: 3rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 12px;
+}
+
+:where(.staff main label) {
+  font-size: 1rem;
+}
+
+/* Buttons: Ink for the main action, Sand for the rest, each with room for an icon. */
+:where(.staff main) :is(button, .button) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+:where(.staff main) button[type="submit"],
+:where(.staff main) .button {
+  min-height: 3rem;
+  padding: 0.4rem 1.2rem;
+  border-radius: 14px;
+  text-decoration: none;
+  box-shadow: 0 10px 20px -14px rgb(10 29 36 / 0.8);
+}
+
+:where(.staff main) .button:hover {
+  background: var(--ink-deep);
+  color: var(--shell);
+}
+
+:where(.staff main button:not([type="submit"])) {
+  border: 0;
+  border-radius: 14px;
+  background: var(--sand);
+  font-weight: 600;
+}
+
+:where(.staff main button:not([type="submit"]):hover:not(:disabled)) {
+  background: var(--sand-deep);
+}
+
+:where(.staff main) .inline-form button {
+  border: 0;
+  background: var(--sand);
+  box-shadow: none;
+}
+
+:where(.staff main) .inline-form button:hover {
+  background: var(--sand-deep);
+}
+
+:where(.staff main) .button-quiet {
+  background: var(--paper);
+  color: var(--ink);
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+:where(.staff main) .button-quiet:hover {
+  background: var(--shell);
+  color: var(--ink);
+}
+
+/* Messages: words first, with a soft plate; a problem has a Kesa edge and a warm tint. */
+:where(.staff main) [role="status"] {
+  border-radius: 14px;
+}
+
+:where(.staff main) [role="alert"] {
+  border-radius: 14px;
+  background: var(--kesa-soft);
+  box-shadow: inset 0 0 0 1px var(--kesa-deep);
+}
+
+.staff .status {
+  padding: 0.15rem 0.75rem;
+}
+
+.staff .status-approved {
+  border-color: var(--green);
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.staff .held-note,
+.staff .missing {
+  border-radius: 14px;
+}
+
+/* Tables: a soft frame, quiet column names in sentence case. */
+:where(.staff .table-scroll) {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px var(--line-faint);
+}
+
+:where(.staff) thead th {
+  background: var(--shell);
+  border-bottom: 1px solid var(--line-faint);
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+:where(.staff) :is(th, td) {
+  padding: 0.75rem 0.9rem;
+  border-bottom-color: var(--line-faint);
+}
+
+:where(.staff tbody tr:hover) {
+  background: var(--shell);
+}
+
+/* "What's this?" help, as on the public site. */
+.staff .whats-this > summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0;
+  text-decoration-color: var(--kesa);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.24em;
+}
+
+.staff .whats-this-body {
+  border-radius: 18px;
+}
+
+/* --- Staff home --- */
+
+.staff .seat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.staff .seat-large {
+  width: 4rem;
+  height: 4rem;
+}
+
+.staff .seat.tone-kesa {
+  background: var(--kesa-soft);
+  color: var(--kesa-deep);
+}
+
+.staff .seat.tone-green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.staff .seat.tone-voivoi {
+  background: var(--voivoi-soft);
+  color: #6b4e0e;
+}
+
+.staff .quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.staff .attention-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.staff .attention-head h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.staff .count {
+  flex: none;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.6rem;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--shell);
+  font-weight: 600;
+  font-size: var(--step-small);
+  font-variant-numeric: tabular-nums;
+}
+
+:where(.staff .attention-grid ul) {
+  list-style: none;
+  padding-left: 0;
+}
+
+:where(.staff .attention-grid li) {
+  padding: 0.55rem 0 0;
+  border-top: 1px solid var(--line-faint);
+}
+
+:where(.staff .attention-grid li a) {
+  font-weight: 600;
+}
+
+.staff .attention-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 2rem 1.5rem;
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  text-align: center;
+}
+
+.staff .attention-empty p {
+  max-width: none;
+  margin: 0;
+  color: var(--muted);
+}
+
+.staff .attention-empty .attention-empty-title {
+  margin-top: 0.4rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where(.staff main) :is(button, .button) {
+    transition: background-color 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+/* --- One piece: where it stands, as three steps with a mark and words each. --- */
+.staff .progress-steps {
+  list-style: none;
+  margin: 0.75rem 0 1rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: 0.6rem;
+}
+
+.staff .progress-steps li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  max-width: none;
+  padding: 0.75rem 0.9rem;
+  border-radius: 16px;
+  background: var(--shell);
+}
+
+.staff .progress-steps strong {
+  display: block;
+  font-weight: 600;
+}
+
+.staff .step-sub {
+  display: block;
+  font-size: var(--step-small);
+  color: var(--muted);
+}
+
+.staff .step-mark {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--sand);
+  color: var(--ink);
+}
+
+.staff .step-done .step-mark {
+  background: var(--ink);
+  color: var(--voivoi);
+}
+
+.staff .step-now .step-mark {
+  background: var(--voivoi-soft);
+  color: #6b4e0e;
+}
+
+.staff .progress-steps .step-live {
+  background: var(--green-soft);
+}
+
+.staff .step-live .step-mark {
+  background: var(--green);
+  color: var(--paper);
+}
+
+.staff .step-live strong,
+.staff .step-live .step-sub {
+  color: var(--green);
+}
+
+.staff .review-standing {
+  list-style: none;
+  padding-left: 0;
+}
+
+.staff .review-standing li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+}
+
+.staff .state-approved {
+  color: var(--green);
+}
+
+.staff .state-changes {
+  color: var(--kesa-deep);
+}
+
+.staff .state-waiting {
+  color: var(--muted);
+}
+
+/* On a phone the header keeps the wordmark, the menu and sign out on one line. */
+@media (max-width: 30rem) {
+  .staff-wordmark .staff-tag {
+    display: none;
+  }
+
+  .staff-header button,
+  .staff-menu summary {
+    white-space: nowrap;
+  }
 }

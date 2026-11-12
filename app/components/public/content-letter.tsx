@@ -1,5 +1,19 @@
+import {
+  ArrowRight,
+  Calendar,
+  Download,
+  ExternalLink,
+  Flag,
+  GraduationCap,
+  Headphones,
+  Languages,
+  Tags,
+  User,
+} from "lucide-react";
 import { Link } from "react-router";
 import { ArticleBodyView } from "~/components/article-body-view";
+import { AREA_ICONS, Icon, KIND_ICONS, labelIcon } from "~/components/icons";
+import { BackLink, PageHead } from "~/components/public/parts";
 import { DateMark, Postmarks } from "~/components/public/postmarks";
 import { TranscriptParagraphs } from "~/components/transcript-paragraphs";
 import { WhatsThis } from "~/components/whats-this";
@@ -13,42 +27,57 @@ import { meaningsOfLabels } from "~/lib/review-label-help";
  */
 export function ContentLetter({ item }: { item: PublicView }) {
   const name = item.kindName.toLowerCase();
+  const KindIcon = KIND_ICONS[item.kind];
   return (
     <article className="pane">
+      {item.area && <BackLink to={`/${item.area}`}>{`Back to ${item.areaName}`}</BackLink>}
       <header className="pane-intro">
-        <div className={`pane-head tile-${item.area ?? "none"}`}>
-          <h1>{item.title}</h1>
-        </div>
+        <PageHead tone={item.area ?? "none"} icon={item.area ? AREA_ICONS[item.area] : KindIcon} title={item.title} />
         {item.summary && <p className="lede">{item.summary}</p>}
-        {item.credit && (
-          <p className="from">
-            <span className="from-label">From</span> {item.credit}
-          </p>
-        )}
-      </header>
-
-      <Postmarks label={`About this ${name}`}>
-        <li>{item.kindName}</li>
-        {item.publishedAt && (
+        <Postmarks label={`About this ${name}`}>
+          {item.credit && (
+            <li>
+              <span className="fact-seat">
+                <Icon icon={User} size={18} />
+              </span>
+              <span>
+                <span className="fact-name">From</span> {item.credit}
+              </span>
+            </li>
+          )}
           <li>
-            <DateMark label="Published" date={item.publishedAt} />
+            <span className="fact-seat">
+              <Icon icon={KindIcon} size={18} />
+            </span>
+            {item.kindName}
           </li>
-        )}
-      </Postmarks>
+          {item.publishedAt && (
+            <li>
+              <span className="fact-seat">
+                <Icon icon={Calendar} size={18} />
+              </span>
+              <DateMark label="Published" date={item.publishedAt} />
+            </li>
+          )}
+        </Postmarks>
+      </header>
 
       {item.kind !== "page" && (
         <section className="review-labels" aria-labelledby="reviewed-heading">
-          <h2 id="reviewed-heading" className="review-labels-heading">
-            Review Labels
-          </h2>
+          <h2 id="reviewed-heading">What this was reviewed for</h2>
           {item.labels.length ? (
-            <Postmarks label="Review Labels">
+            <ul className="label-lines" aria-label="Review Labels">
               {item.labels.map((label) => (
-                <li key={label}>{label}</li>
+                <li key={label}>
+                  <span className="seat seat-small">
+                    <Icon icon={labelIcon(label)} />
+                  </span>
+                  <span>{label}</span>
+                </li>
               ))}
-            </Postmarks>
+            </ul>
           ) : (
-            <p className="no-review">{`This ${name} has none.`}</p>
+            <p className="no-review">{`This ${name} has no Review Labels.`}</p>
           )}
           <WhatsThis summary="What do these labels mean?">
             <p>Labels say exactly what a person checked for the version you're reading, and nothing more.</p>
@@ -94,30 +123,35 @@ export function ContentLetter({ item }: { item: PublicView }) {
 
       <footer className="pane-foot">
         {item.topics.length > 0 && (
-          <p>
-            <span className="from-label">Topics</span>{" "}
-            {item.topics.map((topic, index) => (
-              <span key={topic.slug}>
-                {index > 0 && ", "}
-                <Link reloadDocument to={`/topics/${topic.slug}`}>
-                  {topic.name}
-                </Link>
-              </span>
-            ))}
+          <p className="topic-line">
+            <Icon icon={Tags} />
+            <span>
+              <span className="fact-name">Topics</span>{" "}
+              {item.topics.map((topic, index) => (
+                <span key={topic.slug}>
+                  {index > 0 && ", "}
+                  <Link reloadDocument to={`/topics/${topic.slug}`}>
+                    {topic.name}
+                  </Link>
+                </span>
+              ))}
+            </span>
           </p>
         )}
-        {item.area && (
-          <p>
-            <Link reloadDocument to={`/${item.area}`}>
+        <div className="foot-row">
+          {item.area && (
+            <Link reloadDocument to={`/${item.area}`} className="button button-soft">
               More from {item.areaName}
+              <Icon icon={ArrowRight} size={18} />
+            </Link>
+          )}
+          <p className="report-problem">
+            <Link reloadDocument to={`/forms/report?about=${encodeURIComponent(item.path)}`}>
+              <Icon icon={Flag} size={18} />
+              Report a problem with this {name}
             </Link>
           </p>
-        )}
-        <p className="report-problem">
-          <Link reloadDocument to={`/forms/report?about=${encodeURIComponent(item.path)}`}>
-            Report a problem with this {name}
-          </Link>
-        </p>
+        </div>
       </footer>
     </article>
   );
@@ -147,16 +181,23 @@ function StoryVideo({ title, video }: { title: string; video: NonNullable<Public
       </div>
       {video.layer && (
         <section aria-labelledby="explore-heading" className="explore-language">
-          <h3 id="explore-heading">Explore the language</h3>
-          <ul className="piece-list">
-            <li>
-              <Link to={video.layer.path} reloadDocument>
+          <span className="seat seat-medium">
+            <Icon icon={Languages} size={28} />
+          </span>
+          <div className="explore-text">
+            <h3 id="explore-heading">Explore the language</h3>
+            <p>
+              <Link to={video.layer.path} reloadDocument className="explore-link">
                 {video.layer.title}
               </Link>
-              <p>Fijian captions, a transcript, word meanings and practice.</p>
-              <p className="list-mark">{video.layer.level}</p>
-            </li>
-          </ul>
+              : Fijian captions, a transcript, word meanings and practice.
+            </p>
+            <p className="explore-level">
+              <Icon icon={GraduationCap} size={16} />
+              {video.layer.level}
+            </p>
+          </div>
+          <Icon icon={ArrowRight} className="explore-arrow" />
         </section>
       )}
     </section>
@@ -167,7 +208,10 @@ function StoryVideo({ title, video }: { title: string; video: NonNullable<Public
 function EpisodePlayer({ title, episode }: { title: string; episode: NonNullable<PublicView["episode"]> }) {
   return (
     <section className="episode" aria-labelledby="listen-heading">
-      <h2 id="listen-heading">Listen</h2>
+      <h2 id="listen-heading">
+        <Icon icon={Headphones} />
+        Listen
+      </h2>
       {episode.audioPath ? (
         // biome-ignore lint/a11y/useMediaCaption: audio-only; its alternative is the full transcript on this page (WCAG 1.2.1).
         <audio controls preload="none" className="episode-player" aria-label={`Audio of ${title}`}>
@@ -271,7 +315,8 @@ function ProviderDetails({ provider }: { provider: NonNullable<PublicView["provi
       </dl>
       {provider.website && (
         <p>
-          <a className="primary-link" href={provider.website.href} rel="external noopener noreferrer">
+          <a className="button" href={provider.website.href} rel="external noopener noreferrer">
+            <Icon icon={ExternalLink} size={18} />
             {`Go to ${provider.website.host}`}
           </a>{" "}
           (another website)
@@ -311,14 +356,16 @@ function ResourceDetails({ resource }: { resource: NonNullable<PublicView["resou
       </dl>
       {resource.file ? (
         <p>
-          <a className="primary-link" href={resource.file.path}>
+          <a className="button" href={resource.file.path}>
+            <Icon icon={Download} size={18} />
             {`Download (${resource.file.type}, ${resource.file.size})`}
           </a>
         </p>
       ) : (
         resource.url && (
           <p>
-            <a className="primary-link" href={resource.url.href} rel="external noopener noreferrer">
+            <a className="button" href={resource.url.href} rel="external noopener noreferrer">
+              <Icon icon={ExternalLink} size={18} />
               {`Go to ${resource.url.host}`}
             </a>
           </p>
