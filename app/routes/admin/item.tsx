@@ -174,7 +174,13 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
       <p>
-        <a href="/admin/items">All content</a>
+        {actor.edits ? (
+          <a href="/admin/items">All content</a>
+        ) : actor.holds ? (
+          <a href="/admin/submissions">Messages and reports</a>
+        ) : (
+          <a href="/admin">Staff home</a>
+        )}
       </p>
       <h1>{latest.title}</h1>
       <p className="meta">
