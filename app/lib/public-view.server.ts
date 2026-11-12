@@ -54,7 +54,9 @@ export function itemCard({ item, revision }: PublicItem) {
     path: itemPath(item),
     title: revision.title,
     summary: revision.summary,
+    kind: item.kind,
     kindName: KINDS[item.kind].name,
+    area: isPrimaryArea(item.area) ? item.area : null,
     publishedAt: item.publishedAt,
     image: revision.fields.coverMediaId || revision.fields.posterMediaId || revision.fields.portraitMediaId || null,
   };

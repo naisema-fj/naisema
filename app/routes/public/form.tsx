@@ -1,4 +1,6 @@
+import { House, MailCheck, Send } from "lucide-react";
 import { data, Form, Link } from "react-router";
+import { FORM_ICONS, Icon } from "~/components/icons";
 import {
   type Errors,
   FormAlert,
@@ -7,6 +9,7 @@ import {
   TurnstileField,
   type Values,
 } from "~/components/public/form-fields";
+import { PageHead } from "~/components/public/parts";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
 import { guardForm } from "~/lib/form-guard.server";
@@ -55,10 +58,15 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
     return (
       <main id="main">
         <article className="pane pane-narrow">
-          <h1>Thank you, it's been sent</h1>
-          <p role="status">{spec.done}</p>
-          <p>
-            <Link to="/">Back to NAISEMA</Link>
+          <PageHead tone="none" icon={MailCheck} title="Thank you, it's been sent" />
+          <p role="status" className="lede">
+            {spec.done}
+          </p>
+          <p className="button-row">
+            <Link to="/" className="button">
+              <Icon icon={House} />
+              Back to NAISEMA
+            </Link>
           </p>
         </article>
       </main>
@@ -68,9 +76,14 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
   const values: Values = actionData?.values ?? (loaderData.about ? { address: loaderData.about } : {});
   return (
     <main id="main">
-      <article className="pane pane-narrow">
-        <h1>{spec.title}</h1>
-        <p className="standfirst">{spec.intro}</p>
+      <article className="pane pane-wide form-pane">
+        <div className="form-intro">
+          <span className="seat seat-large">
+            <Icon icon={FORM_ICONS[loaderData.key]} size={34} />
+          </span>
+          <h1>{spec.title}</h1>
+          <p className="standfirst">{spec.intro}</p>
+        </div>
         <Form method="post" className="public-form" noValidate>
           <FormAlert errors={errors} />
           <TextField
@@ -108,7 +121,10 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
           ))}
           <NoticeField values={values} errors={errors} />
           <TurnstileField siteKey={loaderData.siteKey} />
-          <button type="submit">Send</button>
+          <button type="submit">
+            <Icon icon={Send} />
+            Send
+          </button>
         </Form>
       </article>
     </main>

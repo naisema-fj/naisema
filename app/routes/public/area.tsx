@@ -1,5 +1,8 @@
+import { ArrowRight, Calendar, CircleHelp, FileText, Smartphone } from "lucide-react";
 import { Link } from "react-router";
+import { AREA_ICONS, Icon } from "~/components/icons";
 import { ContentLetter } from "~/components/public/content-letter";
+import { BackLink, NotOpen, PageHead, PieceList } from "~/components/public/parts";
 import { DateMark } from "~/components/public/postmarks";
 import { AREA_INFO, AREA_NAMES, isPrimaryArea, type PrimaryArea } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
@@ -61,11 +64,10 @@ export default function AreaOrPage({ loaderData }: Route.ComponentProps) {
     return (
       <main id="main">
         <article className="pane pane-narrow">
-          <h1>{loaderData.title}</h1>
-          <p className="not-open">
-            <span className="from-label">Being written</span> This page will say {loaderData.purpose}.
-          </p>
-          <p>
+          <BackLink to="/">Home</BackLink>
+          <PageHead tone="none" icon={FileText} title={loaderData.title} />
+          <NotOpen label="Being written.">This page will say {loaderData.purpose}.</NotOpen>
+          <p className="lede-small">
             Until then, <Link to="/forms/enquiry">send us a message</Link> with any question.
           </p>
         </article>
@@ -79,69 +81,70 @@ function Area({ area, items, more }: { area: PrimaryArea; items: ReturnType<type
   const info = AREA_INFO[area];
   return (
     <main id="main" className="area-page">
-      <nav aria-label="Breadcrumb" className="breadcrumb">
-        <ol>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li aria-current="page">{AREA_NAMES[area]}</li>
-        </ol>
-      </nav>
-      <article className="pane area-pane" aria-labelledby="area-heading">
-        <header className="pane-intro">
-          <div className={`pane-head tile-${area}`}>
-            <h1 id="area-heading">{AREA_NAMES[area]}</h1>
-          </div>
-          <p className="lede">{info.description}</p>
-          {items[0]?.publishedAt && (
-            <p className="dateline">
-              <DateMark label="Last published" date={items[0].publishedAt} />
-            </p>
-          )}
-        </header>
-        {info.notYetOpen && !items.length && (
-          <p className="not-open">
-            <span className="from-label">Not open yet</span> {info.notYetOpen}
-          </p>
-        )}
+      <article className="pane pane-wide area-pane" aria-labelledby="area-heading">
+        <BackLink to="/">Home</BackLink>
+        <PageHead
+          tone={area}
+          icon={AREA_ICONS[area]}
+          headingId="area-heading"
+          title={AREA_NAMES[area]}
+          plate={
+            <>
+              <p className="lede">{info.description}</p>
+              {items[0]?.publishedAt && (
+                <p className="dateline">
+                  <Icon icon={Calendar} size={16} />
+                  <DateMark label="Last published" date={items[0].publishedAt} />
+                </p>
+              )}
+            </>
+          }
+        />
         {area === "learn" && (
-          <nav aria-label="Learn sections" className="area-sections">
+          <nav aria-label="Learn sections" className="helper-links">
             <ul>
               <li>
-                <Link to="/how-it-works">New here? How learning on NAISEMA works</Link>
+                <Link to="/how-it-works" className="helper">
+                  <span className="seat seat-small tone-learn-soft">
+                    <Icon icon={CircleHelp} />
+                  </span>
+                  <span className="helper-text">
+                    <strong>New here?</strong> How learning on NAISEMA works
+                  </span>
+                  <Icon icon={ArrowRight} className="helper-arrow" />
+                </Link>
               </li>
               <li>
-                <Link to="/apps">Fijian apps: the dictionary, lessons and community translation</Link>
+                <Link to="/apps" className="helper">
+                  <span className="seat seat-small tone-learn-soft">
+                    <Icon icon={Smartphone} />
+                  </span>
+                  <span className="helper-text">
+                    <strong>Fijian apps:</strong> the dictionary, lessons and community translation
+                  </span>
+                  <Icon icon={ArrowRight} className="helper-arrow" />
+                </Link>
               </li>
             </ul>
           </nav>
         )}
-        {items.length ? (
-          <ul className="piece-list">
-            {items.map((item) => (
-              <li key={item.path}>
-                <Link to={item.path}>{item.title}</Link>
-                <p>{item.summary}</p>
-                <p className="list-mark">
-                  {item.kindName}
-                  {item.publishedAt && (
-                    <>
-                      {" · "}
-                      <DateMark label="Published" date={item.publishedAt} />
-                    </>
-                  )}
-                </p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="empty">Nothing has been published in {AREA_NAMES[area]} yet.</p>
-        )}
-        {more && (
-          <p className="see-all">
-            <Link to={`/search?area=${area}`}>See everything in {AREA_NAMES[area]}</Link>
-          </p>
-        )}
+        {info.notYetOpen && !items.length && <NotOpen>{info.notYetOpen}</NotOpen>}
+        <section aria-labelledby="pieces-heading" className="pieces">
+          <h2 id="pieces-heading">Everything in {AREA_NAMES[area]}</h2>
+          {items.length ? (
+            <PieceList items={items} />
+          ) : (
+            <p className="shelf-empty">Nothing has been published in {AREA_NAMES[area]} yet.</p>
+          )}
+          {more && (
+            <p className="see-all">
+              <Link to={`/search?area=${area}`} className="button button-soft">
+                See everything in {AREA_NAMES[area]}
+                <Icon icon={ArrowRight} size={18} />
+              </Link>
+            </p>
+          )}
+        </section>
       </article>
     </main>
   );

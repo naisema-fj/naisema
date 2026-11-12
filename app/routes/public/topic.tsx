@@ -1,5 +1,8 @@
 import { eq, isNull } from "drizzle-orm";
+import { ArrowRight, Tag, Tags } from "lucide-react";
 import { Link } from "react-router";
+import { Icon } from "~/components/icons";
+import { BackLink, PageHead, PieceList } from "~/components/public/parts";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { publicItems } from "~/lib/content.server";
 import { getDb } from "~/lib/db.server";
@@ -35,19 +38,33 @@ export default function Topics({ loaderData }: Route.ComponentProps) {
   if (loaderData.kind === "all") {
     return (
       <main id="main" className="area-page">
-        <article className="pane area-pane">
-          <h1>Topics</h1>
+        <article className="pane pane-wide area-pane">
+          <BackLink to="/">Home</BackLink>
+          <PageHead
+            tone="none"
+            icon={Tags}
+            title="Topics"
+            plate={<p className="lede">Topics cut across every area.</p>}
+          />
           {loaderData.topics.length ? (
-            <ul className="piece-list">
+            <ul className="topic-grid">
               {loaderData.topics.map((row) => (
                 <li key={row.slug}>
-                  <Link to={`/topics/${row.slug}`}>{row.name}</Link>
-                  {row.description && <p>{row.description}</p>}
+                  <Link to={`/topics/${row.slug}`} className="helper">
+                    <span className="seat seat-small tone-voices-soft">
+                      <Icon icon={Tag} />
+                    </span>
+                    <span className="helper-text">
+                      <strong>{row.name}</strong>
+                      {row.description && <span className="helper-sub">{row.description}</span>}
+                    </span>
+                    <Icon icon={ArrowRight} className="helper-arrow" />
+                  </Link>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="empty">No Topics yet.</p>
+            <p className="shelf-empty">No Topics yet.</p>
           )}
         </article>
       </main>
@@ -56,22 +73,16 @@ export default function Topics({ loaderData }: Route.ComponentProps) {
   const { topic: chosen, subtopics, items } = loaderData;
   return (
     <main id="main" className="area-page">
-      <nav aria-label="Breadcrumb" className="breadcrumb">
-        <ol>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/topics">Topics</Link>
-          </li>
-          <li aria-current="page">{chosen.name}</li>
-        </ol>
-      </nav>
-      <article className="pane area-pane">
-        <h1>{chosen.name}</h1>
-        {chosen.description && <p className="lede">{chosen.description}</p>}
+      <article className="pane pane-wide area-pane">
+        <BackLink to="/topics">All Topics</BackLink>
+        <PageHead
+          tone="none"
+          icon={Tag}
+          title={chosen.name}
+          plate={chosen.description ? <p className="lede">{chosen.description}</p> : undefined}
+        />
         {subtopics.length > 0 && (
-          <nav aria-label="Subtopics" className="area-sections">
+          <nav aria-label="Subtopics" className="chip-links">
             <ul>
               {subtopics.map((row) => (
                 <li key={row.slug}>
@@ -82,17 +93,9 @@ export default function Topics({ loaderData }: Route.ComponentProps) {
           </nav>
         )}
         {items.length ? (
-          <ul className="piece-list">
-            {items.map((item) => (
-              <li key={item.path}>
-                <Link to={item.path}>{item.title}</Link>
-                <p>{item.summary}</p>
-                <p className="list-mark">{item.kindName}</p>
-              </li>
-            ))}
-          </ul>
+          <PieceList items={items} showArea />
         ) : (
-          <p className="empty">Nothing has been published under {chosen.name} yet.</p>
+          <p className="shelf-empty">Nothing has been published under {chosen.name} yet.</p>
         )}
       </article>
     </main>

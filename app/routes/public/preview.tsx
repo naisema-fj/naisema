@@ -1,5 +1,8 @@
 import { eq } from "drizzle-orm";
+import { Eye, Link2Off } from "lucide-react";
+import { Icon } from "~/components/icons";
 import { ContentLetter } from "~/components/public/content-letter";
+import { PageHead } from "~/components/public/parts";
 import { NOTE_KINDS } from "~/lib/annotations";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { getDb } from "~/lib/db.server";
@@ -59,8 +62,12 @@ export default function Preview({ loaderData }: Route.ComponentProps) {
     return (
       <main id="main">
         <article className="pane pane-narrow">
-          <h1>{loaderData.state === "expired" ? "This link has expired" : "This link doesn't work"}</h1>
-          <p>Ask the person who sent it for a new one.</p>
+          <PageHead
+            tone="none"
+            icon={Link2Off}
+            title={loaderData.state === "expired" ? "This link has expired" : "This link doesn't work"}
+          />
+          <p className="lede">Ask the person who sent it for a new one.</p>
         </article>
       </main>
     );
@@ -69,6 +76,7 @@ export default function Preview({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="article-page">
       <p className="draft-banner" role="note">
+        <Icon icon={Eye} />
         Draft for review: version {loaderData.revisionNumber}. Not published. This link works until{" "}
         {new Date(loaderData.expiresAt).toLocaleDateString("en-AU", { dateStyle: "long" })}.
       </p>

@@ -1,5 +1,7 @@
+import { Check, CircleCheck, Clock, Eye, Globe, MessageCircle } from "lucide-react";
 import { data, Form, redirect } from "react-router";
 import { BodyEditor } from "~/components/body-editor";
+import { Icon } from "~/components/icons";
 import { WhatsThis } from "~/components/whats-this";
 import { AREA_NAMES, isPrimaryArea } from "~/lib/areas";
 import { type ArticleBody, parseArticleBody } from "~/lib/article-body";
@@ -205,6 +207,42 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
 
       <section aria-labelledby="status-heading" className="status-panel">
         <h2 id="status-heading">Where it stands</h2>
+        <ol className="progress-steps" aria-label="Progress">
+          <li className="step-done">
+            <span className="step-mark">
+              <Icon icon={Check} size={18} />
+            </span>
+            <span>
+              <strong>Written</strong>
+              <span className="step-sub">Version {latest.number}</span>
+            </span>
+          </li>
+          <li className={standing.every((entry) => entry.approved) ? "step-done" : "step-now"}>
+            <span className="step-mark">
+              <Icon icon={standing.every((entry) => entry.approved) ? Check : Eye} size={18} />
+            </span>
+            <span>
+              <strong>Reviewed</strong>
+              <span className="step-sub">
+                {standing.filter((entry) => entry.approved).length} of {standing.length} reviews in
+              </span>
+            </span>
+          </li>
+          <li
+            className={isPublishedVersion ? "step-live" : eligibility.eligible ? "step-now" : "step-later"}
+            aria-current={isPublishedVersion ? "step" : undefined}
+          >
+            <span className="step-mark">
+              <Icon icon={isPublishedVersion ? CircleCheck : Globe} size={18} />
+            </span>
+            <span>
+              <strong>Published</strong>
+              <span className="step-sub">
+                {isPublishedVersion ? "This version is live" : eligibility.eligible ? "Ready to publish" : "Not yet"}
+              </span>
+            </span>
+          </li>
+        </ol>
         {item.heldAt && (
           <p role="note" className="held-note">
             <strong>Held off the site</strong> by {item.heldBy} since{" "}
@@ -227,6 +265,10 @@ export default function Item({ loaderData, actionData }: Route.ComponentProps) {
         <ul className="review-standing">
           {standing.map((entry) => (
             <li key={entry.type}>
+              <Icon
+                icon={entry.approved ? CircleCheck : entry.latest ? MessageCircle : Clock}
+                className={entry.approved ? "state-approved" : entry.latest ? "state-changes" : "state-waiting"}
+              />
               {entry.name}:{" "}
               {entry.approved
                 ? `approved by ${entry.latest?.by}`

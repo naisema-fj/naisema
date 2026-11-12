@@ -1,8 +1,10 @@
 /*
- * The public site: "Woven mat" (direction in .impeccable/surfaces/app-routes-home-tsx.md).
- * The NAISEMA brand laid out as an ibe: tiles in Ink, Kesa, Voivoi and Shell, set upright and
- * sideways like the strands of the woven mark, on a Shell ground, with the brand's woven strip
- * above the footer. Loaded only by the public layout; no inline styles anywhere (the CSP allows none).
+ * The public site: "The front room" (direction in .impeccable/surfaces/app-routes-home-tsx.md).
+ * NAISEMA as the family's front room: a Shell ground, Sand mats under each group, soft cushions
+ * in the area colours, and one Lucide line icon beside every area, kind, fact and action. The
+ * brand is binding: the woven N mark, Ink, Kesa, Voivoi and Shell, Bricolage Grotesque and Jost,
+ * and the woven strip as the hem of the welcome mat and the footer. Loaded only by the public
+ * layout; no inline styles anywhere (the CSP allows none).
  */
 @import "@fontsource-variable/bricolage-grotesque";
 @import "@fontsource-variable/jost";
@@ -14,40 +16,47 @@
   --ink-2: #1b3f4c;
   --kesa: #d2603f;
   --voivoi: #e9be5b;
+  --voivoi-light: #f1cd78;
   --shell: #f6f5f2;
-  /* Quiet tiles, lines and text tones from the brand boards */
+  /* Quiet grounds, lines and text tones */
   --sand: #e8e5de;
+  /* Sand pressed: the hover of every Sand button and pill. */
+  --sand-deep: #dcd8cf;
   --paper: #ffffff;
   --line: #d6d2c8;
+  --line-soft: #e3dfd6;
+  --line-faint: #ece9e2;
   --muted: #56686e;
   --mist: #a9bcc2;
-  /* Kesa deepened for small text, labels and the focus ring: 5.3:1 on Shell, where Kesa is 3.5:1. */
+  --shell-dim: #d5dfe2;
+  /* Kesa deepened for small text, icons on light grounds and the focus ring: 5.3:1 on Shell. */
   --kesa-deep: #a9472a;
+  /* Light tints of the brand colours, for the round seats icons sit on. */
+  --kesa-soft: #f6dfd5;
+  --voivoi-soft: #f8eccb;
+  --ink-soft: #dde6e8;
 
   /* Type: Bricolage Grotesque speaks, Jost is read. */
   --font-display: "Bricolage Grotesque Variable", "Arial Narrow", system-ui, sans-serif;
   --font-text: "Jost Variable", "Century Gothic", "Avenir Next", system-ui, sans-serif;
-  --step--1: 0.8125rem;
-  /* Small: sentence-case text a step under Body (hints, errors, form labels, fact lines, breadcrumbs). */
   --step-small: 0.95rem;
   --step-0: 1.0625rem;
   --step-1: 1.3rem;
-  --step-2: clamp(1.5rem, 1.25rem + 1vw, 2rem);
-  --step-3: clamp(2rem, 1.5rem + 2vw, 2.9rem);
-  --step-4: clamp(2.5rem, 1.7rem + 3.6vw, 4.5rem);
-  --step-5: clamp(3.1rem, 2rem + 5vw, 6rem);
+  --step-2: clamp(1.6rem, 1.3rem + 1.1vw, 2.25rem);
+  --step-3: clamp(2.1rem, 1.6rem + 2vw, 3.25rem);
+  --step-4: clamp(2.6rem, 1.8rem + 3.4vw, 4.75rem);
+  --step-5: clamp(3.2rem, 2rem + 5vw, 6rem);
 
-  /* The weave: tiles are rounded like the mark's strands and inset upright or sideways. */
-  --gutter: clamp(1rem, 0.6rem + 2vw, 3.5rem);
-  --weave-gap: clamp(0.6rem, 0.4rem + 0.8vw, 1rem);
-  --strand-inset: clamp(0.35rem, 0.2rem + 0.5vw, 0.7rem);
-  --tile-radius: 18px;
-  /* One repeat of the weave, used as a mask so each tile can tint its own strands. */
-  --strand-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Crect x='3.5' y='1.5' width='11' height='15' rx='1.6'/%3E%3Crect x='19.5' y='3.5' width='15' height='11' rx='1.6'/%3E%3Crect x='1.5' y='21.5' width='15' height='11' rx='1.6'/%3E%3Crect x='21.5' y='19.5' width='11' height='15' rx='1.6'/%3E%3C/svg%3E");
-  --tile-name-size: 2.4rem;
-  --plate-radius: 10px;
+  /* Shape: soft, like cushions. Four radii, from the welcome mat down to a field. */
+  --r-mat: 28px;
+  --r-panel: 24px;
+  --r-plate: 18px;
+  --r-control: 14px;
+  --gutter: clamp(1rem, 0.6rem + 2vw, 3rem);
   --measure: 66ch;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-rest: 0 1px 2px rgb(15 43 53 / 0.06), 0 10px 24px -18px rgb(15 43 53 / 0.4);
+  --shadow-lift: 0 2px 4px rgb(15 43 53 / 0.06), 0 22px 36px -20px rgb(15 43 53 / 0.5);
 
   min-height: 100vh;
   display: flex;
@@ -56,7 +65,7 @@
   color: var(--ink);
   font-family: var(--font-text);
   font-size: var(--step-0);
-  line-height: 1.65;
+  line-height: 1.6;
   text-rendering: optimizeLegibility;
 }
 
@@ -78,7 +87,8 @@ html:has(.public) {
   text-underline-offset: 0.24em;
   transition:
     text-decoration-thickness 160ms var(--ease-out),
-    text-underline-offset 160ms var(--ease-out);
+    text-underline-offset 160ms var(--ease-out),
+    background-color 200ms var(--ease-out);
 }
 
 .public a:hover {
@@ -90,7 +100,6 @@ html:has(.public) {
 .public :focus-visible {
   outline: 3px solid var(--kesa-deep);
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 .public h1,
@@ -98,20 +107,22 @@ html:has(.public) {
 .public h3,
 .public h4 {
   font-family: var(--font-display);
-  color: var(--ink);
-  line-height: 1;
+  color: inherit;
+  line-height: 1.05;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 /* Margins reset at zero specificity, so each layout's own spacing rules win. */
-:where(.public) :is(h1, h2, h3, h4, p) {
+:where(.public) :is(h1, h2, h3, h4, p, ul, ol, dl, figure, blockquote) {
   margin: 0;
 }
 
 .public h1 {
   font-size: var(--step-4);
   font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
 }
 
 .public h2 {
@@ -124,14 +135,20 @@ html:has(.public) {
   font-weight: 700;
 }
 
-/* The page column shares its edges with the header and footer: 80rem inside one gutter. */
+/* Icons: Lucide line icons, the colour of their words unless a rule says otherwise. */
+.public .icon {
+  flex: none;
+  display: block;
+}
+
+/* The page column shares its edges with the header and footer. */
 .public main {
   flex: 1;
   width: 100%;
   max-width: calc(80rem + 2 * var(--gutter));
   margin-inline: auto;
   box-sizing: border-box;
-  padding: clamp(1.25rem, 0.8rem + 1.5vw, 2.25rem) var(--gutter) clamp(3rem, 2rem + 4vw, 5.5rem);
+  padding: clamp(1.25rem, 0.8rem + 1.5vw, 2.25rem) var(--gutter) clamp(3.5rem, 2rem + 5vw, 6rem);
 }
 
 /* The woven mark, coloured by where it sits. */
@@ -150,22 +167,241 @@ html:has(.public) {
   fill: var(--mark-ground);
 }
 
-/* Header */
+/* --- Tones: one colour per area, shared by its menu seat, its homepage cushion, its pages' head
+   and the seats of its pieces. --- */
+
+.tone-learn {
+  --tone: var(--kesa);
+  --tone-on: var(--ink);
+  --tone-soft: var(--kesa-soft);
+  --tone-soft-on: var(--kesa-deep);
+  --tone-seat: var(--shell);
+  --tone-seat-on: var(--ink);
+  --room: var(--kesa);
+  --room-on: var(--ink);
+  --room-seat: var(--shell);
+  --room-seat-on: var(--ink);
+}
+
+.tone-voices,
+.tone-ezine {
+  --tone: var(--voivoi);
+  --tone-on: var(--ink);
+  --tone-soft: var(--voivoi-soft);
+  --tone-soft-on: var(--ink);
+  --tone-seat: var(--shell);
+  --tone-seat-on: var(--ink);
+  --room: var(--voivoi-soft);
+  --room-on: var(--ink);
+  --room-seat: var(--voivoi);
+  --room-seat-on: var(--ink);
+}
+
+.tone-discover {
+  --tone: var(--paper);
+  --tone-on: var(--ink);
+  --tone-edge: var(--line);
+  --tone-soft: var(--sand);
+  --tone-soft-on: var(--ink);
+  --tone-seat: var(--sand);
+  --tone-seat-on: var(--ink);
+  --room: var(--paper);
+  --room-on: var(--ink);
+  --room-edge: var(--line);
+  --room-seat: var(--sand);
+  --room-seat-on: var(--ink);
+}
+
+.tone-connect {
+  --tone: var(--ink);
+  --tone-on: var(--shell);
+  --tone-soft: var(--ink-soft);
+  --tone-soft-on: var(--ink);
+  --tone-seat: var(--ink-2);
+  --tone-seat-on: var(--voivoi);
+  --room: var(--ink);
+  --room-on: var(--shell);
+  --room-sub: var(--shell-dim);
+  --room-seat: var(--ink-2);
+  --room-seat-on: var(--voivoi);
+}
+
+.tone-resources {
+  --tone: var(--ink-2);
+  --tone-on: var(--shell);
+  --tone-soft: var(--ink-soft);
+  --tone-soft-on: var(--ink-2);
+  --tone-seat: var(--ink);
+  --tone-seat-on: var(--shell);
+  --room: var(--ink-2);
+  --room-on: var(--shell);
+  --room-sub: var(--shell-dim);
+  --room-seat: var(--ink);
+  --room-seat-on: var(--shell);
+}
+
+.tone-none {
+  --tone: var(--sand);
+  --tone-on: var(--ink);
+  --tone-soft: var(--sand);
+  --tone-soft-on: var(--kesa-deep);
+  --tone-seat: var(--shell);
+  --tone-seat-on: var(--kesa-deep);
+  --room: var(--sand);
+  --room-on: var(--ink);
+  --room-seat: var(--shell);
+  --room-seat-on: var(--kesa-deep);
+}
+
+/* A round seat for an icon. */
+.public .seat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: var(--seat-bg, var(--shell));
+  color: var(--seat-on, var(--kesa-deep));
+}
+
+.public .seat-small {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.public .seat-medium {
+  width: 3.75rem;
+  height: 3.75rem;
+}
+
+.public .seat-large {
+  width: 4.75rem;
+  height: 4.75rem;
+}
+
+.public .tone-learn-soft {
+  --seat-bg: var(--kesa-soft);
+  --seat-on: var(--kesa-deep);
+}
+
+.public .tone-voices-soft {
+  --seat-bg: var(--voivoi-soft);
+  --seat-on: var(--ink);
+}
+
+.public .tone-connect-soft {
+  --seat-bg: var(--ink-soft);
+  --seat-on: var(--ink);
+}
+
+.public .seat:is(.tone-learn, .tone-voices, .tone-ezine, .tone-discover, .tone-connect, .tone-resources) {
+  --seat-bg: var(--tone);
+  --seat-on: var(--tone-on);
+  box-shadow: inset 0 0 0 1px var(--tone-edge, transparent);
+}
+
+.public .seat.tone-connect {
+  --seat-on: var(--voivoi);
+}
+
+/* --- Buttons: soft, thumb-sized, an icon beside the word. --- */
+
+.public .button,
+.public .public-form button,
+.public .search-form button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 52px;
+  padding: 0 1.4rem;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--ink);
+  color: var(--shell);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 10px 20px -14px rgb(10 29 36 / 0.8);
+  transition:
+    background-color 200ms var(--ease-out),
+    transform 200ms var(--ease-out);
+}
+
+.public .button:hover,
+.public .public-form button:hover,
+.public .search-form button:hover {
+  background: var(--ink-deep);
+  color: var(--shell);
+  transform: translateY(-1px);
+}
+
+.public .button-soft {
+  background: var(--sand);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.public .button-soft:hover {
+  background: var(--sand-deep);
+  color: var(--ink);
+}
+
+.public .public-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+  transform: none;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* The way back: a soft pill with an arrow, above a page's opening. */
+.public .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 1rem 0 0.75rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--sand);
+  font-weight: 600;
+  font-size: var(--step-small);
+  text-decoration: none;
+}
+
+.public .back-link:hover {
+  background: var(--sand-deep);
+}
+
+/* --- Header --- */
 
 .site-header {
+  position: relative;
+  z-index: 5;
   background: var(--shell);
   border-bottom: 1px solid var(--line);
-  position: relative;
 }
 
 .site-header-inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 0.9rem var(--gutter);
+  padding: 0.75rem var(--gutter);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .public .wordmark {
@@ -183,8 +419,8 @@ html:has(.public) {
 }
 
 .wordmark .woven-mark {
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
 .area-links {
@@ -192,27 +428,67 @@ html:has(.public) {
   margin: 0;
   padding: 0;
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 0.25rem 1.6rem;
-  font-weight: 500;
-  font-size: var(--step-0);
+  gap: 0.15rem;
 }
 
 .public .area-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0 0.8rem;
+  box-sizing: border-box;
+  border-radius: 999px;
   color: var(--ink);
+  font-weight: 500;
   text-decoration: none;
-  padding: 0.4rem 0;
-  border-bottom: 3px solid transparent;
-  display: inline-block;
+  white-space: nowrap;
 }
 
-.public .area-links a:hover {
-  border-bottom-color: var(--voivoi);
+.public .area-links .link-seat {
+  display: inline-flex;
+  color: var(--kesa-deep);
 }
 
-.public .area-links a[aria-current="page"] {
+.public .site-nav .area-links a:hover {
+  background: var(--sand);
+}
+
+.public .site-nav .area-links a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--shell);
   font-weight: 600;
-  border-bottom-color: var(--kesa);
+}
+
+.public .site-nav .area-links a[aria-current="page"] .link-seat {
+  color: var(--voivoi);
+}
+
+.public .site-nav .area-links a[aria-current="page"]:focus-visible {
+  outline-color: var(--kesa-deep);
+}
+
+/* Search is a soft pill of its own at the end of the row. */
+.public .site-nav .search-item {
+  margin-left: 0.6rem;
+}
+
+.public .site-nav .search-link {
+  min-width: 9rem;
+  padding: 0 1.1rem 0 0.9rem;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.public .site-nav .search-link .link-seat {
+  color: var(--muted);
+}
+
+/* How it works lives in the phone menu; on wide screens the homepage and footer carry it. */
+.site-nav .guide-item {
+  display: none;
 }
 
 .site-menu {
@@ -222,74 +498,115 @@ html:has(.public) {
 .site-menu > summary {
   list-style: none;
   cursor: pointer;
-  font-weight: 600;
-  color: var(--ink);
-  padding: 0.5rem 1.1rem;
-  border: 2px solid var(--ink);
   border-radius: 999px;
+  background: var(--ink);
+  color: var(--shell);
+  font-weight: 600;
+  min-height: 46px;
+  padding: 0 1.1rem 0 0.95rem;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  box-sizing: border-box;
 }
 
 .site-menu > summary::-webkit-details-marker {
   display: none;
 }
 
-/* Three drawn strands, not a glyph. */
-.site-menu > summary::before {
-  content: "";
-  width: 18px;
-  height: 12px;
-  background:
-    linear-gradient(var(--ink), var(--ink)) top / 100% 2px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) center / 100% 2px no-repeat,
-    linear-gradient(var(--ink), var(--ink)) bottom / 100% 2px no-repeat;
+.site-menu > summary > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.site-menu[open] > summary {
-  background: var(--ink);
-  color: var(--shell);
+.site-menu .when-open,
+.site-menu[open] .when-closed {
+  display: none;
 }
 
-.site-menu[open] > summary::before {
-  background:
-    linear-gradient(var(--shell), var(--shell)) top / 100% 2px no-repeat,
-    linear-gradient(var(--shell), var(--shell)) center / 100% 2px no-repeat,
-    linear-gradient(var(--shell), var(--shell)) bottom / 100% 2px no-repeat;
+.site-menu[open] .when-open {
+  display: inline-flex;
+}
+
+.public .site-menu > summary:focus-visible {
+  outline-color: var(--kesa-deep);
 }
 
 .site-menu > nav {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 100%;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: calc(100% + 0.5rem);
   z-index: 10;
-  background: var(--shell);
-  border-bottom: 1px solid var(--line);
-  box-shadow: 0 16px 32px -20px rgb(15 43 53 / 0.45);
-  padding: 0.5rem var(--gutter) 1rem;
+  max-width: 30rem;
+  margin-left: auto;
+  padding: 0.6rem;
+  background: var(--paper);
+  border-radius: var(--r-panel);
+  box-shadow:
+    0 0 0 1px var(--line-soft),
+    0 24px 40px -22px rgb(15 43 53 / 0.55);
 }
 
 .site-menu .area-links {
   flex-direction: column;
-  gap: 0;
-  font-size: var(--step-1);
+  align-items: stretch;
+  gap: 0.1rem;
 }
 
-.site-menu .area-links a {
-  display: block;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid var(--line);
+.public .site-menu .area-links a {
+  display: flex;
+  min-height: 60px;
+  padding: 0 0.6rem;
+  border-radius: var(--r-plate);
+  font-size: 1.125rem;
+  gap: 0.85rem;
 }
 
-.site-menu .area-links a[aria-current="page"] {
-  border-bottom: 3px solid var(--kesa);
+.public .site-menu .area-links a:hover {
+  background: var(--shell);
 }
 
-@media (max-width: 56rem) {
+.public .site-menu .link-seat {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  background: var(--shell);
+  color: var(--kesa-deep);
+}
+
+.public
+  .site-menu
+  .area-link:is(.tone-learn, .tone-voices, .tone-ezine, .tone-discover, .tone-connect, .tone-resources)
+  .link-seat {
+  background: var(--tone-seat-bg, var(--tone));
+  color: var(--tone-on);
+  box-shadow: inset 0 0 0 1px var(--tone-edge, transparent);
+}
+
+.public .site-menu .area-link.tone-discover .link-seat {
+  background: var(--sand);
+  box-shadow: none;
+}
+
+.public .site-menu .area-link.tone-connect .link-seat {
+  color: var(--voivoi);
+}
+
+.public .site-menu .area-links a[aria-current="page"] {
+  background: var(--kesa-soft);
+  font-weight: 600;
+}
+
+.site-menu .search-item {
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--line-faint);
+}
+
+@media (max-width: 74.999rem) {
   .site-nav {
     display: none;
   }
@@ -302,7 +619,7 @@ html:has(.public) {
 /* At the narrowest phones (320 px, or 200% zoom) the wordmark and menu tighten to fit one row. */
 @media (max-width: 24rem) {
   .site-header-inner {
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .public .wordmark {
@@ -311,8 +628,8 @@ html:has(.public) {
   }
 
   .wordmark .woven-mark {
-    width: 2.1rem;
-    height: 2.1rem;
+    width: 2.2rem;
+    height: 2.2rem;
   }
 
   .site-menu > summary {
@@ -320,213 +637,214 @@ html:has(.public) {
   }
 }
 
-/* Panes: a page's content on the Shell ground, headed by a tile. */
+/* --- Panes: a page's content in one centred column. --- */
 
 .pane {
   max-width: 48rem;
   margin: 0 auto;
-  position: relative;
   box-sizing: border-box;
+  display: grid;
+  gap: 1.75rem;
+  align-content: start;
+}
+
+.pane > * {
+  min-width: 0;
 }
 
 .pane-narrow {
-  max-width: 42rem;
+  max-width: 44rem;
 }
 
-.pane > * + * {
-  margin-top: 1rem;
+.pane-wide {
+  max-width: 80rem;
+  gap: 2.25rem;
 }
 
-/*
- * The head tile: Sand by default; an Article or area page takes its area's colour. Only the
- * heading sits on a coloured head, so small text never lands on Kesa.
- */
-.pane-head {
-  display: grid;
-  gap: 0.9rem;
-  background: var(--sand);
-  border-radius: var(--tile-radius);
-  padding: clamp(1.4rem, 1rem + 2vw, 2.5rem);
+.back {
+  margin-bottom: -0.5rem;
 }
 
-.pane > :where(.pane-head, .pane-intro) + * {
-  margin-top: 1.5rem;
-}
-
-/* A page whose heading opens it bare (forms, info pages, errors) gets the same Sand head tile. */
-.pane > h1:first-child {
-  background: var(--sand);
-  border-radius: var(--tile-radius);
-  padding: clamp(1.4rem, 1rem + 2vw, 2.5rem);
-  font-size: var(--step-4);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
-}
-
-.pane > :where(h1:first-child) + * {
-  margin-top: 1.5rem;
-}
-
-/* An Article's or area's opening: its head tile in the area's colour, then the lede and byline. */
 .pane-intro {
   display: grid;
+  gap: 1.25rem;
+}
+
+/* A page's opening: a cushion in its area's colour, its icon on a round seat, and the heading.
+   Anything smaller rides the Shell plate beside it, so small text never sits on Kesa. */
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.5rem 2rem;
+  padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+  border-radius: var(--r-mat);
+  background: var(--tone, var(--sand));
+  color: var(--tone-on, var(--ink));
+  box-shadow: inset 0 0 0 1px var(--tone-edge, transparent);
+}
+
+.page-head-main {
+  flex: 1 1 22rem;
+  min-width: 0;
+  display: grid;
+  justify-items: start;
   gap: 1.1rem;
 }
 
-.pane-head h1 {
-  font-size: var(--step-4);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
+.public .page-head .seat {
+  --seat-bg: var(--tone-seat, var(--shell));
+  --seat-on: var(--tone-seat-on, var(--kesa-deep));
+}
+
+.public .page-head :focus-visible {
+  outline-color: var(--ink);
+}
+
+.public .page-head.tone-connect :focus-visible,
+.public .page-head.tone-resources :focus-visible {
+  outline-color: var(--voivoi);
+}
+
+.head-plate {
+  flex: 1 1 20rem;
+  max-width: 34rem;
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.1rem 1.3rem;
+  border-radius: var(--r-plate);
+  background: var(--shell);
+  color: var(--ink);
+}
+
+.public .page-head h1 {
+  max-width: 18ch;
 }
 
 .lede {
   font-size: var(--step-1);
   line-height: 1.5;
-  color: var(--ink);
   max-width: 40rem;
 }
 
-.pane-head .lede {
-  color: var(--ink);
+.head-plate .lede {
+  font-size: clamp(1.1rem, 1rem + 0.4vw, 1.25rem);
 }
 
-.from {
+.lede-small {
   font-size: var(--step-0);
 }
 
-.from-label {
-  font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--kesa-deep);
-  margin-right: 0.4rem;
+.dateline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 500;
+  font-size: var(--step-small);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
-/* Area colours: one tile colour per area, shared by its homepage tile and its pages' heads. */
-.tile-learn {
-  --tile-bg: var(--kesa);
-  --tile-fg: var(--ink);
-  --tile-plate: var(--shell);
-}
-
-.tile-voices,
-.tile-ezine {
-  --tile-bg: var(--voivoi);
-  --tile-fg: var(--ink);
-}
-
-.tile-discover {
-  --tile-bg: var(--paper);
-  --tile-fg: var(--ink);
-  --tile-edge: var(--line);
-}
-
-.tile-connect {
-  --tile-bg: var(--ink);
-  --tile-fg: var(--shell);
-}
-
-.tile-resources {
-  --tile-bg: var(--ink-2);
-  --tile-fg: var(--shell);
-}
-
-.pane-head:is(.tile-learn, .tile-voices, .tile-ezine, .tile-discover, .tile-connect, .tile-resources) {
-  background: var(--tile-bg);
-  box-shadow: inset 0 0 0 2px var(--tile-edge, transparent);
-}
-
-.pane-head:is(.tile-learn, .tile-voices, .tile-ezine, .tile-discover, .tile-connect, .tile-resources) h1 {
-  color: var(--tile-fg);
-}
-
-/* What a page is and what it was reviewed for: flat lines, each led by a woven strand. */
-
+/* What a piece is: flat lines, each led by its icon on a round Sand seat. Never badges. */
 .fact-lines {
   list-style: none;
-  margin: 1.25rem 0 0;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem 1.5rem;
+  gap: 0.75rem 1.75rem;
   font-weight: 500;
-  font-size: var(--step-small);
-  color: var(--ink);
   font-variant-numeric: tabular-nums;
 }
 
 .fact-lines li {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 0.6rem;
 }
 
-.fact-lines li::before {
-  content: "";
+.fact-seat {
   flex: none;
-  width: 0.5rem;
-  height: 0.7rem;
-  border-radius: 2px;
-  background: var(--kesa);
-  transform: translateY(0.05rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--sand);
 }
 
-.fact-lines li:nth-child(even)::before {
-  width: 0.7rem;
-  height: 0.5rem;
-  background: var(--ink);
-  transform: translateY(-0.05rem);
+.fact-name {
+  color: var(--muted);
 }
 
-/* Review Labels sit under their own label, one per line, apart from the format and dates. */
+/* What it was reviewed for: its own white panel, one line per Review Label, each with the icon
+   of what was reviewed. */
 .review-labels {
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.25rem 1.4rem;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
 }
 
-.public .review-labels-heading {
-  font-family: var(--font-text);
+.public .review-labels h2 {
+  font-size: 1.25rem;
+}
+
+.label-lines {
+  list-style: none;
+  padding: 0;
+  display: grid;
+}
+
+.label-lines li {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--line-faint);
   font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--kesa-deep);
+  font-variant-numeric: tabular-nums;
 }
 
-.review-labels .fact-lines {
-  margin-top: 0.6rem;
-  flex-direction: column;
+.public .label-lines .seat {
+  --seat-bg: var(--kesa-soft);
+  --seat-on: var(--kesa-deep);
+}
+
+.label-meanings li {
+  font-weight: 400;
+  align-items: flex-start;
 }
 
 .no-review {
-  margin-top: 0.4rem;
   font-size: var(--step-small);
   color: var(--muted);
 }
 
 /* "What's this?" help: a native disclosure beside the thing it explains (no JavaScript, no hover). */
 .whats-this {
-  margin-top: 0.6rem;
   font-size: var(--step-small);
 }
 
 .public .whats-this > summary {
-  display: inline-block;
-  padding: 0.35rem 0;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   cursor: pointer;
   font-weight: 600;
   color: var(--ink);
   text-decoration: underline;
-  text-decoration-color: var(--kesa-deep);
-  text-underline-offset: 0.2em;
+  text-decoration-color: var(--kesa);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.24em;
 }
 
 .whats-this-body {
-  margin-top: 0.4rem;
-  padding: 0.8rem 1rem;
-  border-radius: var(--plate-radius);
+  margin-top: 0.3rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: var(--r-plate);
   background: var(--sand);
   color: var(--ink);
 }
@@ -545,23 +863,35 @@ html:has(.public) {
   flex-basis: 100%;
 }
 
-/* A dateline: one flat fact. */
-.dateline {
-  font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  justify-self: start;
+/* What isn't open yet: said plainly, on a Sand plate beside a clock. */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  padding: 1rem 1.15rem;
+  border-radius: var(--r-plate);
+  background: var(--sand);
+  line-height: 1.5;
 }
 
-/* Reading */
+.notice p {
+  align-self: center;
+}
+
+.notice strong {
+  font-weight: 600;
+}
+
+/* --- Reading --- */
 
 .pane-body {
   max-width: var(--measure);
   font-size: 1.125rem;
   line-height: 1.75;
+}
+
+.pane-body:empty {
+  display: none;
 }
 
 .pane-body > * + * {
@@ -584,19 +914,19 @@ html:has(.public) {
 
 .pane-body blockquote {
   margin: 1.5em 0;
-  padding: 1rem 1.25rem;
-  background: var(--paper);
-  box-shadow: inset 0 0 0 2px var(--voivoi);
-  border-radius: var(--plate-radius);
+  padding: 1.1rem 1.35rem;
+  background: var(--voivoi-soft);
+  border-radius: var(--r-plate);
   font-size: var(--step-1);
   line-height: 1.6;
 }
 
-.pane-body img {
+.pane-body img,
+.public .cover {
   max-width: 100%;
   height: auto;
   display: block;
-  border-radius: var(--plate-radius);
+  border-radius: var(--r-plate);
 }
 
 .pane-body ul,
@@ -610,26 +940,56 @@ html:has(.public) {
 
 .public .callout {
   background: var(--sand);
-  border-radius: var(--plate-radius);
+  border-radius: var(--r-plate);
   padding: 1rem 1.25rem;
   margin: 1.5em 0;
 }
 
 .public .embedded-item {
   background: var(--paper);
-  box-shadow: inset 0 0 0 2px var(--line);
-  border-radius: var(--plate-radius);
-  padding: 0.9rem 1.1rem;
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  border-radius: var(--r-plate);
+  padding: 1rem 1.2rem;
   margin: 1.5em 0;
   font-weight: 600;
 }
 
 .pane-foot {
-  border-top: 1px solid var(--line);
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
   display: grid;
-  gap: 1rem;
+  gap: 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.topic-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.topic-line .icon {
+  color: var(--kesa-deep);
+  margin-top: 0.2rem;
+}
+
+.foot-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+}
+
+.public .report-problem a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  font-size: var(--step-small);
+}
+
+.public .report-problem .icon {
+  color: var(--kesa-deep);
 }
 
 .sources {
@@ -638,601 +998,86 @@ html:has(.public) {
   color: var(--muted);
 }
 
-/* Breadcrumbs */
+/* --- The homepage: the front room --- */
 
-.breadcrumb {
-  max-width: 48rem;
-  margin: 0 auto 1rem;
-  font-size: var(--step-small);
+.public main.home {
+  display: grid;
+  gap: clamp(3rem, 2rem + 3vw, 4.75rem);
 }
 
-.breadcrumb ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* The welcome mat: Sand, with the woven strip as its hem. */
+/* The hem runs edge to edge, so the mat's lower corners are only just rounded. */
+.welcome {
+  border-radius: var(--r-mat) var(--r-mat) 8px 8px;
+  background: var(--sand);
+  overflow: hidden;
+}
+
+.welcome-inner {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem 0.5rem;
-}
-
-.breadcrumb li + li::before {
-  content: "/";
-  color: var(--muted);
-  margin-right: 0.5rem;
-}
-
-.breadcrumb [aria-current="page"] {
-  color: var(--muted);
-}
-
-/* Buttons and the way in */
-
-.public .primary-link {
-  font-weight: 600;
-  font-size: var(--step-0);
-  background: var(--ink);
-  color: var(--shell);
-  text-decoration: none;
-  padding: 0.8rem 1.6rem;
-  border-radius: var(--plate-radius);
-  min-height: 48px;
-  box-sizing: border-box;
-  display: inline-flex;
   align-items: center;
-  box-shadow: 0 8px 18px -12px rgb(10 29 36 / 0.7);
-  transition:
-    background-color 200ms var(--ease-out),
-    transform 200ms var(--ease-out);
+  gap: 2rem 3rem;
+  padding: clamp(1.75rem, 1rem + 3.5vw, 4rem) clamp(1.4rem, 0.8rem + 3.5vw, 4.5rem) clamp(1.75rem, 1rem + 3vw, 3.5rem);
 }
 
-.public .primary-link:hover {
-  background: var(--ink-deep);
-  color: var(--shell);
-  transform: translateY(-1px);
-}
-
-/*
- * The homepage: the mat. On wide screens the welcome is a 2 by 2 tile, the six areas weave to
- * its right, and the latest pieces sit under the welcome; the ways to take part close it.
- */
-
-.home {
-  max-width: calc(80rem + 2 * var(--gutter));
-}
-
-.mat {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--weave-gap);
-}
-
-.tile {
-  border-radius: var(--tile-radius);
-  padding: clamp(1.25rem, 0.9rem + 1.4vw, 2rem);
-  box-sizing: border-box;
+.welcome-words {
+  flex: 1 1 30rem;
   min-width: 0;
+  display: grid;
+  justify-items: start;
+  gap: 1.6rem;
 }
 
-.tile-welcome {
-  background: var(--ink);
-  color: var(--shell);
-  padding: clamp(1.6rem, 1rem + 3vw, 3.25rem);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.25rem, 1rem + 1vw, 2rem);
-}
-
-.welcome-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-.public .tile-welcome h1 {
+.public .welcome h1 {
   font-size: var(--step-5);
-  line-height: 0.88;
+  line-height: 0.9;
   letter-spacing: -0.035em;
-  color: var(--shell);
-  max-width: 6ch;
 }
 
-.tile-welcome .woven-mark {
-  --mark-n: var(--shell);
-  --mark-ground: var(--kesa);
-  width: clamp(4.5rem, 3rem + 5vw, 8.5rem);
+.welcome-statement {
+  max-width: 34ch;
+  font-size: clamp(1.15rem, 1rem + 0.6vw, 1.4rem);
+  line-height: 1.5;
+}
+
+.public .welcome .button-soft {
+  background: var(--shell);
+}
+
+.public .welcome .button-soft:hover {
+  background: var(--paper);
+}
+
+.welcome-guide {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 500;
+}
+
+.welcome-guide .icon {
+  color: var(--kesa-deep);
+}
+
+.welcome-mark {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(11rem, 8rem + 8vw, 16.5rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--shell);
+  box-shadow: inset 0 0 0 10px #efede8;
+}
+
+.welcome-mark .woven-mark {
+  width: 64%;
   height: auto;
   aspect-ratio: 1;
 }
 
-.welcome-statement {
-  max-width: 34rem;
-  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.3rem);
-  line-height: 1.5;
-  color: #d5dfe2;
-}
-
-/* Signed like a letter from the mat's maker: small, set apart from the action below it. */
-.sign-off {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.sign-off::before {
-  content: "";
-  width: 0.7rem;
-  height: 0.5rem;
-  border-radius: 2px;
-  background: var(--kesa);
-}
-
-.tile-welcome .sign-off,
-.tile-welcome .dateline {
-  order: 2;
-}
-
-/* The way in for someone new: a quiet line under the main action, in the welcome's own colours. */
-.welcome-guide {
-  font-size: var(--step-0);
-  color: var(--shell-dim);
-}
-
-.public .welcome-guide a {
-  color: var(--shell);
-  text-underline-offset: 0.2em;
-}
-
-.public .tile-welcome .primary-link {
-  background: var(--voivoi);
-  color: var(--ink);
-}
-
-.public .tile-welcome .primary-link:hover {
-  background: #f1cd78;
-  color: var(--ink);
-}
-
-.signature {
-  font-weight: 500;
-  font-size: var(--step-small);
-  letter-spacing: 0.08em;
-  color: var(--mist);
-}
-
-.tile-welcome .dateline {
-  color: var(--mist);
-}
-
-.public .tile-welcome :focus-visible {
-  outline-color: var(--voivoi);
-}
-
-/*
- * The six areas: tiles alternately upright and sideways, as the strands of the mark are. On
- * phones and tablets the alternation is an inset; on wide screens the tiles take the strands'
- * own shapes, upright ones two rows tall and sideways ones two columns wide.
- */
-
-.area-tiles {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--weave-gap);
-}
-
-.area-tiles li {
-  display: flex;
-  min-width: 0;
-}
-
-.public .area-tiles .tile {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 1.25rem;
-  min-height: 9.5rem;
-  background: var(--tile-bg);
-  color: var(--tile-fg);
-  box-shadow: inset 0 0 0 2px var(--tile-edge, transparent);
-  text-decoration: none;
-  transition:
-    margin 320ms var(--ease-out),
-    transform 320ms var(--ease-out),
-    box-shadow 320ms var(--ease-out);
-}
-
-.public .area-tiles .tile {
-  margin: var(--inset-block, 0) var(--inset-inline, 0);
-}
-
-.area-tiles .tile-upright {
-  --inset-inline: var(--strand-inset);
-}
-
-.area-tiles .tile-across {
-  --inset-block: var(--strand-inset);
-}
-
-/* The weave pulls taut under the pointer: the strand's inset relaxes to flush and it lifts. */
-.public .area-tiles .tile:hover,
-.public .area-tiles .tile:focus-visible {
-  margin: 0;
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 0 0 2px var(--tile-edge, transparent),
-    0 18px 30px -18px rgb(10 29 36 / 0.55);
-  color: var(--tile-fg);
-}
-
-.public .area-tiles .tile:focus-visible {
-  outline-color: var(--ink);
-}
-
-/*
- * In the full mat, the tall tiles (the upright strands and the welcome) fill the height between
- * their heading and their words with their own strands, so the mat shows through instead of an
- * empty field. The band is never shorter than one whole repeat and repeats whole strands only.
- * Decorative only; set in the desktop mat below.
- */
-.area-tiles .tile::after,
-.tile-welcome::after {
-  order: 1;
-  flex: 1 1 0;
-  min-height: 36px;
-  background-color: var(--tile-strand);
-  -webkit-mask: var(--strand-mask) center / 36px 36px round space;
-  mask: var(--strand-mask) center / 36px 36px round space;
-}
-
-.tile-text {
-  order: 2;
-}
-
-.tile-learn {
-  --tile-strand: #b95334;
-}
-
-.tile-voices,
-.tile-ezine {
-  --tile-strand: #ddad45;
-}
-
-.tile-discover {
-  --tile-strand: var(--sand);
-}
-
-.tile-connect,
-.tile-welcome {
-  --tile-strand: var(--ink-2);
-}
-
-.tile-resources {
-  --tile-strand: #24505f;
-}
-
-.tile-name {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: var(--tile-name-size);
-  line-height: 0.92;
-  letter-spacing: -0.025em;
-}
-
-.tile-text {
-  display: grid;
-  gap: 0.6rem;
-  font-size: var(--step-0);
-  line-height: 1.45;
-  max-width: 22rem;
-}
-
-/* Small text never sits on Kesa: it rides a Shell plate. */
-.tile-learn .tile-text {
-  background: var(--tile-plate);
-  color: var(--ink);
-  border-radius: var(--plate-radius);
-  padding: 0.75rem 0.9rem;
-}
-
-.tile-note {
-  font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.tile-learn .tile-note {
-  color: var(--kesa-deep);
-}
-
-/* The latest pieces, the ways to take part and the newsletter: quiet tiles. */
-
-.tile-latest,
-.tile-participate {
-  background: var(--sand);
-}
-
-.tile-updates {
-  background: var(--voivoi);
-}
-
-.tile-latest h2,
-.tile-participate h2,
-.tile-updates h2 {
-  margin-bottom: 1rem;
-}
-
-.tile-updates :where(p + p) {
-  margin-top: 0.75rem;
-}
-
-.participate-links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.6rem;
-  font-weight: 500;
-  font-size: var(--step-0);
-}
-
-/*
- * Two columns (tablets, and laptops below the full mat): Learn crosses the head, Voices stands
- * upright beside Discover and Connect, and E-zine and Resources stand upright at the foot. The
- * left column reads before the right, as the areas are listed.
- */
-@media (min-width: 40rem) and (max-width: 79.999rem) {
-  .area-tiles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: minmax(9.5rem, auto);
-  }
-
-  .area-tiles li:has(.tile-learn) {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  .area-tiles li:has(.tile-voices) {
-    grid-column: 1;
-    grid-row: 2 / span 2;
-  }
-
-  .area-tiles li:has(.tile-discover) {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .area-tiles li:has(.tile-connect) {
-    grid-column: 2;
-    grid-row: 3;
-  }
-
-  .area-tiles li:has(.tile-ezine) {
-    grid-column: 1;
-    grid-row: 4 / span 2;
-  }
-
-  .area-tiles li:has(.tile-resources) {
-    grid-column: 2;
-    grid-row: 4 / span 2;
-  }
-
-  .area-tiles :is(.tile-voices, .tile-ezine, .tile-resources) {
-    --inset-inline: var(--strand-inset);
-    --inset-block: 0;
-  }
-
-  .area-tiles :is(.tile-learn, .tile-discover, .tile-connect) {
-    --inset-inline: 0;
-    --inset-block: var(--strand-inset);
-  }
-
-  .area-tiles :is(.tile-voices, .tile-ezine, .tile-resources)::after {
-    content: "";
-  }
-}
-
-@media (min-width: 40rem) {
-  .mat {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .tile-welcome,
-  .areas,
-  .tile-latest {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 80rem) {
-  /* Five columns: the welcome takes two and the areas three; the latest pieces close the mat
-     beside the ways to take part and the newsletter, stacked. */
-  .mat {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-  }
-
-  .tile-welcome {
-    grid-column: 1 / span 2;
-  }
-
-  .areas {
-    grid-column: 3 / span 3;
-    /* So the area tiles fill the cell the tall welcome tile sets, with no gap under them. */
-    display: grid;
-  }
-
-  .tile-latest {
-    grid-column: 1 / span 3;
-    grid-row: 2 / span 2;
-  }
-
-  .tile-participate,
-  .tile-updates {
-    grid-column: 4 / span 2;
-  }
-
-  .area-tiles {
-    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.7fr);
-    grid-template-rows: minmax(9.5rem, auto) repeat(2, minmax(9.5rem, 1fr));
-  }
-
-  /* A quiet tile with room to spare fills it with its own strands, as the tall tiles do. */
-  .tile-latest {
-    display: flex;
-    flex-direction: column;
-    --tile-strand: var(--line);
-  }
-
-  .tile-latest::after {
-    content: "";
-    flex: 1 1 0;
-    min-height: 36px;
-    margin-top: 1.25rem;
-    background-color: var(--tile-strand);
-    -webkit-mask: var(--strand-mask) center / 36px 36px round space;
-    mask: var(--strand-mask) center / 36px 36px round space;
-  }
-
-  .areas {
-    --tile-name-size: 2rem;
-  }
-
-  .area-tiles :is(.tile-discover, .tile-connect)::after,
-  .tile-welcome::after {
-    content: "";
-  }
-
-  .public .area-tiles .tile {
-    padding: 1.1rem 1.1rem 1.25rem;
-  }
-
-  /* Sideways strands across the head: Learn and Voices, two columns wide. */
-  .area-tiles li:has(.tile-learn) {
-    grid-column: 1 / span 2;
-    grid-row: 1;
-  }
-
-  .area-tiles li:has(.tile-voices) {
-    grid-column: 3 / span 2;
-    grid-row: 1;
-  }
-
-  /* Upright strands at either edge, two rows tall: the areas with the shortest descriptions. */
-  .area-tiles li:has(.tile-discover) {
-    grid-column: 1;
-    grid-row: 2 / span 2;
-  }
-
-  .area-tiles li:has(.tile-connect) {
-    grid-column: 4;
-    grid-row: 2 / span 2;
-  }
-
-  /* Two more sideways strands woven between them. */
-  .area-tiles li:has(.tile-ezine) {
-    grid-column: 2 / span 2;
-    grid-row: 2;
-  }
-
-  .area-tiles li:has(.tile-resources) {
-    grid-column: 2 / span 2;
-    grid-row: 3;
-  }
-
-  .area-tiles :is(.tile-discover, .tile-connect) {
-    --inset-inline: var(--strand-inset);
-    --inset-block: 0;
-  }
-
-  .area-tiles :is(.tile-learn, .tile-voices, .tile-ezine, .tile-resources) {
-    --inset-inline: 0;
-    --inset-block: var(--strand-inset);
-  }
-}
-
-/* Lists of pieces: ruled lines, each title in the display face. */
-
-.piece-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  max-width: 48rem;
-  display: grid;
-}
-
-.tile-latest .piece-list {
-  max-width: none;
-}
-
-.public .piece-list li {
-  display: grid;
-  gap: 0.35rem;
-  padding: 1.15rem 0;
-  border-top: 1px solid var(--line);
-}
-
-.public .piece-list li:last-child {
-  border-bottom: 1px solid var(--line);
-}
-
-.public .piece-list a {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: var(--step-1);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  text-decoration: none;
-}
-
-.public .piece-list a:hover {
-  text-decoration: underline;
-  text-decoration-color: var(--kesa);
-}
-
-.list-mark {
-  font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Area pages */
-
-.public .area-pane > .piece-list {
-  margin-top: 2rem;
-}
-
-.public .area-pane > .see-all {
-  margin-top: 1.25rem;
-  font-weight: 600;
-}
-
-/* What isn't open yet: said plainly, on a Sand plate. */
-.not-open {
-  font-size: var(--step-0);
-  line-height: 1.5;
-  color: var(--ink);
-  background: var(--sand);
-  border-radius: var(--plate-radius);
-  padding: 0.9rem 1.1rem;
-}
-
-.not-open .from-label {
-  color: var(--ink);
-}
-
-.empty {
-  color: var(--muted);
-}
-
-/* Footer: the brand's woven strip, then an Ink field. */
-
+/* The brand's woven strip: the hem of the welcome mat and the top of the footer. */
 .weave-strip {
   height: 36px;
   background-color: var(--shell);
@@ -1240,6 +1085,540 @@ html:has(.public) {
   background-repeat: repeat-x;
   background-size: 72px 36px;
 }
+
+@media (max-width: 39.999rem) {
+  /* On a phone the mark sits small above the greeting, at the right. */
+  .welcome-inner {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .welcome-mark {
+    align-self: flex-end;
+    width: 5.5rem;
+    box-shadow: inset 0 0 0 5px #efede8;
+    margin-bottom: -4.5rem;
+  }
+
+  /* "Bula" over "vinaka", so the greeting clears the mark beside it. */
+  .public .welcome h1 {
+    max-width: 5ch;
+  }
+
+  .welcome-words {
+    gap: 1.25rem;
+  }
+
+  .welcome .button-row,
+  .welcome .button-row .button {
+    width: 100%;
+  }
+}
+
+/* Where would you like to go? Six cushions and a search, Learn the largest. */
+.rooms {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.room-grid {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.75rem, 0.5rem + 0.8vw, 1.25rem);
+}
+
+.room-cell {
+  display: flex;
+  min-width: 0;
+}
+
+.room-cell-learn {
+  grid-column: 1 / -1;
+}
+
+.public .room {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: clamp(1.1rem, 0.9rem + 0.8vw, 1.65rem);
+  border-radius: var(--r-panel);
+  background: var(--room);
+  color: var(--room-on);
+  text-decoration: none;
+  box-shadow:
+    inset 0 0 0 1px var(--room-edge, transparent),
+    var(--shadow-rest);
+  transition:
+    transform 320ms var(--ease-out),
+    box-shadow 320ms var(--ease-out);
+}
+
+.public .room.tone-none {
+  box-shadow: none;
+}
+
+/* A cushion settles under the pointer or keyboard focus: it lifts and its seat fills. */
+.public .room:hover,
+.public .room:focus-visible {
+  color: var(--room-on);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px var(--room-edge, transparent),
+    var(--shadow-lift);
+}
+
+.public .room:focus-visible {
+  outline-color: var(--kesa-deep);
+}
+
+.room-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.public .room .seat {
+  --seat-bg: var(--room-seat);
+  --seat-on: var(--room-seat-on);
+  transition: transform 320ms var(--ease-out);
+}
+
+.public .room:hover .seat,
+.public .room:focus-visible .seat {
+  transform: scale(1.06);
+}
+
+.room-arrow {
+  color: var(--room-sub, var(--muted));
+  transition: transform 320ms var(--ease-out);
+}
+
+.room.tone-learn .room-arrow {
+  color: var(--ink);
+}
+
+.public .room:hover .room-arrow,
+.public .room:focus-visible .room-arrow {
+  transform: translateX(3px);
+}
+
+.room-name {
+  margin-top: auto;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.45rem, 1.2rem + 0.8vw, 1.9rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.room-text {
+  font-size: var(--step-0);
+  line-height: 1.45;
+  color: var(--room-sub, var(--room-on));
+}
+
+/* Learn: the largest cushion. Its words ride a Shell plate (small text never sits on Kesa). */
+.room.tone-learn .room-name {
+  font-weight: 800;
+  font-size: clamp(2.5rem, 1.8rem + 2.4vw, 3.75rem);
+  letter-spacing: -0.03em;
+  line-height: 0.92;
+}
+
+.room.tone-learn .seat {
+  width: 4.75rem;
+  height: 4.75rem;
+}
+
+.room.tone-learn .room-text {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.15rem;
+  border-radius: var(--r-plate);
+  background: var(--shell);
+  color: var(--ink);
+}
+
+.room-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: var(--kesa-deep);
+}
+
+@media (max-width: 29.999rem) {
+  /* The smaller cushions show their name only on the narrowest phones; their pages say the rest. */
+  .room-cell:not(.room-cell-learn) .room-text,
+  .room-cell:not(.room-cell-learn) .room-arrow {
+    display: none;
+  }
+
+  .room-cell:not(.room-cell-learn) .room-name {
+    font-size: 1.3rem;
+  }
+
+  .room-cell:not(.room-cell-learn) .seat {
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+@media (min-width: 64rem) {
+  .room-grid {
+    grid-template-columns: minmax(0, 1.25fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .room-cell-learn {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .public .room {
+    min-height: 13rem;
+  }
+}
+
+/* The close of the room: the newest pieces on their shelf, beside the ways to join in. */
+.home-close {
+  display: grid;
+  gap: 2rem 1.5rem;
+  align-items: start;
+}
+
+.latest {
+  display: grid;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.home-side {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.join,
+.updates {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  border-radius: var(--r-panel);
+}
+
+.join {
+  background: var(--sand);
+}
+
+.updates {
+  background: var(--voivoi);
+}
+
+.public .join h2,
+.public .updates h2 {
+  font-size: clamp(1.5rem, 1.3rem + 0.6vw, 1.85rem);
+}
+
+.public .updates h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.public .updates .seat {
+  --seat-on: var(--ink);
+}
+
+.public .updates :focus-visible {
+  outline-color: var(--ink);
+}
+
+.join-links {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.public .join-links a {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-height: 56px;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--r-control);
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.public .join-links a:hover {
+  background: var(--shell);
+}
+
+@media (min-width: 64rem) {
+  .home-close {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  /* A short shelf (one piece, or none yet) runs the full width, with the ways to join in and the
+     newsletter side by side beneath it, so the room never shows an empty corner. */
+  .home-close:has(.shelf-item:only-child, .shelf-empty) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-close:has(.shelf-item:only-child, .shelf-empty) .home-side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+/* --- The shelf: pieces as rows, each led by its kind's icon in its area's colour. --- */
+
+.shelf {
+  list-style: none;
+  padding: 0.5rem;
+  display: grid;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    0 10px 24px -20px rgb(15 43 53 / 0.35);
+}
+
+.shelf-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.85rem, 0.6rem + 0.8vw, 1.25rem);
+  padding: clamp(0.85rem, 0.7rem + 0.5vw, 1.15rem);
+  border-radius: var(--r-plate);
+  transition: background-color 200ms var(--ease-out);
+}
+
+.shelf-item + .shelf-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  right: 1rem;
+  border-top: 1px solid var(--line-faint);
+}
+
+.shelf-item:hover {
+  background: var(--shell);
+}
+
+.shelf-item:has(.shelf-title:focus-visible) {
+  outline: 3px solid var(--kesa-deep);
+  outline-offset: 0;
+}
+
+.shelf-seat {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(3.25rem, 2.9rem + 1vw, 4rem);
+  aspect-ratio: 1;
+  border-radius: var(--r-plate);
+  background: var(--tone-soft);
+  color: var(--tone-soft-on);
+}
+
+.shelf-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.public .shelf-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+/* The title is the row's one link, stretched over the whole row. */
+.public .shelf-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-plate);
+}
+
+.public .shelf-title:focus-visible {
+  outline: none;
+}
+
+.shelf-text > p {
+  line-height: 1.45;
+}
+
+.shelf-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1rem;
+  font-size: var(--step-small);
+  font-weight: 500;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.shelf-arrow {
+  color: var(--muted);
+  transition: transform 200ms var(--ease-out);
+}
+
+.shelf-item:hover .shelf-arrow {
+  transform: translateX(3px);
+}
+
+.shelf-empty {
+  padding: 1.5rem;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  color: var(--muted);
+}
+
+@media (max-width: 29.999rem) {
+  .shelf-arrow {
+    display: none;
+  }
+}
+
+/* --- Area pages and helper rows --- */
+
+.pieces {
+  display: grid;
+  gap: 1.1rem;
+}
+
+.see-all {
+  margin-top: 0.4rem;
+}
+
+/* A helper row: a soft white cushion with an icon, a line of words and an arrow. */
+.helper-links ul,
+.topic-grid {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.public .helper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  text-decoration: none;
+  transition:
+    transform 320ms var(--ease-out),
+    box-shadow 320ms var(--ease-out);
+}
+
+.public a.helper:hover,
+.public a.helper:focus-visible {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    var(--shadow-lift);
+}
+
+.helper-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.15rem;
+  line-height: 1.4;
+}
+
+.helper-text strong {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+
+.helper-sub {
+  color: var(--muted);
+  font-size: var(--step-small);
+}
+
+.helper-arrow {
+  color: var(--muted);
+}
+
+@media (min-width: 48rem) {
+  .helper-links ul,
+  .topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.browse-topics {
+  flex-wrap: wrap;
+}
+
+.browse-topics .helper-text {
+  flex: 1 1 16rem;
+}
+
+/* Subtopics: a row of soft pills. */
+.chip-links ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.public .chip-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  background: var(--sand);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.public .chip-links a:hover {
+  background: var(--sand-deep);
+}
+
+.public .chip-links a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--shell);
+}
+
+.quiet-line {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--muted);
+}
+
+/* --- Footer: the brand's woven strip, then an Ink field in four short columns. --- */
 
 .site-footer {
   background: var(--ink);
@@ -1249,9 +1628,16 @@ html:has(.public) {
 .site-footer-inner {
   max-width: 80rem;
   margin: 0 auto;
-  padding: 2.25rem var(--gutter) 2.75rem;
+  padding: clamp(2.25rem, 1.5rem + 2vw, 3.25rem) var(--gutter) clamp(2.5rem, 2rem + 2vw, 3.75rem);
   display: grid;
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  gap: 2rem 2.5rem;
+}
+
+.footer-about {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
 }
 
 .public .footer-wordmark {
@@ -1262,20 +1648,27 @@ html:has(.public) {
 .footer-wordmark .woven-mark {
   --mark-n: var(--shell);
   --mark-ground: var(--kesa);
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.public .footer-heading {
+  margin-bottom: 0.6rem;
+  font-size: 1.1rem;
+  color: var(--shell);
 }
 
 .footer-links {
   list-style: none;
-  margin: 0;
   padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.75rem;
+  display: grid;
+  gap: 0.15rem;
 }
 
 .public .site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
   color: var(--shell);
   text-decoration-color: var(--voivoi);
 }
@@ -1289,53 +1682,82 @@ html:has(.public) {
 }
 
 .footer-note {
-  max-width: 60ch;
+  max-width: 34ch;
   font-size: var(--step-small);
   line-height: 1.6;
   color: var(--mist);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .public a,
-  .public .area-tiles .tile,
-  .public .primary-link {
-    transition: none;
-  }
-
-  .public .area-tiles .tile:hover,
-  .public .area-tiles .tile:focus-visible,
-  .public .primary-link:hover {
-    transform: none;
-  }
-
-  /* The strand keeps its inset: nothing moves, the shadow alone marks the tile. */
-  .public .area-tiles .tile:hover,
-  .public .area-tiles .tile:focus-visible {
-    margin: var(--inset-block, 0) var(--inset-inline, 0);
+@media (min-width: 64rem) {
+  .site-footer-inner {
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
   }
 }
 
-/*
- * Public forms (enquiries, proposals, the newsletter): plain fields on the Shell ground. Each
- * consent is its own box with the notice's words beside it, set in the reading face.
- */
+/* --- Public forms: an intro on a Sand mat beside the fields on a white cushion. --- */
+
+.form-pane {
+  max-width: 70rem;
+  align-items: start;
+}
+
+.form-intro {
+  display: grid;
+  justify-items: start;
+  align-content: start;
+  gap: 1.1rem;
+  padding: clamp(1.5rem, 1rem + 2vw, 2.25rem);
+  border-radius: var(--r-mat);
+  background: var(--sand);
+}
+
+.public .form-intro h1 {
+  font-size: var(--step-3);
+}
+
+.public .form-intro .seat {
+  --seat-bg: var(--shell);
+  --seat-on: var(--kesa-deep);
+}
+
+.public .standfirst {
+  max-width: 32em;
+  font-size: 1.125rem;
+  line-height: 1.55;
+}
+
+@media (min-width: 60rem) {
+  .form-pane {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .form-intro {
+    position: sticky;
+    top: 1.5rem;
+  }
+}
 
 .public-form {
   display: grid;
   gap: 1.5rem;
-  margin-top: 2rem;
+  padding: clamp(1.4rem, 1rem + 1.5vw, 2.25rem);
+  border-radius: var(--r-mat);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    0 10px 24px -20px rgb(15 43 53 / 0.35);
 }
 
 .form-field {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
 }
 
 .public-form label,
 .public-form legend {
   font-family: var(--font-text);
   font-weight: 600;
-  font-size: var(--step-small);
+  font-size: 1rem;
   color: var(--ink);
 }
 
@@ -1344,7 +1766,7 @@ html:has(.public) {
   color: var(--muted);
 }
 
-.public-form .hint {
+.public .hint {
   margin: 0;
   font-size: var(--step-small);
   color: var(--muted);
@@ -1355,18 +1777,20 @@ html:has(.public) {
 .public .public-form input[type="file"],
 .public .public-form textarea {
   font: inherit;
+  font-size: var(--step-0);
   color: var(--ink);
   background: var(--paper);
   border: 1px solid var(--ink);
-  border-radius: 8px;
-  padding: 0.55rem 0.75rem;
-  min-height: 44px;
+  border-radius: var(--r-control);
+  padding: 0.75rem 1rem;
+  min-height: 52px;
   width: 100%;
   box-sizing: border-box;
 }
 
 .public .public-form textarea {
   resize: vertical;
+  line-height: 1.5;
 }
 
 .public .public-form [aria-invalid="true"] {
@@ -1376,9 +1800,9 @@ html:has(.public) {
 
 .public .public-form input[type="checkbox"],
 .public .public-form input[type="radio"] {
-  width: 1.25rem;
-  height: 1.25rem;
-  margin: 0.2rem 0 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  margin: 0.15rem 0 0;
   accent-color: var(--ink);
   flex: none;
 }
@@ -1392,12 +1816,6 @@ html:has(.public) {
   gap: 0.6rem;
 }
 
-.form-consents {
-  border-top: 1px solid var(--line);
-  padding-top: 1.25rem;
-  gap: 1.25rem;
-}
-
 .form-choice {
   display: flex;
   gap: 0.75rem;
@@ -1406,69 +1824,79 @@ html:has(.public) {
 
 .form-choice > label {
   font-weight: 500;
-  color: var(--ink);
+}
+
+/* A consent: the notice's words beside a lock, on a Shell plate, with the box that agrees under it. */
+.public .form-consent {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.15rem 1.25rem;
+  background: var(--shell);
+  border-radius: var(--r-plate);
 }
 
 .notice-wording {
-  margin: 0.5rem 0 0 2rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
   font-size: var(--step-small);
-  color: var(--muted);
+  line-height: 1.55;
+  max-width: 34em;
+}
+
+.notice-wording .icon {
+  color: var(--kesa-deep);
+  margin-top: 0.15rem;
 }
 
 blockquote.notice-wording {
-  margin: 0 0 1.5rem;
-  padding: 0.9rem 1.1rem;
+  padding: 1rem 1.2rem;
   background: var(--sand);
-  border-radius: var(--plate-radius);
+  border-radius: var(--r-plate);
+}
+
+.public .form-consent .form-choice {
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.public .form-consent .form-choice input[type="checkbox"] {
+  margin: 0;
+}
+
+.public .form-consent .form-choice > label {
+  cursor: pointer;
+  font-weight: 600;
 }
 
 .public .field-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0;
-  font-family: var(--font-text);
   font-weight: 600;
   font-size: var(--step-small);
   color: var(--kesa-deep);
 }
 
 .form-alert {
-  background: var(--paper);
-  box-shadow: inset 0 0 0 2px var(--kesa-deep);
-  border-radius: var(--plate-radius);
-  padding: 0.85rem 1.1rem;
-  font-family: var(--font-text);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1.15rem;
+  border-radius: var(--r-plate);
+  background: var(--kesa-soft);
+  color: var(--ink);
   font-weight: 600;
 }
 
-.form-alert p {
-  margin: 0;
+.form-alert .icon {
+  color: var(--kesa-deep);
 }
 
 .public .public-form button {
   justify-self: start;
-  font-family: var(--font-text);
-  font-weight: 600;
-  font-size: var(--step-0);
-  background: var(--ink);
-  color: var(--paper);
-  border: 0;
-  border-radius: 8px;
-  padding: 0 1.6rem;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.public .public-form button:hover {
-  background: var(--ink-deep);
-}
-
-.public .public-form button:disabled {
-  opacity: 0.6;
-  cursor: progress;
-}
-
-.report-problem {
-  font-family: var(--font-text);
-  font-size: var(--step-small);
+  padding: 0 1.75rem;
 }
 
 .fixed-routes {
@@ -1479,114 +1907,154 @@ blockquote.notice-wording {
   padding-left: 1.25rem;
 }
 
-/* Search: a plain form; results are the same ruled list as an area's. */
+/* --- Search: one big friendly box on a Sand mat, the areas as pills, results on the shelf. --- */
 
-.area-links .search-item {
-  padding-left: 1.5rem;
-  border-left: 1px solid var(--line);
-}
-
-.site-menu .area-links .search-item {
-  padding-left: 0;
-  border-left: 0;
+.search-pane {
+  max-width: 60rem;
 }
 
 .search-form {
   display: grid;
-  gap: 1.25rem;
+  gap: 1.35rem;
+  padding: clamp(1.5rem, 1rem + 2vw, 2.5rem);
+  border-radius: var(--r-mat);
+  background: var(--sand);
 }
 
-.search-form label,
-.search-filters legend {
-  font-family: var(--font-text);
-  font-weight: 600;
-  font-size: var(--step-small);
-  color: var(--ink);
+.public .search-form h1 {
+  font-size: var(--step-3);
 }
 
 .search-words {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.4rem 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
 }
 
-.search-words label {
-  grid-column: 1 / -1;
-}
-
-.public .search-form input,
-.public .search-form select {
-  font: inherit;
-  color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--ink);
-  border-radius: 8px;
-  padding: 0.55rem 0.75rem;
-  min-height: 44px;
-  width: 100%;
+.search-box {
+  flex: 1 1 18rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 60px;
+  padding: 0 1.1rem;
   box-sizing: border-box;
+  border-radius: var(--r-plate);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--ink);
 }
 
-.public .search-form button {
-  font-family: var(--font-text);
-  font-weight: 600;
-  font-size: var(--step-0);
-  background: var(--ink);
-  color: var(--paper);
+.search-box .icon {
+  color: var(--muted);
+}
+
+.search-box:focus-within {
+  outline: 3px solid var(--kesa-deep);
+  outline-offset: 3px;
+}
+
+.public .search-box input {
+  flex: 1;
+  min-width: 0;
   border: 0;
-  border-radius: 8px;
-  padding: 0 1.4rem;
-  min-height: 44px;
-  cursor: pointer;
+  background: transparent;
+  font: inherit;
+  font-size: 1.15rem;
+  color: var(--ink);
+  min-height: 56px;
 }
 
-.public .search-form button:hover {
-  background: var(--ink-deep);
+.public .search-box input:focus-visible {
+  outline: none;
+}
+
+.public .search-form .search-words button {
+  min-height: 60px;
+  border-radius: var(--r-plate);
+  padding: 0 1.75rem;
 }
 
 .search-filters {
   border: 0;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .search-filters legend {
+  float: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  margin-right: 0.4rem;
   padding: 0;
-  margin-bottom: 0.5rem;
-  font-size: var(--step--1);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.search-filters legend .icon {
   color: var(--kesa-deep);
 }
 
-.search-filters p {
-  display: grid;
-  gap: 0.3rem;
+/* A radio as a pill: the native control stays, hidden only visually, so it keeps the keyboard. */
+.chip-choice {
+  position: relative;
+  display: inline-flex;
 }
 
-.search-reset {
-  font-family: var(--font-text);
+.chip-choice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.chip-choice label {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 1.05rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--shell);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.chip-choice input:hover + label {
+  background: var(--paper);
+}
+
+.chip-choice input:checked + label {
+  background: var(--ink);
+  color: var(--shell);
+  font-weight: 600;
+}
+
+.chip-choice input:focus-visible + label {
+  outline: 3px solid var(--kesa-deep);
+  outline-offset: 3px;
+}
+
+.public .search-reset a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  font-weight: 500;
 }
 
 .public .search-results {
-  margin-top: 2.5rem;
   display: grid;
   gap: 1rem;
 }
 
-.no-results {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.no-results ul {
-  margin: 0;
-  padding-left: 1.25rem;
-  display: grid;
-  gap: 0.4rem;
+.public .search-results h2 {
+  font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.75rem);
 }
 
 .pager {
@@ -1595,28 +2063,303 @@ blockquote.notice-wording {
   justify-content: space-between;
   align-items: center;
   gap: 0.75rem 1.5rem;
+}
+
+/* --- How NAISEMA works, and the info pages: a contents list beside one reading column. --- */
+
+.guide-layout {
+  display: grid;
+  gap: 2rem 3rem;
+  align-items: start;
+}
+
+.guide-toc {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.public .guide-toc-heading {
+  margin: 0 0 0.3rem 0.75rem;
   font-family: var(--font-text);
+  font-size: var(--step-small);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
 }
 
-@media (max-width: 40rem) {
-  .search-filters {
-    grid-template-columns: minmax(0, 1fr);
-  }
+.guide-toc ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
-/* Resources and Episodes: what a visitor reads before downloading or listening, on a Sand tile. */
+.public .guide-toc a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-height: 46px;
+  padding: 0 0.85rem;
+  border-radius: var(--r-control);
+  font-weight: 500;
+  text-decoration: none;
+}
 
-.resource-details,
-.episode {
-  margin-top: 1.5rem;
-  padding: clamp(1.1rem, 0.9rem + 1vw, 1.6rem);
-  border-radius: var(--tile-radius);
+.public .guide-toc a:hover {
   background: var(--sand);
 }
 
-.resource-details h2,
-.episode h2 {
+.guide-toc .icon {
+  color: var(--kesa-deep);
+}
+
+@media (min-width: 60rem) {
+  .guide-layout {
+    grid-template-columns: 15rem minmax(0, 1fr);
+  }
+
+  .guide-toc {
+    position: sticky;
+    top: 1.5rem;
+  }
+
+  .guide-toc ul {
+    flex-direction: column;
+  }
+}
+
+.guide-body {
+  max-width: 46rem;
+  display: grid;
+  gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+  font-size: 1.1rem;
+  line-height: 1.7;
+}
+
+.guide-section {
+  display: grid;
+  gap: 1.1rem;
+  scroll-margin-top: 1.5rem;
+}
+
+.guide-areas {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.7rem;
+  font-size: var(--step-0);
+  line-height: 1.45;
+}
+
+.public .guide-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 0.9rem 1rem;
+  border-radius: var(--r-plate);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  text-decoration: none;
+}
+
+.public .guide-area:hover {
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    var(--shadow-rest);
+}
+
+.guide-area strong {
+  display: block;
+  font-weight: 600;
+}
+
+@media (min-width: 40rem) {
+  .guide-areas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.guide-steps {
+  list-style: none;
+  padding: 0.4rem 1.25rem;
+  display: grid;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+  font-size: var(--step-0);
+  line-height: 1.55;
+}
+
+.guide-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 0;
+}
+
+.guide-steps li + li {
+  border-top: 1px solid var(--line-faint);
+}
+
+.step-count {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--shell);
+  font-weight: 600;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.step-icon {
+  display: inline-flex;
+  margin-top: 0.25rem;
+  color: var(--kesa-deep);
+}
+
+.guide-reassure,
+.guide-links {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+  font-size: var(--step-0);
+  line-height: 1.5;
+}
+
+.guide-reassure li,
+.guide-links li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+
+.guide-reassure .icon,
+.guide-links .icon {
+  color: var(--kesa-deep);
+  margin-top: 0.15rem;
+}
+
+@media (min-width: 40rem) {
+  .guide-reassure {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.label-meanings {
+  padding: 0.3rem 1.25rem;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.label-meanings li:first-child {
+  border-top: 0;
+}
+
+.guide-help {
+  padding: clamp(1.4rem, 1rem + 1.5vw, 2rem);
+  border-radius: var(--r-panel);
+  background: var(--voivoi);
+}
+
+.guide-help .icon {
+  color: var(--ink);
+}
+
+.public .guide-help :focus-visible {
+  outline-color: var(--ink);
+}
+
+/* --- The Fijian apps: three cushions, each saying what isn't open yet. --- */
+
+.app-grid {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 1.25rem;
+}
+
+.app-card {
+  display: grid;
+  grid-template-rows: auto auto auto auto 1fr;
+  justify-items: start;
+  gap: 1rem;
+  padding: clamp(1.35rem, 1rem + 1vw, 1.85rem);
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow:
+    inset 0 0 0 1px var(--line-soft),
+    0 10px 24px -20px rgb(15 43 53 / 0.35);
+}
+
+.public .app-card h2 {
+  font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.7rem);
+}
+
+.app-card .notice {
+  font-size: var(--step-small);
+}
+
+.app-actions {
+  align-self: end;
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.app-forms {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.app-actions .button {
+  width: 100%;
+}
+
+@media (min-width: 44rem) {
+  .app-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 72rem) {
+  .app-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --- Resources, Episodes, Creators and Providers: details on a Sand cushion. --- */
+
+.resource-details,
+.episode {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  border-radius: var(--r-panel);
+  background: var(--sand);
+}
+
+.public .resource-details h2,
+.public .episode h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   font-size: var(--step-1);
+}
+
+.episode h2 .icon {
+  color: var(--kesa-deep);
 }
 
 .resource-details dl,
@@ -1624,21 +2367,15 @@ blockquote.notice-wording {
 .creator dl {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 0.4rem 1.25rem;
-  margin: 1rem 0 1.25rem;
+  gap: 0.5rem 1.25rem;
 }
 
 .resource-details dt,
 .episode dt,
 .creator dt,
 .facts dt {
-  font-family: var(--font-text);
   font-weight: 600;
-  font-size: var(--step--1);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--kesa-deep);
-  padding-top: 0.2rem;
+  color: var(--muted);
 }
 
 .resource-details dd,
@@ -1648,13 +2385,8 @@ blockquote.notice-wording {
   margin: 0;
 }
 
-.public .report-link {
-  margin-top: 0.75rem;
-}
-
 .public .report-link button {
   font: inherit;
-  font-family: var(--font-text);
   font-size: var(--step-small);
   background: none;
   border: 0;
@@ -1662,6 +2394,7 @@ blockquote.notice-wording {
   min-height: 44px;
   color: var(--ink);
   text-decoration: underline;
+  text-decoration-color: var(--kesa);
   text-underline-offset: 0.22em;
   cursor: pointer;
 }
@@ -1681,14 +2414,12 @@ blockquote.notice-wording {
   }
 }
 
-/* An Episode's player: as wide as the column, never wider. */
 .episode-player {
   display: block;
   width: 100%;
-  margin-top: 0.75rem;
 }
 
-.episode h3 {
+.public .episode h3 {
   font-size: var(--step-0);
 }
 
@@ -1698,16 +2429,16 @@ blockquote.notice-wording {
 
 /* The transcript keeps its own line breaks (sound cues, verse) inside paragraphs. */
 .transcript {
-  margin-top: 2rem;
+  display: grid;
+  gap: 0.9rem;
 }
 
 .transcript p {
   white-space: pre-line;
-  margin-top: 0.85rem;
 }
 
 .transcript .speaker {
-  font-family: var(--font-text);
+  font-weight: 600;
 }
 
 /* The view beacon (content_opened): an image no one sees. */
@@ -1719,71 +2450,23 @@ blockquote.notice-wording {
   opacity: 0;
 }
 
-.public .related {
-  margin-top: 1rem;
-}
-
-/* Topic pages: subtopic filters as a row of underlined links. */
-
-.subtopics ul,
-.area-sections ul {
-  list-style: none;
-  margin: 1.25rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1.25rem;
-  font-family: var(--font-text);
-  font-weight: 600;
-}
-
-.public .subtopics a,
-.public .area-sections a {
-  display: inline-block;
-  padding: 0.35rem 0;
-  border-bottom: 2px solid transparent;
-  text-decoration: none;
-}
-
-.public .subtopics a[aria-current="page"] {
-  color: var(--ink);
-  border-bottom-color: var(--kesa-deep);
-}
-
-.public .topic-pane > section {
-  margin-top: 2rem;
-}
-
-.topic-index {
-  padding-left: 1.25rem;
+.creator {
   display: grid;
-  gap: 0.5rem;
+  gap: 1.25rem;
 }
 
-/* Connect: Providers, Offerings and Creators. */
-
-.public .area-sections {
-  margin-top: 1.5rem;
-}
-
-.public .filters {
-  margin: 1.5rem 0 0.5rem;
-}
-
-.offering {
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--line);
-}
-
-.offering h3 {
-  font-size: var(--step-1);
+.portrait {
+  display: block;
+  width: min(16rem, 60%);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 0 6px var(--paper);
 }
 
 .facts {
   display: grid;
   gap: 0.4rem;
-  margin: 1rem 0;
 }
 
 .facts div {
@@ -1792,28 +2475,15 @@ blockquote.notice-wording {
   gap: 1.25rem;
 }
 
+.offering {
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
 /* Sponsorship and editorial features, always disclosed in the same plain voice. */
 .disclosure {
-  font-family: var(--font-text);
   font-size: var(--step-small);
   color: var(--kesa-deep);
-}
-
-.creator {
-  margin-top: 1.5rem;
-}
-
-.portrait {
-  display: block;
-  width: min(16rem, 60%);
-  aspect-ratio: 1;
-  object-fit: cover;
-  border: 1px solid var(--line);
-  border-radius: var(--tile-radius);
-}
-
-.creator .sample {
-  margin-top: 1.25rem;
 }
 
 @media (max-width: 40rem) {
@@ -1823,103 +2493,425 @@ blockquote.notice-wording {
   }
 }
 
-/* A Video's footage (story pages and the learner player): its own shape, never cropped, never
-   taller than the screen, so a vertical video stays whole on a phone. */
+/* A draft shown to a reviewer: said plainly at the top, beside an eye. */
+.public .draft-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  max-width: 48rem;
+  margin: 0 auto 1.75rem;
+  padding: 0.95rem 1.2rem;
+  border-radius: var(--r-plate);
+  background: var(--voivoi);
+  font-weight: 600;
+}
+
+/* --- Video: its own shape, never cropped, never taller than the screen. --- */
+
 .public .video-frame {
   max-width: 100%;
-  margin: 1rem auto 0;
+  margin: 0 auto;
 }
 
 .public .video-frame.video-portrait {
-  width: min(100%, calc(80vh * 9 / 16));
+  width: min(100%, calc(80vh * 9 / 16), 26rem);
+}
+
+.public video.public-video,
+.public .public-video video {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+  background: var(--ink-deep);
+  border-radius: var(--r-panel);
 }
 
 .public .public-video {
   margin: 0;
 }
 
-/* The shape comes from the footage (an inline aspect-ratio), so a message below never overflows it. */
-.public .public-video video {
-  display: block;
-  width: 100%;
-  max-height: 80vh;
-  object-fit: contain;
-  background: var(--ink-deep);
+.public .public-video > p[role="alert"] {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  background: var(--paper);
+  color: var(--ink);
 }
 
+.story-video {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* Explore the language: one big cushion that answers a tap anywhere. */
 .public .explore-language {
-  margin-top: 1.5rem;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  padding: clamp(1.15rem, 1rem + 0.8vw, 1.6rem);
+  border-radius: var(--r-panel);
+  background: var(--kesa-soft);
+  transition:
+    transform 320ms var(--ease-out),
+    box-shadow 320ms var(--ease-out);
 }
 
-/* The learner player (app/components/learner-player.tsx). */
+.public .explore-language:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+}
+
+.public .explore-language:has(.explore-link:focus-visible) {
+  outline: 3px solid var(--kesa-deep);
+  outline-offset: 3px;
+}
+
+.public .explore-language .seat {
+  --seat-bg: var(--kesa);
+  --seat-on: var(--ink);
+}
+
+.explore-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.public .explore-text h3 {
+  font-size: clamp(1.3rem, 1.15rem + 0.5vw, 1.6rem);
+}
+
+.public .explore-link {
+  font-weight: 600;
+}
+
+.public .explore-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-panel);
+}
+
+.public .explore-link:focus-visible {
+  outline: none;
+}
+
+.explore-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: var(--step-small);
+  color: var(--kesa-deep);
+}
+
+.explore-arrow {
+  color: var(--ink);
+}
+
+/* --- The language player (app/components/learner-player.tsx) --- */
+
+.public main.player-page {
+  max-width: calc(72rem + 2 * var(--gutter));
+}
+
+.learner-player {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.learner-player > * {
+  min-width: 0;
+}
+
+.player-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.25rem;
+}
+
+.public .player-title .seat {
+  --seat-bg: var(--kesa);
+  --seat-on: var(--ink);
+}
+
+.public .player-page h1 {
+  font-size: var(--step-4);
+}
+
+/* The eight steps: a white cushion of icon tabs. */
+.public .stage-steps {
+  padding: 0.5rem;
+  border-radius: var(--r-panel);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.public .stage-steps ol {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.public .stage-steps a {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  min-height: 4.5rem;
+  padding: 0.75rem 0.4rem;
+  border-radius: var(--r-plate);
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+  font-size: var(--step-small);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.public .stage-steps a:hover {
+  background: var(--sand);
+}
+
+.public .stage-steps .step-icon {
+  margin: 0;
+  color: var(--kesa-deep);
+}
+
+.public .stage-steps .step-number {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.public .stage-steps .visited a {
+  background: var(--shell);
+}
+
+.public .stage-steps a[aria-current="step"] {
+  background: var(--ink);
+  color: var(--shell);
+  font-weight: 600;
+}
+
+.public .stage-steps a[aria-current="step"] .step-icon {
+  color: var(--voivoi);
+}
+
+@media (min-width: 40rem) {
+  .public .stage-steps ol {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 72rem) {
+  .public .stage-steps ol {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+
+.public .stage-intro {
+  display: grid;
+  gap: 0.6rem;
+  padding: clamp(1.25rem, 1rem + 1vw, 1.85rem);
+  border-radius: var(--r-panel);
+  background: var(--sand);
+}
+
+.public .stage-intro h2 {
+  font-size: var(--step-2);
+}
+
+.public .stage-intro p {
+  max-width: 56ch;
+  font-size: 1.1rem;
+}
+
+.public .stage-intro .stage-reassure {
+  font-size: var(--step-small);
+  color: var(--muted);
+}
+
+/* The clip beside its controls on a wide screen; stacked on a phone. */
+.public .player-stage {
+  display: grid;
+  gap: 1.25rem 2rem;
+  align-items: start;
+}
+
+@media (min-width: 60rem) {
+  .public .player-stage {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
+
+  .public .player-stage > :not(.video-frame, .player-controls, p[role="alert"]) {
+    grid-column: 1 / -1;
+  }
+}
+
 .public .player-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem 1.5rem;
-  margin-top: 1rem;
-  font-family: var(--font-text);
+  align-items: flex-start;
+  gap: 0.85rem 1rem;
 }
 
 .public .player-controls fieldset {
-  border: 1px solid var(--line);
-  padding: 0.5rem 0.75rem;
-  border-radius: var(--plate-radius);
+  flex: 1 1 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0.75rem 0.9rem 0.85rem;
+  border: 0;
+  border-radius: var(--r-plate);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.public .player-controls legend {
+  float: left;
+  width: 100%;
+  margin-bottom: 0.35rem;
+  padding: 0;
+  font-weight: 600;
+  font-size: var(--step-small);
+  color: var(--muted);
 }
 
 .public .caption-switches button,
 .public .segment-tools button,
 .public .replay-status button,
 .public .occurrences button,
-.public .meaning-popover button {
+.public .meaning-popover button,
+.public .help-control > button,
+.public .stage-help button,
+.public .learner-activities button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   min-height: 2.75rem;
   margin: 0.15rem 0.35rem 0.15rem 0;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--ink);
-  background: var(--paper);
+  padding: 0.35rem 0.95rem;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--sand);
   color: var(--ink);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
-  border-radius: 8px;
 }
 
-.public .key-word {
-  margin-left: 0.5rem;
-  font-family: var(--font-text);
-  font-size: var(--step--1, 0.9rem);
-  color: var(--kesa-deep);
+/* The caption switch's state is its own text (": on"), so no gap is set inside it. */
+.public .caption-switches button {
+  gap: 0;
+}
+
+.public .caption-switches button:hover,
+.public .segment-tools button:hover,
+.public .help-control > button:hover,
+.public .learner-activities button:hover:not(:disabled) {
+  background: var(--sand-deep);
 }
 
 .public .caption-switches button[aria-pressed="true"],
-.public .segment-tools button[aria-pressed="true"] {
+.public .segment-tools button[aria-pressed="true"],
+.public .help-control > button[aria-expanded="true"] {
   background: var(--ink);
-  color: var(--paper);
+  color: var(--shell);
+}
+
+.public .learner-activities button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.public .speed-choice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1rem;
 }
 
 .public .speed-choice label {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.45rem;
   min-height: 2.75rem;
+}
+
+.public .speed-choice input,
+.public .learner-settings .checkbox input {
+  width: 1.2rem;
+  height: 1.2rem;
+  margin: 0;
+  accent-color: var(--ink);
 }
 
 .public .replay-status {
   flex-basis: 100%;
-  margin: 0;
 }
 
-.public .transcript-list {
+.public .player-controls > p[role="status"] {
+  flex-basis: 100%;
+}
+
+.public .help-control {
+  flex-basis: 100%;
+}
+
+.public .stage-help {
+  margin-top: 0.5rem;
+  padding: 1rem 1.15rem;
+  border-radius: var(--r-plate);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
+}
+
+.public .stage-help ul {
+  margin: 0.5rem 0;
   padding-left: 0;
   list-style: none;
 }
 
-.public .transcript-segment {
-  padding: 0.75rem;
-  border-radius: var(--plate-radius);
+.public .stage-help li {
+  margin: 0.25rem 0;
 }
 
-/* The line being played is a Voivoi strand, said in words to assistive technology by the player. */
+.public .help-status:empty {
+  display: none;
+}
+
+.public .key-word {
+  margin-left: 0.5rem;
+  font-size: var(--step-small);
+  color: var(--kesa-deep);
+}
+
+.public .transcript-list {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.public .transcript-segment {
+  padding: 0.85rem 1rem;
+  border-radius: var(--r-plate);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line-faint);
+}
+
+/* The line being played sits on Voivoi, said in words to assistive technology by the player. */
 .public .transcript-segment.playing {
   background: var(--voivoi);
+  box-shadow: none;
 }
 
 .public .transcript-fijian {
@@ -1946,24 +2938,28 @@ blockquote.notice-wording {
   color: inherit;
   font: inherit;
   text-decoration: underline;
+  text-decoration-color: var(--kesa);
   text-decoration-thickness: 2px;
   text-underline-offset: 0.2em;
   cursor: pointer;
 }
 
 .public .meaning-word[aria-expanded="true"] {
-  background: var(--sand);
+  background: var(--voivoi-soft);
+  border-radius: 4px;
 }
 
 .public .meaning-popover {
   display: block;
   margin: 0.5rem 0;
-  padding: 0.75rem;
-  border: 1px solid var(--ink);
+  padding: 0.9rem 1rem;
+  border-radius: var(--r-plate);
   background: var(--paper);
+  box-shadow:
+    0 0 0 1px var(--line),
+    var(--shadow-rest);
   font-family: var(--font-text);
   font-size: var(--step-0);
-  border-radius: var(--plate-radius);
 }
 
 .public .meaning-popover:focus {
@@ -1985,198 +2981,30 @@ blockquote.notice-wording {
   list-style: none;
 }
 
-.public .public-video > p[role="alert"] {
-  margin: 0;
-  padding: 0.5rem 0.75rem;
-  background: var(--paper);
-  color: var(--ink);
-}
-
-/* How NAISEMA works (/how-it-works): sections in reading order, the steps as a numbered list. */
-.guide-section {
-  margin-top: 2.25rem;
-}
-
-.guide-section h2 {
-  margin-bottom: 0.75rem;
-}
-
-.guide-areas {
-  display: grid;
-  gap: 0.9rem;
-  margin: 1.25rem 0 0;
-}
-
-.guide-areas dt {
-  font-family: var(--font-text);
-  font-weight: 700;
-}
-
-.guide-areas dd {
-  margin: 0.1rem 0 0;
-}
-
-.guide-steps {
+.public .learner-activities,
+.public .context-notes,
+.public .vocabulary,
+.public .learner-player > .transcript {
   display: grid;
   gap: 0.75rem;
-  margin: 1.25rem 0 0;
-  padding-left: 1.5rem;
-}
-
-.guide-reassure,
-.guide-links {
-  display: grid;
-  gap: 0.6rem;
-  margin: 1.25rem 0 0;
-  padding-left: 1.25rem;
-}
-
-.guide-section .not-open {
-  margin-top: 1.25rem;
-}
-
-/* The immersion route around the player (app/components/learner-player.tsx). */
-.public .stage-pager a,
-.public .stage-help a,
-.public .learner-progress a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-}
-
-.public .stage-steps ol {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 1rem 0;
-  padding: 0;
-  list-style: none;
-  font-family: var(--font-text);
-  font-size: var(--step--1);
-}
-
-.public .stage-steps a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-height: 2.75rem;
-  padding: 0.25rem 0.65rem;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  color: var(--ink);
-  text-decoration: none;
-  border-radius: 8px;
-}
-
-.public .stage-steps a:hover {
-  border-color: var(--ink);
-}
-
-.public .stage-steps .step-number {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.public .stage-steps .visited a {
-  border-color: var(--ink);
-  background: var(--sand);
-}
-
-.public .stage-steps a[aria-current="step"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.public .stage-intro {
-  margin: 1rem 0;
-  padding: 0.9rem 1.1rem;
-  border-radius: var(--plate-radius);
-  background: var(--sand);
-}
-
-.public .stage-intro h2 {
-  margin: 0 0 0.25rem;
-  font-size: var(--step-1);
-}
-
-.public .stage-intro p {
-  margin: 0;
-}
-
-.public .stage-intro .stage-reassure {
-  margin-top: 0.5rem;
-  font-size: var(--step-small);
-  color: var(--muted);
-}
-
-.public .help-control {
-  flex-basis: 100%;
-}
-
-.public .help-control > button,
-.public .stage-help button,
-.public .learner-activities button {
-  min-height: 2.75rem;
-  margin: 0.15rem 0.35rem 0.15rem 0;
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--ink);
-  background: var(--paper);
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-  border-radius: 8px;
-}
-
-.public .help-control > button[aria-expanded="true"] {
-  background: var(--ink);
-  color: var(--paper);
-}
-
-.public .learner-activities button:disabled {
-  border-color: var(--line);
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-.public .stage-help {
-  margin-top: 0.5rem;
-  padding: 0.75rem;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  border-radius: var(--plate-radius);
-}
-
-.public .stage-help ul {
-  margin: 0.5rem 0;
-  padding-left: 0;
-  list-style: none;
-}
-
-.public .stage-help li {
-  margin: 0.25rem 0;
-}
-
-.public .help-status:empty {
-  display: none;
 }
 
 .public .learner-activities .activity-list {
+  display: grid;
+  gap: 0.75rem;
   padding-left: 0;
   list-style: none;
 }
 
 .public .learner-activities h3 {
-  margin: 1.25rem 0 0;
   font-size: var(--step-0);
 }
 
 .public .learner-activities .activity-preview {
-  margin-top: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--line);
+  padding: 1rem 1.15rem;
+  border-radius: var(--r-plate);
   background: var(--paper);
-  border-radius: var(--plate-radius);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
 }
 
 .public .learner-activities fieldset {
@@ -2189,7 +3017,11 @@ blockquote.notice-wording {
   display: block;
   width: 100%;
   max-width: 40rem;
+  box-sizing: border-box;
   margin: 0.25rem 0 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ink);
+  border-radius: var(--r-control);
   font: inherit;
 }
 
@@ -2198,37 +3030,43 @@ blockquote.notice-wording {
   min-height: 2.75rem;
 }
 
-.public .activity-alternative {
-  padding: 0.75rem 1rem;
-  border-radius: var(--plate-radius);
+.public .activity-alternative,
+.public .activity-feedback {
+  padding: 0.8rem 1rem;
+  border-radius: var(--r-plate);
   background: var(--sand);
 }
 
 .public .activity-feedback {
   margin-top: 0.5rem;
-  padding: 0.5rem 0.75rem;
-  background: var(--sand);
 }
 
 .public .meta {
   color: var(--muted);
-  font-size: var(--step--1);
+  font-size: var(--step-small);
+}
+
+.public .meta-private {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.public .meta-private .icon {
+  margin-top: 0.15rem;
 }
 
 .public .context-notes ul {
+  display: grid;
+  gap: 0.6rem;
   padding-left: 0;
   list-style: none;
 }
 
 .public .context-notes li {
-  margin: 0.75rem 0;
-  padding: 0.75rem 1rem;
-  border-radius: var(--plate-radius);
+  padding: 0.85rem 1rem;
+  border-radius: var(--r-plate);
   background: var(--sand);
-}
-
-.public .context-notes p {
-  margin: 0;
 }
 
 .public .stage-pager {
@@ -2236,201 +3074,93 @@ blockquote.notice-wording {
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.75rem;
-  margin: 1.5rem 0;
-  font-family: var(--font-text);
+}
+
+.public .stage-pager .button:only-child {
+  margin-left: auto;
+}
+
+.public .stage-help a,
+.public .learner-progress a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
 }
 
 .public .learner-progress {
-  margin: 1.5rem 0;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--line);
+  display: grid;
+  gap: 0.6rem;
+  padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  border-radius: var(--r-panel);
   background: var(--paper);
-  border-radius: var(--plate-radius);
+  box-shadow: inset 0 0 0 1px var(--line-soft);
 }
 
 .public .learner-progress h2 {
-  margin-top: 0;
   font-size: var(--step-1);
 }
 
-/* Inside the progress panel, the settings are named by their legend and set apart by space, not boxed again. */
+.public .learner-progress > p[role="status"] {
+  font-size: 1.1rem;
+}
+
+.public .learner-progress ul {
+  margin: 0.25rem 0;
+  padding-left: 1.1rem;
+}
+
+/* Inside the progress panel, the settings are named by their legend and set apart by a rule. */
 .public .learner-settings {
   min-width: 0;
-  margin: 1.25rem 0 0;
-  padding: 0;
+  margin: 0.5rem 0 0;
+  padding: 0.85rem 0 0;
   border: 0;
+  border-top: 1px solid var(--line-faint);
 }
 
 .public .learner-settings legend {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   padding: 0;
   margin-bottom: 0.25rem;
   font-weight: 600;
 }
 
+.public .learner-settings legend .icon {
+  color: var(--kesa-deep);
+}
+
 .public .learner-settings .checkbox {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.65rem;
   min-height: 2.75rem;
 }
 
-/*
- * --- Layout pass over the inner pages ---
- * The video, the forms' consent plates, the apps list and the learner player, each brought onto
- * the same column and rhythm as the pages around them.
- */
+@media (prefers-reduced-motion: reduce) {
+  .public a,
+  .public .room,
+  .public .room .seat,
+  .public .room-arrow,
+  .public .helper,
+  .public .button,
+  .public .shelf-item,
+  .public .shelf-arrow,
+  .public .explore-language {
+    transition: none;
+  }
 
-/* A story's <video> carries the class itself; the player wraps its video in one. Both fill their frame. */
-.public video.public-video {
-  display: block;
-  width: 100%;
-  height: auto;
-  max-height: 80vh;
-  object-fit: contain;
-  background: var(--ink-deep);
-  border-radius: var(--plate-radius);
-}
-
-.public .video-frame video {
-  border-radius: var(--plate-radius);
-}
-
-.public .explore-language > h3 {
-  margin-bottom: 0.5rem;
-}
-
-/* A consent: the notice's words on a Sand plate, with the box that agrees to them directly under. */
-.public .form-consent {
-  display: grid;
-  gap: 0.75rem;
-  padding: 1rem 1.1rem;
-  background: var(--sand);
-  border-radius: var(--plate-radius);
-}
-
-.public .form-consent > .notice-wording {
-  margin: 0;
-  /* Jost runs narrow, so the measure is set in em: about 75 characters a line. */
-  max-width: 32em;
-  color: var(--ink);
-}
-
-/* A form's opening sentence keeps the same measure as the notice under it. */
-.public .standfirst {
-  max-width: 32em;
-}
-
-.public .form-consent .form-choice {
-  align-items: center;
-  min-height: 2.75rem;
-}
-
-.public .form-consent .form-choice input[type="checkbox"] {
-  margin: 0;
-}
-
-.public .form-consent .form-choice > label {
-  cursor: pointer;
-}
-
-/* The apps: what each is, whether it is open, then the ways to help it grow, as pills. */
-.public .piece-list .app-preview a {
-  font-family: var(--font-text);
-  font-size: var(--step-0);
-  font-weight: 600;
-  letter-spacing: 0;
-  text-decoration: underline;
-  text-decoration-color: var(--kesa);
-  text-underline-offset: 0.2em;
-}
-
-.public .piece-list .app-forms {
-  list-style: none;
-  margin: 0.25rem 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.public .piece-list .app-forms li {
-  display: block;
-  padding: 0;
-  border: 0;
-}
-
-.public .piece-list .app-forms a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: 0.4rem 1rem;
-  border: 1px solid var(--ink);
-  border-radius: 999px;
-  font-family: var(--font-text);
-  font-size: var(--step-0);
-  font-weight: 500;
-  letter-spacing: 0;
-}
-
-.public .piece-list .app-forms a:hover {
-  background: var(--ink);
-  color: var(--shell);
-  text-decoration: none;
-}
-
-/* The learner player sits in one centred column, as every other page does. */
-.public main.player-page {
-  max-width: calc(56rem + 2 * var(--gutter));
-}
-
-.public .player-page h1 {
-  font-size: var(--step-4);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
-  margin: 0.5rem 0 0;
-}
-
-.public .player-controls {
-  align-items: stretch;
-}
-
-.public .player-controls fieldset {
-  margin: 0;
-  min-width: 0;
-  background: var(--paper);
-}
-
-.public .player-controls legend {
-  padding: 0 0.4rem;
-  font-weight: 600;
-  font-size: var(--step--1);
-}
-
-.public .speed-choice {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1rem;
-}
-
-.public .speed-choice input {
-  width: 1.15rem;
-  height: 1.15rem;
-  margin: 0;
-  accent-color: var(--ink);
-}
-
-.public .help-control {
-  margin-top: 0;
-}
-
-.public .learner-settings .checkbox input {
-  width: 1.15rem;
-  height: 1.15rem;
-  margin: 0;
-  accent-color: var(--ink);
-}
-
-.public .learner-progress ul {
-  margin: 0.5rem 0;
-  padding-left: 1.1rem;
+  .public .room:hover,
+  .public .room:focus-visible,
+  .public .room:hover .seat,
+  .public .room:focus-visible .seat,
+  .public .room:hover .room-arrow,
+  .public .helper:hover,
+  .public .helper:focus-visible,
+  .public .button:hover,
+  .public .shelf-item:hover .shelf-arrow,
+  .public .explore-language:hover {
+    transform: none;
+  }
 }

@@ -1,9 +1,22 @@
+import {
+  CircleCheck,
+  Clock,
+  ExternalLink,
+  Eye,
+  Inbox,
+  type LucideIcon,
+  Plus,
+  Sun,
+  TriangleAlert,
+  Upload,
+} from "lucide-react";
+import { Icon } from "~/components/icons";
 import { WhatsThis } from "~/components/whats-this";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { attention } from "~/lib/dashboard.server";
 import { getDb } from "~/lib/db.server";
 import { formatDay } from "~/lib/rights-rules";
-import { ROLE_NAMES } from "~/lib/roles";
+import { can, ROLE_NAMES } from "~/lib/roles";
 import { requireStaff } from "~/lib/staff.server";
 import { ROLE_DOES } from "~/lib/staff-help";
 import type { Route } from "./+types/home";
@@ -11,7 +24,16 @@ import type { Route } from "./+types/home";
 export async function loader({ request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const actor = await requireStaff(env, request);
-  return { name: actor.name, roles: actor.roles, ...(await attention(getDb(env.DB), actor)) };
+  const url = new URL(request.url);
+  return {
+    name: actor.name,
+    roles: actor.roles,
+    canWrite: can(actor, "content.edit") || can(actor, "video.edit"),
+    canUpload: can(actor, "media.upload"),
+    // The public site is the staff host without its "admin." in front.
+    publicSite: `${url.protocol}//${url.host.replace(/^admin\./, "")}/`,
+    ...(await attention(getDb(env.DB), actor)),
+  };
 }
 
 export function meta() {
@@ -24,6 +46,25 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
   return (
     <main id="main" className="page">
       <h1>Bula, {loaderData.name}</h1>
+      <p className="page-lede">{nothing ? "You're all caught up." : "Here's what needs you today."}</p>
+      <nav aria-label="Quick actions" className="quick-actions">
+        {loaderData.canWrite && (
+          <a href="/admin/items" className="button">
+            <Icon icon={Plus} />
+            Write something new
+          </a>
+        )}
+        {loaderData.canUpload && (
+          <a href="/admin/media" className="button button-quiet">
+            <Icon icon={Upload} />
+            Upload media
+          </a>
+        )}
+        <a href={loaderData.publicSite} className="button button-quiet">
+          <Icon icon={ExternalLink} />
+          Open the public site
+        </a>
+      </nav>
       <h2>Needs your attention</h2>
       <WhatsThis summary="How this page works">
         <p>This page lists only what needs you. A list with nothing in it isn't shown.</p>
@@ -58,13 +99,19 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
       </WhatsThis>
       {nothing && (
         <div className="attention-empty">
-          <p>Nothing is waiting for you.</p>
+          <span className="seat seat-large tone-voivoi">
+            <Icon icon={Sun} size={30} />
+          </span>
+          <p className="attention-empty-title">Nothing is waiting for you.</p>
+          <p>Vinaka! When something needs you, it will be here.</p>
         </div>
       )}
       <div className="attention-grid">
         {toReview.length > 0 && (
           <section aria-labelledby="review-heading">
-            <h3 id="review-heading">Waiting for your review</h3>
+            <AttentionHead id="review-heading" icon={Eye} tone="kesa" count={toReview.length}>
+              Waiting for your review
+            </AttentionHead>
             <ul>
               {toReview.map(({ item, types }) => (
                 <li key={item.id}>
@@ -76,7 +123,9 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
         )}
         {ready.length > 0 && (
           <section aria-labelledby="ready-heading">
-            <h3 id="ready-heading">Ready to publish</h3>
+            <AttentionHead id="ready-heading" icon={CircleCheck} tone="green" count={ready.length}>
+              Ready to publish
+            </AttentionHead>
             <ul>
               {ready.map((item) => (
                 <li key={item.id}>
@@ -88,7 +137,9 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
         )}
         {waiting.length > 0 && (
           <section aria-labelledby="waiting-heading">
-            <h3 id="waiting-heading">Not ready yet</h3>
+            <AttentionHead id="waiting-heading" icon={TriangleAlert} tone="sand" count={waiting.length}>
+              Not ready yet
+            </AttentionHead>
             <ul>
               {waiting.map(({ item, reasons }) => (
                 <li key={item.id}>
@@ -101,7 +152,9 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
         )}
         {expiring.length > 0 && (
           <section aria-labelledby="expiring-heading">
-            <h3 id="expiring-heading">Rights running out in the next 30 days</h3>
+            <AttentionHead id="expiring-heading" icon={Clock} tone="voivoi" count={expiring.length}>
+              Rights running out in the next 30 days
+            </AttentionHead>
             <ul>
               {expiring.map((record) => (
                 <li key={record.id}>
@@ -114,7 +167,9 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
         )}
         {newMessages > 0 && (
           <section aria-labelledby="messages-heading">
-            <h3 id="messages-heading">Messages and reports</h3>
+            <AttentionHead id="messages-heading" icon={Inbox} tone="sand" count={newMessages}>
+              Messages and reports
+            </AttentionHead>
             <p>
               <a href="/admin/submissions">
                 {newMessages === 1 ? "1 message or report" : `${newMessages} messages and reports`} to deal with
@@ -124,5 +179,33 @@ export default function StaffHome({ loaderData }: Route.ComponentProps) {
         )}
       </div>
     </main>
+  );
+}
+
+/** A card's heading: its icon on a round seat, the words, and how many are waiting. */
+function AttentionHead({
+  id,
+  icon,
+  tone,
+  count,
+  children,
+}: {
+  id: string;
+  icon: LucideIcon;
+  tone: "kesa" | "green" | "sand" | "voivoi";
+  count: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="attention-head">
+      <span className={`seat tone-${tone}`}>
+        <Icon icon={icon} />
+      </span>
+      <h3 id={id}>{children}</h3>
+      <span className="count">
+        {count}
+        <span className="visually-hidden"> waiting</span>
+      </span>
+    </div>
   );
 }

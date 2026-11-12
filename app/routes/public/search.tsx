@@ -1,5 +1,7 @@
+import { ArrowRight, ListFilter, Search as SearchIcon, Tags, X } from "lucide-react";
 import { Link } from "react-router";
-import { DateMark } from "~/components/public/postmarks";
+import { Icon } from "~/components/icons";
+import { PieceList } from "~/components/public/parts";
 import { AREA_NAMES, isPrimaryArea, PRIMARY_AREAS } from "~/lib/areas";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { publicItems } from "~/lib/content.server";
@@ -32,64 +34,78 @@ export function meta() {
 
 export default function Search({ loaderData }: Route.ComponentProps) {
   const { q, area, results } = loaderData;
+  const where = area ? ` in ${AREA_NAMES[area]}` : "";
+  const count = results ? (results.length === 1 ? "1 result" : `${results.length} results`) : "";
   return (
     <main id="main">
       <article className="pane search-pane" aria-labelledby="search-heading">
-        <h1 id="search-heading">Search</h1>
         <search>
           <form method="get" action="/search" className="search-form">
+            <h1 id="search-heading">What are you looking for?</h1>
             <p className="search-words">
-              <label htmlFor="search-q">Search for</label>
-              <input id="search-q" name="q" type="search" defaultValue={q} autoComplete="off" />
-              <button type="submit">Search</button>
+              <label htmlFor="search-q" className="visually-hidden">
+                Search for
+              </label>
+              <span className="search-box">
+                <Icon icon={SearchIcon} size={24} />
+                <input id="search-q" name="q" type="search" defaultValue={q} autoComplete="off" />
+              </span>
+              <button type="submit" className="button">
+                Search
+              </button>
             </p>
             <fieldset className="search-filters">
-              <legend>Narrow it down</legend>
-              <p>
-                <label htmlFor="search-area">Area</label>
-                <select id="search-area" name="area" defaultValue={area ?? ""}>
-                  <option value="">All areas</option>
-                  {PRIMARY_AREAS.map((option) => (
-                    <option key={option} value={option}>
-                      {AREA_NAMES[option]}
-                    </option>
-                  ))}
-                </select>
-              </p>
+              <legend>
+                <Icon icon={ListFilter} size={18} />
+                Only in
+              </legend>
+              <span className="chip-choice">
+                <input type="radio" id="search-area-all" name="area" value="" defaultChecked={!area} />
+                <label htmlFor="search-area-all">All areas</label>
+              </span>
+              {PRIMARY_AREAS.map((option) => (
+                <span key={option} className="chip-choice">
+                  <input
+                    type="radio"
+                    id={`search-area-${option}`}
+                    name="area"
+                    value={option}
+                    defaultChecked={area === option}
+                  />
+                  <label htmlFor={`search-area-${option}`}>{AREA_NAMES[option]}</label>
+                </span>
+              ))}
             </fieldset>
             {results && (
               <p className="search-reset">
-                <Link to="/search">Clear the search</Link>
+                <Link to="/search">
+                  <Icon icon={X} size={18} />
+                  Clear the search
+                </Link>
               </p>
             )}
           </form>
         </search>
         {results && (
           <section className="search-results" aria-labelledby="results-heading">
-            <h2 id="results-heading">{results.length === 1 ? "1 result" : `${results.length} results`}</h2>
+            <h2 id="results-heading">{q ? `${count} for \u201c${q}\u201d${where}` : `${count}${where}`}</h2>
             {results.length ? (
-              <ul className="piece-list">
-                {results.map((result) => (
-                  <li key={result.id}>
-                    <Link to={result.path}>{result.title}</Link>
-                    <p>{result.summary}</p>
-                    <p className="list-mark">
-                      {result.kindName}
-                      {result.publishedAt && (
-                        <>
-                          {" · "}
-                          <DateMark label="Published" date={result.publishedAt} />
-                        </>
-                      )}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              <PieceList items={results} showArea />
             ) : (
-              <p>Nothing published matches. Try fewer or different words.</p>
+              <p className="shelf-empty">Nothing published matches. Try fewer or different words.</p>
             )}
           </section>
         )}
+        <aside className="helper browse-topics" aria-label="Browse by topic">
+          <span className="seat seat-small tone-voices-soft">
+            <Icon icon={Tags} />
+          </span>
+          <p className="helper-text">Not sure what to type? Browse by topic: they cut across every area.</p>
+          <Link to="/topics" className="button button-soft">
+            Browse Topics
+            <Icon icon={ArrowRight} size={18} />
+          </Link>
+        </aside>
       </article>
     </main>
   );
