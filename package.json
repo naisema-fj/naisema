@@ -18,7 +18,9 @@
     "test": "pnpm build && vitest run",
     "test:e2e": "playwright test",
     "staff:grant": "node scripts/grant-staff.mjs",
-    "db:export": "node scripts/export-database.mjs"
+    "db:export": "node scripts/export-database.mjs",
+    "backup": "node scripts/backup.mjs",
+    "restore:files": "node scripts/restore-files.mjs"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

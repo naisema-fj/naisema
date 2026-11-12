@@ -24,6 +24,7 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 - [ ] UptimeRobot (free) checks `https://naisema.com/` and `/health` every 5 minutes and emails the technical owner.
 - [ ] Cloudflare billing alerts at 50% and 80% of AUD 100 a month.
 - [ ] GitHub `production` environment has `CLOUDFLARE_API_TOKEN` and a required reviewer.
+- [ ] GitHub `production-backup` environment, with no reviewer, has its read-only `CLOUDFLARE_API_TOKEN` and `BACKUP_PASSPHRASE`, and the passphrase is in the password manager. Run Actions > Weekly backup by hand once and check its artifact decrypts (runbook, "Backups and restoring").
   - Staging's token works (each merge to `main` deploys staging). Production's couldn't be checked from here.
 
 ## 2. People and content (founder)
@@ -46,7 +47,7 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
   - play a Learning Layer through all eight stages
 - [ ] Tag `v1.0.0` and approve the `production` deployment.
 - [ ] `curl -i https://naisema.com/health` answers `200 ok`, and the uptime monitor shows green.
-- [ ] Restore staging once from D1 Time Travel and once from a weekly export, and note how long each took (runbook, "Backups and restoring").
+- [ ] Restore staging once from D1 Time Travel and once from a backup (`pnpm backup staging <folder>`, then the runbook's restore steps), and note how long each took (runbook, "Backups and restoring").
 
 ## After launch
 
