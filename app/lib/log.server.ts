@@ -67,9 +67,12 @@ export function redact(value: unknown, depth = 0): unknown {
   if (value instanceof URL) return redactText(value.href);
   if (value instanceof Date) return value.toISOString();
   if (value instanceof Error) {
+    const { code } = value as Error & { code?: unknown };
     return {
       name: value.name,
       message: redactText(value.message),
+      // Cloudflare's own error code, such as Email Service's E_SENDER_NOT_VERIFIED.
+      ...(typeof code === "string" ? { code } : {}),
       ...(value.stack ? { stack: redactText(value.stack) } : {}),
       ...(value instanceof AggregateError ? { errors: value.errors.map((error) => redact(error, depth + 1)) } : {}),
       ...(value.cause !== undefined ? { cause: redact(value.cause, depth + 1) } : {}),

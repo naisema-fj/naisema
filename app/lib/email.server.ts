@@ -7,10 +7,23 @@ import { logError, logInfo } from "./log.server";
  * stored.
  */
 
+type EmailAddress = { email: string; name?: string };
 type EmailEnv = Env & {
-  EMAIL?: { send(message: { from: string; to: string | string[]; subject: string; text: string }): Promise<unknown> };
+  EMAIL?: { send(message: { from: EmailAddress; to: string[]; subject: string; text: string }): Promise<unknown> };
   NOTIFY_EMAILS?: string;
 };
+
+/**
+ * `EMAIL_FROM` ("NAISEMA <no-reply@naisema.com>") as the `{ email, name }` Email Service takes. It
+ * doesn't accept the "Name <address>" form as a sender, so passing the setting through as it is
+ * meant every send failed.
+ */
+export function senderAddress(from: string): EmailAddress {
+  const match = /^\s*(.*?)\s*<([^<>\s]+@[^<>\s]+)>\s*$/.exec(from);
+  if (!match) return { email: from.trim() };
+  const name = match[1].replace(/^"(.*)"$/, "$1").trim();
+  return name ? { email: match[2], name } : { email: match[2] };
+}
 
 /** The team addresses notifications go to: the NOTIFY_EMAILS secret, comma-separated. */
 export const teamAddresses = (env: Env) =>
@@ -26,7 +39,12 @@ export async function sendEmail(env: Env, message: { to: string[]; subject: stri
     return false;
   }
   try {
-    await EMAIL.send({ from: env.EMAIL_FROM, to: message.to, subject: message.subject, text: message.text });
+    await EMAIL.send({
+      from: senderAddress(env.EMAIL_FROM),
+      to: message.to,
+      subject: message.subject,
+      text: message.text,
+    });
     return true;
   } catch (error) {
     logError("Email failed", { subject: message.subject, error });

@@ -77,6 +77,11 @@ describe("redact", () => {
     expect(logged.stack).not.toContain("sera@example.com");
   });
 
+  it("keeps a platform error's code", () => {
+    const error = Object.assign(new Error("Sender not verified"), { code: "E_SENDER_NOT_VERIFIED" });
+    expect(redact(error)).toMatchObject({ message: "Sender not verified", code: "E_SENDER_NOT_VERIFIED" });
+  });
+
   it("follows an error's cause and an aggregate's errors", () => {
     const error = new AggregateError([new Error("to a@b.fj")], "2 failed", { cause: new Error("c@d.fj") });
     expect(redact(error)).toMatchObject({
