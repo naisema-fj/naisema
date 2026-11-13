@@ -34,10 +34,13 @@ if (!["deploy", "find"].includes(mode) || (mode === "deploy" && !secretsFile)) {
   process.exit(1);
 }
 
-/** What Wrangler printed, or null when the command failed (the thing it asked about isn't there). */
+/**
+ * What Wrangler printed, or null when the command failed (the thing it asked about isn't there).
+ * Quiet, so an expected "doesn't exist" never shows in the deploy log as a red error.
+ */
 function lookUp(args) {
   try {
-    return wranglerOutput(args);
+    return wranglerOutput(args, { quiet: true });
   } catch {
     return null;
   }
@@ -92,6 +95,7 @@ if (lookUp(["queues", "info", OLD_QUEUE]) !== null) {
   );
   process.exit(1);
 }
+console.log("No Phase 1a Worker in the way.");
 
 let databaseId = findDatabaseId();
 if (!databaseId) {
