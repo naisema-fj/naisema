@@ -15,10 +15,13 @@ export function wrangler(args) {
   execFileSync(process.execPath, [entry, ...args], { stdio: "inherit" });
 }
 
-/** Runs `wrangler <args>` and returns what it printed, for commands asked for `--json`. */
-export function wranglerOutput(args) {
+/**
+ * Runs `wrangler <args>` and returns what it printed, for commands asked for `--json`. With
+ * `quiet`, Wrangler's errors aren't shown either: for lookups where "not found" is an answer.
+ */
+export function wranglerOutput(args, { quiet = false } = {}) {
   return execFileSync(process.execPath, [entry, ...args], {
-    stdio: ["ignore", "pipe", "inherit"],
+    stdio: ["ignore", "pipe", quiet ? "ignore" : "inherit"],
     encoding: "utf8",
     maxBuffer: 64 * 1024 * 1024,
   });
