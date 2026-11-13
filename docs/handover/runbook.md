@@ -53,7 +53,8 @@ Production doesn't need this section's steps 1 to 3, 5 or the wrangler.jsonc pul
    - `PREVIEW_SECRET` is a long random string.
    - `NOTIFY_EMAILS` is the comma-separated addresses that hear about new enquiries and offers.
    - Production also needs its real Turnstile site key in `wrangler.jsonc`.
-4. **Email Service:** verify `naisema.com` as a sending domain, so `no-reply@naisema.com` can send. Staff can't sign in without it.
+4. **Email Service:** verify `naisema.com` as a sending domain, so `no-reply@naisema.com` can send. Staff can't sign in without it. Sending to any address needs the Workers Paid plan.
+   - If sign-in emails don't arrive, the sign-in page still says "Check your email", so it doesn't give away who is on the staff list. Look in the Worker's logs (Workers & Pages → the Worker → Logs) for `Email failed`: its `code` is Email Service's reason, such as `E_SENDER_NOT_VERIFIED`. Compute → Email Service → Email Sending → Activity log shows what was sent.
 5. **The first administrator:**
    ```bash
    pnpm staff:grant staging founder@example.org "Name" admin,editor
