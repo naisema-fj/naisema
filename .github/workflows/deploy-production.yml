@@ -1,0 +1,101 @@
+name: Deploy to production
+
+# One button: Actions > Deploy to production > Run workflow. It runs CI, then deploys the latest
+# main (what staging already runs) to naisema.com. If the production environment has a required
+# reviewer, the deploy waits for that one approval first.
+#
+# The first run sets production up by itself (scripts/prepare-production.mjs): it creates the D1
+# database and R2 bucket in Oceania, applies every migration, makes the preview-link secret and,
+# if you give one, adds the first administrator. Later runs reuse them. Nothing runs on anyone's
+# computer. The settings it reads once, on the production environment, are listed in
+# docs/handover/runbook.md ("Deploy"); a missing one stops the run with its name.
+
+on:
+  workflow_dispatch:
+    inputs:
+      first_admin_email:
+        description: "First deploy only, optional: the first administrator's email address"
+        required: false
+        type: string
+      first_admin_name:
+        description: "Their name"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  production:
+    name: Deploy to production
+    needs: ci
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://naisema.com
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_ENV: production
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+      NOTIFY_EMAILS: ${{ secrets.NOTIFY_EMAILS }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Check this is the main branch and the settings are in place
+        run: |
+          if [ "$GITHUB_REF_NAME" != "$DEFAULT_BRANCH" ]; then
+            echo "::error::Production only deploys $DEFAULT_BRANCH. Run this workflow again with \"Use workflow from: $DEFAULT_BRANCH\"."
+            exit 1
+          fi
+          missing=()
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing+=("CLOUDFLARE_ACCOUNT_ID (repository variable)")
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing+=("CLOUDFLARE_API_TOKEN (secret)")
+          [ -n "$TURNSTILE_SITE_KEY" ] || missing+=("TURNSTILE_SITE_KEY (variable)")
+          [ -n "$TURNSTILE_SECRET_KEY" ] || missing+=("TURNSTILE_SECRET_KEY (secret)")
+          [ -n "$NOTIFY_EMAILS" ] || missing+=("NOTIFY_EMAILS (secret)")
+          if [ ${#missing[@]} -gt 0 ]; then
+            list=$(printf '%s, ' "${missing[@]}")
+            echo "::error::Add these to the production environment (Settings > Environments > production), then run this again: ${list%, }. What each one is: docs/handover/runbook.md, \"Deploy\"."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create the database and media bucket on the first deploy, and fill in their settings
+        run: node scripts/prepare-production.mjs deploy "$RUNNER_TEMP/production-secrets.json"
+      - run: pnpm build
+      - name: Apply database migrations
+        run: pnpm wrangler d1 migrations apply DB --remote --env production --config wrangler.jsonc
+      - name: Add the first administrator
+        if: inputs.first_admin_email != ''
+        env:
+          ADMIN_EMAIL: ${{ inputs.first_admin_email }}
+          ADMIN_NAME: ${{ inputs.first_admin_name || 'Administrator' }}
+        run: node scripts/grant-staff.mjs production "$ADMIN_EMAIL" "$ADMIN_NAME" admin,editor
+      - name: Deploy
+        run: pnpm wrangler deploy --secrets-file "$RUNNER_TEMP/production-secrets.json"
+      - name: Check naisema.com answers
+        run: |
+          rm -f "$RUNNER_TEMP/production-secrets.json"
+          # A new custom domain's certificate can take a few minutes on the first deploy.
+          for _ in $(seq 1 20); do
+            if [ "$(curl -fsS https://naisema.com/health 2>/dev/null || true)" = "ok" ]; then
+              echo "https://naisema.com/health answers ok."
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::warning::Deployed, but https://naisema.com/health didn't answer ok within 5 minutes. On a first deploy the certificate may still be on its way: try it again shortly."

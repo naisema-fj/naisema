@@ -38,16 +38,17 @@ jobs:
       BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
     steps:
       - uses: actions/checkout@v7
-      # Until production is set up for v1, there's nothing to back up: skip with a warning.
-      - name: Check production is set up in wrangler.jsonc
+      # Until the first production deploy has created the database, there's nothing to back up:
+      # skip with a warning. Otherwise this fills its ID into wrangler.jsonc for the backup.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Find the production database
         id: config
-        run: |
-          if grep -q "REPLACE_WITH_PRODUCTION" wrangler.jsonc; then
-            echo "::warning::Production isn't set up for v1 yet, so there's nothing to back up."
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          fi
+        run: node scripts/prepare-production.mjs find
       - name: Check the backup can be encrypted
         if: steps.config.outputs.ready == 'true'
         run: |
@@ -55,15 +56,6 @@ jobs:
             echo "::error::Set BACKUP_PASSPHRASE (at least 32 characters) on the production-backup environment (docs/handover/runbook.md, \"Backups and restoring\"). Nothing was backed up."
             exit 1
           fi
-      - if: steps.config.outputs.ready == 'true'
-        uses: pnpm/action-setup@v6
-      - if: steps.config.outputs.ready == 'true'
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          cache: pnpm
-      - if: steps.config.outputs.ready == 'true'
-        run: pnpm install --frozen-lockfile
       - name: Copy the database, media and evidence out of Cloudflare
         if: steps.config.outputs.ready == 'true'
         run: node scripts/backup.mjs production "$RUNNER_TEMP/backup"

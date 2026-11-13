@@ -6,24 +6,24 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 
 ## 1. Accounts (technical owner and founder)
 
-`bash scripts/setup-environment.sh staging`, then `production`, does most of this section and opens a pull request with the settings (runbook, "One-time provisioning").
+`bash scripts/setup-environment.sh staging` did most of this section for staging. For production, the first run of **Actions > Deploy to production** creates the database and bucket and makes `PREVIEW_SECRET` itself, once its four settings are on the `production` environment (runbook, "Deploy").
 
 - [ ] Cloudflare Workers paid plan active; account holder recorded in `docs/handover/vendors-and-accounts.md`.
   - The account exists and deploys (its ID is in `wrangler.jsonc`, and `CLOUDFLARE_ACCOUNT_ID` is set in GitHub). The account holder is still "founder to fill in", and the plan couldn't be checked from here.
-- [ ] D1 databases `naisema-v1-staging` and `naisema-v1-production` created fresh (the v1 schema starts again at migration 0000), with their IDs set in `wrangler.jsonc`.
-  - Staging done: its ID is in `wrangler.jsonc`, each deploy from `main` applies migrations to it, and `https://staging.naisema.com/health`, which reads the database, answers `200 ok`. Production: not created (`REPLACE_WITH_PRODUCTION_DATABASE_ID`).
+- [ ] D1 databases `naisema-v1-staging` and `naisema-v1-production` created fresh (the v1 schema starts again at migration 0000). Staging's ID is in `wrangler.jsonc`; production's is found by name at each deploy.
+  - Staging done: its ID is in `wrangler.jsonc`, each deploy from `main` applies migrations to it, and `https://staging.naisema.com/health`, which reads the database, answers `200 ok`. Production: created by its first deploy (runbook, "Deploy").
 - [ ] R2 buckets `naisema-staging-media` and `naisema-production-media` created.
-  - Staging: the Worker deploys with `naisema-staging-media` bound; an upload on staging would confirm it. Production: to do.
+  - Staging: the Worker deploys with `naisema-staging-media` bound; an upload on staging would confirm it. Production: created by its first deploy.
 - [ ] The first administrator added with `pnpm staff:grant <env> <email> "<Name>" admin,editor`; everyone else at `/admin/staff`. Everyone turns on two-factor for the email account they sign in with.
 - [ ] Real Turnstile keys: `TURNSTILE_SITE_KEY` var and `TURNSTILE_SECRET_KEY` secret.
-  - Not yet: staging uses Cloudflare's always-passing test site key (`1x00000000000000000000AA`), and production's is a placeholder.
+  - Not yet: staging uses Cloudflare's always-passing test site key (`1x00000000000000000000AA`), and production's comes from the `TURNSTILE_SITE_KEY` variable on the `production` environment.
 - [ ] `PREVIEW_SECRET` set (signs preview links for Knowledge Holders), and `NOTIFY_EMAILS` (who hears about new forms).
 - [ ] Email Service sends from `no-reply@naisema.com`: a staff sign-in link and a form notification each arrive in a real inbox.
 - [ ] Buttondown's embed form address set as `NEWSLETTER_FORM_URL`.
   - Not yet: it is empty for staging and production, so the newsletter page says it isn't open.
 - [ ] UptimeRobot (free) checks `https://naisema.com/` and `/health` every 5 minutes and emails the technical owner.
 - [ ] Cloudflare billing alerts at 50% and 80% of AUD 100 a month.
-- [ ] GitHub `production` environment has `CLOUDFLARE_API_TOKEN` and a required reviewer.
+- [ ] GitHub `production` environment has `CLOUDFLARE_API_TOKEN`, `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`, `NOTIFY_EMAILS`, a required reviewer, and allows deploys from `main`.
 - [ ] GitHub `production-backup` environment, with no reviewer, has its read-only `CLOUDFLARE_API_TOKEN` and `BACKUP_PASSPHRASE`, and the passphrase is in the password manager. Run Actions > Weekly backup by hand once and check its artifact decrypts (runbook, "Backups and restoring").
   - Staging's token works (each merge to `main` deploys staging). Production's couldn't be checked from here.
 
@@ -39,13 +39,13 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 ## 3. Go live
 
 - [ ] `main` is green in CI and staging has deployed from it.
-  - True so far: on 11 November, `main` at `222b80d` (#102) passed CI and deployed to staging. Tick this for the commit you tag.
+  - True so far: on 11 November, `main` at `222b80d` (#102) passed CI and deployed to staging. Tick this for the commit you deploy.
 - [ ] Smoke test on staging, on a phone:
   - sign in with the emailed link
   - publish a reviewed item
   - submit a form and receive its notification email
   - play a Learning Layer through all eight stages
-- [ ] Tag `v1.0.0` and approve the `production` deployment.
+- [ ] Run **Actions > Deploy to production** (fill in the first administrator on the first run) and approve it.
 - [ ] `curl -i https://naisema.com/health` answers `200 ok`, and the uptime monitor shows green.
 - [ ] Restore staging once from D1 Time Travel and once from a backup (`pnpm backup staging <folder>`, then the runbook's restore steps), and note how long each took (runbook, "Backups and restoring").
 
