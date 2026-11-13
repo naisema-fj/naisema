@@ -72,7 +72,7 @@ Production doesn't need this section's steps 1 to 3, 5 or the wrangler.jsonc pul
 - **Staging:** every push to `main` deploys there after CI passes (`.github/workflows/deploy.yml`). Migrations apply first. To redeploy it, run **Actions > Deploy to staging > Run workflow**.
 - **Production:** one button. Go to **Actions > Deploy to production > Run workflow**, keep "Use workflow from" on `main`, and run it (`.github/workflows/deploy-production.yml`). It runs CI, then deploys the latest `main`, which is what staging already runs. If the `production` environment has a required reviewer, approve the deploy when GitHub asks. There are no tags to make.
 - **The first production deploy** sets production up by itself (`scripts/prepare-production.mjs`). It creates the `naisema-v1-production` database and the private `naisema-production-media` bucket in Oceania, applies every migration and makes a random `PREVIEW_SECRET`. If you fill in the run's "first administrator" boxes, it also adds them as admin and editor. Later deploys reuse all of it; `wrangler.jsonc` keeps placeholders, and the deploy fills them in on GitHub's machine.
-- **What the first deploy needs, once.** Set these in **Settings > Environments > production**; a missing one stops the run, naming it:
+- **What the first deploy needs, once.** Set these in **Settings > Environments > production**. The Turnstile keys and `NOTIFY_EMAILS` work as either a secret or a variable; keep the token a secret. A missing one stops the run, naming it:
   | Name | Kind | What it is |
   | --- | --- | --- |
   | `CLOUDFLARE_API_TOKEN` | Secret | Cloudflare token: Workers Scripts Edit, D1 Edit, Workers R2 Storage Edit, Cloudflare Images Edit, Account Settings Read; Workers Routes Edit and DNS Edit on naisema.com |
