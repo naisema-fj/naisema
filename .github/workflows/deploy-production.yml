@@ -45,9 +45,11 @@ jobs:
       CLOUDFLARE_ENV: production
       CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
-      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-      NOTIFY_EMAILS: ${{ secrets.NOTIFY_EMAILS }}
+      # The site key and the addresses aren't secret, but either kind of setting works, so it
+      # doesn't matter which one they were added as.
+      TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY || secrets.TURNSTILE_SITE_KEY }}
+      TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY || vars.TURNSTILE_SECRET_KEY }}
+      NOTIFY_EMAILS: ${{ secrets.NOTIFY_EMAILS || vars.NOTIFY_EMAILS }}
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
     steps:
       - name: Check this is the main branch and the settings are in place
@@ -59,12 +61,12 @@ jobs:
           missing=()
           [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing+=("CLOUDFLARE_ACCOUNT_ID (repository variable)")
           [ -n "$CLOUDFLARE_API_TOKEN" ] || missing+=("CLOUDFLARE_API_TOKEN (secret)")
-          [ -n "$TURNSTILE_SITE_KEY" ] || missing+=("TURNSTILE_SITE_KEY (variable)")
-          [ -n "$TURNSTILE_SECRET_KEY" ] || missing+=("TURNSTILE_SECRET_KEY (secret)")
-          [ -n "$NOTIFY_EMAILS" ] || missing+=("NOTIFY_EMAILS (secret)")
+          [ -n "$TURNSTILE_SITE_KEY" ] || missing+=("TURNSTILE_SITE_KEY")
+          [ -n "$TURNSTILE_SECRET_KEY" ] || missing+=("TURNSTILE_SECRET_KEY")
+          [ -n "$NOTIFY_EMAILS" ] || missing+=("NOTIFY_EMAILS")
           if [ ${#missing[@]} -gt 0 ]; then
             list=$(printf '%s, ' "${missing[@]}")
-            echo "::error::Add these to the production environment (Settings > Environments > production), then run this again: ${list%, }. What each one is: docs/handover/runbook.md, \"Deploy\"."
+            echo "::error::Add these to the production environment (Settings > Environments > production), as secrets or variables, then run this again: ${list%, }. What each one is: docs/handover/runbook.md, \"Deploy\"."
             exit 1
           fi
       - uses: actions/checkout@v7
