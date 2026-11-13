@@ -1,0 +1,34 @@
+name: Check staff sign-in
+
+# One button for when a staff sign-in email doesn't arrive: Actions > Check staff sign-in > Run
+# workflow. It asks admin.naisema.com for a sign-in link for the newest administrator, watches the
+# Worker's logs while it answers, and says where it stopped (scripts/check-sign-in.mjs). A real
+# link is emailed to them. The log never shows an address or a link: the repository is public.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check staff sign-in
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Find the production database
+        run: node scripts/prepare-production.mjs find
+      - name: Ask for a sign-in link and watch what happens
+        run: node scripts/check-sign-in.mjs
