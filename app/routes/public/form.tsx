@@ -25,11 +25,23 @@ export function headers() {
   return { "Cache-Control": PRIVATE_NO_STORE };
 }
 
-/** GET /forms/:form: one public form. Nothing is sent until it is stored (PUB-05, PUB-06). */
+/**
+ * GET /forms/:form: one public form. Nothing is sent until it is stored (PUB-05, PUB-06). A page
+ * that links here can fill in the form's own fields by name (`?word=`, as a Vosa entry does), and
+ * `?about=` fills in where a report is about.
+ */
 export function loader({ params, request, context }: Route.LoaderArgs) {
   if (!isFormKey(params.form)) throw new Response("Not found", { status: 404 });
-  const about = new URL(request.url).searchParams.get("about")?.slice(0, 300) ?? "";
-  return { key: params.form, siteKey: context.get(cloudflareContext).env.TURNSTILE_SITE_KEY, about };
+  const search = new URL(request.url).searchParams;
+  const spec: FormSpec = FORMS[params.form];
+  const prefill: Record<string, string> = {};
+  for (const field of spec.fields) {
+    const value = search.get(field.name)?.trim();
+    if (value) prefill[field.name] = value.slice(0, field.long ? FIELD_LIMITS.long : FIELD_LIMITS.short);
+  }
+  const about = search.get("about")?.slice(0, FIELD_LIMITS.short);
+  if (about) prefill.address = about;
+  return { key: params.form, siteKey: context.get(cloudflareContext).env.TURNSTILE_SITE_KEY, prefill };
 }
 
 export async function action({ params, request, context }: Route.ActionArgs) {
@@ -73,7 +85,7 @@ export default function PublicForm({ loaderData, actionData }: Route.ComponentPr
     );
   }
   const errors: Errors = actionData?.errors ?? {};
-  const values: Values = actionData?.values ?? (loaderData.about ? { address: loaderData.about } : {});
+  const values: Values = actionData?.values ?? loaderData.prefill;
   return (
     <main id="main">
       <article className="pane pane-wide form-pane">

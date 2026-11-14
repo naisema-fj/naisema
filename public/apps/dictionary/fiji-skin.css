@@ -1,0 +1,244 @@
+.fijian-app{
+  --rail-width:246px;
+  --ocean:#08273a;
+  --ocean-mid:#114b60;
+  --lagoon:#26c8d2;
+  --lagoon-light:#9be6e6;
+  --sand:#f4efe5;
+  --surface:#fffdf8;
+  --line:#d9e5e4;
+  --shadow:0 18px 44px rgba(8,39,58,.10);
+}
+.fijian-app{scroll-padding-top:24px}
+.fijian-app{background:#edf4f3;color:var(--ocean)}
+.fijian-app .skip-link{position:absolute;left:-9999px;z-index:50;background:#fff;padding:9px 14px}
+.fijian-app .skip-link:focus{left:14px;top:14px}
+.fijian-app .vosa-rail{
+  position:fixed;inset:0 auto 0 0;z-index:20;width:var(--rail-width);
+  min-height:100vh;height:auto;padding:29px 18px 21px;
+  display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  gap:0;overflow-y:auto;border:0;color:#f6fcfb;
+  background:
+    radial-gradient(circle at 8% 90%,rgba(38,200,210,.20),transparent 32%),
+    radial-gradient(circle at 102% 52%,rgba(38,200,210,.14),transparent 34%),
+    linear-gradient(165deg,#061e31,#0b344a 68%,#072235);
+  box-shadow:5px 0 28px rgba(5,33,48,.16);
+}
+.fijian-app .vosa-rail::after{
+  content:"";position:absolute;right:-86px;bottom:72px;width:270px;height:270px;
+  border:1px solid rgba(92,229,231,.17);border-radius:50%;pointer-events:none;
+  box-shadow:0 0 0 25px rgba(92,229,231,.045),0 0 0 51px rgba(92,229,231,.035);
+}
+.fijian-app .naisema-brand{gap:11px;color:#fff;text-decoration:none;position:relative;z-index:1}
+.fijian-app .brand-mark-wrap{flex:none;display:grid;place-items:center;width:45px;height:45px;border-radius:12px;background:#f4f4ec}
+.fijian-app .naisema-brand img{width:35px;height:35px}
+.fijian-app .brand-words{display:grid;gap:4px;min-width:0}
+.fijian-app .brand-words strong{font:800 25px/1 Bricolage,system-ui,sans-serif;letter-spacing:.015em}
+.fijian-app .brand-words small{font:700 9px/1.25 Jost,system-ui,sans-serif;letter-spacing:.20em;text-transform:uppercase;color:#81e4e3}
+.fijian-app .tabs{display:grid;gap:5px;margin-top:65px;border:0;overflow:visible;white-space:normal;position:relative;z-index:1}
+.fijian-app .tab{
+  display:flex;align-items:center;min-height:48px;width:100%;
+  padding:10px 14px;border:1px solid transparent;border-radius:12px;
+  color:#c7dadd;text-align:left;font-size:15px;font-weight:650;
+  transition:background .16s,border-color .16s,color .16s;
+}
+.fijian-app .tabs a.tab{text-decoration:none}
+.fijian-app .tab::before{content:"";flex:none;width:7px;height:7px;margin-right:14px;border:1.5px solid currentColor;border-radius:50%;opacity:.72}
+.fijian-app .tab:hover,.fijian-app .tab:focus-visible{background:rgba(84,206,209,.12);color:#fff}
+.fijian-app .tab.active{background:#116074;border-color:rgba(123,239,231,.42);color:#fff;box-shadow:inset 3px 0 var(--lagoon)}
+.fijian-app .tab.active::before{background:var(--lagoon);border-color:var(--lagoon);opacity:1}
+.fijian-app .header-actions{display:grid;gap:8px;margin-top:auto;position:relative;z-index:1}
+.fijian-app .suggest-link{display:block;text-align:center;border:1px solid #6be3e7;border-radius:12px;background:#0e4c63;color:#fff}
+.fijian-app .suggest-link:hover{background:#12687b;color:#fff}
+.fijian-app .rail-note{position:relative;z-index:1;margin:18px 8px 0;color:#9fc6cd;font-size:12px;line-height:1.4}
+.fijian-app main{max-width:none;width:calc(100% - var(--rail-width));margin:0 0 0 var(--rail-width)}
+.fijian-app .hero{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:438px;display:flex;align-items:center;justify-content:flex-start;
+  padding:53px clamp(30px,6vw,88px);color:#fff;
+  background:
+    linear-gradient(90deg,rgba(4,30,47,.96) 0%,rgba(4,34,50,.91) 37%,rgba(4,42,58,.47) 71%,rgba(4,42,58,.18) 100%),
+    url("../assets/nadi-moana-beach-fiji.jpg") center 44% / cover no-repeat;
+}
+.fijian-app .hero::before{display:none}
+.fijian-app .hero::after{
+  content:"";position:absolute;inset:0 0 0 41%;z-index:0;pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(4,30,47,.88),rgba(4,30,47,.72) 44%,rgba(4,30,47,.42) 76%,transparent),
+    url("../assets/naisema-fiji-future-reef-v1.png") 68% 52% / cover no-repeat;
+  -webkit-mask-image:linear-gradient(90deg,transparent 0%,#000 27%);
+  mask-image:linear-gradient(90deg,transparent 0%,#000 27%);
+}
+.fijian-app .hero-copy{position:relative;z-index:1;width:min(100%,740px)}
+.fijian-app .hero .eyebrow{margin-bottom:12px;color:#8ff1ed;font-size:12px;letter-spacing:.23em}
+.fijian-app .hero h1{max-width:660px;color:#fff;font:800 clamp(44px,5.7vw,78px)/1.03 Bricolage,system-ui,sans-serif;letter-spacing:-.045em;text-wrap:balance}
+.fijian-app .hero .hero-copy>p[data-i18n="vosaIntro"]{max-width:590px;margin:19px 0 0;color:#e3f0ee;font-size:17px;line-height:1.52}
+.fijian-app .hero-search{display:flex;align-items:center;width:min(100%,700px);height:66px;margin:32px 0 0;padding:6px 7px 6px 18px;border:1px solid rgba(129,227,232,.84);border-radius:18px;background:#fff;box-shadow:0 14px 30px rgba(0,25,43,.18)}
+.fijian-app .hero-search label{display:grid;place-items:center;flex:none;width:31px;height:31px;color:#16445a}
+.fijian-app .hero-search svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.fijian-app .hero-search input{flex:1;min-width:0;height:100%;padding:0 12px;border:0;background:transparent;color:var(--ocean);font-size:17px;outline:none}
+.fijian-app .hero-search input::placeholder{color:#6c828c}
+.fijian-app .hero-search:focus-within{outline:3px solid var(--lagoon);outline-offset:3px}
+.fijian-app #hero-search-go{flex:none;height:50px;padding:0 19px;border:0;border-radius:13px;background:#0f778c;color:#fff;font-weight:800}
+.fijian-app #hero-search-go span{margin-left:8px;font-size:21px;line-height:0}
+.fijian-app #hero-search-go:hover{background:#075a70}
+.fijian-app .discovery-paths{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:22px clamp(22px,4vw,62px) 8px;background:#edf4f3}
+.fijian-app .path-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;min-height:162px;padding:23px 24px;text-align:left;border:1px solid rgba(8,39,58,.08);border-radius:19px;overflow:hidden;box-shadow:0 10px 25px rgba(8,39,58,.07);transition:transform .16s,box-shadow .16s}
+.fijian-app .path-card:hover{transform:translateY(-3px);box-shadow:0 18px 32px rgba(8,39,58,.13)}
+.fijian-app .path-card::after{content:"";position:absolute;right:-49px;bottom:-63px;width:177px;height:177px;border:18px solid currentColor;border-radius:50%;opacity:.1;pointer-events:none}
+.fijian-app .path-kicker{font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}
+.fijian-app .path-card strong{max-width:88%;margin:12px 0 4px;font:800 clamp(22px,2.3vw,29px)/1.1 Bricolage,system-ui,sans-serif}
+.fijian-app .path-card>span:not(.path-kicker):not(.path-arrow){max-width:235px;font-size:13px;line-height:1.38}
+.fijian-app .path-arrow{position:absolute;right:21px;top:21px;font-size:23px;line-height:1}
+.fijian-app .path-words{background:linear-gradient(140deg,#0a354a,#0b6680);color:#fff}
+.fijian-app .path-grammar{background:linear-gradient(135deg,#e0f7f4,#b9e4e1);color:#09364a}
+.fijian-app .path-fish{background:linear-gradient(135deg,#f8edce,#eac981);color:#173b4b}
+.fijian-app .path-culture{background:linear-gradient(135deg,#f4e6db,#e8ae88);color:#173b4b}
+.fijian-app .path-culture strong{font-size:clamp(20px,2vw,26px);overflow-wrap:anywhere}
+.fijian-app .culture-overview{margin:0 0 18px;padding:22px 25px;border:1px solid #e6d6c8;border-left:5px solid #bd7654;border-radius:16px;background:#fffaf5;color:#24424d}
+.fijian-app .culture-overview h3{margin:0 0 8px;color:#0b3448;font:800 23px/1.2 Bricolage,system-ui,sans-serif}
+.fijian-app .culture-overview p{max-width:850px;margin:0 0 8px;line-height:1.55}
+.fijian-app .culture-overview .culture-review-note{margin:0;color:#697679;font-size:13px}
+.fijian-app .vosa-disclaimer{margin:22px clamp(22px,4vw,62px);padding:13px 18px;border-left:4px solid #ce6746;border-radius:10px;background:#fff8ed;box-shadow:0 5px 18px rgba(8,39,58,.04)}
+.fijian-app .vosa-disclaimer strong{font-size:15px}
+.fijian-app .vosa-disclaimer p{font-size:13px}
+.fijian-app .vosa-disclaimer a{font-size:13px;color:#105c70}
+.fijian-app .work-area{padding:28px clamp(22px,4vw,62px) 72px;background:#f6f8f5}
+.fijian-app .toolbar{display:flex;justify-content:flex-end;margin:0 0 16px}
+.fijian-app .toolbar select{min-height:43px;border-radius:10px}
+.fijian-app .section-intro h2,.fijian-app .guide-grid h2{color:var(--ocean)}
+.fijian-app .context-note{background:#e9f2f0;border-left-color:#28aabc;color:#35545c}
+.fijian-app .entry-list,.fijian-app .entry-detail,.fijian-app .theme-list,.fijian-app .source-card,.fijian-app .pair-card{border-color:#dce9e7;border-radius:16px;background:#fff}
+.fijian-app .entry-row:hover,.fijian-app .entry-row.selected{background:#e8f6f4}
+.fijian-app .entry-row.selected{box-shadow:inset 4px 0 #159bb0}
+.fijian-app .entry-word,.fijian-app .detail-headword{color:#0b3448}
+.fijian-app .entry-reading-section{padding:21px 0;border-top:1px solid #dce9e7}
+.fijian-app .entry-meaning-section{border-top:0;padding-top:13px}
+.fijian-app .entry-section-title{margin:0 0 10px;color:#0b3448;font:800 18px/1.2 Bricolage,system-ui,sans-serif}
+.fijian-app .entry-reading-section .translated-meaning .sense-meaning{margin:0}
+.fijian-app .entry-reading-section .usage-examples{max-width:none;margin:0}
+.fijian-app .entry-reading-section .compact-role{margin:0}
+.fijian-app .entry-reading-section .compact-comparison{margin:0}
+.fijian-app .entry-reading-section .grammar-reference-panel{margin:16px 0 0}
+.fijian-app .entry-grammar-link{margin-top:16px;color:#0b5363;border-color:#a6cbd1}
+.fijian-app .grammar-reading-section{margin-top:18px}
+.fijian-app .grammar-reading-section .grammar-explanation{margin:0}
+.fijian-app .in-use-heading{max-width:850px;padding:34px 0 19px}
+.fijian-app .in-use-heading .eyebrow{color:#147382;font-size:12px;letter-spacing:.18em;text-transform:uppercase}
+.fijian-app .in-use-heading h2{margin:6px 0 10px;color:#08273a;font:800 clamp(29px,4vw,43px)/1.12 Bricolage,system-ui,sans-serif}
+.fijian-app .in-use-heading p:not(.eyebrow){max-width:760px;color:#49646b;line-height:1.55}
+.fijian-app .in-use-heading .button{margin-top:10px;color:#0b5363;border-color:#a6cbd1}
+.fijian-app .in-use-examples{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.fijian-app .in-use-card{display:flex;flex-direction:column;align-items:flex-start;min-height:222px;padding:20px;border:1px solid #dce9e7;border-radius:16px;background:#fff;box-shadow:0 8px 20px rgba(8,39,58,.05)}
+.fijian-app .in-use-word{color:#0e7583;font-size:11px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+.fijian-app .in-use-fijian{margin:14px 0 5px;color:#0b3448;font:700 20px/1.3 Georgia,serif}
+.fijian-app .in-use-english{margin:0 0 18px;color:#49646b;font-size:13px;line-height:1.5}
+.fijian-app .in-use-open{margin-top:auto;padding:0;border:0;background:none;color:#0c6675;font:800 13px/1.3 Jost,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.fijian-app .in-use-open:focus-visible{outline:3px solid #f2be63;outline-offset:3px}
+.fijian-app .in-use-examples+.guide-grid{margin-top:22px;border-top:1px solid #dce9e7}
+.fijian-app .culture-guide{max-width:1180px;margin:auto;color:#1b3a45}
+.fijian-app .culture-heading{padding:32px clamp(22px,3vw,42px);border-radius:22px;background:linear-gradient(115deg,#07354c,#0c6871 72%,#357f76);color:#fff}
+.fijian-app .culture-heading .eyebrow,.fijian-app .culture-section .eyebrow{margin:0 0 8px;color:#86dfe1;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+.fijian-app .culture-heading h2{margin:0 0 14px;color:#fff;font:800 clamp(34px,4vw,52px)/1.05 Bricolage,system-ui,sans-serif}
+.fijian-app .culture-heading p{max-width:850px;margin:0 0 12px;line-height:1.57}
+.fijian-app .culture-heading .culture-caution{max-width:900px;margin:17px 0 0;padding:12px 16px;border-left:3px solid #82e6e2;background:rgba(255,255,255,.11);font-size:14px}
+.fijian-app .culture-jump{display:flex;flex-wrap:wrap;gap:8px;margin:19px 0 13px}
+.fijian-app .culture-jump a{padding:9px 13px;border:1px solid #a7cecf;border-radius:99px;background:#fff;color:#0b5864;font-size:13px;font-weight:700;text-decoration:none}
+.fijian-app .culture-jump a:hover,.fijian-app .culture-jump a:focus-visible{background:#e1f5f2}
+.fijian-app .culture-section{margin:24px 0;padding:28px clamp(18px,3vw,36px);border:1px solid #dce9e7;border-radius:20px;background:#fff;box-shadow:0 8px 22px rgba(8,39,58,.04);scroll-margin-top:18px}
+.fijian-app .culture-section .eyebrow{color:#0c7783}
+.fijian-app .culture-section h3{margin:0 0 9px;color:#0b3448;font:800 clamp(25px,3vw,34px)/1.12 Bricolage,system-ui,sans-serif}
+.fijian-app .culture-section>p:not(.eyebrow){max-width:880px;line-height:1.6}
+.fijian-app .culture-term-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin-top:19px}
+.fijian-app .culture-term-grid article{padding:17px 18px;border:1px solid #dce9e7;border-radius:13px;background:#f8fbf9;scroll-margin-top:20px}
+.fijian-app .culture-term-grid button{display:flex;gap:6px;align-items:baseline;padding:0;border:0;background:none;color:#0b6270;font:800 18px/1.22 Bricolage,system-ui,sans-serif;text-align:left;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.fijian-app .culture-term-grid button span{font-size:14px;text-decoration:none}
+.fijian-app .culture-term-grid p{margin:7px 0 0;font-size:14px;line-height:1.48}
+.fijian-app .culture-related{color:#4e6469;font-size:12px!important;line-height:1.5}
+.fijian-app .culture-related a,.fijian-app .culture-sequence a,.fijian-app .culture-chiefly-list a,.fijian-app .culture-principles a{color:#0b6572;text-decoration:underline;text-underline-offset:2px}
+.fijian-app .culture-sequence,.fijian-app .culture-chiefly-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:20px 0 0;padding:0;list-style:none;counter-reset:culture-step}
+.fijian-app .culture-sequence li,.fijian-app .culture-chiefly-list li{position:relative;min-height:86px;padding:16px 16px 16px 54px;border:1px solid #dce9e7;border-radius:12px;background:#f7faf8;counter-increment:culture-step}
+.fijian-app .culture-sequence li::before,.fijian-app .culture-chiefly-list li::before{content:counter(culture-step,decimal-leading-zero);position:absolute;left:15px;top:16px;color:#138b92;font-weight:800}
+.fijian-app .culture-sequence li strong,.fijian-app .culture-chiefly-list li strong{display:block;color:#123c4b}
+.fijian-app .culture-sequence li span,.fijian-app .culture-chiefly-list li span{display:block;margin-top:5px;color:#4a6066;font-size:14px;line-height:1.4}
+.fijian-app .culture-procedure-grid{display:grid;gap:15px;margin-top:20px}
+.fijian-app .culture-procedure{padding:23px;border:1px solid #dce9e7;border-left:5px solid #0d9196;border-radius:14px;background:#fbfdfb}
+.fijian-app .culture-procedure-title{display:flex;gap:15px;align-items:start}
+.fijian-app .culture-procedure-title>span{padding:7px 9px;border-radius:8px;background:#d5f1ed;color:#0c6171;font-weight:800}
+.fijian-app .culture-procedure h4{margin:0;color:#0b3448;font:800 23px/1.12 Bricolage,system-ui,sans-serif}
+.fijian-app .culture-procedure-title p{margin:5px 0 10px;color:#557078}
+.fijian-app .culture-procedure>p{margin:10px 0;line-height:1.55}
+.fijian-app .culture-procedure ol{margin:12px 0 12px 19px;padding:0;line-height:1.6}
+.fijian-app .culture-procedure li{padding-left:7px;margin:5px 0}
+.fijian-app .culture-principles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:18px 0}
+.fijian-app .culture-principles p{margin:0;padding:14px;border-radius:10px;background:#eaf6f3;line-height:1.5}
+.fijian-app .culture-section>.culture-caution{margin-top:20px;padding:13px 16px;border-left:4px solid #d28b62;background:#fff7ee;font-size:13px}
+.fijian-app .tab:focus-visible,.fijian-app .path-card:focus-visible,.fijian-app #hero-search-go:focus-visible{outline:3px solid #f2be63;outline-offset:3px}
+.fijian-app footer{margin-left:var(--rail-width);padding:20px clamp(22px,4vw,62px);background:#edf4f3;color:#49646b}
+.fijian-app .photo-credit a{font-weight:700}
+@media(max-width:1050px){
+  .fijian-app{--rail-width:212px}
+  .fijian-app .vosa-rail{padding-inline:13px}
+  .fijian-app .brand-words strong{font-size:22px}
+  .fijian-app .tab{font-size:14px;padding-inline:11px}
+  .fijian-app .discovery-paths{gap:10px}
+  .fijian-app .path-card{padding:19px;min-height:157px}
+}
+@media(max-width:1300px) and (min-width:651px){
+  .fijian-app .discovery-paths{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:800px){
+  .fijian-app .vosa-rail{position:relative;inset:auto;width:100%;min-height:0;padding:12px 18px;display:flex;flex-direction:row;align-items:center;flex-wrap:wrap;box-shadow:none;overflow:visible}
+  .fijian-app .vosa-rail::after,.fijian-app .rail-note{display:none}
+  .fijian-app .naisema-brand{margin-right:auto}
+  .fijian-app .tabs{order:3;display:flex;gap:5px;width:100%;margin:11px 0 0;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
+  .fijian-app .tabs::-webkit-scrollbar{display:none}
+  .fijian-app .tab{width:auto;min-height:42px;flex:none;padding:7px 12px;font-size:13px}
+  .fijian-app .tab::before{width:6px;height:6px;margin-right:8px}
+  .fijian-app .header-actions{margin:0;display:flex}
+  .fijian-app main{width:100%;margin:0}
+  .fijian-app footer{margin-left:0}
+  .fijian-app .hero{min-height:410px}
+  .fijian-app .hero::after{left:36%;background-position:72% 52%}
+  .fijian-app .in-use-examples{grid-template-columns:1fr 1fr}
+  .fijian-app .culture-term-grid,.fijian-app .culture-sequence,.fijian-app .culture-chiefly-list,.fijian-app .culture-principles{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+  .fijian-app .vosa-rail{padding:11px 13px}
+  .fijian-app .brand-mark-wrap{width:38px;height:38px}
+  .fijian-app .naisema-brand img{width:29px;height:29px}
+  .fijian-app .brand-words strong{font-size:20px}
+  .fijian-app .brand-words small{font-size:8px}
+  .fijian-app .header-actions .suggest-link{padding:8px 10px;font-size:12px}
+  .fijian-app .tabs{flex-wrap:wrap;overflow:visible;white-space:normal}
+  .fijian-app .hero{min-height:380px;padding:35px 23px;background-position:57% center}
+  .fijian-app .hero::after{left:0;opacity:.55;background-position:72% center;background-image:linear-gradient(90deg,rgba(4,30,47,.76),rgba(4,30,47,.42)),url("../assets/naisema-fiji-future-reef-v1.png");-webkit-mask-image:none;mask-image:none}
+  .fijian-app .hero h1{font-size:clamp(42px,10vw,60px)}
+  .fijian-app .hero .hero-copy>p[data-i18n="vosaIntro"]{font-size:15px}
+  .fijian-app .hero-search{height:58px;margin-top:25px;border-radius:14px;padding:5px 5px 5px 11px}
+  .fijian-app .hero-search input{font-size:14px;padding:0 7px}
+  .fijian-app #hero-search-go{height:46px;padding:0 12px;font-size:12px}
+  .fijian-app #hero-search-go span{margin-left:3px;font-size:17px}
+  .fijian-app .discovery-paths{display:flex;overflow-x:auto;padding:15px 14px 4px;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .fijian-app .discovery-paths::-webkit-scrollbar{display:none}
+  .fijian-app .path-card{flex:0 0 min(78vw,280px);min-height:150px;scroll-snap-align:start}
+  .fijian-app .vosa-disclaimer{margin:17px 14px}
+  .fijian-app .work-area{padding:22px 14px 46px}
+  .fijian-app .in-use-examples{grid-template-columns:1fr}
+  .fijian-app .in-use-card{min-height:0}
+  .fijian-app footer{padding:18px 14px}
+}
+@media(prefers-reduced-motion:reduce){.fijian-app .path-card,.fijian-app .tab{transition:none}}
+
+/* The ibe continues beneath every reading area, not just the Icavuti index. */
+.fijian-app .discovery-paths,.fijian-app .work-area{
+  background-image:linear-gradient(rgba(246,248,244,.74),rgba(246,248,244,.74)),url("../assets/ibe-voivoi-texture-v1.webp");
+  background-size:auto,480px auto;
+}
+.fijian-app .entry-list,.fijian-app .entry-detail,.fijian-app .theme-list,.fijian-app .in-use-card,.fijian-app .culture-section,.fijian-app .culture-overview,.fijian-app .source-card,.fijian-app .pair-card,.fijian-app .guide-card,.fijian-app .usage-examples,.fijian-app .grammar-reference-panel,.fijian-app .culture-term-grid article,.fijian-app .culture-sequence li,.fijian-app .culture-chiefly-list li,.fijian-app .culture-procedure,.fijian-app .culture-principles p{
+  background-image:linear-gradient(rgba(255,255,255,.91),rgba(255,255,255,.91)),url("../assets/ibe-voivoi-texture-v1.webp");
+  background-size:auto,440px auto;
+}
+.fijian-app .culture-overview,.fijian-app .culture-procedure,.fijian-app .guide-card,.fijian-app .culture-principles p{
+  background-image:linear-gradient(rgba(247,252,248,.88),rgba(247,252,248,.88)),url("../assets/ibe-voivoi-texture-v1.webp");
+}

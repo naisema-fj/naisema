@@ -69,6 +69,11 @@
   text-rendering: optimizeLegibility;
 }
 
+/* The header and footer around a Fijian app's page are each a band of their own, not a whole page. */
+.public.public-band {
+  min-height: 0;
+}
+
 /* The page's own scrollbar, in Ink on Shell. */
 html:has(.public) {
   scrollbar-color: #0f2b35 #f6f5f2;
@@ -2301,8 +2306,100 @@ blockquote.notice-wording {
     0 10px 24px -20px rgb(15 43 53 / 0.35);
 }
 
-.public .app-card h2 {
+.public .app-card h3 {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
   font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.7rem);
+}
+
+.public .app-card .app-kind {
+  font-family: var(--font-text);
+  font-size: var(--step-small);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* The Fijian apps' home (/apps): the brand banner, the apps, a word about them, and the suggestion form. */
+.apps-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--r-plate);
+}
+
+.apps-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.public .apps-section h2,
+.public .apps-about h2,
+.public .apps-suggest h2 {
+  margin: 0;
+}
+
+.apps-about {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+  border-radius: var(--r-mat);
+  background: var(--sand);
+}
+
+.apps-about img {
+  flex: none;
+  width: clamp(4rem, 3rem + 3vw, 6rem);
+  height: auto;
+  border-radius: var(--r-plate);
+}
+
+.apps-about p {
+  margin: 0.5rem 0 0;
+  max-width: var(--measure);
+}
+
+.apps-suggest {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.apps-suggest-intro {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.apps-suggest-intro p {
+  margin: 0;
+  max-width: var(--measure);
+}
+
+.apps-steps {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+  padding-left: 1.5rem;
+}
+
+.apps-steps strong {
+  margin-right: 0.35rem;
+}
+
+@media (min-width: 60rem) {
+  .apps-suggest {
+    grid-template-columns: 5fr 7fr;
+    align-items: start;
+  }
+}
+
+@media (max-width: 30rem) {
+  .apps-about {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .app-card .notice {

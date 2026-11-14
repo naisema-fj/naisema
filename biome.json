@@ -15,7 +15,9 @@
       "!THIRD_PARTY_LICENSES",
       "!skills-lock.json",
       "!pnpm-lock.yaml",
-      "!DESIGN.md"
+      "!DESIGN.md",
+      "!public/apps",
+      "!app/fijian-apps/pages"
     ]
   },
   "formatter": {

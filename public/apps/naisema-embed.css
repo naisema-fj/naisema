@@ -1,0 +1,136 @@
+/*
+ * NAISEMA's adjustments to the Fijian apps' pages, loaded last on each one. The apps' own styles
+ * are scoped to .fijian-app; these settle the few places where NAISEMA's parts sit inside an app.
+ */
+
+/* The public site's plain .sources rule (white-space: pre-line) must not reach the apps' source lists. */
+.fijian-app .sources {
+  white-space: normal;
+}
+
+.fijian-app .naisema-correction-action {
+  margin-top: 13px;
+}
+
+.fijian-app .naisema-correction-link {
+  display: inline-block;
+  border: 1px solid #126079;
+  border-radius: 999px;
+  padding: 7px 15px;
+  background: #126079;
+  color: #fff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.fijian-app .naisema-correction-link:hover,
+.fijian-app .naisema-correction-link:focus-visible {
+  background: #0b4256;
+  color: #fff;
+}
+
+/* NAISEMA's privacy notice and Turnstile's check, inside an app's form. */
+.fijian-app .form-consent {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0.4rem 0 0.2rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: #e8e5de;
+  color: #0f2b35;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.fijian-app .form-consent .notice-wording {
+  display: flex;
+  gap: 0.6rem;
+  margin: 0;
+}
+
+.fijian-app .form-consent .icon {
+  flex: none;
+  margin-top: 0.15rem;
+}
+
+.fijian-app .form-consent .form-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+}
+
+.fijian-app .form-consent .form-choice input {
+  width: 1.3rem;
+  height: 1.3rem;
+  margin: 0;
+}
+
+.fijian-app .form-field .hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+/* "Suggest a correction" on a Vosa entry, saying or grammar term, in place of the apps site's editor. */
+.fijian-app .sense-correction {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  margin-top: 0.6rem;
+  font-weight: 700;
+  color: #0f2b35;
+  text-decoration: underline;
+  text-decoration-color: #d2603f;
+  text-underline-offset: 0.2em;
+}
+
+/* Sending a community translation draft to the team. */
+.fijian-app .send-draft {
+  display: inline-block;
+  margin-top: 0.6rem;
+  font-weight: 700;
+  color: #0f2b35;
+  text-decoration-color: #d2603f;
+  text-underline-offset: 0.2em;
+}
+
+/*
+ * Vosa's rail was fixed to the whole window on the apps site. Under NAISEMA's header it is a
+ * column of its own beside the dictionary, staying in view as the dictionary scrolls.
+ */
+@media (min-width: 801px) {
+  .fijian-app-dictionary {
+    display: grid;
+    grid-template-columns: var(--rail-width) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .fijian-app-dictionary > .app-switcher {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .fijian-app-dictionary > .vosa-rail {
+    position: sticky;
+    top: 0;
+    grid-column: 1;
+    grid-row: 1 / span 3;
+    align-self: start;
+    height: 100vh;
+    min-height: 0;
+  }
+
+  .fijian-app-dictionary > main {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    margin: 0;
+  }
+
+  .fijian-app-dictionary > footer {
+    grid-column: 2;
+    grid-row: 3;
+    margin-left: 0;
+  }
+}

@@ -1,0 +1,168 @@
+.fijian-app {
+  --ink: #173948;
+  --deep: #135a92;
+  --teal: #14758d;
+  --orange: #ee8340;
+  --gold: #ffd45e;
+  --cream: #fff9ef;
+  --paper: #fffefa;
+  --line: #d5e7e6;
+  --muted: #4f6570;
+  color: var(--ink);
+  background: #fff9ee;
+}
+
+.fijian-app {
+  background:
+    radial-gradient(circle at 7% 18%, #ffd45e 0 8rem, transparent 8.1rem),
+    radial-gradient(circle at 91% 83%, #f672a8 0 11rem, transparent 11.1rem),
+    linear-gradient(145deg, transparent 0 29%, #ffffff4d 29.1% 29.35%, transparent 29.45% 100%),
+    linear-gradient(145deg, #2087d0 0 29%, #41b97a 29.1% 53%, #f5a447 53.1% 77%, #ed74a6 77.1% 100%);
+  background-attachment: fixed;
+}
+
+.fijian-app .topbar { background: #fffdf7; border-bottom: 2px solid #bce8ec; }
+.fijian-app .preview-badge { background: #fff1d0; border-color: #ffc76a; color: #765018; }
+.fijian-app .eyebrow { color: #13758d; }
+.fijian-app main {
+  margin: 22px auto 0;
+  padding: 22px;
+  border: 1px solid #ffffff;
+  border-radius: 28px 28px 0 0;
+  background: #fffdf8f2;
+  box-shadow: 0 24px 72px #2f2c674d;
+}
+
+.fijian-app .hero {
+  margin-top: 0;
+  border: 2px solid #2287c3;
+  background: linear-gradient(115deg, #124d85 0%, #167bb2 55%, #4c9dc2 100%);
+  box-shadow: 0 24px 55px #145e7b30;
+}
+.fijian-app .hero::after {
+  background: radial-gradient(circle at 42% 90%, #ffcd7233, transparent 35%),
+              linear-gradient(100deg, transparent 44%, #ef7bac42 100%);
+}
+.fijian-app .hero .eyebrow { color: #ffe29a; }
+.fijian-app .hero h1 em { color: #ffcf70; }
+.fijian-app .hero-copy > p:not(.eyebrow) { color: #f0f8f7; }
+.fijian-app .hero-art {
+  background: radial-gradient(circle at 50% 50%, #90cdea, #5da8d1 55%, #317eaf 100%);
+}
+.fijian-app .hero-preview {
+  position: absolute;
+  left: 21%;
+  top: 7%;
+  width: 56%;
+  height: 86%;
+  object-fit: cover;
+  object-position: center top;
+  border: 6px solid #fffdf7;
+  border-radius: 22px;
+  transform: rotate(-4deg);
+  box-shadow: 0 22px 46px #1f225a66;
+}
+.fijian-app .hero-orbit { border-color: #fff1cbaa; }
+.fijian-app .orbit-two { border-color: #ffffff62; }
+.fijian-app .hero-orbit::before, .fijian-app .hero-orbit::after { background: #ff96bd; box-shadow: 0 0 17px #ffafd0; }
+.fijian-app .hero-word { border-color: #fff; color: #284869; }
+.fijian-app .word-one { background: #ffe5a4; }
+.fijian-app .word-two { background: #ffd9e9; }
+.fijian-app .word-three { background: #d8f6db; }
+.fijian-app .hero-mark {
+  left: 83%;
+  top: 69%;
+  width: 132px;
+  height: 132px;
+  font-size: 3.8rem;
+  background: linear-gradient(145deg, #ffe690, #ffb669);
+  box-shadow: 0 0 0 14px #ffffff22, 0 24px 45px #252c7659;
+}
+.fijian-app .word-one { left: 2%; top: 15%; }
+.fijian-app .word-two { right: 3%; top: 14%; }
+.fijian-app .word-three { left: 5%; bottom: 14%; }
+.fijian-app .button.primary { border-color: #e46f2e; background: #ffad5d; color: #173e50; box-shadow: 0 5px 0 #a95e3747; }
+.fijian-app .button.primary:hover { background: #ffc078; }
+.fijian-app .button.secondary { border-color: #69b8c5; background: #e9fafd; color: #15546a; }
+.fijian-app .button.secondary:hover { background: #d5f4fa; }
+
+.fijian-app .stage { box-shadow: 0 8px 20px #245a6a12; }
+.fijian-app .stage:nth-child(1) { background: #e4f9e9; border-color: #88d5a5; }
+.fijian-app .stage:nth-child(2) { background: #fff5cf; border-color: #e8ce75; }
+.fijian-app .stage:nth-child(3) { background: #ffebf2; border-color: #eda8c2; }
+.fijian-app .stage:nth-child(1) > span { background: #a8eac2; color: #145d40; }
+.fijian-app .stage:nth-child(2) > span { background: #ffe381; color: #745019; }
+.fijian-app .stage:nth-child(3) > span { background: #ffc7db; color: #8b325c; }
+.fijian-app .stage.active { box-shadow: inset 0 0 0 2px #2ca465, 0 10px 24px #2c9c6130; }
+.fijian-app .stage[aria-disabled=true] { opacity: .68; }
+.fijian-app .section-title {
+  position: relative;
+  padding: 20px 24px;
+  border: 1px solid #e7eceb;
+  border-left-width: 9px;
+  border-radius: 21px;
+  background: linear-gradient(115deg, #fff 0 78%, #f6fbfc 78.1% 100%);
+  box-shadow: 0 10px 24px #29266a13;
+}
+.fijian-app .lab-section > .section-title { border-left-color: #35b779; }
+.fijian-app .recall-section > .section-title { border-left-color: #f0ba3b; }
+.fijian-app .possession-section > .section-title { border-left-color: #e875a6; }
+.fijian-app .section-title h2 { color: #153e63; }
+.fijian-app .lab-section .section-title .eyebrow { color: #25744c; }
+.fijian-app .recall-section .section-title .eyebrow { color: #8c620d; }
+.fijian-app .possession-section .section-title .eyebrow { color: #a4396a; }
+
+.fijian-app .map-shell { border: 2px solid #8bd5ad; box-shadow: 0 15px 36px #32865d24; }
+.fijian-app .map-topline { background: linear-gradient(90deg, #dbf8e5, #e8f8ee); border-bottom-color: #a6dfb9; color: #226745; }
+.fijian-app .live-dot { background: #e65b9a; box-shadow: 0 0 0 5px #e65b9a2d; }
+.fijian-app .focus-ring { border-color: #ed4d8c; box-shadow: 0 0 0 8px #ed4d8c38, 0 0 0 17px #ed4d8c16; }
+.fijian-app .focus-ring::after { background: #ed4d8c; }
+.fijian-app .map-caption { background: linear-gradient(100deg, #146d54, #267f8a); }
+.fijian-app .map-symbol { color: #ffe085; }
+.fijian-app .lab-panel { background: #fffefa; border: 2px solid #a7ddbb; box-shadow: 0 15px 35px #4183601c; }
+.fijian-app .panel-heading h3 { color: #263b70; }
+.fijian-app .panel-icon { background: #ffd36f; color: #79531a; }
+.fijian-app .filter { background: #eff9f1; border-color: #bcdcc6; color: #315d42; }
+.fijian-app .filter.active { background: #218757; border-color: #218757; color: white; }
+.fijian-app .word-card { transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease; }
+.fijian-app .word-card[data-region="head"] { background: #ecf7ff; border-color: #b8dff4; }
+.fijian-app .word-card[data-region="upper"] { background: #fff7da; border-color: #ebd99b; }
+.fijian-app .word-card[data-region="lower"] { background: #e9f9ee; border-color: #b7e4c6; }
+.fijian-app .word-card:hover { transform: translateY(-2px); box-shadow: 0 6px 13px #335e751e; }
+.fijian-app .word-card.selected { border: 2px solid #ed8242; box-shadow: 0 5px 13px #c774422e; }
+.fijian-app .word-number { background: #dbeef9; color: #245e7a; }
+.fijian-app .word-card.selected .word-number { background: #e77939; color: #fff; }
+.fijian-app .video-drawer { background: #f9f2ff; border-color: #e0c9ec; }
+
+.fijian-app .recall-section { background: linear-gradient(125deg, #fff2bc, #fff8df 58%, #fffdf3); border: 2px solid #e9ca69; }
+.fijian-app .recall-card, .fijian-app .theory-check, .fijian-app .attempt-history { box-shadow: 0 12px 30px #376f8817; }
+.fijian-app .mode-chip { background: #ffe495; color: #745514; }
+.fijian-app .answer-title span { background: #ffe6a3; color: #76510d; }
+.fijian-app .answer-form .fijian-label { background: #e3f4fd; color: #135776; }
+.fijian-app .answer-form input:focus { border-color: #8952af; box-shadow: 0 0 0 3px #8952af25; }
+.fijian-app .locked-panel { border-color: #eab3cb; background: #fff0f6; }
+.fijian-app .lock-icon { background: #ffd4e5; color: #9a3f6a; }
+.fijian-app .theory-intro { background: linear-gradient(110deg, #125d91, #ce578c); }
+.fijian-app .concept:nth-child(1) { background: #edf8ff; border-color: #aed7ea; }
+.fijian-app .concept:nth-child(2) { background: #fff8de; border-color: #ecdca1; }
+.fijian-app .concept:nth-child(3) { background: #fff0f6; border-color: #f0c3d8; }
+.fijian-app .theory-explorer { background: linear-gradient(120deg, #fff4ce, #ffe9e5); border-color: #f3d39d; }
+.fijian-app .scenario-buttons button.active { background: #c45485; border-color: #c45485; }
+.fijian-app .suffix-display { background: linear-gradient(140deg, #195f86, #b94f83); }
+.fijian-app .practice-panel { background: linear-gradient(130deg, #e5f9fa, #f0edff); border-color: #bad7e4; }
+.fijian-app .source-note { background: #f4f9ff; border-top: 2px solid #b9d6ea; border-radius: 17px; }
+.fijian-app footer { background: linear-gradient(100deg, #153f60, #196d8c); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fijian-app .word-card { transition: none; }
+}
+
+@media (max-width: 720px) {
+  .fijian-app main { margin-top: 12px; padding: 12px; border-radius: 20px 20px 0 0; }
+  .fijian-app .hero-preview { left: 28%; top: 6%; width: 45%; height: 87%; border-width: 4px; }
+  .fijian-app .hero-mark { left: 77%; top: 63%; width: 80px; height: 80px; font-size: 2.2rem; }
+  .fijian-app .hero-mark span { font-size: .42rem; }
+  .fijian-app .word-one { left: 13%; top: 12%; }
+  .fijian-app .word-two { right: 9%; top: 13%; }
+  .fijian-app .word-three { left: 13%; bottom: 13%; }
+}

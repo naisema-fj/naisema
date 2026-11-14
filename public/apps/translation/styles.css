@@ -1,0 +1,67 @@
+.fijian-app .return-line{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem;margin:1.35rem 0 1.1rem;font-size:.85rem}
+.fijian-app .return-line a{font-weight:750;text-decoration:none}.fijian-app .return-line a:hover{text-decoration:underline}.fijian-app .return-line span{color:var(--muted)}
+.fijian-app .explorer{margin-bottom:3rem}
+.fijian-app .explorer-heading{display:flex;justify-content:space-between;align-items:end;gap:2rem;margin:0 0 1.35rem}
+.fijian-app .explorer-heading .overline{margin:0;color:#366071}
+.fijian-app .explorer-heading h1{margin:.1rem 0 0;font:800 clamp(2.75rem,5vw,5rem)/.98 var(--display);letter-spacing:-.06em}
+.fijian-app .period{color:var(--kesa)}
+.fijian-app .explorer-heading>p{max-width:23rem;margin:0 0 .2rem;color:#40535a;font-size:1.05rem;line-height:1.4}
+.fijian-app .explorer-layout{display:block}
+.fijian-app .explorer-layout.has-selection{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(26rem,.94fr);gap:1.2rem;align-items:start}
+.fijian-app .scene-column{min-width:0}
+.fijian-app .has-selection .scene-column{position:sticky;top:1rem}
+.fijian-app .scene-viewport{overflow:hidden;border-radius:18px;background:#176878;box-shadow:0 10px 28px rgba(15,43,53,.12)}
+.fijian-app .scene{position:relative;width:100%;aspect-ratio:1672/941;overflow:hidden}
+.fijian-app .scene>img{display:block;width:100%;height:100%;object-fit:cover}
+.fijian-app .scene::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(15,43,53,.06),transparent 35%,rgba(15,43,53,.13))}
+.fijian-app .movement-cue{position:absolute;z-index:1;inset:0;width:100%;height:100%;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,35,48,.8))}
+.fijian-app .flow-arrow{fill:none;stroke:#fff6d7;stroke-width:9;stroke-linecap:round;stroke-dasharray:17 14;animation:rise 2.5s linear infinite}
+.fijian-app .flow-arrow.is-active{stroke:#ffd15d;stroke-width:12}
+@keyframes rise{to{stroke-dashoffset:-30}}
+.fijian-app .evaporation-cue{position:absolute;z-index:2;left:20%;top:46%;padding:.3rem .55rem;border:1px solid rgba(255,255,255,.85);border-radius:8px;background:rgba(255,248,225,.94);box-shadow:0 3px 10px rgba(0,0,0,.2);color:var(--ink);font-size:clamp(.68rem,.95vw,.8rem);font-weight:800;line-height:1.15;pointer-events:none}
+.fijian-app .hotspot{position:absolute;z-index:2;display:inline-flex;align-items:center;gap:.4rem;min-height:2.55rem;padding:.3rem .7rem .3rem .35rem;border:1px solid rgba(255,255,255,.8);border-radius:999px;background:rgba(15,43,53,.93);box-shadow:0 4px 14px rgba(0,0,0,.27);color:#fff;font-size:clamp(.76rem,1.12vw,.93rem);font-weight:800;line-height:1.1;text-decoration:none;white-space:nowrap;transform:translate(-50%,-50%);transition:background .18s,scale .18s}
+.fijian-app .hotspot:hover,.fijian-app .hotspot:focus-visible,.fijian-app .hotspot.is-active{background:var(--voivoi);color:var(--ink);scale:1.06}
+.fijian-app .hotspot-number{display:grid;place-items:center;flex:none;width:1.8rem;height:1.8rem;border-radius:50%;background:var(--kesa);color:#fff;font:800 .64rem var(--display);letter-spacing:.02em}
+.fijian-app .hotspot.evaporation{left:22%;top:68%}.fijian-app .hotspot.condensation{left:43%;top:24%}.fijian-app .hotspot.precipitation{left:75%;top:34%}.fijian-app .hotspot.transpiration{left:52%;top:48%}.fijian-app .hotspot.runoff{left:65%;top:64%}.fijian-app .hotspot.infiltration{left:85%;top:82%}
+.fijian-app .scene-footer{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:.7rem .2rem 0;color:var(--muted);font-size:.83rem;font-weight:700}
+.fijian-app .scene-footer a{color:var(--ink)}
+.fijian-app .process-panel{min-width:0;padding:1.4rem;border:1px solid var(--line);border-radius:18px;background:var(--paper);box-shadow:0 12px 28px rgba(15,43,53,.06);animation:panel-in .25s ease-out}
+.fijian-app .process-panel[hidden]{display:none}
+@keyframes panel-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fijian-app .panel-topline{display:flex;justify-content:space-between;gap:1rem;align-items:center;color:#366071;font-size:.76rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.fijian-app .panel-topline a{text-decoration:none}.fijian-app .panel-topline a:hover{text-decoration:underline}
+.fijian-app .process-panel h2{margin:.4rem 0 0;font:800 clamp(2.4rem,3.8vw,4rem)/1 var(--display);letter-spacing:-.055em;overflow-wrap:anywhere}
+.fijian-app .process-subtitle{margin:.35rem 0 1.25rem;color:var(--kesa);font-weight:800}
+.fijian-app .idea-strip{display:grid;gap:.55rem}
+.fijian-app .idea-cell{display:grid;grid-template-columns:2.1rem 1fr;gap:.7rem;align-items:start;padding:.82rem;border:1px solid var(--line);border-radius:10px;background:var(--shell)}
+.fijian-app .idea-cell.clue-cell{border-color:#ddb467;background:#fff5dc}
+.fijian-app .idea-icon{display:grid;place-items:center;width:2rem;height:2rem;border-radius:50%;background:var(--ink);color:#fff;font-weight:800}
+.fijian-app .clue-cell .idea-icon{background:var(--kesa)}
+.fijian-app .idea-cell h3{margin:0;font:800 .75rem var(--text);text-transform:uppercase;letter-spacing:.1em;color:#366071}
+.fijian-app .idea-cell p{margin:.15rem 0 0;font-size:.98rem;line-height:1.35}
+.fijian-app .idea-cell a{display:inline-block;margin:.25rem 0 0;font-size:.78rem;font-weight:750}
+.fijian-app .panel-actions{display:flex;justify-content:space-between;gap:.3rem 1rem;flex-wrap:wrap;margin:.7rem 0 1.1rem;font-size:.76rem;color:var(--muted)}
+.fijian-app .panel-actions a{color:var(--ink);font-weight:750}
+.fijian-app .translation-form{display:grid;gap:.45rem;padding:1.15rem;border-radius:12px;background:var(--ink);color:#fff}
+.fijian-app .form-heading{display:flex;justify-content:space-between;gap:.5rem;align-items:start;margin-bottom:.15rem}
+.fijian-app .form-heading .overline{margin:0;color:var(--voivoi)}
+.fijian-app .form-heading h3{margin:0;font:800 clamp(1.5rem,2vw,2rem)/1.1 var(--display);letter-spacing:-.03em}
+.fijian-app .form-heading>span{max-width:7.5rem;padding:.25rem .5rem;border:1px solid #7d989f;border-radius:999px;color:#d6e1df;font-size:.7rem;font-weight:700;text-align:center;line-height:1.2}
+.fijian-app .translation-form label{display:block;margin-top:.15rem;font-size:.8rem;font-weight:750}
+.fijian-app .translation-form input,.fijian-app .translation-form select{display:block;width:100%;min-height:2.7rem;padding:.5rem .65rem;border:1px solid #abc0c3;border-radius:7px;background:#fff;color:var(--ink);font:inherit}
+.fijian-app .translation-form input::placeholder{color:#6a797c}
+.fijian-app .form-pair{display:grid;grid-template-columns:.8fr 1.2fr;gap:.65rem}
+.fijian-app .method-rule{min-height:1rem;margin:.05rem 0;color:#d6e1df;font-size:.76rem;line-height:1.35}
+.fijian-app .source-details{font-size:.8rem;color:#d6e1df}.fijian-app .source-details summary{cursor:pointer;text-decoration:underline;text-underline-offset:.15em}.fijian-app .source-details label{margin:.4rem 0 .2rem}
+.fijian-app .form-bottom{display:flex;align-items:center;gap:.6rem 1rem;flex-wrap:wrap;margin-top:.3rem}
+.fijian-app .form-bottom .tile-button{min-height:2.75rem;padding:.4rem 1rem}
+.fijian-app .form-bottom p{flex:1;min-width:10rem;margin:0;color:#d6e1df;font-size:.76rem;line-height:1.35}
+.fijian-app .saved-draft{margin-top:.7rem;padding:1rem;border:1px solid #ddb467;border-radius:10px;background:#fff8e9;overflow-wrap:anywhere}
+.fijian-app .saved-draft[hidden]{display:none}
+.fijian-app .saved-draft .saved-top{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.fijian-app .saved-draft strong{font:800 1.25rem var(--display)}
+.fijian-app .saved-draft p{margin:.35rem 0 0;font-size:.85rem;line-height:1.4}
+.fijian-app .saved-draft button{border:0;background:none;color:#a63b22;font:750 .76rem var(--text);text-decoration:underline;cursor:pointer}
+@media(max-width:1100px){.fijian-app .explorer-layout.has-selection{grid-template-columns:1fr}.fijian-app .has-selection .scene-column{position:static}.fijian-app .process-panel{max-width:none}}
+@media(max-width:720px){.fijian-app .explorer-heading{display:block}.fijian-app .explorer-heading>p{margin:.55rem 0 0;font-size:.98rem}.fijian-app .return-line{margin:1rem 0}.fijian-app .scene-viewport{overflow-x:auto;overflow-y:hidden}.fijian-app .scene{width:max(720px,100%)}.fijian-app .hotspot{font-size:.82rem}.fijian-app .process-panel{margin-top:1rem;padding:1rem}.fijian-app .form-pair{grid-template-columns:1fr}.fijian-app .scene-footer{font-size:.75rem}}
+@media(prefers-reduced-motion:reduce){.fijian-app .hotspot{transition:none}.fijian-app .process-panel{animation:none}.fijian-app .flow-arrow{animation:none}}

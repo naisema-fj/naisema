@@ -15,7 +15,9 @@ import {
   Lock,
   type LucideIcon,
   Mail,
+  MapPin,
   MessageCircle,
+  MessageSquareWarning,
   MessagesSquare,
   Mic,
   Newspaper,
@@ -82,6 +84,8 @@ export const FORM_ICONS: Record<FormKey, LucideIcon> = {
   "suggest-word": Plus,
   "correct-word": PencilLine,
   "suggest-translation": Languages,
+  "page-correction": MessageSquareWarning,
+  icavuti: MapPin,
 };
 
 /** The eight steps of the language player. */

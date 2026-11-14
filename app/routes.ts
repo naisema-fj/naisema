@@ -19,6 +19,9 @@ export default [
     route(":area/:slug", "routes/public/item.tsx"),
     route(":area/:slug/language", "routes/public/player.tsx"),
   ]),
+  // The Fijian apps' pages, at the addresses they had on apps.naisema.com, each running its own
+  // script files from public/apps under the same strict policy (app/lib/fijian-app-pages.server.ts).
+  layout("routes/public/apps-layout.tsx", [route("apps/*", "routes/public/fijian-app.tsx")]),
   route("preview/:token/media/:type/:id/:width?", "routes/public/preview-media.ts"),
   route("sitemap.xml", "routes/public/sitemap.ts"),
   route("robots.txt", "routes/public/robots.ts"),

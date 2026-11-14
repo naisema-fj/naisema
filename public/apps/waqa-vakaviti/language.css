@@ -1,0 +1,77 @@
+.fijian-app .scene-buttons .language-toggle{border-color:#b95587;background:#fff1f6;color:#7d2755}
+.fijian-app .scene-buttons .language-toggle:is(:hover,:focus-visible),.fijian-app .scene-buttons .language-toggle[aria-expanded="true"]{background:#8d315f;border-color:#8d315f;color:#fff}
+.fijian-app .language-lab[hidden]{display:none}
+.fijian-app .language-lab{margin:0 0 17px;padding:clamp(18px,2.5vw,30px);border:1px solid #b6dcd5;border-radius:22px;background:linear-gradient(120deg,#fff2d9,#e5f5e9 52%,#def2f4);box-shadow:var(--shadow);scroll-margin-top:16px}
+.fijian-app .language-heading{display:flex;align-items:start;justify-content:space-between;gap:20px;margin-bottom:17px}
+.fijian-app .language-heading h3{margin:0 0 5px;font-size:clamp(1.55rem,2.4vw,2.35rem);line-height:1.1;letter-spacing:-.035em}
+.fijian-app .language-heading p:last-child{margin:0;color:#3f6270;max-width:75ch}
+.fijian-app .language-heading button{flex:none;border:1px solid #8cbdb8;border-radius:999px;background:#fffefa;color:#245465;padding:8px 13px;font-size:.8rem;font-weight:800}
+.fijian-app .language-grid{display:grid;grid-template-columns:1.12fr 1fr 1fr;gap:13px;align-items:stretch}
+.fijian-app .language-card{min-width:0;padding:19px;border:1px solid #dfd9c9;border-top:6px solid #eb9b55;border-radius:17px;background:#fffaf0;box-shadow:0 9px 25px rgba(16,70,77,.07)}
+.fijian-app .language-card:nth-child(2){border-top-color:#4bb99c;background:#eefaf4}
+.fijian-app .language-card:nth-child(3){border-top-color:#d8749a;background:#fff2f7}
+.fijian-app .language-step{display:block;margin-bottom:9px;color:#955326;font-size:.68rem;font-weight:900;letter-spacing:.13em}
+.fijian-app .language-card:nth-child(2) .language-step{color:#087365}.fijian-app .language-card:nth-child(3) .language-step{color:#9a3565}
+.fijian-app .language-card h4{margin:0 0 11px;color:#123e52;font-size:1.18rem;line-height:1.2}
+.fijian-app .language-card p{margin:0 0 13px;color:#3b5b65;font-size:.88rem;line-height:1.5}
+.fijian-app .language-card label{display:block;margin:11px 0 5px;color:#274e5b;font-size:.78rem;font-weight:850}
+.fijian-app .language-card select,.fijian-app .language-card input,.fijian-app .language-card textarea{display:block;width:100%;min-height:42px;padding:8px 10px;border:1px solid #96bdb7;border-radius:10px;background:#fff;color:#143f50;font:inherit;font-size:.88rem}
+.fijian-app .language-card textarea{resize:vertical;min-height:80px}
+.fijian-app .language-card input::placeholder{color:#71838a}
+.fijian-app .language-card select:focus-visible,.fijian-app .language-card input:focus-visible,.fijian-app .language-card textarea:focus-visible{outline:3px solid #e34786;outline-offset:2px}
+.fijian-app .language-card .language-prompt{margin:10px 0;color:#48666c;font-size:.8rem}
+.fijian-app .phrase-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0 12px}
+.fijian-app .language-card .language-small-button{margin:12px 0 7px;padding:6px 0;border:0;background:transparent;color:#096782;text-decoration:underline;text-underline-offset:3px;text-align:left;font-size:.77rem;font-weight:800}
+.fijian-app .language-card .language-output-label{margin:11px 0 5px;font-size:.72rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase;color:#45646e}
+.fijian-app .language-card .language-output{min-height:58px;margin:0 0 12px;padding:12px;border:1px dashed #9ebbb2;border-radius:10px;background:#fff;color:#123e52;font-size:1rem;font-weight:750;overflow-wrap:anywhere}
+.fijian-app .language-card .language-save{padding:9px 13px;border:1px solid #11647a;border-radius:10px;background:#13556b;color:#fff;font-size:.78rem;font-weight:850}
+.fijian-app .language-card .language-save:is(:hover,:focus-visible){background:#0b7083}
+.fijian-app .language-card .language-source{margin:13px 0 0;font-size:.74rem;color:#577078}
+.fijian-app .language-drafts{margin-top:16px;padding:16px 18px;border-radius:15px;background:rgba(255,255,255,.84);border:1px solid #d4e3dc}
+.fijian-app .language-drafts h4{margin:0 0 3px;font-size:1rem}.fijian-app .language-drafts p{margin:0;color:#4b6870;font-size:.79rem}
+.fijian-app .language-drafts ul{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:13px 0 0;padding:0;list-style:none}
+.fijian-app .language-drafts li{min-width:0;display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #dceae5;overflow-wrap:anywhere}
+.fijian-app .language-drafts li span{color:#7b5770;font-size:.64rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase}
+.fijian-app .language-drafts li strong{color:#143e4f;font-size:.9rem}.fijian-app .language-drafts li small{color:#58727b;font-size:.75rem}
+.fijian-app .language-drafts .language-status{min-height:1.4em;margin-top:10px;color:#8a4c27;font-weight:750}
+.fijian-app .language-guided{margin-bottom:14px;border-top-color:#eaa058;background:#fffdf6}
+.fijian-app .language-word{margin-bottom:14px;border-top-color:#58bda2;background:#f5fcf7}
+.fijian-app .language-word .sentence-slot{max-width:520px}
+.fijian-app .language-word .word-bank{max-width:520px}
+.fijian-app .language-guided #blockLesson{max-width:420px}
+.fijian-app .language-guided .block-english{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 12px;padding:14px;border:2px solid #d3dfd6;border-radius:13px;background:#f5f7f1;transition:background .2s ease,border-color .2s ease}
+.fijian-app .block-english strong{width:100%;color:#294e5b;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase}
+.fijian-app .english-chunk{display:inline-flex;align-items:center;min-height:42px;padding:7px 12px;border:2px solid transparent;border-radius:10px;background:#e5eae7;color:#66777a;font-weight:800;transition:background .2s ease,box-shadow .2s ease,color .2s ease}
+.fijian-app .english-chunk.lit{border-color:#43a770;background:#c4f0c6;color:#164b36;box-shadow:0 0 0 3px rgba(92,194,113,.2)}
+.fijian-app .language-guided .block-english.is-complete{border-color:#43a770;background:#e6f8df}
+.fijian-app .block-role-toast:not([hidden]){position:fixed;z-index:50;left:50%;bottom:20px;transform:translateX(-50%);max-width:min(90vw,480px);margin:0;padding:11px 17px;border:2px solid #46ac83;border-radius:100px;background:#123f4b;color:#fff;text-align:center;font-size:.9rem;font-weight:850;box-shadow:0 9px 26px #183f4770;pointer-events:none}
+.fijian-app .language-application{margin:0 0 14px;border-top-color:#5abb98;background:#f2fcf7}
+.fijian-app .language-application label{display:block;margin:12px 0 5px}
+.fijian-app .language-application select,.fijian-app .language-application input{max-width:440px}
+.fijian-app .block-learning .language-small-button{display:block;margin-top:12px}
+.fijian-app .language-guided .block-instruction{margin:0 0 11px;color:#48666c;font-size:.82rem}
+.fijian-app .sentence-slot,.fijian-app .word-bank{display:flex;flex-wrap:wrap;align-items:center;gap:9px;min-height:72px;padding:13px;border-radius:12px}
+.fijian-app .sentence-slot{border:2px dashed #70afa0;background:#edfaf3}
+.fijian-app .word-bank{min-height:66px;border:1px solid #ebddc4;background:#fff6e8}
+.fijian-app .slot-hint{color:#57757b;font-size:.87rem;font-weight:750}
+.fijian-app .word-block{min-height:44px;padding:8px 13px;border:2px solid #c77745;border-radius:10px;background:#fff;color:#74401f;font-size:.94rem;font-weight:850;touch-action:manipulation;cursor:grab;box-shadow:0 3px 6px rgba(42,62,55,.09)}
+.fijian-app .word-block.placed{border-color:#158b78;background:#d7f3e6;color:#155145}
+.fijian-app .word-block:active{cursor:grabbing}
+.fijian-app .word-block:is(:hover,:focus-visible){box-shadow:0 0 0 3px rgba(227,71,134,.2)}
+.fijian-app .block-actions{display:flex;flex-wrap:wrap;align-items:center;gap:13px;margin-top:13px}
+.fijian-app .language-card .block-actions .language-small-button{margin:0}
+.fijian-app .language-card .block-feedback{min-height:1.5em;margin:12px 0 0;color:#24576a;font-size:.84rem;font-weight:780}
+.fijian-app .block-learning{margin-top:13px;padding:14px 16px;border:1px solid #8bc6a4;border-radius:12px;background:#eefbf1}
+.fijian-app .block-learning[hidden]{display:none}
+.fijian-app .block-learning h5{margin:0 0 7px;color:#174c3d;font-size:1.08rem}
+.fijian-app .block-learning ol{margin:0 0 9px;padding-left:22px;color:#345a50;font-size:.84rem}
+.fijian-app .block-learning p{margin:0 0 7px;font-weight:750}
+.fijian-app .block-learning a{font-size:.8rem;font-weight:800}
+.fijian-app .language-progress{margin-top:14px}
+.fijian-app .connect-choices{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.fijian-app .connect-choices button{padding:8px 10px;border:1px solid #68a9a2;border-radius:9px;background:#fff;color:#14566a;font:inherit;font-size:.78rem;font-weight:850;cursor:pointer}
+.fijian-app .connect-choices button:disabled{opacity:.5;cursor:not-allowed}
+.fijian-app .connect-choices button:not(:disabled):is(:hover,:focus-visible){outline:2px solid #e34786;outline-offset:2px}
+@media(max-width:1050px){.fijian-app .language-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.fijian-app .language-grid .language-card:last-child{grid-column:1/-1}}
+@media(max-width:700px){.fijian-app .language-heading{flex-direction:column;gap:10px}.fijian-app .language-grid{grid-template-columns:1fr}.fijian-app .language-grid .language-card:last-child{grid-column:auto}.fijian-app .language-drafts ul{grid-template-columns:1fr}.fijian-app .language-lab{padding:17px}}
+@media(prefers-reduced-motion:reduce){.fijian-app .language-guided .block-english,.fijian-app .english-chunk{transition:none}}

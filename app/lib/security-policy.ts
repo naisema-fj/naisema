@@ -9,13 +9,23 @@ import { TURNSTILE_ORIGIN } from "./turnstile";
  * also loads Cloudflare Turnstile's script and frame, and nothing else (app/lib/turnstile.ts).
  * A page that plays or reads video (`video`) may also load media from `blob:` addresses, which is
  * how a chosen file's length is read before it is uploaded. Video itself comes from this site.
+ * A Fijian app page (`selfScripts`) is server-rendered without React and loads its own script files
+ * from this site, so it allows `'self'` scripts and still no inline script (app/lib/fijian-app-pages.server.ts).
  */
 export function applySecurityHeaders(
   headers: Headers,
   nonce: string | null,
-  { allowIndexing, turnstile = false, video = false }: { allowIndexing: boolean; turnstile?: boolean; video?: boolean },
+  {
+    allowIndexing,
+    turnstile = false,
+    video = false,
+    selfScripts = false,
+  }: { allowIndexing: boolean; turnstile?: boolean; video?: boolean; selfScripts?: boolean },
 ) {
-  const scripts = [...(nonce ? ["'self'", `'nonce-${nonce}'`] : []), ...(turnstile ? [TURNSTILE_ORIGIN] : [])];
+  const scripts = [
+    ...(nonce ? ["'self'", `'nonce-${nonce}'`] : selfScripts ? ["'self'"] : []),
+    ...(turnstile ? [TURNSTILE_ORIGIN] : []),
+  ];
   headers.set(
     "Content-Security-Policy",
     [

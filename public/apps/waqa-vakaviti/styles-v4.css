@@ -1,0 +1,27 @@
+.fijian-app .zoom-image{background-image:none}
+.fijian-app .scene-buttons{display:flex;flex-wrap:wrap;gap:9px;margin:0 0 15px}
+.fijian-app .scene-buttons button{border:1px solid #74b4ae;border-radius:999px;background:#fffdf6;color:#18516a;padding:8px 14px;font-size:.81rem;font-weight:850;box-shadow:0 3px 8px rgba(14,69,76,.08)}
+.fijian-app .scene-buttons button:is(:hover,:focus-visible){background:#def4e6}
+.fijian-app .scene-buttons button.selected{background:#134d5f;color:#fff;border-color:#134d5f}
+.fijian-app .image-stage{position:relative;width:100%;line-height:0}
+.fijian-app .image-stage>img{display:block;width:100%;height:auto;background:#e4f2e8}
+.fijian-app .image-stage:has(img[src$=".svg"])>img{background:#d9f1e7}
+.fijian-app .map-footer #sceneCaption{max-width:48ch}
+.fijian-app .lexicon-section,.fijian-app .reference-section{margin-top:24px;padding:25px;border-radius:20px;background:rgba(255,253,247,.91);border:1px solid #e2ddca;box-shadow:var(--shadow)}
+.fijian-app .lexicon-section h2,.fijian-app .reference-section h2{margin:0 0 8px}
+.fijian-app .lexicon-section>p:not(.eyebrow):not(.review-note){margin:0 0 16px;color:#3b5c65;font-size:.9rem}
+.fijian-app .lexicon-section label{display:block;margin-bottom:7px;font-size:.79rem;font-weight:850;color:#254d59}
+.fijian-app .lexicon-section input[type=search]{display:block;width:min(100%,610px);padding:11px 13px;border:1px solid #86b5ae;border-radius:10px;background:#fff;color:#12384c;font:inherit}
+.fijian-app .lexicon-count{font-size:.78rem;color:#53737a;margin:10px 0}
+.fijian-app .lexicon-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-height:530px;overflow:auto;padding-right:5px}
+.fijian-app .lexicon-card{padding:13px 14px;border:1px solid #d9e8e5;border-radius:12px;background:#fff}
+.fijian-app .lexicon-card h3{margin:0 0 4px;font-size:1rem;color:#10455b}
+.fijian-app .lexicon-card p{margin:0;color:#49656b;font-size:.8rem;line-height:1.4}
+.fijian-app .lexicon-card small{display:inline-block;margin-top:8px;padding:2px 7px;border-radius:99px;background:#e1f1e8;color:#226a61;font-size:.65rem;font-weight:850;text-transform:uppercase;letter-spacing:.04em}
+.fijian-app .lexicon-card small.pending{background:#fae9d7;color:#9a5c2d}
+.fijian-app .reference-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.fijian-app .reference-grid figure{margin:0;background:#fff;border:1px solid #d9e8e5;border-radius:13px;overflow:hidden}
+.fijian-app .reference-grid img{display:block;width:100%;height:235px;object-fit:contain;background:#f5f1e7}
+.fijian-app .reference-grid figcaption{padding:10px 12px;color:#3d5a61;font-size:.77rem;line-height:1.4}
+@media(max-width:900px){.fijian-app .lexicon-results{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.fijian-app .scene-buttons{gap:7px}.fijian-app .scene-buttons button{padding:7px 10px;font-size:.72rem}.fijian-app .image-wrap{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}.fijian-app .image-stage{width:700px}.fijian-app .lexicon-section,.fijian-app .reference-section{padding:18px}.fijian-app .lexicon-results{grid-template-columns:1fr;max-height:500px}.fijian-app .reference-grid{grid-template-columns:1fr}.fijian-app .reference-grid img{height:260px}}

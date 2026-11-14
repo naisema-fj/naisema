@@ -111,6 +111,45 @@ export const FORMS = {
     ],
     done: "Thank you. Your proposal will be discussed and reviewed.",
   },
+  "page-correction": {
+    title: "Suggest a correction",
+    intro:
+      "Tell us what to revisit on a Fijian app page: a word, an image or an explanation. Your message goes to the team; it won't appear on the page by itself. Share community knowledge only with appropriate permission.",
+    handler: "team",
+    needsEmail: false,
+    fields: [
+      { name: "page", label: "The page it's on" },
+      { name: "topic", label: "Which word, image, or explanation?" },
+      { name: "message", label: "What should we correct or investigate?", long: true },
+      {
+        name: "source",
+        label: "Source or context to consult",
+        long: true,
+        optional: true,
+        hint: "A book and page, a builder or sailor, a place, or your own knowledge and its context.",
+      },
+    ],
+    done: "Thank you. Your correction has been sent for review.",
+  },
+  icavuti: {
+    title: "Add a missing icavuti",
+    intro:
+      "Share an icavuti (a place's title) for a yasana, tikina or koro, or correct one we show. Give the title, not a chief's personal name. Contributions are checked privately before anything is shown.",
+    handler: "team",
+    needsEmail: false,
+    fields: [
+      { name: "scope", label: "What the title belongs to (yasana, tikina or koro)" },
+      { name: "province", label: "Yasana · Province" },
+      { name: "district", label: "Tikina Cokovata", optional: true },
+      { name: "subdistrict", label: "Tikina Vou", optional: true },
+      { name: "title", label: "Icavuti · Title" },
+      { name: "villages", label: "Koro · Village or villages", long: true },
+      { name: "community", label: "Yavusa and family connections", long: true, optional: true },
+      { name: "note", label: "How do you know this?", long: true, optional: true },
+      { name: "corrects", label: "The record it corrects", optional: true },
+    ],
+    done: "Thank you. Your icavuti has been sent for review. It will appear only after the team has checked it.",
+  },
 } as const satisfies Record<string, FormSpec>;
 
 export type FormKey = keyof typeof FORMS;

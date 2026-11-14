@@ -1,0 +1,93 @@
+.fijian-app .icavuti-prompt{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:15px clamp(22px,4vw,62px) 0;padding:19px 23px;border:1px solid #b9dcd5;border-radius:16px;background:linear-gradient(100deg,#e5f5ef,#f5f1e5);box-shadow:0 8px 23px rgba(8,39,58,.05)}
+.fijian-app .icavuti-prompt .eyebrow{margin:0;color:#0b7a80;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+.fijian-app .icavuti-prompt h2{margin:3px 0;color:#08384c;font:800 24px/1.1 Bricolage,system-ui,sans-serif}
+.fijian-app .icavuti-prompt p{margin:4px 0 0;color:#49626b;font-size:14px}
+.fijian-app .icavuti-prompt button{flex:none}
+.fijian-app .icavuti-view{max-width:1180px;margin:auto;color:#173e4a}
+.fijian-app .icavuti-heading{position:relative;overflow:hidden;padding:31px clamp(22px,3vw,42px);border-radius:22px;background:linear-gradient(115deg,#07354c,#0a6370 75%,#428978);color:white}
+.fijian-app .icavuti-heading::after{content:"";position:absolute;right:-90px;top:-100px;width:350px;height:350px;border:35px solid rgba(128,240,225,.11);border-radius:50%;pointer-events:none}
+.fijian-app .icavuti-heading .eyebrow,.fijian-app .icavuti-contribute .eyebrow{margin:0 0 7px;color:#8ce2dc;font-size:11px;font-weight:850;letter-spacing:.17em;text-transform:uppercase}
+.fijian-app .icavuti-heading h2{margin:0 0 12px;color:white;font:800 clamp(32px,4vw,50px)/1.06 Bricolage,system-ui,sans-serif}
+.fijian-app .icavuti-heading p{max-width:830px;margin:0 0 11px;line-height:1.55}
+.fijian-app .icavuti-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:19px 0 17px;max-width:880px}
+.fijian-app .icavuti-steps>div{display:grid;gap:5px;padding:13px 15px;border:1px solid rgba(178,241,224,.35);border-radius:13px;background:rgba(255,255,255,.12)}
+.fijian-app .icavuti-steps b{color:#b9f1e8;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.fijian-app .icavuti-steps span{font-size:13px;line-height:1.35}
+.fijian-app .icavuti-word-link{padding:0;border:0;background:none;color:#b4f4ea;font:800 13px Jost,system-ui,sans-serif;text-decoration:underline;cursor:pointer}
+.fijian-app .icavuti-word-link:hover{color:white}
+.fijian-app .icavuti-heading .icavuti-caution{max-width:880px;margin:17px 0 0;padding:12px 16px;border-left:3px solid #8ce2dc;background:rgba(255,255,255,.12);font-size:14px}
+.fijian-app .icavuti-panel{margin:20px 0;padding:24px;border:1px solid #cde2dd;border-radius:18px;background:#fff;box-shadow:0 9px 25px rgba(8,39,58,.05)}
+.fijian-app .icavuti-fields,.fijian-app .icavuti-form-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}
+.fijian-app .icavuti-fields label,.fijian-app .icavuti-contribute label{display:grid;gap:7px;color:#194353;font-size:13px;font-weight:750}
+.fijian-app .icavuti-fields input,.fijian-app .icavuti-contribute input,.fijian-app .icavuti-contribute textarea{width:100%;min-width:0;padding:11px 13px;border:1px solid #b5d0d1;border-radius:11px;background:#fff;color:#103746;font:inherit;font-weight:450}
+.fijian-app .icavuti-contribute select{width:100%;min-width:0;padding:11px 13px;border:1px solid #b5d0d1;border-radius:11px;background:#fff;color:#103746;font:inherit;font-weight:550}
+.fijian-app .icavuti-fields input:focus,.fijian-app .icavuti-contribute input:focus,.fijian-app .icavuti-contribute textarea:focus{outline:3px solid #5dced0;outline-offset:2px}
+.fijian-app .icavuti-actions,.fijian-app .icavuti-form-actions{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0 0}
+.fijian-app .icavuti-province-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:19px;padding-top:17px;border-top:1px solid #e1edeb}
+.fijian-app .icavuti-province-chips button{padding:6px 10px;border:1px solid #bed9d8;border-radius:99px;background:#f2faf7;color:#0d5965;font:700 12px/1.2 Jost,system-ui,sans-serif;cursor:pointer}
+.fijian-app .icavuti-province-chips button:hover,.fijian-app .icavuti-province-chips button[aria-pressed="true"]{border-color:#0c7e89;background:#0c6b7a;color:white}
+.fijian-app .icavuti-results-zone{margin-top:24px;padding:22px;border:1px solid #d9d0bd;border-radius:21px;background-image:linear-gradient(rgba(250,249,244,.89),rgba(250,249,244,.89)),url('../assets/ibe-voivoi-texture-v1.webp');background-size:auto,540px auto;box-shadow:0 10px 28px rgba(58,55,40,.08)}
+.fijian-app .icavuti-results-head{display:flex;justify-content:space-between;align-items:end;gap:15px;margin:0 0 15px}
+.fijian-app .icavuti-results-head .eyebrow{margin:0 0 3px;color:#9a5639;font-size:11px;font-weight:850;letter-spacing:.15em}
+.fijian-app .icavuti-results-head h3{margin:0;color:#103a4a;font:800 26px/1.15 Bricolage,system-ui,sans-serif}
+.fijian-app .icavuti-results-head p{margin:5px 0 0;color:#5b7076;font-size:13px}
+.fijian-app .icavuti-gap{display:flex;align-items:center;flex-wrap:wrap;gap:5px;margin-bottom:17px;padding:13px 16px;border-left:4px solid #d3643e;border-radius:10px;background:rgba(255,252,245,.94);color:#36525a;font-size:14px;line-height:1.4}
+.fijian-app .icavuti-gap[hidden]{display:none}
+.fijian-app .icavuti-gap strong{color:#173d49}
+.fijian-app .icavuti-gap button{margin-left:auto;padding:6px 9px;border:0;background:none;color:#0d6773;font:800 13px Jost,system-ui,sans-serif;text-decoration:underline;cursor:pointer}
+.fijian-app .icavuti-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.fijian-app .icavuti-card{display:flex;flex-direction:column;align-items:flex-start;min-height:220px;padding:20px 21px;border:1px solid #d8e6e2;border-radius:16px;background:rgba(255,255,255,.96);box-shadow:0 7px 20px rgba(8,39,58,.045)}
+.fijian-app .icavuti-scope{display:inline-flex;align-items:center;margin:0 0 13px;padding:5px 9px;border-radius:100px;background:#e6f4ef;color:#0b6570;font-size:10px;font-weight:850;letter-spacing:.09em;text-transform:uppercase}
+.fijian-app .icavuti-scope-koro{background:#fbe8d8;color:#8f4926}
+.fijian-app .icavuti-card .icavuti-place{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:0 0 9px;color:#0b6976;font-size:12px;font-weight:800;letter-spacing:.035em}
+.fijian-app .icavuti-card .icavuti-place span+span::before{content:"›";margin-right:5px;color:#8cacaf}
+.fijian-app .icavuti-card h4{margin:0;color:#103847;font:800 21px/1.2 Bricolage,system-ui,sans-serif}
+.fijian-app .icavuti-card .icavuti-alt{margin:7px 0 0;color:#475f68;font-size:13px}
+.fijian-app .icavuti-card .icavuti-villages{display:flex;flex-wrap:wrap;gap:6px;margin:11px 0 0}
+.fijian-app .icavuti-card .icavuti-villages button{padding:5px 8px;border:1px solid #cce1df;border-radius:7px;background:#eff7f4;color:#14495a;font:600 12px/1.3 Jost,system-ui,sans-serif;cursor:pointer}
+.fijian-app .icavuti-card .icavuti-villages button:hover{background:#c7efea}
+.fijian-app .icavuti-card details{margin-top:17px;color:#315660;font-size:13px}
+.fijian-app .icavuti-card summary{color:#0b6976;font-weight:750;cursor:pointer}
+.fijian-app .icavuti-card .icavuti-koro{margin:12px 0 0;color:#45666c;font-size:14px;font-weight:700}
+.fijian-app .icavuti-card .icavuti-village-add{margin-top:14px;padding:7px 0;border:0;background:none;color:#b45231;font:800 13px Jost,system-ui,sans-serif;text-align:left;text-decoration:underline;cursor:pointer}
+.fijian-app .icavuti-card .icavuti-card-foot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;width:100%;margin-top:auto;padding-top:14px;border-top:1px solid #e6eeeb}
+.fijian-app .icavuti-card .icavuti-card-foot span{color:#6b7d7d;font-size:11px}
+.fijian-app .icavuti-card .icavuti-card-foot button{padding:5px 0;border:0;background:none;color:#0b6c7c;font:800 12px Jost,system-ui,sans-serif;text-decoration:underline;cursor:pointer}
+.fijian-app .icavuti-view #icavuti-more{display:block;margin:17px auto 0}
+.fijian-app .icavuti-view #icavuti-more[hidden]{display:none}
+.fijian-app .icavuti-empty{grid-column:1/-1;padding:30px;border:1px dashed #9fc4c3;border-radius:14px;background:#fff;color:#4b656b}
+.fijian-app .icavuti-contribute{display:grid;grid-template-columns:minmax(200px,.8fr) minmax(0,1.4fr);gap:28px;margin-top:33px;padding:28px;border:1px solid #cce1da;border-radius:20px;background:#eaf6f1}
+.fijian-app .icavuti-contribute[hidden]{display:none}
+.fijian-app .icavuti-contribute .eyebrow{color:#0c7d82}
+.fijian-app .icavuti-contribute h3{margin:0 0 9px;color:#0e3b4c;font:800 28px/1.12 Bricolage,system-ui,sans-serif}
+.fijian-app .icavuti-contribute p{color:#49656b;font-size:14px;line-height:1.5}
+.fijian-app .icavuti-contribute .icavuti-scope-help{margin:-4px 0 0;color:#557078;font-size:12px}
+.fijian-app .icavuti-contribute form{display:grid;gap:13px}
+.fijian-app .icavuti-form-fields{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fijian-app .icavuti-contribute label span{font-weight:450}
+.fijian-app .icavuti-contribute label[hidden]{display:none}
+.fijian-app .icavuti-contribute textarea{resize:vertical}
+.fijian-app .icavuti-results-zone[hidden]{display:none}
+.fijian-app .icavuti-browse-hint{margin:11px 0 0;color:#42636b;font-size:13px}
+.fijian-app .icavuti-community-form{border:1px solid #b9d9d2;border-radius:14px;background:rgba(255,255,255,.86)}
+.fijian-app .icavuti-community-form>summary{display:grid;gap:2px;padding:14px 16px;color:#0d4c59;font-weight:800;cursor:pointer}
+.fijian-app .icavuti-community-form>summary small{color:#5a7478;font-size:12px;font-weight:500}
+.fijian-app .icavuti-community-body{display:grid;gap:13px;padding:0 16px 16px}
+.fijian-app .icavuti-community-body>p{margin:0}
+.fijian-app .icavuti-yavusa-editor{margin:10px 0;border:1px solid #c7ded8;border-radius:12px;background:#fff}
+.fijian-app .icavuti-yavusa-editor>summary{padding:12px 14px;color:#0a5664;font-weight:800;cursor:pointer}
+.fijian-app .icavuti-yavusa-body{display:grid;gap:12px;padding:0 14px 14px}
+.fijian-app .icavuti-community-pairs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.fijian-app .icavuti-mataqali-editor{display:grid;gap:10px;margin:11px 0;padding:12px;border-left:3px solid #72b9b6;border-radius:0 9px 9px 0;background:#f1f9f6}
+.fijian-app .icavuti-add-line,.fijian-app .icavuti-remove-line{justify-self:start;padding:7px 10px;border:1px solid #86b7b7;border-radius:8px;background:#edf8f6;color:#0a5964;font:750 12px Jost,system-ui,sans-serif;cursor:pointer}
+.fijian-app .icavuti-remove-line{border:0;background:transparent;color:#a64e31;text-decoration:underline}
+.fijian-app .icavuti-community-group{margin:11px 0 0;padding:11px 13px;border-left:3px solid #8bbab6;background:#f5faf8}
+.fijian-app .icavuti-community-group h5{margin:0 0 6px;color:#164a57;font-size:14px}
+.fijian-app .icavuti-community-group p{margin:4px 0;line-height:1.35}
+.fijian-app #icavuti-form-status{min-height:22px;margin:0;color:#0b5964;font-weight:650}
+@media(max-width:850px){.fijian-app .icavuti-prompt{align-items:flex-start}.fijian-app .icavuti-fields{grid-template-columns:1fr}.fijian-app .icavuti-results{grid-template-columns:1fr}.fijian-app .icavuti-contribute{grid-template-columns:1fr}}
+@media(max-width:600px){.fijian-app .icavuti-prompt{display:block}.fijian-app .icavuti-prompt button{margin-top:13px}.fijian-app .icavuti-steps{grid-template-columns:1fr}.fijian-app .icavuti-form-fields,.fijian-app .icavuti-community-pairs{grid-template-columns:1fr}.fijian-app .icavuti-results-head{display:block}.fijian-app .icavuti-panel,.fijian-app .icavuti-contribute,.fijian-app .icavuti-results-zone{padding:18px}.fijian-app .icavuti-card{min-height:0}}
+.fijian-app .icavuti-panel{background-image:linear-gradient(rgba(255,255,255,.90),rgba(255,255,255,.90)),url('../assets/ibe-voivoi-texture-v1.webp');background-size:auto,440px auto}
+.fijian-app .icavuti-results-zone{background-image:linear-gradient(rgba(250,249,244,.76),rgba(250,249,244,.76)),url('../assets/ibe-voivoi-texture-v1.webp')}
+.fijian-app .icavuti-card{background-image:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)),url('../assets/ibe-voivoi-texture-v1.webp');background-size:auto,440px auto}
+.fijian-app .icavuti-contribute{background-image:linear-gradient(rgba(234,246,241,.87),rgba(234,246,241,.87)),url('../assets/ibe-voivoi-texture-v1.webp');background-size:auto,440px auto}

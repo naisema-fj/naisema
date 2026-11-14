@@ -1,0 +1,93 @@
+<main id="main">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">DESIGN INQUIRY · LIVING LANGUAGE LAB</p>
+        <h1 id="page-title">A house you can <em>explore.</em></h1>
+        <p>Which timbers seem to hold this house together? Choose one, trace where it leads, then compare your idea with the Fijian name and the available source clues.</p>
+      <div class="hero-stats"><span><strong id="mappedCount">—</strong> pointers on the image</span><span><strong id="researchCount">—</strong> research terms with blank English glosses</span></div>
+      </div>
+      <div class="hero-shape" aria-hidden="true"><span></span><span></span><span></span></div>
+    </section>
+    <section id="explore" class="explore" aria-label="Interactive house parts">
+      <div class="section-head"><div><p class="eyebrow">01 · NOTICE AND INVESTIGATE</p><h2>Where would you look first?</h2><p>Tap a point, follow its timber through the frame, and ask which other parts help you identify it.</p></div><button id="toggleNames" type="button" class="show-names" aria-pressed="false">Show names on the image</button></div>
+      <div class="lab-layout">
+        <div class="map-panel">
+          <div class="map-topline"><span class="live-dot" aria-hidden="true"></span><span>VALE VAKAVITI · INTERACTIVE FRAME</span><span class="map-topline-end">Zoom on focus</span></div>
+          <div class="image-wrap"><img src="vale-vakaviti-wall-latu-two-openings-v7.png" alt="Open timber house frame with repeated slimmer wall uprights on the right-hand short gable front and the visible long side, leaving a front opening and a separate side opening above the steps" width="1514" height="1039"><div id="hotspots" class="hotspots" aria-label="House part hotspots"></div></div>
+        <div class="map-footer"><span>Move with Tab or tap a point. Solid pink points identify selected features for investigation; pink ? markers show broader areas to check.</span><span>Can you trace each point to a source clue before settling on its name?</span></div>
+        </div>
+        <aside class="detail-panel" aria-labelledby="detailTitle">
+          <div class="detail-top"><span class="detail-kicker">PART IN FOCUS</span><button id="backPart" class="back-part" type="button" hidden>← Previous part</button></div>
+          <div class="zoom-panel"><div id="zoomImage" class="zoom-image" role="img" aria-label="Close-up of the selected house part"></div><div id="zoomPointer" class="zoom-pointer" aria-hidden="true" hidden><span id="zoomPointerLabel" class="zoom-pointer-label"></span></div><span id="zoomHint" class="zoom-hint">Move over a part to inspect it</span></div>
+          <div class="detail-body">
+            <p id="groupName" class="group-name">Explore</p>
+            <h3 id="detailTitle" lang="fj">Choose a part</h3>
+            <p id="english" class="english">Its name and source clues will appear here.</p>
+            <p id="confidence" class="confidence"></p>
+            <div class="fact-block"><h4>What can you see?</h4><p id="seeText"></p></div>
+            <div class="fact-block"><h4>What do the clues suggest?</h4><p id="knowText"></p></div>
+            <div class="thinking"><span aria-hidden="true">✦</span><div><h4>What would you check next?</h4><p id="questionText"></p></div></div>
+            <div class="connected"><h4>Explore connected parts</h4><div id="relatedParts" class="related-parts"></div></div>
+            <div class="field-note"><h4>Build your next question</h4><p>Use the question above as a model. Name what you noticed, compare it with another part or account, and ask what evidence could change your first idea.</p><label for="noticeText">1 · What did you notice?</label><textarea id="noticeText" rows="2" maxlength="1000" placeholder="I noticed..."></textarea><label for="ownQuestionText">2 · What are you wondering now?</label><textarea id="ownQuestionText" rows="2" maxlength="1000" placeholder="How is this like or unlike...?"></textarea><label for="checkText">3 · What could help you check?</label><textarea id="checkText" rows="2" maxlength="1000" placeholder="I could compare this with..."></textarea><small id="noteStatus" role="status" aria-live="polite">Notes stay on this device.</small></div>
+            <details class="sources"><summary>Which sources can you check?</summary><ul id="sourceList"></ul><p>The 2013 Cautata study records one locally built house. Which names or methods might differ in another Fijian house?</p></details>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <section class="part-library" aria-labelledby="library-title">
+      <div class="section-head"><div><p class="eyebrow">02 · FOLLOW THE CONNECTIONS</p><h2 id="library-title">Which name will you investigate?</h2><p>Open a card and compare what the drawing shows with what the sources describe. Six names have blank English glosses. Bou, latu, loru, and qasiqasi ni kalavo point to selected features; two terms still mark broader areas to check.</p></div></div>
+      <div class="filters" role="group" aria-label="Filter parts"><button type="button" data-filter="all" aria-pressed="true">All parts</button><button type="button" data-filter="base" aria-pressed="false">Base</button><button type="button" data-filter="frame" aria-pressed="false">Posts & beams</button><button type="button" data-filter="roof" aria-pressed="false">Roof</button><button type="button" data-filter="research" aria-pressed="false">Still investigating</button></div>
+      <div id="partList" class="part-list"></div>
+    </section>
+    <section id="builder-inquiry" class="builder-inquiry" aria-labelledby="builder-title">
+      <div class="builder-intro">
+        <p class="eyebrow">03 · THINK WITH THE BUILDER</p>
+        <h2 id="builder-title">What could this frame become?</h2>
+        <p>Which timber would you start with? If cyclone wind pushed, lifted, then changed direction, what would you keep, what would you change, and what could make you rethink your first idea?</p>
+      </div>
+      <div class="builder-challenges">
+        <article class="builder-card">
+          <span class="builder-number">01 · FOLLOW THE FORCE</span>
+          <h3>Where might the wind find a loose link?</h3>
+          <p>At a roof edge, can you trace a possible path from <button class="part-link" type="button" data-open="kaco" lang="fj">kaco</button> through <button class="part-link" type="button" data-open="kautabu" lang="fj">kautabu</button> and <button class="part-link" type="button" data-open="duru" lang="fj">duru</button> toward <button class="part-link" type="button" data-open="yavu" lang="fj">yavu</button>?</p>
+          <ol>
+            <li>If wind pulls upward, which joint would you question first? What in this frame supports your guess?</li>
+            <li>If you strengthen that joint with a new connector, where might the force travel next? Could the older joining idea teach you how to keep the whole path connected?</li>
+            <li>How would you compare two small models under repeated pulling and pushing before asking a qualified builder to judge the full design?</li>
+          </ol>
+        </article>
+        <article class="builder-card">
+          <span class="builder-number">02 · REWORK THE ROOF</span>
+          <h3>What can the triangle teach the next roof?</h3>
+          <p>What changes when you compare the front sloping timbers with the <button class="part-link" type="button" data-open="doka" lang="fj">doka</button> and the interior <button class="part-link" type="button" data-open="boutoka" lang="fj">boutoka</button> candidate?</p>
+          <ol>
+            <li>Where could you add bracing without closing the stair-facing entrance? Can you sketch two routes for the force and compare them?</li>
+            <li>If you shortened an eave to reduce wind exposure, what might happen to shade and rain protection? What else could solve both needs?</li>
+            <li>Which part of your proposal could a model show, and which claim would need local wind-load calculations and an engineer's review?</li>
+          </ol>
+        </article>
+        <article class="builder-card">
+          <span class="builder-number">03 · KEEP THE RELATIONSHIPS</span>
+          <h3>What should a stronger house still mean?</h3>
+          <p>What might you learn by comparing the interior <button class="part-link" type="button" data-open="bou" lang="fj">bou</button> candidate, the front opening, and the side of the frame?</p>
+          <ol>
+            <li>Whose local account would help you understand how the front and side entrances are used here? What might differ in another community?</li>
+            <li>If a modern connector changes what people see or how they enter, which cultural meaning could change with it? Who should help decide?</li>
+            <li>Could local builders repair your idea after a storm with available skills and materials? What would you revise after their answer?</li>
+          </ol>
+        </article>
+      </div>
+      <div class="builder-notebook">
+        <div class="builder-notebook-intro"><p class="eyebrow">YOUR DESIGN INVESTIGATION</p><h3>Can you defend a change and still let it be challenged?</h3><p>Which part in the picture supports your first idea? What would you ask someone who knows this building tradition or the local site?</p></div>
+        <div class="builder-fields">
+          <label for="builderStart">What existing feature or practice are you building from?</label><textarea id="builderStart" rows="3" maxlength="1200" placeholder="I would begin with this joint, timber, or local building practice because..."></textarea>
+          <label for="builderChange">What would you change, and what new problem might that create?</label><textarea id="builderChange" rows="3" maxlength="1200" placeholder="I would prototype... It might also affect..."></textarea>
+          <label for="builderCheck">How would you test it, and whose knowledge could make you revise it?</label><textarea id="builderCheck" rows="3" maxlength="1200" placeholder="I would compare... I would ask a builder, engineer, or local knowledge holder..."></textarea>
+          <small id="builderStatus" role="status" aria-live="polite">Your design notes stay on this device.</small>
+        </div>
+      </div>
+      <details class="builder-evidence"><summary>Which building evidence could challenge your design?</summary><p>How do the <a href="https://mcttt.gov.fj/wp-content/uploads/2022/08/Guidelines_for_Improving_Building_Safety.pdf" target="_blank" rel="noopener noreferrer">Fiji rural building safety guidelines</a> and <a href="https://www.housing.gov.fj/_files/ugd/01d667_ec4902722eb349d688fb9bea6336d04d.pdf" target="_blank" rel="noopener noreferrer">Help for Homes</a> test your ideas about connected joints, bracing, roofs, and repair? How could Fiji's <a href="https://www.pmoffice.gov.fj/decisions-made-at-the-5th-cabinet-meeting-held-on-april-01-2025-01042025/" target="_blank" rel="noopener noreferrer">wind-load standards decision</a> help an engineer challenge your model before anyone built the proposal?</p></details>
+    </section>
+    <section class="editor-note" aria-labelledby="note-title"><div class="note-icon" aria-hidden="true">◎</div><div><h2 id="note-title">What pattern can you test?</h2><p>Which parts repeat across the frame, and which do a different job? The textbook drawing and the Cautata house may use different forms or names; <button class="part-link" type="button" data-open="kaco" lang="fj">kaco</button> appears in the study but not the textbook diagram. Compare the connections first, then ask whether a cultural meaning recorded for one house also belongs in another. Every hotspot needs language and building review before it becomes a scored lesson or public dictionary entry.</p><p><a href="#builder-inquiry">Return to the design investigation →</a></p></div></section>
+  </main>
+  <footer><strong>NAISEMA</strong><span>Look closely. Ask what the evidence shows. Follow the word.</span></footer>
