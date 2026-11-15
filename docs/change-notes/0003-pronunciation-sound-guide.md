@@ -63,18 +63,21 @@ This change is done when:
 - links such as `/apps/dictionary/pronunciation/#Q` still open on that letter;
 - tests cover the review fingerprint, the import counts, and the rule that a recording plays only while its rights allow, at the level the Content Item rules have.
 
-## Open decisions for the founder
+## Decisions for the founder
 
-- **Speakers and permission:** who recorded each letter, and does written permission exist? Without a rights holder there is nothing to put in a Rights Record, so step 1 can't be completed, and the recordings should not be called published under NAISEMA's rules until it is. If permission is missing, should the recordings be re-recorded or the speakers asked now?
-- **Own record or Expressions:** keep Sounds as a record of their own (recommended here), or fold them into Expressions after #116? The second avoids a new table but makes a letter an "Expression", which it is not: an Expression is a word or phrase with a meaning.
-- **Drafts on the public site:** keep showing every Sound, labelled "not reviewed yet" (as the preview does now), or only reviewed ones? (Recommended: show all, labelled. The label says exactly what has been checked.)
-- **Who reviews:** the same Language Reviewer (#7) who reviews Learning Layers and, if change note 0002 goes ahead, the dictionary? A phonetics review of 24 sounds is small, but it needs someone who can listen to the recordings, not only read the IPA.
-- **"Dz":** leave it as "recording under review" until the reviewer decides, or remove it from the public page until then?
-- **Time and cost** of the build: _to be estimated by the developer once the decisions above are made._
+Each has the answer proposed here. They become decisions when the sign-off below is completed.
+
+- **Speakers and permission.** _Founder, 15 November 2026:_ the recordings were made by the NAISEMA team. Still needed before step 1 can be completed: the name of the speaker for each of the 24 recordings, and a short written permission from each to publish their voice (an email saying they agree to NAISEMA publishing their recording of the letters is enough), kept as the Rights Record's evidence. If the speakers are staff or contractors, check whether their agreements already cover it. This does not hold up the rest of the build: Sounds, the staff screen and the page can be built first, and the Rights Records filled in as the names and permissions arrive. Until a recording has a Rights Record it should not be called published under NAISEMA's rules.
+- **Own record or Expressions.** Proposed: Sounds are a record of their own. A letter is not a word, and an Expression is a word or phrase with a meaning. It costs one small table, reuses the review rules proposed for Expressions, and does not wait on #116.
+- **Drafts on the public site.** Proposed: show every Sound, labelled "not reviewed yet", as the preview does now. The label says exactly what has been checked, and an empty page helps nobody.
+- **"Dz".** Proposed: keep it on the page as "recording under review" until the reviewer decides what it is. Hiding it would look like a ruling on Fijian spelling that nobody has made.
+- **Who reviews.** Proposed: the same Language Reviewer (#7) who reviews Learning Layers; a second reviewer for 24 sounds is more than is needed. The condition is that the reviewer listens to the recordings and does not review from the IPA alone, because the page says the IPA describes expected sounds, not these recordings. The sign-off should say so.
+- **Order of work.** Proposed: build the Sound records, the staff screen and the server-rendered page first, then add rights and review as the speaker names and the reviewer arrive.
+- **Time and cost** of the build: _to be estimated by the developer once the founder has agreed the above._
 
 ## Risks
 
-- The speaker's permission is the likely blocker. Recordings shown publicly without a Rights Record go against the rule that media is public only while its own rights allow.
+- The speakers' names and permissions are the likely blocker. Recordings shown publicly without a Rights Record go against the rule that media is public only while its own rights allow.
 - The IPA and English comparisons are an expected-sound guide, not a check of these particular recordings. The page must keep saying so until a reviewer has listened, or a reader may take a draft for a ruling on how Fijian is pronounced.
 - Five recordings (K, N, O, S and V) are marked "user-supplied", so their origin is less clear than the rest. The import should carry that status over as a note on the Sound.
 - If this goes ahead before change note 0002, two reviews exist side by side for a while (Sounds and Expressions) with different tools.
