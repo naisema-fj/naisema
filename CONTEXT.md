@@ -35,6 +35,10 @@ _Avoid_: Lesson (a Lesson has no video), VideoLearningObject, learning object, p
 An interactive Content Item in Learn that isn't built on a video (ADR-0014): pictures, words and Activities with its own Completion Rule, reviewed and published by Revision like any Content Item. Its Fijian points to Expressions.
 _Avoid_: Learning Layer (that is on a video), course, module
 
+**Fijian app**:
+One of the interactive previews first built on apps.naisema.com and now served under `/apps`: Vosa (the dictionary and its pronunciation library), the lesson previews and community translation. Not a Content Item: it has no Revisions and no Review Label, and shows the review state its material came with.
+_Avoid_: Lesson (for a lesson preview, until it is a Lesson), app (for the whole site)
+
 **Segment**:
 A timed span of a Learning Layer's clip holding the Fijian text, English translation and optional speaker for that span.
 _Avoid_: Cue, caption line (for the record)
@@ -164,7 +168,7 @@ _Avoid_: Approved tutor
 ## Operations
 
 **Submission**:
-Anything a member of the public sends through a form (enquiry, contribution offer, offer to teach, consultation interest, report, privacy request, dictionary suggestion), stored with the Notice version it was sent under and never published.
+Anything a member of the public sends through a form (enquiry, contribution offer, offer to teach, consultation interest, report, privacy request, dictionary suggestion or correction, icavuti, correction to a Fijian app page, translation proposal), stored with the Notice version it was sent under and never published.
 _Avoid_: Post, entry
 
 **Notice**:

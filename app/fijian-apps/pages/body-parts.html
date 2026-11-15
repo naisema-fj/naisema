@@ -1,0 +1,62 @@
+<header class="topbar">
+    <div class="topbar-inner">
+      <span class="preview-badge">Lesson preview · language review pending</span>
+    </div>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="lesson-title">
+      <div class="hero-copy">
+        <p class="eyebrow">Language learning · Lesson experiment 01</p>
+        <h1 id="lesson-title">Know the body.<br><em>Change the viewpoint.</em></h1>
+        <p>Explore body words in Fijian and English. Hide the Fijian labels, write what you remember, then discover how the form changes with the person it belongs to.</p>
+        <div class="hero-actions"><a class="button primary" href="#body-lab">Start the body lab <span aria-hidden="true">↗</span></a><span id="saveStatus" class="save-status">Progress stays in this browser.</span><button id="resetBtn" class="reset-button" type="button">Reset preview progress</button></div>
+      </div>
+      <div class="hero-art" aria-hidden="true"><div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div><img class="hero-preview" src="assets/body-map.png" alt=""><span class="hero-word word-one">ulu</span><span class="hero-word word-two">mata</span><span class="hero-word word-three">liga</span><span class="hero-mark">17<span>body words</span></span></div>
+    </section>
+    <nav class="journey" aria-label="Lesson stages">
+      <a href="#body-lab" class="stage active"><span>01</span><strong>Explore</strong><small>See and locate</small></a>
+      <a href="#recall" class="stage"><span>02</span><strong>Recall</strong><small>Hide and write</small></a>
+      <a href="#possession" class="stage" id="possessionStage" aria-disabled="true"><span>03</span><strong>Possession</strong><small>Unlock at 90%</small></a>
+    </nav>
+    <section id="body-lab" class="lab-section" aria-labelledby="lab-title">
+      <div class="section-title"><p class="eyebrow">01 · Explore</p><h2 id="lab-title">The body lab</h2><p>Choose a word to move the focus ring. The Fijian and English labels stay together while you study.</p></div>
+      <div class="lab-layout">
+        <div class="map-shell">
+          <div class="map-topline"><span class="live-dot"></span> Interactive map <span class="map-count" id="mapCount">01 / 17</span></div>
+          <div class="map-visual" id="mapVisual"><img src="assets/body-map.png" alt="Your supplied character, with buiniga hair and a blue patterned sulu, showing body parts and close-ups of hair, mouth, hand, and foot"><span class="focus-ring" id="focusRing" aria-hidden="true"></span></div>
+          <div class="map-caption"><span id="focusEnglish">Head</span><strong id="focusFijian" lang="fj">Ulu</strong><span class="map-symbol" aria-hidden="true">↗</span></div>
+          <p class="map-note">The ring is a visual guide. For small parts such as teeth, lips, fingers, and nails, use the original video or your own body to check the precise location.</p>
+        </div>
+        <div class="lab-panel">
+          <div class="panel-heading"><div><p class="eyebrow">Body word collection</p><h3>Tap a label. Make a connection.</h3></div><span class="panel-icon" aria-hidden="true">✦</span></div>
+          <div class="group-tabs" role="group" aria-label="Filter body words"><button type="button" class="filter active" data-filter="all" aria-pressed="true">All 17</button><button type="button" class="filter" data-filter="head" aria-pressed="false">Head & face</button><button type="button" class="filter" data-filter="upper" aria-pressed="false">Arms & body</button><button type="button" class="filter" data-filter="lower" aria-pressed="false">Legs & feet</button></div>
+          <div id="wordCards" class="word-cards"></div>
+          <details class="video-drawer"><summary><span aria-hidden="true">▷</span> Watch the original video reference</summary><div class="video-inner"><video controls playsinline preload="metadata" poster="assets/poster.jpg" aria-label="Original body-parts video"><source src="assets/body-parts-intro.mp4" type="video/mp4">Your browser cannot play this video.</video><p>The video is an optional reference. Its Fijian labels are built into the image, so the Hide activity uses the clean body map.</p></div></details>
+        </div>
+      </div>
+    </section>
+    <section id="recall" class="recall-section" aria-labelledby="recall-title">
+      <div class="section-title"><p class="eyebrow">02 · Recall</p><h2 id="recall-title">Make the words yours.</h2><p>Try hiding the Fijian labels while you practise. When ready, start an independent 17-word check to open the possession lesson.</p></div>
+      <div class="recall-toolbar"><button id="hideBtn" class="button secondary" type="button">Hide Fijian labels</button><button id="challengeBtn" class="button primary" type="button">Start 90% check <span aria-hidden="true">→</span></button><span id="recallMode" class="mode-chip">Study mode</span></div>
+      <div class="recall-card"><div id="answerGrid" class="answer-grid"></div><div class="check-bar"><p id="checkInstruction">Use the labels to study, or hide them for a practice round.</p><button id="submitBtn" class="button primary" type="button" hidden>Check 17 answers</button></div></div>
+      <div id="result" class="result" role="status" aria-live="polite" hidden></div>
+      <details id="attemptHistory" class="attempt-history"><summary>Review earlier checks</summary><div id="historyList"></div></details>
+    </section>
+    <section id="possession" class="possession-section locked" aria-labelledby="possession-title">
+      <div class="section-title"><p class="eyebrow">03 · Possession</p><h2 id="possession-title">Now change the viewpoint.</h2><p id="possessionIntro">Earn 16 correct body labels in a fresh check to open this theory and its activities.</p></div>
+      <div id="lockedPanel" class="locked-panel"><div class="lock-icon" aria-hidden="true">◇</div><div><h3>Body labels first</h3><p>Once you reach 90%, the theory opens. You can always return to revise your body words.</p></div><a href="#recall" class="button secondary">Go to recall</a></div>
+      <div id="theoryPanel" hidden>
+        <div class="theory-intro"><span class="theory-number">The idea</span><h3>Whose body part? Which group?</h3><p>In Fijian, a body-part word can take a possessive ending. We will look at the relationship first, then choose a form. These examples follow Vosa Vakaviti Raraba and still need qualified speaker review before public teaching.</p></div>
+        <div class="concept-grid">
+          <article class="concept"><span class="concept-index">01 / FORM</span><h4>Attach to a body word</h4><div class="form-demo"><span lang="fj">bati</span><span class="plus">+</span><span lang="fj">-qu</span><span class="equals">→</span><strong lang="fj">batiqu</strong></div><p><strong>Taukeni kuri:</strong> a checked example for “my teeth.” Compare <span lang="fj">na noqu vale</span> (“my house”): <span lang="fj">noqu</span> is before <span lang="fj">vale</span>. It is not the default before every body word.</p></article>
+          <article class="concept"><span class="concept-index">02 / PEOPLE</span><h4>Count the people</h4><div class="people-display" id="peopleDisplay" aria-hidden="true"><span class="person on">●</span><span class="person">●</span><span class="person">●</span><span class="person">●</span></div><p>One, two, a few, or many changes the ending. “A few” does not have to mean exactly three.</p></article>
+          <article class="concept"><span class="concept-index">03 / VIEWPOINT</span><h4>Is the listener in the group?</h4><div class="group-visual" aria-hidden="true"><span>speaker</span><span id="listenerIcon">listener</span><span>others</span></div><p>Inclusive means the speaker and listener are together. Exclusive means the listener is outside the speaker’s group.</p></article>
+        </div>
+        <div class="theory-explorer"><div><p class="eyebrow">Try the viewpoint switch</p><h3>Move the listener in or out.</h3><p id="viewpointExplanation">Choose a group to see its relationship and the corresponding attached ending.</p></div><div class="scenario-buttons" id="scenarioButtons"></div><div class="suffix-display"><span id="scenarioPeople">My own body part</span><strong id="scenarioForm" lang="fj">-qu</strong><small id="scenarioNote">A suffix shown on its own is a form clue, not a complete body-part word.</small></div></div>
+        <div class="theory-check" id="theoryCheck"><div><p class="eyebrow">Quick understanding check</p><h3>Show you can tell the forms apart.</h3><p>Select one answer for each idea. Feedback explains the distinction before you move on.</p></div><div id="theoryQuestions"></div><p id="theoryResult" role="status" aria-live="polite"></p></div>
+        <div id="practicePanel" class="practice-panel" hidden><div class="practice-head"><div><p class="eyebrow">Apply it</p><h3>Suffix detective</h3><p>Look at the people first. Then choose the attached ending that expresses that relationship. These are ending choices; complete body-part words need their own checked examples.</p></div><span id="practiceProgress" class="practice-progress">0 / 11</span></div><div id="practiceQuestion"></div><div id="practiceFeedback" role="status" aria-live="polite"></div><button id="nextPractice" class="button secondary" type="button" hidden>Next viewpoint →</button></div>
+      </div>
+    </section>
+    <section class="source-note" aria-labelledby="source-title"><h2 id="source-title">How this preview treats the language</h2><p>The original video supplies the starting word list. Some labels can name more than one nearby part, and not every body word takes the same possession pattern. This preview keeps those differences visible while a qualified Fijian speaker reviews the final words and examples.</p><details><summary>Sources and review notes</summary><ul><li><a href="https://sangamedu.ac.fj/wp-content/uploads/2021/06/Fijian-Sheet-1-8.pdf">Sangam Education Board Year 3 worksheet</a> — attested <span lang="fj">batiqu</span>, <span lang="fj">batimu</span>, <span lang="fj">mataqu</span>, and <span lang="fj">yavaqu</span>.</li><li><a href="https://openresearch-repository.anu.edu.au/bitstreams/ad8ffd53-3125-4166-885e-a761ec8bf989/download">ANU Standard Fijian pronoun paradigm</a> — person, number, inclusive/exclusive, and suffix distinctions.</li><li><a href="https://openresearch-repository.anu.edu.au/bitstreams/d0142aff-f4bb-4c2c-b7ef-f2e5a70134bc/download">ANU possession study</a> — direct suffixes and preposed possession patterns.</li></ul></details></section>
+  </main>
+  <footer><div><strong>NAISEMA</strong><span>Learning through noticing, trying, explaining, and revising.</span></div><p>Lesson preview · no account · progress on this device</p></footer>

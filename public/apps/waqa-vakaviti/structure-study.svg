@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Concept cutaway with two hulls, deck, hold, ribs, mast base, support and canoe house shelf">
+  <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#e7f8e8"/><stop offset="1" stop-color="#c5e7f3"/></linearGradient></defs>
+  <rect width="1200" height="800" fill="url(#bg)"/>
+  <rect x="45" y="35" width="660" height="84" rx="20" fill="#16475a"/>
+  <text x="70" y="68" font-family="Arial,sans-serif" font-size="25" font-weight="700" fill="#fff">LOOK INSIDE · CONCEPT CUTAWAY</text>
+  <text x="70" y="98" font-family="Arial,sans-serif" font-size="18" fill="#d9f2ec">Positions to question with builders, not a building plan</text>
+  <path d="M0 655Q330 634 620 654T1200 652V800H0Z" fill="#55bbcb"/>
+  <path d="M92 554Q113 691 268 716H450Q609 705 630 554Z" fill="#a36540" stroke="#543d35" stroke-width="10"/>
+  <path d="M126 558Q150 652 281 673H435Q553 660 590 558" fill="#3c696c" stroke="#553f34" stroke-width="9"/>
+  <path d="M642 554Q670 687 791 709H965Q1091 694 1110 554Z" fill="#a36540" stroke="#543d35" stroke-width="10"/>
+  <path d="M675 558Q701 643 807 667H945Q1042 651 1070 558" fill="#3c696c" stroke="#553f34" stroke-width="9"/>
+  <path d="M184 568Q197 642 244 660M274 570Q292 650 329 670M386 569Q411 642 449 661M486 565Q505 626 533 643" stroke="#d69d64" stroke-width="11" fill="none"/>
+  <path d="M727 565Q746 638 786 658M829 566Q846 639 886 661M932 565Q954 630 989 653" stroke="#d69d64" stroke-width="11" fill="none"/>
+  <path d="M282 706L438 706M809 702H965" stroke="#573a34" stroke-width="17" stroke-linecap="round"/>
+  <path d="M114 528H1085V558H114Z" fill="#bd8052" stroke="#634a39" stroke-width="8"/>
+  <path d="M185 505H1018V531H185Z" fill="#8c5c43" stroke="#5d4437" stroke-width="8"/>
+  <path d="M244 454H952V500H244Z" fill="#d39a65" stroke="#674a3b" stroke-width="8"/>
+  <path d="M380 454V333H697V454" fill="#bd8655" stroke="#593e35" stroke-width="12"/>
+  <path d="M400 451V353H673V451Z" fill="#f0ce99" stroke="#805844" stroke-width="7"/>
+  <path d="M349 318H734V341H349Z" fill="#90654b" stroke="#5b4439" stroke-width="7"/>
+  <path d="M390 318V265M688 318V265" stroke="#795240" stroke-width="17"/>
+  <path d="M324 250H754V271H324Z" fill="#d6a66d" stroke="#795640" stroke-width="8"/>
+  <path d="M525 458L593 145" stroke="#6b483a" stroke-width="30" stroke-linecap="round"/>
+  <path d="M543 372H694" stroke="#725042" stroke-width="24" stroke-linecap="round"/>
+  <path d="M655 360V457" stroke="#81523e" stroke-width="25" stroke-linecap="round"/>
+  <circle cx="526" cy="454" r="18" fill="#493f3a" stroke="#e8bb70" stroke-width="7"/>
+  <path d="M940 507L1063 546" stroke="#75513e" stroke-width="14" stroke-linecap="round"/>
+  <path d="M1063 546L1104 621" stroke="#75513e" stroke-width="20" stroke-linecap="round"/>
+  <path d="M1063 546L1104 621" stroke="#ead09d" stroke-width="4" stroke-linecap="round"/>
+  <rect x="45" y="736" width="1110" height="43" rx="13" fill="#fff9e9"/>
+  <text x="65" y="764" font-family="Arial,sans-serif" font-size="18" fill="#2b4f5b">What can this cutaway reveal? Which exact joins and proportions still need a real model?</text>
+</svg>

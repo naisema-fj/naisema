@@ -76,6 +76,12 @@ export function meta() {
 }
 
 const formTitle = (key: string) => FORMS[key as FormKey]?.title ?? key;
+
+/** A field's label on its form, or its stored name for a field the form no longer has. */
+const fieldLabel = (key: string, name: string) =>
+  (FORMS[key as FormKey]?.fields as readonly { name: string; label: string }[] | undefined)?.find(
+    (field) => field.name === name,
+  )?.label ?? name;
 const day = (date: Date | string) => new Date(date).toLocaleDateString("en-AU", { dateStyle: "long" });
 
 export default function Submissions({ loaderData, actionData }: Route.ComponentProps) {
@@ -114,7 +120,7 @@ export default function Submissions({ loaderData, actionData }: Route.ComponentP
           </dd>
           {Object.entries(one.fields).map(([name, value]) => (
             <div key={name}>
-              <dt>{name}</dt>
+              <dt>{fieldLabel(one.form, name)}</dt>
               <dd className="preserve-lines">{value}</dd>
             </div>
           ))}

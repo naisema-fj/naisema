@@ -1,6 +1,7 @@
 # Change note 0001: Lessons in Learn
 
 **Status:** proposed, not yet agreed. Nothing below is built, and nothing should be built until the sign-off at the end is complete.
+**Update, 14 November 2026:** the founder brought the apps.naisema.com previews themselves onto NAISEMA under `/apps`, labelled as previews (decision log, "The Fijian apps join NAISEMA"). That is not the change below: the Lesson content type, its review and its progress are still unbuilt, and the previews carry no Review Label.
 **Date:** 9 November 2026
 **Changes:** the Phase 1a scope in ADR-0002 (decision log, MOU amendment 1: "Phase 1a as defined in ADR-0002, together with ADRs 0001 onward").
 **Design:** ADR-0014, "Lessons are Content Items of their own, not Learning Layers" (in pull request 88 until merged).
@@ -47,7 +48,7 @@ None, if this is agreed as a **post-launch** addition. The recommendation is to 
 - the launch blockers (#5 to #10) are about people, and Lessons would add a second stream of content for the same single Language Reviewer (#7) and Educator (#8);
 - the interactive island is the first client-side JavaScript on a public content page, and deserves its own accessibility checks (see below) rather than a rush before launch.
 
-Until a Lesson is built and published, `/apps` keeps saying Lessons are not open yet.
+Until a Lesson is built and published, the lesson previews at `/apps/lessons/` say they are previews awaiting review.
 
 ## Acceptance
 

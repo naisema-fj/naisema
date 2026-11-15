@@ -1,0 +1,57 @@
+<main id="main">
+    <div class="return-line"><span>Community translation · design preview</span></div>
+    <section class="explorer" aria-labelledby="page-title">
+      <div class="explorer-heading">
+        <div><p class="overline">Science · water cycle</p><h1 id="page-title">Follow the water<span class="period">.</span></h1></div>
+        <p>Choose a name in the picture. What would you call this change in Fijian?</p>
+      </div>
+      <div class="explorer-layout" id="explorer-layout">
+        <div class="scene-column">
+          <div class="scene-viewport"><div class="scene" aria-label="Illustrated water cycle with six selectable processes">
+            <img src="water-cycle-illustration-v1.png" width="1672" height="941" alt="Sun over water, clouds and rain above land, a tree, a flowing river and a cross-section of soil. Select a labeled process to explore it.">
+            <svg class="movement-cue" viewBox="0 0 1672 941" preserveAspectRatio="none" aria-hidden="true">
+              <defs><marker id="flow-head" viewBox="0 0 12 12" refX="9" refY="6" markerWidth="5" markerHeight="5" orient="auto"><path d="M1 1 L10 6 L1 11" fill="none" stroke="#fff6d7" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+              <path class="flow-arrow evaporation-arrow" d="M330 606 C314 547 321 463 356 378 C372 340 391 312 412 291" marker-end="url(#flow-head)"/>
+              <path class="flow-arrow condensation-arrow" d="M472 288 C523 250 568 229 626 226" marker-end="url(#flow-head)"/>
+              <path class="flow-arrow precipitation-arrow" d="M1125 240 C1118 297 1104 353 1086 413" marker-end="url(#flow-head)"/>
+              <path class="flow-arrow transpiration-arrow" d="M925 519 C944 467 957 408 956 347" marker-end="url(#flow-head)"/>
+              <path class="flow-arrow runoff-arrow" d="M1450 464 C1373 474 1312 507 1250 557 C1179 608 1098 625 1013 648" marker-end="url(#flow-head)"/>
+              <path class="flow-arrow infiltration-arrow" d="M1536 606 C1531 666 1526 728 1515 785" marker-end="url(#flow-head)"/>
+            </svg>
+            <span class="evaporation-cue">Liquid water <span aria-hidden="true">→</span><br>invisible vapour</span>
+            <a class="hotspot evaporation" href="?term=evaporation" data-term="evaporation" aria-label="Explore evaporation"><span class="hotspot-number">01</span><span class="hotspot-name">Evaporation</span></a>
+            <a class="hotspot condensation" href="?term=condensation" data-term="condensation" aria-label="Explore condensation"><span class="hotspot-number">02</span><span class="hotspot-name">Condensation</span></a>
+            <a class="hotspot precipitation" href="?term=precipitation" data-term="precipitation" aria-label="Explore precipitation"><span class="hotspot-number">03</span><span class="hotspot-name">Precipitation</span></a>
+            <a class="hotspot transpiration" href="?term=transpiration" data-term="transpiration" aria-label="Explore transpiration"><span class="hotspot-number">04</span><span class="hotspot-name">Transpiration</span></a>
+            <a class="hotspot runoff" href="?term=runoff" data-term="runoff" aria-label="Explore runoff"><span class="hotspot-number">05</span><span class="hotspot-name">Runoff</span></a>
+            <a class="hotspot infiltration" href="?term=infiltration" data-term="infiltration" aria-label="Explore infiltration"><span class="hotspot-number">06</span><span class="hotspot-name">Infiltration</span></a>
+          </div></div>
+          <div class="scene-footer"><span>Tap a name · swipe the picture on a small screen</span><a href="https://www.usgs.gov/water-science-school/water-cycle" target="_blank" rel="noopener noreferrer">Explore the science · USGS ↗</a></div>
+        </div>
+        <section class="process-panel" id="process-panel" aria-labelledby="process-title" hidden>
+          <div class="panel-topline"><a href="./" id="back-to-cycle">← Whole picture</a><span id="process-count"></span></div>
+          <h2 id="process-title"></h2>
+          <p class="process-subtitle" id="process-subtitle"></p>
+          <div class="idea-strip">
+            <div class="idea-cell"><span class="idea-icon" aria-hidden="true">◉</span><div><h3>Meaning</h3><p id="process-meaning"></p></div></div>
+            <div class="idea-cell"><span class="idea-icon" aria-hidden="true">↶</span><div><h3>English word trail</h3><p id="process-etymology"></p><a id="etymology-source" target="_blank" rel="noopener noreferrer">Word history ↗</a></div></div>
+            <div class="idea-cell clue-cell"><span class="idea-icon" aria-hidden="true">✦</span><div><h3>Translation clue</h3><p id="process-clue"></p></div></div>
+          </div>
+          <div class="panel-actions"><a id="science-source" target="_blank" rel="noopener noreferrer">Science source ↗</a><span>Clue for discussion · no approved Fijian term yet</span></div>
+          <form id="translation-form" class="translation-form">
+            <div class="form-heading"><div><p class="overline">Your turn</p><h3>How would you say it?</h3></div><span>Draft on this device</span></div>
+            <label for="proposed-expression">Fijian expression</label>
+            <input id="proposed-expression" name="expression" required maxlength="120" autocomplete="off" placeholder="Write your suggestion">
+            <div class="form-pair">
+              <div><label for="translation-method">Approach</label><select id="translation-method" name="method" required><option value="">Choose one</option><option value="existing">Existing usage</option><option value="literal">Literal</option><option value="descriptive">Descriptive</option><option value="borrowed">Borrowed</option><option value="new">New wording</option></select></div>
+              <div><label for="translation-reason">Why this wording?</label><input id="translation-reason" name="reason" required maxlength="400" placeholder="A short reason"></div>
+            </div>
+            <p class="method-rule" id="method-rule" aria-live="polite"></p>
+            <details class="source-details"><summary>Have a source or local example?</summary><label for="translation-context">Where have you seen or heard it?</label><input id="translation-context" name="context" maxlength="300" placeholder="Source, speaker context or place"></details>
+            <div class="form-bottom"><button class="tile-button" type="submit">Save my draft <span aria-hidden="true">→</span></button><p id="translation-feedback" role="status" aria-live="polite">Saved only in this browser. Nothing is sent.</p></div>
+          </form>
+          <div class="saved-draft" id="saved-draft" hidden></div>
+        </section>
+      </div>
+    </section>
+  </main>

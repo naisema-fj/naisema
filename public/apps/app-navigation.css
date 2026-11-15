@@ -1,0 +1,74 @@
+/* One predictable route back to the apps collection on every app page. */
+.fijian-app .brand-logo {
+  display: block;
+  flex: 0 0 62px;
+  width: 62px;
+  height: 62px;
+  overflow: hidden;
+  border-radius: 13px;
+  background: #0f2b35;
+  box-shadow: 0 4px 12px #0f2b3526;
+}
+.fijian-app .brand-logo img {
+  display: block;
+  width: 84px;
+  height: 84px;
+  max-width: none;
+  margin: -11px;
+}
+.fijian-app .app-switcher {
+  position: relative;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(80rem, calc(100% - 2rem));
+  margin: 14px auto 0;
+  color: #173948;
+  font: 750 .91rem/1.25 Jost, system-ui, sans-serif;
+}
+.fijian-app .app-switcher a { text-decoration: none; }
+.fijian-app .app-switcher a:hover { text-decoration: underline; text-underline-offset: .2em; }
+.fijian-app .app-back,
+.fijian-app .app-menu summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 43px;
+  padding: 8px 14px;
+  border: 1px solid #bad6dc;
+  border-radius: 13px;
+  background: #fffefa;
+  box-shadow: 0 5px 14px #17476316;
+  color: #173948;
+}
+.fijian-app .app-back span,
+.fijian-app .app-menu summary span { font-size: 1.2em; line-height: 1; }
+.fijian-app .app-menu { position: relative; }
+.fijian-app .app-menu summary { cursor: pointer; list-style: none; }
+.fijian-app .app-menu summary::-webkit-details-marker { display: none; }
+.fijian-app .app-menu[open] summary { border-color: #398db0; background: #e7f7fd; }
+.fijian-app .app-menu-list {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  display: grid;
+  gap: 3px;
+  width: min(280px, calc(100vw - 2rem));
+  padding: 8px;
+  border: 1px solid #bad6dc;
+  border-radius: 15px;
+  background: #fffefa;
+  box-shadow: 0 15px 35px #1739482b;
+}
+.fijian-app .app-menu-list a { display: block; padding: 10px 12px; border-radius: 9px; }
+.fijian-app .app-menu-list a:hover,
+.fijian-app .app-menu-list a[aria-current="page"] { background: #e7f7fd; }
+.fijian-app .app-switcher :focus-visible { outline: 3px solid #e47b3b; outline-offset: 3px; }
+@media (max-width: 460px) {
+  .fijian-app .brand-logo { flex-basis: 52px; width: 52px; height: 52px; border-radius: 11px; }
+  .fijian-app .brand-logo img { width: 72px; height: 72px; margin: -10px; }
+  .fijian-app .app-switcher { margin-top: 9px; font-size: .83rem; }
+  .fijian-app .app-back, .fijian-app .app-menu summary { min-height: 40px; padding: 8px 10px; }
+}

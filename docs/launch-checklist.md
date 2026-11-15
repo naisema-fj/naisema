@@ -51,4 +51,4 @@ Everything between the code and a live NAISEMA, as of 9 November 2026, after the
 
 ## After launch
 
-#3 (component approvals), #5 (backup Safeguarding Lead), #6 (backup technical owner), #9 (support agreement and MOU amendments), #65 (Phase 1b scope), the Vosa dictionary pages, and Lessons (change note 0001).
+#3 (component approvals), #5 (backup Safeguarding Lead), #6 (backup technical owner), #9 (support agreement and MOU amendments), #65 (Phase 1b scope), and Lessons as a content type (change note 0001). The Vosa dictionary pages and the lesson previews are on the site as previews under `/apps` (decision log, "The Fijian apps join NAISEMA"); their Rights Records and a store for approved Vosa entries are still to do.

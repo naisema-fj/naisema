@@ -4,7 +4,7 @@ import type { EntryContext, HandleErrorFunction, RouterContextProvider } from "r
 import { isRouteErrorResponse, ServerRouter } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
 import { logError } from "~/lib/log.server";
-import { pageHydrates, pagePlaysVideo, type RouteHandle } from "~/lib/route-handle";
+import { pageHydrates, pagePlaysVideo, pageUsesTurnstile, type RouteHandle } from "~/lib/route-handle";
 import { createNonce, NonceContext } from "~/lib/security-headers";
 import { applySecurityHeaders } from "~/lib/security-policy";
 
@@ -49,8 +49,9 @@ export default async function handleRequest(
     const onAdminHost = new URL(request.url).hostname === env.ADMIN_HOSTNAME;
     applySecurityHeaders(responseHeaders, hydrates(routerContext) ? nonce : null, {
       allowIndexing: env.ALLOW_INDEXING === "true" && !onAdminHost && leafHandle(routerContext)?.noindex !== true,
-      turnstile: leafHandle(routerContext)?.turnstile === true,
+      turnstile: pageUsesTurnstile(leafHandle(routerContext), leafData(routerContext)),
       video: pagePlaysVideo(leafHandle(routerContext), leafData(routerContext)),
+      selfScripts: leafHandle(routerContext)?.selfScripts === true,
     });
   }
   return new Response(body, { headers: responseHeaders, status: responseStatusCode });

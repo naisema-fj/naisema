@@ -1,0 +1,34 @@
+.fijian-app{background:linear-gradient(145deg,#1b82c2 0 31%,#3ab778 31.1% 62%,#f6aa4a 62.1% 83%,#f47dac 83.1%);background-attachment:fixed}
+.fijian-app main{padding:1.15rem 1.15rem 4rem;border-radius:24px 24px 0 0;background:#fffdf8f2;box-shadow:0 20px 55px #15435b30}
+.fijian-app .lessons-hero{position:relative;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);min-height:320px;overflow:hidden;border-radius:21px;background:linear-gradient(115deg,#125580,#208ac0);color:#fff}
+.fijian-app .lessons-hero-copy{position:relative;z-index:1;align-self:center;padding:clamp(1.7rem,4vw,3.7rem)}
+.fijian-app .lessons-kicker{margin:0 0 .7rem;color:#a3406b;font-size:.76rem;font-weight:900;letter-spacing:.13em}
+.fijian-app .lessons-hero .lessons-kicker{color:#ffe27c}
+.fijian-app .lessons-hero h1{margin:0 0 1rem;font:800 clamp(2.8rem,5vw,5rem)/.98 var(--display);letter-spacing:-.045em}
+.fijian-app .lessons-hero h1 em{color:#ffda72;font-style:normal}
+.fijian-app .lessons-hero-copy>p:last-child{max-width:40rem;margin:0;color:#f1faff;font-size:1.06rem}
+.fijian-app .lessons-hero-art{position:relative;min-height:260px;background:radial-gradient(circle at 50% 50%,#7cc6dd,#348cb8)}
+.fijian-app .shape{position:absolute;display:block}
+.fijian-app .shape-one{top:12%;left:16%;width:35%;aspect-ratio:1;border-radius:50%;background:#ffd866}
+.fijian-app .shape-two{top:30%;right:16%;width:31%;aspect-ratio:1;transform:rotate(30deg);background:#ff91b6}
+.fijian-app .shape-three{bottom:-17%;left:11%;width:50%;aspect-ratio:1;transform:rotate(45deg);background:#46c489}
+.fijian-app .shape-four{bottom:10%;right:15%;width:26%;aspect-ratio:1;border:15px solid #ffb061;border-radius:50%}
+.fijian-app .art-word{position:absolute;top:45%;left:22%;transform:rotate(-8deg);padding:.4rem 1rem;border:3px solid #fff;border-radius:100px;background:#fffefa;color:#125580;font:900 clamp(2.2rem,4vw,4rem) var(--display);box-shadow:0 15px 30px #1450774d}
+.fijian-app .lesson-collection{margin-top:2.2rem}
+.fijian-app .collection-heading{max-width:43rem;padding:1.2rem 1.5rem;border-left:8px solid #38b778;border-radius:16px;background:#fff;box-shadow:0 8px 25px #17394812}
+.fijian-app .collection-heading h2{margin:.15rem 0 .5rem;color:#124f73;font:800 clamp(2rem,3.7vw,3.6rem)/1 var(--display)}
+.fijian-app .collection-heading p:last-child{margin:0;color:#4c6268}
+.fijian-app .lesson-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.2rem;margin-top:1.3rem}
+.fijian-app .lesson-grid>.lesson-card:last-child:nth-child(odd){grid-column:1 / -1;max-width:none}
+.fijian-app .lesson-card{display:grid;grid-template-columns:minmax(150px,.7fr) minmax(0,1.3fr);overflow:hidden;max-width:880px;border:2px solid #a8d8e9;border-radius:19px;background:#fff;box-shadow:0 12px 30px #18618520}
+.fijian-app .lesson-art{display:grid;place-items:center;min-height:280px;overflow:hidden;background:linear-gradient(140deg,#d9f3fd,#fff1db)}
+.fijian-app .lesson-art img{display:block;width:100%;height:100%;max-height:360px;object-fit:contain}
+.fijian-app .lesson-card-copy{align-self:center;padding:1.5rem}
+.fijian-app .lesson-status{color:#a33d6b;font-size:.75rem;font-weight:900;letter-spacing:.1em}
+.fijian-app .lesson-card h3{margin:.55rem 0 .75rem;color:#124f73;font:800 clamp(1.7rem,2.5vw,2.5rem)/1.05 var(--display)}
+.fijian-app .lesson-card p{max-width:40rem;margin:0 0 .8rem;color:#455d67}
+.fijian-app .lesson-card .review-note{font-size:.83rem}
+.fijian-app .lesson-open{display:inline-flex;gap:.5rem;align-items:center;padding:.7rem 1rem;border:1px solid #db762e;border-radius:10px;background:#ffae60;color:#173948;font-weight:850;text-decoration:none}
+.fijian-app .lesson-open:hover{background:#ffc078;text-decoration:none}
+@media(max-width:1050px){.fijian-app .lesson-grid{grid-template-columns:1fr}.fijian-app .lesson-grid>.lesson-card:last-child:nth-child(odd){grid-column:auto}}
+@media(max-width:750px){.fijian-app main{padding:.8rem .8rem 3rem}.fijian-app .lessons-hero{display:block}.fijian-app .lessons-hero-art{min-height:150px}.fijian-app .lessons-hero-copy{padding:1.6rem}.fijian-app .art-word{top:28%;left:33%}.fijian-app .shape-one{width:15%;top:22%}.fijian-app .shape-two{width:15%;top:18%}.fijian-app .shape-three{width:20%;bottom:-20%}.fijian-app .shape-four{width:13%;border-width:9px}.fijian-app .lesson-card{grid-template-columns:1fr}.fijian-app .lesson-art{min-height:230px}.fijian-app .lesson-art img{max-height:250px}}

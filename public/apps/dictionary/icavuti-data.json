@@ -1,0 +1,3940 @@
+{
+  "version": "2026-11-02-local-02",
+  "records": [
+    {
+      "scope": "tikina",
+      "id": "b8785d0b449201",
+      "province": "Ba",
+      "district": "Ba",
+      "subdistrict": "Nailaga",
+      "title": "Nawaivituri na Marama na Tui Ba (Tiliva Bukuya)",
+      "otherTitles": [],
+      "villages": [
+        "Nailaga",
+        "Votua",
+        "Nawaqarua",
+        "Matawalu",
+        "Nasolo",
+        "Koroqaqa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "43474bfd390af7",
+      "province": "Ba",
+      "district": "Ba",
+      "subdistrict": "Bulu",
+      "title": "Koronubu na Momo na Tui Ba (Tiliva Koronubu)",
+      "otherTitles": [],
+      "villages": [
+        "Sorokoba",
+        "Natalecake",
+        "Vadravadra",
+        "Sasa",
+        "Natunuku",
+        "Natu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "aea39ff17aaaa7",
+      "province": "Ba",
+      "district": "Magodro",
+      "subdistrict": "Magodro",
+      "title": "Naroyasi na Momo na Tui Magodro",
+      "otherTitles": [],
+      "villages": [
+        "Bukuya",
+        "Nadevo",
+        "Navaga",
+        "Tabalei",
+        "Tabuquto",
+        "Nasivikoso"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "d40309284e5d2d",
+      "province": "Ba",
+      "district": "Magodro",
+      "subdistrict": "Naloto",
+      "title": "Tabuatolu na Momo na Tui Naloto",
+      "otherTitles": [],
+      "villages": [
+        "Toge",
+        "Balevuto",
+        "Nadrugu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "59ca64cad56f79",
+      "province": "Ba",
+      "district": "Magodro",
+      "subdistrict": "Nalotawa",
+      "title": "Namaravulevu na Momo na Tui Yakete",
+      "otherTitles": [],
+      "villages": [
+        "Nalotawa",
+        "Navilawa",
+        "Nanuku",
+        "Tukuraki",
+        "Yaloku"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "fc15f7f114bf19",
+      "province": "Ba",
+      "district": "Nadi",
+      "subdistrict": "Nadi",
+      "title": "Navatulevu na Momo na Tui Nadi",
+      "otherTitles": [],
+      "villages": [
+        "Narewa",
+        "Nakavu",
+        "Namotomoto",
+        "Navoci",
+        "Saunaka",
+        "Dratabu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6061bbe9df3f72",
+      "province": "Ba",
+      "district": "Nadi",
+      "subdistrict": "Sikituru",
+      "title": "",
+      "otherTitles": [],
+      "villages": [
+        "Sikituru",
+        "Moala",
+        "Yavunsania",
+        "Korovuto"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "36c6f0a74eef86",
+      "province": "Ba",
+      "district": "Tavua",
+      "subdistrict": "Tavua",
+      "title": "Bila na Momo na Tui Tavua",
+      "otherTitles": [],
+      "villages": [
+        "Tavualevu",
+        "Nabuna",
+        "Korovou",
+        "Vatuvui",
+        "Nadelei"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 1,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "487b4e9ed59cbd",
+      "province": "Ba",
+      "district": "Tavua",
+      "subdistrict": "Savatu",
+      "title": "Tilivalevu na Momo na iTaukei Nubu",
+      "otherTitles": [],
+      "villages": [
+        "Nagatagata",
+        "Waikubukubu",
+        "Vatucere (Nadala)",
+        "Vunabuna",
+        "Tewa",
+        "Koro"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "ad695ec8111ed6",
+      "province": "Ba",
+      "district": "Tavua",
+      "subdistrict": "Qaliyatina",
+      "title": "Na Momo na Tui Yalatina",
+      "otherTitles": [],
+      "villages": [
+        "Navala",
+        "Nakoroboya"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "7e218b8f72c6df",
+      "province": "Ba",
+      "district": "Vuda",
+      "subdistrict": "Vuda",
+      "title": "Vunisei na Momo na Tui Vuda",
+      "otherTitles": [],
+      "villages": [
+        "Veiseisei",
+        "Lauwaki",
+        "Lomolomo",
+        "Namara",
+        "Abaca"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "ac3bb5808973cc",
+      "province": "Ba",
+      "district": "Vuda",
+      "subdistrict": "Sabeto",
+      "title": "Erenavula na Momo na Tui Sabeto",
+      "otherTitles": [],
+      "villages": [
+        "Koroyaca",
+        "Narokorokoyawa",
+        "Natalau",
+        "Naboutini",
+        "Nadele (Korobebe)"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "8bba749e51d6ae",
+      "province": "Ba",
+      "district": "Vuda",
+      "subdistrict": "Vitogo",
+      "title": "Sukanacagi na Momo na Tui Vitogo",
+      "otherTitles": [],
+      "villages": [
+        "Vitogo",
+        "Naviyago"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "394f3915e1f003",
+      "province": "Ba",
+      "district": "Vuda",
+      "subdistrict": "Vitogo",
+      "title": "Momo na iTaukei Vidilo",
+      "otherTitles": [],
+      "villages": [
+        "Namoli",
+        "Saru"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "79639354d67511",
+      "province": "Ba",
+      "district": "Vuda",
+      "subdistrict": "Vitogo",
+      "title": "Momo na iTaukei Saqele",
+      "otherTitles": [],
+      "villages": [
+        "Vakabuli"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "05ff3509b6eb40",
+      "province": "Ba",
+      "district": "Yasawa",
+      "subdistrict": "Nacula",
+      "title": "Nacula na Momo na Tui Drola",
+      "otherTitles": [],
+      "villages": [
+        "Nacula",
+        "Malakati",
+        "Matacawalevu",
+        "Vuaki",
+        "Navotua",
+        "Naisilisili",
+        "Namatayalevu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5027487818d6d7",
+      "province": "Ba",
+      "district": "Yasawa",
+      "subdistrict": "Nacula",
+      "title": "Momo na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Yaqeta"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5178b23f71e547",
+      "province": "Ba",
+      "district": "Yasawa",
+      "subdistrict": "Yasawa",
+      "title": "Vatanitawake na Momo na Tui Yasawa",
+      "otherTitles": [],
+      "villages": [
+        "Yasawa irara",
+        "Teci",
+        "Daloma",
+        "Tamusua",
+        "Bukama"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0b4e2bd4301ba1",
+      "province": "Ba",
+      "district": "Naviti",
+      "subdistrict": "Naviti",
+      "title": "Neilesu na Momo na Tui Naviti",
+      "otherTitles": [],
+      "villages": [
+        "Soso"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "15f63d3a77a4cd",
+      "province": "Ba",
+      "district": "Naviti",
+      "subdistrict": "Naviti",
+      "title": "Nadikalagi na Marama na Tui Marou",
+      "otherTitles": [],
+      "villages": [
+        "Marou",
+        "Kese",
+        "Gunu",
+        "Somosomo",
+        "Muaira"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5b5ca00bf37ed6",
+      "province": "Ba",
+      "district": "Naviti",
+      "subdistrict": "Waya",
+      "title": "Nalotu na Momo na Tui Waya",
+      "otherTitles": [],
+      "villages": [
+        "Yalobi",
+        "Natawa",
+        "Wayalevu",
+        "Naluwaki"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "990808e0f3accd",
+      "province": "Ba",
+      "district": "Naviti",
+      "subdistrict": "Viwa",
+      "title": "Nalagi na Momo na Tui Viwa",
+      "otherTitles": [
+        "Tui Viwa"
+      ],
+      "villages": [
+        "Natia",
+        "Naibalebale",
+        "Yakani"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 2,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "52bbc006b902f3",
+      "province": "Ba",
+      "district": "Nawaka",
+      "subdistrict": "Nawaka",
+      "title": "Nalagi na Momo na Tui Nawaka",
+      "otherTitles": [],
+      "villages": [
+        "Nawaka",
+        "Namulomulo",
+        "Vatutu",
+        "Evuna",
+        "Tubenasolo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "092c600fd54e24",
+      "province": "Ba",
+      "district": "Nawaka",
+      "subdistrict": "Vaturu",
+      "title": "Momo na Tui Yalatina",
+      "otherTitles": [],
+      "villages": [
+        "Nagado",
+        "Natawa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0ed91edb4ac4f1",
+      "province": "Ba",
+      "district": "Nawaka",
+      "subdistrict": "Rukuruku",
+      "title": "Momo na Tui Nasesevia",
+      "otherTitles": [],
+      "villages": [
+        "Vunamoli",
+        "Nawaqadamu",
+        "Uto"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e95efe15771658",
+      "province": "Ba",
+      "district": "Nawaka",
+      "subdistrict": "Rukuruku",
+      "title": "Na Kai ni Yasa",
+      "otherTitles": [],
+      "villages": [
+        "Rararua",
+        "Dreke"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a3aab83a92e291",
+      "province": "Bua",
+      "district": "Bua",
+      "subdistrict": "Bua",
+      "title": "Cakaunitabua na Turaga na Tui Bua",
+      "otherTitles": [],
+      "villages": [
+        "Bua",
+        "Navunievu",
+        "Koroinasolo",
+        "Tiliva",
+        "Nawailevu",
+        "Dalomo",
+        "Waitabu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e640ece947202a",
+      "province": "Bua",
+      "district": "Bua",
+      "subdistrict": "Navakasiga",
+      "title": "Turaga na Buli Navakasiga",
+      "otherTitles": [],
+      "villages": [
+        "Naviqiri",
+        "Nasau",
+        "Naivaka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "dc2fe528dca45a",
+      "province": "Bua",
+      "district": "Bua",
+      "subdistrict": "Lekutu",
+      "title": "Turaga na Buli Lekutu",
+      "otherTitles": [],
+      "villages": [
+        "Votua",
+        "Namuavoivoi",
+        "Banikea",
+        "Kavula",
+        "Tavea",
+        "Galoa",
+        "Nasorowaqa",
+        "Yagaqa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "85652b256c96e2",
+      "province": "Bua",
+      "district": "Wainunu",
+      "subdistrict": "Wainunu",
+      "title": "Turaga na Tui Wainunu",
+      "otherTitles": [],
+      "villages": [
+        "Daria",
+        "Nakorotiki",
+        "Nakawakawa",
+        "Cogea",
+        "Navakasali",
+        "Nadua",
+        "Saolo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "94d56be1f4f4b3",
+      "province": "Bua",
+      "district": "Wainunu",
+      "subdistrict": "Solevu",
+      "title": "Turaga na Ai Sualevu",
+      "otherTitles": [],
+      "villages": [
+        "Nawaido",
+        "Makolei",
+        "Cavaga"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "866b6f3937ad31",
+      "province": "Bua",
+      "district": "Wainunu",
+      "subdistrict": "Nadi",
+      "title": "Turaga na Buli Navere",
+      "otherTitles": [],
+      "villages": [
+        "Nasavu",
+        "Nasolo",
+        "Nasawana",
+        "Sawani"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 3,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4cfc0bcddfa098",
+      "province": "Bua",
+      "district": "Vuya",
+      "subdistrict": "Vuya",
+      "title": "Vuya na Turaga Tui Vuya",
+      "otherTitles": [],
+      "villages": [
+        "Navave",
+        "Vuya"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "2d30f3d0b50ce7",
+      "province": "Bua",
+      "district": "Vuya",
+      "subdistrict": "Vuya",
+      "title": "Turaga na Buli Raviravi",
+      "otherTitles": [],
+      "villages": [
+        "Nabouwalu",
+        "Wairiki",
+        "Yadua"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "601ad39f7b16bb",
+      "province": "Bua",
+      "district": "Vuya",
+      "subdistrict": "Dama",
+      "title": "Dama na Buli Dama",
+      "otherTitles": [],
+      "villages": [
+        "Dama",
+        "Nasau",
+        "Nawaca",
+        "Tavuloma",
+        "Naruwai",
+        "Nagadoa",
+        "Driti"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "14cc100d0c0a1f",
+      "province": "Bua",
+      "district": "Vuya",
+      "subdistrict": "Kubulau",
+      "title": "Kubulau na Tui Kubulau",
+      "otherTitles": [],
+      "villages": [
+        "Kiobo",
+        "Namalata",
+        "Raviravi",
+        "Navatu",
+        "Waisa",
+        "Nasasaivua",
+        "Natokalau",
+        "Nakorovou",
+        "Nadivakarua",
+        "Kilaka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0b8dd7965a84b5",
+      "province": "Cakaudrove",
+      "district": "Cakaudrove",
+      "subdistrict": "Cakaudrove",
+      "title": "Lalagavesi na Turaga na Tui Cakau na i Sokula",
+      "otherTitles": [],
+      "villages": [
+        "Somosomo",
+        "Loa",
+        "Lovonivonu",
+        "Nakobo",
+        "Nabagasau",
+        "Nanuca",
+        "Nawi",
+        "Dakuniba",
+        "Tavuki"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "34645366025439",
+      "province": "Cakaudrove",
+      "district": "Cakaudrove",
+      "subdistrict": "Cakaudrove",
+      "title": "Navunisa na Tui Taveuni",
+      "otherTitles": [],
+      "villages": [
+        "Welagi",
+        "Yacata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "26830ea92161ee",
+      "province": "Cakaudrove",
+      "district": "Cakaudrove",
+      "subdistrict": "Vuna",
+      "title": "Na Turaga na Sau kei Vuna",
+      "otherTitles": [],
+      "villages": [
+        "Kanacea",
+        "Nakorovou",
+        "Navakawau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "cd43921a502124",
+      "province": "Cakaudrove",
+      "district": "Wainikeli",
+      "subdistrict": "Laucala",
+      "title": "Turaga na Tui Laucala",
+      "otherTitles": [],
+      "villages": [
+        "Dreketi",
+        "Kocoma",
+        "Naqelelevu",
+        "Toga",
+        "Yanuca"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "50bb70d5e66475",
+      "province": "Cakaudrove",
+      "district": "Wainikeli",
+      "subdistrict": "Wainikeli",
+      "title": "Turaga na Tuwei",
+      "otherTitles": [],
+      "villages": [
+        "Naselesele",
+        "Lavena",
+        "Korovou",
+        "Naiviivi",
+        "Nadilo",
+        "Qeleni",
+        "Vidawa",
+        "Waitabu",
+        "Yanuca"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0989fc0cccc8ad",
+      "province": "Cakaudrove",
+      "district": "Tunuloa",
+      "subdistrict": "Tunuloa",
+      "title": "Turaga na Tui Tunuloa",
+      "otherTitles": [],
+      "villages": [
+        "Kanakana",
+        "Karoko",
+        "Koroivonu",
+        "Muana",
+        "Naqaravatu",
+        "Navetau",
+        "Salia",
+        "Wailevu",
+        "Nailou"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 4,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "f68ad9bd46a849",
+      "province": "Cakaudrove",
+      "district": "Tunuloa",
+      "subdistrict": "Natewa",
+      "title": "Sovatabua na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Natewa",
+        "Buca",
+        "Dawa",
+        "Tukavesi",
+        "Vusaratu",
+        "Vusasivo",
+        "Nadavaci"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 5,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4ad2c71ac6f702",
+      "province": "Cakaudrove",
+      "district": "Nasavusavu",
+      "subdistrict": "Savusavu",
+      "title": "Turaga na Tui Nasavusavu",
+      "otherTitles": [],
+      "villages": [
+        "Yaroi",
+        "Naidi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 5,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6560e4b5ca909c",
+      "province": "Cakaudrove",
+      "district": "Nasavusavu",
+      "subdistrict": "Savusavu",
+      "title": "Turaga na Tunisa",
+      "otherTitles": [],
+      "villages": [
+        "Nagigi",
+        "Nacavanadi",
+        "Nacekoro",
+        "Nukubalavu",
+        "Savudrodro",
+        "Vivili",
+        "Waivunia"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 5,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "30db9fa97cea16",
+      "province": "Cakaudrove",
+      "district": "Nasavusavu",
+      "subdistrict": "Naweni",
+      "title": "Turaga na Tui Naweni",
+      "otherTitles": [],
+      "villages": [
+        "Tacilevu",
+        "Naweni",
+        "Dromuninuku"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 5,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "cfd24f5697886a",
+      "province": "Cakaudrove",
+      "district": "Nasavusavu",
+      "subdistrict": "Navatu",
+      "title": "Turaga na Tui Navadra",
+      "otherTitles": [
+        "Ratu i Navatu"
+      ],
+      "villages": [
+        "Viani",
+        "Nasinu",
+        "Drekeniwai",
+        "Korolevu",
+        "Koronatoga",
+        "Korosi",
+        "Navakaka",
+        "Tabia",
+        "Leia",
+        "Valeni",
+        "Batiri",
+        "Nayarailagi",
+        "Naiqaqi",
+        "Vatuvonu",
+        "Dawara",
+        "Vunidawamou",
+        "Natuvu",
+        "Laucala"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 5,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "3cc76cda3ecbe1",
+      "province": "Cakaudrove",
+      "district": "Wailevu",
+      "subdistrict": "Wailevu East",
+      "title": "",
+      "otherTitles": [],
+      "villages": [
+        "Wailevu",
+        "Vakativa",
+        "Waisali",
+        "Buca",
+        "Nasawana",
+        "Nakasa",
+        "Natua",
+        "Vunivesi",
+        "Navatukawa",
+        "Vuadomo",
+        "Urata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 5,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b3495a1f67c7b3",
+      "province": "Kadavu",
+      "district": "Tavuki",
+      "subdistrict": "Tavuki",
+      "title": "Nacolase na Turaga na Tui Tavuki",
+      "otherTitles": [],
+      "villages": [
+        "Tavuki",
+        "Baidamudamu",
+        "Nukunuku",
+        "Nagonedau",
+        "Solodamu",
+        "Natumua",
+        "Waisomo",
+        "Namuana",
+        "Namalata",
+        "Galoa",
+        "Cevai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6323cbcf46fcf9",
+      "province": "Kadavu",
+      "district": "Tavuki",
+      "subdistrict": "Ravitaki",
+      "title": "Namanusa na Turaga na Tui Ravitaki",
+      "otherTitles": [],
+      "villages": [
+        "Wailevu",
+        "Mokoisa",
+        "Muani",
+        "Ravitaki",
+        "Solovola",
+        "Matanuku",
+        "Nasegai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6eccd743b4eb6a",
+      "province": "Kadavu",
+      "district": "Tavuki",
+      "subdistrict": "Ravitaki",
+      "title": "Nalovani na Roko Tui Drawe",
+      "otherTitles": [],
+      "villages": [
+        "Nasegai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a2dbf64abb95c9",
+      "province": "Kadavu",
+      "district": "Tavuki",
+      "subdistrict": "Sanima",
+      "title": "Nawaimalua Turaga na Tui Drue",
+      "otherTitles": [],
+      "villages": [
+        "Drue",
+        "Navuatu",
+        "Naikorokoro",
+        "Naivakarauniniu",
+        "Namara",
+        "Mataso"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "96330eaa3e1b99",
+      "province": "Kadavu",
+      "district": "Nabukelevu",
+      "subdistrict": "Nabukelevu",
+      "title": "Valesasa na Turaga na Tui Nabukelevu",
+      "otherTitles": [],
+      "villages": [
+        "Daviqele",
+        "Dagai",
+        "Talaulia",
+        "Lomati",
+        "Nabukelevura",
+        "Qalira",
+        "Nasau",
+        "Kabariki",
+        "Levuka",
+        "Muaninuku",
+        "Tabuya"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "189ecc2656693d",
+      "province": "Kadavu",
+      "district": "Nabukelevu",
+      "subdistrict": "Yawe",
+      "title": "Valedeideiga Turaga na Tui Yawe",
+      "otherTitles": [],
+      "villages": [
+        "Nalotu",
+        "Natokalau",
+        "Korovou",
+        "Yakita",
+        "Naqalotu",
+        "Tawava"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "739fd2a4cd7c87",
+      "province": "Kadavu",
+      "district": "Naceva",
+      "subdistrict": "Naceva",
+      "title": "Koroisoso na Turaga na Tui Naceva",
+      "otherTitles": [],
+      "villages": [
+        "Soso",
+        "Vukavu",
+        "Kadavu",
+        "Jioma",
+        "Niudua",
+        "Nacomoto",
+        "Dravuwalu",
+        "Muanisolo",
+        "Vunisei",
+        "Daku",
+        "Yavitu"
+      ],
+      "source": "Na Icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0ee7feb3f96922",
+      "province": "Kadavu",
+      "district": "Naceva",
+      "subdistrict": "Yale",
+      "title": "Naivibati na Turaga na Tui Yale",
+      "otherTitles": [],
+      "villages": [
+        "Rakiraki",
+        "Gasele",
+        "Nauciwai",
+        "Levuka",
+        "Naioti"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4729a292fb52c0",
+      "province": "Kadavu",
+      "district": "Nakasaleka",
+      "subdistrict": "Nakasaleka",
+      "title": "Nabala na Turaga na Tui Nakasa",
+      "otherTitles": [],
+      "villages": [
+        "Nakoronawa",
+        "Lomanikoro",
+        "Nakaunakoro",
+        "Nakaugasele",
+        "Kavala",
+        "Lawaki",
+        "Solotavui",
+        "Tiliva",
+        "Matasawalevu",
+        "Nukuvou",
+        "Vacalea"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 6,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "149bb3d9b29704",
+      "province": "Kadavu",
+      "district": "Nakasaleka",
+      "subdistrict": "Ono",
+      "title": "Koroivabea na Marama na Tui Ono",
+      "otherTitles": [],
+      "villages": [
+        "Vabea",
+        "Waisomo",
+        "Narikoso",
+        "Naqara",
+        "Nabouwalu",
+        "Buliya",
+        "Dravuni"
+      ],
+      "source": "Na Icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "13dc92a9902f05",
+      "province": "Lau",
+      "district": "Lakeba",
+      "subdistrict": "Lakeba",
+      "title": "Vuanirewa na Turaga na Tui Nayau",
+      "otherTitles": [],
+      "villages": [
+        "Tubou",
+        "Nasaqalau",
+        "Vakano",
+        "Yadrana",
+        "Nukunuku",
+        "Waitabu",
+        "Waciwaci",
+        "Levuka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "db8e921ee65f57",
+      "province": "Lau",
+      "district": "Oneata",
+      "subdistrict": "Oneata",
+      "title": "Bukatatanoa na Turaga na Tui Oneata",
+      "otherTitles": [],
+      "villages": [
+        "Waiqori",
+        "Dakuiloa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c680f508d6465b",
+      "province": "Lau",
+      "district": "Moce",
+      "subdistrict": "Moce",
+      "title": "Delaimakotu na Turaga na Ramasi",
+      "otherTitles": [],
+      "villages": [
+        "Nasau",
+        "Korotolu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "eac066fccea336",
+      "province": "Lau",
+      "district": "Vulaga",
+      "subdistrict": "Vulaga",
+      "title": "Vanuaseu na Turaga na Tui Vulaga",
+      "otherTitles": [],
+      "villages": [
+        "Muanaira",
+        "Muanaicake",
+        "Naividamu",
+        "Ogea"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "17ce38906bb196",
+      "province": "Lau",
+      "district": "Ono",
+      "subdistrict": "Ono",
+      "title": "Naduruvesi, na Turaga na Tui Ono",
+      "otherTitles": [],
+      "villages": [
+        "Nukuni",
+        "Lovoni",
+        "Matokana",
+        "Doi",
+        "Vatoa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b21a558bd72ab6",
+      "province": "Lau",
+      "district": "Kabara",
+      "subdistrict": "Kabara",
+      "title": "Turaga na Tui Kabara",
+      "otherTitles": [],
+      "villages": [
+        "Naikeleyaga",
+        "Tokalau",
+        "Lomaji",
+        "Udu",
+        "Namuka",
+        "Komo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "7770299db9c877",
+      "province": "Lau",
+      "district": "Totoya",
+      "subdistrict": "Totoya",
+      "title": "Narocake na Turaga na Roko Sau",
+      "otherTitles": [],
+      "villages": [
+        "Tovu",
+        "Ketei",
+        "Dravuwalu",
+        "Udu",
+        "Vanuavatu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c951220364d938",
+      "province": "Lau",
+      "district": "Moala",
+      "subdistrict": "Moala",
+      "title": "Nai Vucu ni Masi na Turaga na Tui Nasau / Yavusa Turagalevu na Turaga na Tui Moala",
+      "otherTitles": [
+        "Roko Musuka – Tui Nasau"
+      ],
+      "villages": [
+        "Naroi",
+        "Nasoki",
+        "Keteira",
+        "Vunuku",
+        "Cakova",
+        "Vadra",
+        "Maloku",
+        "Muaikacuni"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c381e6766938e3",
+      "province": "Lau",
+      "district": "Matuku",
+      "subdistrict": "Matuku",
+      "title": "Burotukula na Turaga na Tui Matuku",
+      "otherTitles": [],
+      "villages": [
+        "Yaroi",
+        "Nakabati",
+        "Qalikarua",
+        "Levukaidaku",
+        "Makadru",
+        "Raviravi",
+        "Lomaji"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4a3a68aab0be56",
+      "province": "Lau",
+      "district": "Nayau",
+      "subdistrict": "Nayau",
+      "title": "Na Vaka i Tuinayau",
+      "otherTitles": [],
+      "villages": [
+        "Salia",
+        "Liku",
+        "Narocivo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "f59ffe3339561f",
+      "province": "Lau",
+      "district": "Lomaloma",
+      "subdistrict": "Lomaloma",
+      "title": "Turaga na Rasau",
+      "otherTitles": [
+        "Turaga na Ravunisa"
+      ],
+      "villages": [
+        "Lomaloma",
+        "Sawana",
+        "Susui",
+        "Narocivo",
+        "Namalata",
+        "Uruone",
+        "Levukana",
+        "Dakuiloma",
+        "Tuvuca"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b45ba8df857305",
+      "province": "Lau",
+      "district": "Mualevu",
+      "subdistrict": "Mualevu",
+      "title": "Sau kei Mualevu, na Turaga na Tui Mavana",
+      "otherTitles": [],
+      "villages": [
+        "Mualevu",
+        "Mavana",
+        "Daliconi",
+        "Malaka",
+        "Muamua",
+        "Boitaci",
+        "Cikobia",
+        "Yavea"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 7,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "af32ebb4fb84ba",
+      "province": "Lau",
+      "district": "Cicia",
+      "subdistrict": "Cicia",
+      "title": "Naveretabu na Turaga na Tui Cicia",
+      "otherTitles": [],
+      "villages": [
+        "Tarukua",
+        "Natokalau",
+        "Lomaji",
+        "Mabula",
+        "Naceva"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "fde6cfb08c87b7",
+      "province": "Lomaiviti",
+      "district": "Ovalau",
+      "subdistrict": "Levuka",
+      "title": "Nabukebuke na Turaga na Tui Levuka",
+      "otherTitles": [],
+      "villages": [
+        "Levuka",
+        "Vagadaci",
+        "Waitovu",
+        "Vuma",
+        "Toki",
+        "Vatukalo",
+        "Nawowo",
+        "Yaravudi",
+        "Taviya",
+        "Rukuruku"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a9619fe8f2120c",
+      "province": "Lomaiviti",
+      "district": "Ovalau",
+      "subdistrict": "Nasinu",
+      "title": "Rokotuibau na Rokotakala",
+      "otherTitles": [],
+      "villages": [
+        "Nasinu",
+        "Naikorokoro",
+        "Tokou",
+        "Natokalau",
+        "Draiba"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "2be5423912eba0",
+      "province": "Lomaiviti",
+      "district": "Ovalau",
+      "subdistrict": "Lovoni",
+      "title": "Wailevu na Turaga na Tui Wailevu",
+      "otherTitles": [],
+      "villages": [
+        "Lovoni",
+        "Nacobo",
+        "Nukutocia",
+        "Visoto",
+        "Vuniivisavu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0be3b02476847b",
+      "province": "Lomaiviti",
+      "district": "Ovalau",
+      "subdistrict": "Bureta",
+      "title": "Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Naiviteitei",
+        "Nasoga",
+        "Navuloa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e3ab70b80c347a",
+      "province": "Lomaiviti",
+      "district": "Ovalau",
+      "subdistrict": "Moturiki",
+      "title": "Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Niubasaga",
+        "Nasesara",
+        "Navuti",
+        "Nasauvuki",
+        "Naicabecabe",
+        "Yanuca",
+        "Daku",
+        "Uluibau",
+        "Sovuna",
+        "Wawa",
+        "Nasauraki"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "194f9603c44d28",
+      "province": "Lomaiviti",
+      "district": "Batiki",
+      "subdistrict": "Batiki",
+      "title": "Turaga Tora ni Bau",
+      "otherTitles": [],
+      "villages": [
+        "Yavu",
+        "Mua",
+        "Manuku",
+        "Naigani"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "dccea2142edadc",
+      "province": "Lomaiviti",
+      "district": "Koro",
+      "subdistrict": "Mudu",
+      "title": "Gone Turaga na Mata ni Mudu",
+      "otherTitles": [],
+      "villages": [
+        "Mudu",
+        "Tuatua",
+        "Nagaidamu",
+        "Sinuvaca",
+        "Nasau",
+        "Nacamaki",
+        "Nakodu",
+        "Namacu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "77abecf40fc523",
+      "province": "Lomaiviti",
+      "district": "Koro",
+      "subdistrict": "Cawa",
+      "title": "Gone Turaga na Tui Naigani",
+      "otherTitles": [],
+      "villages": [
+        "Nabasovi",
+        "Vatulele",
+        "Nabuna",
+        "Tavua",
+        "Navaga",
+        "Kade"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6281b0e62401cc",
+      "province": "Lomaiviti",
+      "district": "Nairai",
+      "subdistrict": "Nairai",
+      "title": "Kubuna i Wai na Turaga na Tui Nairai",
+      "otherTitles": [],
+      "villages": [
+        "Natauloa",
+        "Tovulailai",
+        "Lawaki",
+        "Vutuna",
+        "Waitoga"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 8,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "7a3ddbe964a535",
+      "province": "Lomaiviti",
+      "district": "Gau",
+      "subdistrict": "Sawaieke",
+      "title": "Nadawa na Turaga na Takalai-Gau",
+      "otherTitles": [],
+      "villages": [
+        "Sawaieke",
+        "Somosomo",
+        "Nawaikama",
+        "Nukuloa",
+        "Levukaigau",
+        "Lovu",
+        "Vadravadra",
+        "Yadua"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e9f4da2f15ad1a",
+      "province": "Lomaiviti",
+      "district": "Gau",
+      "subdistrict": "Navukailagi",
+      "title": "Naiviqeleqele na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Navukailagi",
+        "Baravi",
+        "Vione",
+        "Qarani"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "d404a36423a6c2",
+      "province": "Lomaiviti",
+      "district": "Gau",
+      "subdistrict": "Vanuaso",
+      "title": "Turagalewena na Turaga na Tui Vanuaso",
+      "otherTitles": [],
+      "villages": [
+        "Vanuaso",
+        "Lekanai",
+        "Nacavanadi",
+        "Malawai",
+        "Lamiti"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a27a0c946aeb99",
+      "province": "Macuata",
+      "district": "Macuata",
+      "subdistrict": "Macuata",
+      "title": "Caumatalevu na Turaga na Tui Macuata",
+      "otherTitles": [],
+      "villages": [
+        "Macuataiwai",
+        "Ligau",
+        "Nakalou",
+        "Namama",
+        "Navouono",
+        "Nabukadogo",
+        "Naduri",
+        "Naqumu",
+        "Nasuva",
+        "Navidamu",
+        "Daku",
+        "Niurua",
+        "Ravuravu",
+        "Yaro",
+        "Vatuboroboro",
+        "Buavou"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "34118a1d681624",
+      "province": "Macuata",
+      "district": "Macuata",
+      "subdistrict": "Mali",
+      "title": "Turaga na Tui Mali",
+      "otherTitles": [],
+      "villages": [
+        "Nakawaga",
+        "Ligaulevu",
+        "Matailabasa",
+        "Vesi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5335d85e9e2620",
+      "province": "Macuata",
+      "district": "Macuata",
+      "subdistrict": "Dreketi",
+      "title": "Uluitoga na Vunivalu Turaga na Tui Dreketi",
+      "otherTitles": [],
+      "villages": [
+        "Nabavatu",
+        "Nakanacagi",
+        "Nabiti",
+        "Nasigasiga",
+        "Vunisea",
+        "Nasea",
+        "Lutukina"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "02cc6a7307ee20",
+      "province": "Macuata",
+      "district": "Cikobia",
+      "subdistrict": "Cikobia",
+      "title": "Turaga na Tui Cikobia",
+      "otherTitles": [],
+      "villages": [
+        "Vatulele",
+        "Nautovatu",
+        "Vuninuku",
+        "Nalele"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c6fd0b61512da2",
+      "province": "Macuata",
+      "district": "Dogotuki",
+      "subdistrict": "Namuka",
+      "title": "Namuka vua na Qaqa",
+      "otherTitles": [],
+      "villages": [
+        "Visoqo",
+        "Lakeba",
+        "Nabubu",
+        "Nasovivi",
+        "Naua",
+        "Gevo",
+        "Naisamuwaqa",
+        "Cawadevo",
+        "Qelewara",
+        "Nasovi",
+        "Solevukoso",
+        "Delaivadra",
+        "Ravuka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "899f8208e2ebf3",
+      "province": "Macuata",
+      "district": "Dogotuki",
+      "subdistrict": "Dogotuki",
+      "title": "Marama na Tui Vuna",
+      "otherTitles": [],
+      "villages": [
+        "Rauriko",
+        "Lagi",
+        "Namukalau",
+        "Kedra",
+        "Vitina",
+        "Nabourewa",
+        "Nabuna",
+        "Qaranivai",
+        "Vugalei",
+        "Nayaroyaro"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 9,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0912ac505a8242",
+      "province": "Macuata",
+      "district": "Dogotuki",
+      "subdistrict": "Udu",
+      "title": "Vua na Sauvou",
+      "otherTitles": [],
+      "villages": [
+        "Vunikodi",
+        "Nukusa",
+        "Cawaro",
+        "Nabouono",
+        "Nukudamu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c1ee9084426589",
+      "province": "Macuata",
+      "district": "Sasa",
+      "subdistrict": "Sasa",
+      "title": "Turaga na Taukei Sasa",
+      "otherTitles": [],
+      "villages": [
+        "Sasa",
+        "Korotubu",
+        "Namakomako",
+        "Nasealevu",
+        "Navakasobu",
+        "Korovuli",
+        "Tabia",
+        "Vuiraqilai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c04a822caa45a5",
+      "province": "Macuata",
+      "district": "Sasa",
+      "subdistrict": "Seaqaqa",
+      "title": "Turaga na Masi e Seaqaqa",
+      "otherTitles": [],
+      "villages": [
+        "Naravuka",
+        "Nanenivuda",
+        "Batiri",
+        "Nacaurokovi",
+        "Nacereyaga",
+        "Natua",
+        "Saivou",
+        "Nayarailagi",
+        "Vesidrua",
+        "Lomaloma"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "ac482c6bbe4a3c",
+      "province": "Macuata",
+      "district": "Labasa",
+      "subdistrict": "Labasa",
+      "title": "Wasavulu na Turaga na Tui Labasa",
+      "otherTitles": [],
+      "villages": [
+        "Nasekula",
+        "Nakorowiri",
+        "Batinikama",
+        "Vunimoli",
+        "Dreketilailai",
+        "Namoli",
+        "Vunivau",
+        "Vuo",
+        "Mataniwai",
+        "Bulileka",
+        "Nubuniyavula",
+        "Qelemumu",
+        "Raranibulubulu",
+        "Nacula",
+        "Naqai",
+        "Waikisi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "da5d2511f2d0cf",
+      "province": "Macuata",
+      "district": "Labasa",
+      "subdistrict": "Nadogo",
+      "title": "Turaga na Tui Nadogo",
+      "otherTitles": [],
+      "villages": [
+        "Vunivutu",
+        "Kavewa",
+        "Nabutubutu",
+        "Nasasa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c1ab9c19db7a5c",
+      "province": "Macuata",
+      "district": "Labasa",
+      "subdistrict": "Nadogo",
+      "title": "Turaga na Tui Nubu",
+      "otherTitles": [],
+      "villages": [
+        "Nubu",
+        "Mouta",
+        "Nakelikoso",
+        "Navakebuli",
+        "Sogobiau",
+        "Caurokorika"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "49ea7c1c18951d",
+      "province": "Macuata",
+      "district": "Labasa",
+      "subdistrict": "Wailevu",
+      "title": "Turaga na Tui Wailevu",
+      "otherTitles": [],
+      "villages": [
+        "Wailevu",
+        "Nakama",
+        "Vatulovona",
+        "Vuinakawakawa",
+        "Savusavutaga",
+        "Wakanilato",
+        "Nasaqa",
+        "Yaudigi",
+        "Dogocu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b84d6a22f0774a",
+      "province": "Nadroga-Navosa",
+      "district": "Cuvu",
+      "subdistrict": "Cuvu",
+      "title": "Nakuruvakarua i Louvatu na Ka Levu",
+      "otherTitles": [],
+      "villages": [
+        "Cuvu",
+        "Nayevuyevu",
+        "Tore",
+        "Yadua",
+        "Rukurukulevu",
+        "Hanahana",
+        "Sila"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b8ebe1ab6dc12d",
+      "province": "Nadroga-Navosa",
+      "district": "Cuvu",
+      "subdistrict": "Tuva",
+      "title": "Leweniyarayara na Taukei Vunawi",
+      "otherTitles": [],
+      "villages": [
+        "Vouwa",
+        "Nadroumai",
+        "Togovere",
+        "Semo",
+        "Nabau",
+        "Kamisi",
+        "Emuri",
+        "Niu",
+        "Yoka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 10,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "3894b222c0bb0f",
+      "province": "Nadroga-Navosa",
+      "district": "Sigatoka",
+      "subdistrict": "Nasigatoka",
+      "title": "Louvatu na Tui Nadroga",
+      "otherTitles": [],
+      "villages": [
+        "Nasigatoka",
+        "Yavulo",
+        "Nasama",
+        "Vunavutu",
+        "Volivoli"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "f46f87e4d6c647",
+      "province": "Nadroga-Navosa",
+      "district": "Sigatoka",
+      "subdistrict": "Nasigatoka",
+      "title": "Tui Madudu",
+      "otherTitles": [],
+      "villages": [
+        "Nayawa",
+        "Laselase"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b575a0f8a43bb2",
+      "province": "Nadroga-Navosa",
+      "district": "Sigatoka",
+      "subdistrict": "Nokonoko",
+      "title": "Turaga na Tui Tabanivonoicake",
+      "otherTitles": [],
+      "villages": [
+        "Naduri",
+        "Lawai",
+        "Nakabuto",
+        "Nakalavo",
+        "Vunatuvau",
+        "Kilivalevu",
+        "Qereqere"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "d66e124097555b",
+      "province": "Nadroga-Navosa",
+      "district": "Sigatoka",
+      "subdistrict": "Waicoba",
+      "title": "Turaga na Tui Nasesevia",
+      "otherTitles": [],
+      "villages": [
+        "Narewa",
+        "Vagadra",
+        "Narata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a05e9b15268e58",
+      "province": "Nadroga-Navosa",
+      "district": "Malomalo",
+      "subdistrict": "Malomalo",
+      "title": "Turaga na Tui Nasosowaqa",
+      "otherTitles": [],
+      "villages": [
+        "Malomalo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "d0067f0629e3de",
+      "province": "Nadroga-Navosa",
+      "district": "Malomalo",
+      "subdistrict": "Malomalo",
+      "title": "Taukei Nasoqo",
+      "otherTitles": [],
+      "villages": [
+        "Nadivi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "417a4c04cbc58a",
+      "province": "Nadroga-Navosa",
+      "district": "Malomalo",
+      "subdistrict": "Malomalo",
+      "title": "Tui Nasoni",
+      "otherTitles": [],
+      "villages": [
+        "Nalele",
+        "Sanasana",
+        "Vusama",
+        "Navisabasaba",
+        "Batiri",
+        "Togobula"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b48162ba19c4bc",
+      "province": "Nadroga-Navosa",
+      "district": "Malomalo",
+      "subdistrict": "Raviravi",
+      "title": "Turaga na Tui Tabanivoniwai",
+      "otherTitles": [],
+      "villages": [
+        "Momi",
+        "Yako",
+        "Nabila"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e6447d68f4ee16",
+      "province": "Nadroga-Navosa",
+      "district": "Malomalo",
+      "subdistrict": "Wai",
+      "title": "Nalolo na Turaga na Tui Nabolo",
+      "otherTitles": [],
+      "villages": [
+        "Lomawai",
+        "Kubuna",
+        "Nakorokula",
+        "Navutu",
+        "Tau",
+        "Bavu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "91120195b6a887",
+      "province": "Nadroga-Navosa",
+      "district": "Baravi",
+      "subdistrict": "Conua",
+      "title": "Nabili Turaga na Tui Conua",
+      "otherTitles": [],
+      "villages": [
+        "Sikeli Tawake",
+        "Vatukarasa",
+        "Malevu",
+        "Korotogo",
+        "Naroro",
+        "Nawamagi",
+        "Nalaca",
+        "Nadrala"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "00f30a0e765f06",
+      "province": "Nadroga-Navosa",
+      "district": "Baravi",
+      "subdistrict": "Komave",
+      "title": "Vusu na Turaga na Tui Vusu",
+      "otherTitles": [],
+      "villages": [
+        "Komave",
+        "Namatakula",
+        "Biausevu",
+        "Navola"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "513f5e1de0b749",
+      "province": "Nadroga-Navosa",
+      "district": "Baravi",
+      "subdistrict": "Korolevuiwai",
+      "title": "Turaga na Tui Davutukia i wai",
+      "otherTitles": [],
+      "villages": [
+        "Votua",
+        "Votualailai",
+        "Tagaqe",
+        "Namada"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6a048b550a6ee5",
+      "province": "Nadroga-Navosa",
+      "district": "Baravi",
+      "subdistrict": "Koroinasau",
+      "title": "Turaga na Tui Davutukia i vanua",
+      "otherTitles": [],
+      "villages": [
+        "Balenabelo",
+        "Vunayayawa",
+        "Saru",
+        "Sauvi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0e8ed22d75149e",
+      "province": "Nadroga-Navosa",
+      "district": "Ruwailevu",
+      "subdistrict": "Mavua",
+      "title": "Turaga na Qali Mavua",
+      "otherTitles": [],
+      "villages": [
+        "Raiwaqa",
+        "Mavua",
+        "Tubeirata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "de707ced291fd8",
+      "province": "Nadroga-Navosa",
+      "district": "Ruwailevu",
+      "subdistrict": "Naqalimare",
+      "title": "Turga na Tui Qalimare",
+      "otherTitles": [],
+      "villages": [
+        "Koroisagana",
+        "Sautabu",
+        "Natawatawadi",
+        "Toga",
+        "Vunaqoru",
+        "Raveyaga",
+        "Korona",
+        "Rarabasaga"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 11,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "fdab9e51809da4",
+      "province": "Nadroga-Navosa",
+      "district": "Ruwailevu",
+      "subdistrict": "Bemana",
+      "title": "Raralevu na Tui Davutukia",
+      "otherTitles": [],
+      "villages": [
+        "Tuvu",
+        "Korotuluve",
+        "Vulinagerua",
+        "Nailebaleba"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e1980a8e855f8a",
+      "province": "Nadroga-Navosa",
+      "district": "Ruwailevu",
+      "subdistrict": "Nasikawa",
+      "title": "Nasikawa na Tui Nasikawa",
+      "otherTitles": [],
+      "villages": [
+        "Nawairabe",
+        "Korovou",
+        "Matokana"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "da710307e52fb1",
+      "province": "Nadroga-Navosa",
+      "district": "Navosa",
+      "subdistrict": "Namataku",
+      "title": "Turaga na Tui Nasaunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Keiyasi",
+        "Nasaucoko",
+        "Draiba"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "57b5691dd2e7f0",
+      "province": "Nadroga-Navosa",
+      "district": "Navosa",
+      "subdistrict": "Namataku",
+      "title": "Turaga na Tui Namataku",
+      "otherTitles": [],
+      "villages": [
+        "Sawene",
+        "Wauosi",
+        "Nausori",
+        "Navula",
+        "Yadrau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "3d8444ef79df13",
+      "province": "Nadroga-Navosa",
+      "district": "Navosa",
+      "subdistrict": "Nuaikoro",
+      "title": "Koroivabeka na Marama na Tui Noikoro",
+      "otherTitles": [],
+      "villages": [
+        "Korolevu",
+        "Namoli",
+        "Nukuilau",
+        "Vatubalavu",
+        "Nabuyanitu",
+        "Drobuta",
+        "Noikoro",
+        "Viti Levu",
+        "Wema"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "9ec50380a6e046",
+      "province": "Nadroga-Navosa",
+      "district": "Navosa",
+      "subdistrict": "Nadrau",
+      "title": "Turaga na Tui Nadrau",
+      "otherTitles": [],
+      "villages": [
+        "Nadrau",
+        "Nabawaqa",
+        "Qalinasau",
+        "Naga (Vanua Levu)"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "056831774cd565",
+      "province": "Nadroga-Navosa",
+      "district": "Navosa",
+      "subdistrict": "Navatusila",
+      "title": "Turaga na Tui Navatusila",
+      "otherTitles": [],
+      "villages": [
+        "Nabutautau",
+        "Sauvakarua",
+        "Nanuku",
+        "Tuvavatu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5da5435f8257ef",
+      "province": "Nadroga-Navosa",
+      "district": "Vatulele",
+      "subdistrict": "Vatulele",
+      "title": "Vunisalevu na Tui Ekubu",
+      "otherTitles": [],
+      "villages": [
+        "Ekubu",
+        "Taunovo",
+        "Lomanikaya",
+        "Bouwaqa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "503a1406e67403",
+      "province": "Nadroga-Navosa",
+      "district": "Malolo",
+      "subdistrict": "Malolo",
+      "title": "Turaga na Tui Lawa",
+      "otherTitles": [],
+      "villages": [
+        "Solevu",
+        "Yaro",
+        "Tavua",
+        "Yanuca"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "dc67bb1e3222dc",
+      "province": "Naitasiri",
+      "district": "Naitasiri",
+      "subdistrict": "Naitasiri",
+      "title": "Matanikutu na Turaga na Qaranivalu",
+      "otherTitles": [],
+      "villages": [
+        "Navuso",
+        "Tamavua",
+        "Kalabu",
+        "Vuniniudrovu",
+        "Kasavu",
+        "Nacokaika",
+        "Naganivatu",
+        "Nakini",
+        "Natowaika",
+        "Deladamanu",
+        "Waitolu",
+        "Drekeiwaila"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "73189a758432bd",
+      "province": "Naitasiri",
+      "district": "Naitasiri",
+      "subdistrict": "Vuna",
+      "title": "Roko tui Vuna na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Sawani",
+        "Navatuvula",
+        "Colo-i-Suva"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 12,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "1f488890974436",
+      "province": "Naitasiri",
+      "district": "Lomaivuna",
+      "subdistrict": "Viria",
+      "title": "Nakorolevu na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Viria",
+        "Naqali",
+        "Namuamua",
+        "Gusuisuva",
+        "Navolau",
+        "Natavea",
+        "Nataveaira"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "37513b652c2aa2",
+      "province": "Naitasiri",
+      "district": "Lomaivuna",
+      "subdistrict": "Navuakece",
+      "title": "Navuakece na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Navutu",
+        "Nawaqabena",
+        "Korovou",
+        "Vatuili",
+        "Delaiwaimale",
+        "Waisa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "22998ca0e3d5b6",
+      "province": "Naitasiri",
+      "district": "Lomaivuna",
+      "subdistrict": "Rara",
+      "title": "Naqaranikula na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Naluwai",
+        "Waidracia",
+        "Nasavu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "19e8dd962feb38",
+      "province": "Naitasiri",
+      "district": "Lomaivuna",
+      "subdistrict": "Nabaitavo",
+      "title": "Burenitu na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Nabaitavo",
+        "Navoka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e91a59c81dc8bf",
+      "province": "Naitasiri",
+      "district": "Waimaro",
+      "subdistrict": "Waidina",
+      "title": "Waimaro na Marama na Roko Tui Waimaro",
+      "otherTitles": [],
+      "villages": [
+        "Nabukaluka",
+        "Nadakuni",
+        "Lomai",
+        "Vanuakula",
+        "Nauluvatu",
+        "Navurevure",
+        "Wainawaqa",
+        "Nasirotu",
+        "Nasele",
+        "Naseuvou",
+        "Delailasakau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "9c8a19ff2b672e",
+      "province": "Naitasiri",
+      "district": "Waimaro",
+      "subdistrict": "Soloira",
+      "title": "Waimaro na Turaga na Roko Tui Waimaro",
+      "otherTitles": [],
+      "villages": [
+        "Waikalou",
+        "Navatukia",
+        "Vunidawa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "fcac3dd44dc760",
+      "province": "Naitasiri",
+      "district": "Matailobau",
+      "subdistrict": "Matailobau",
+      "title": "Siko i Nabena na i Taukei ni Waluvu",
+      "otherTitles": [],
+      "villages": [
+        "Nairukuruku",
+        "Navuniyasi",
+        "Taulevu",
+        "Delaitoga",
+        "Nabena"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a898b2f1e9ec0d",
+      "province": "Naitasiri",
+      "district": "Matailobau",
+      "subdistrict": "Matailobau",
+      "title": "Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Matailobau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "de9b9b17614efe",
+      "province": "Naitasiri",
+      "district": "Matailobau",
+      "subdistrict": "Waima",
+      "title": "Siko Koroqele na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Nakorovatu",
+        "Naqara",
+        "Vusiga"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "dbbbc9a28b7279",
+      "province": "Naitasiri",
+      "district": "Matailobau",
+      "subdistrict": "Lutu",
+      "title": "Lutu na Turaga na Tui Lutu",
+      "otherTitles": [],
+      "villages": [
+        "Lutu",
+        "Navuiyaro",
+        "Nukuloa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "79fa44aab50a6d",
+      "province": "Naitasiri",
+      "district": "Matailobau",
+      "subdistrict": "Nagonenicolo",
+      "title": "Waimaro, Delai na Ulucavu na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Nakorosule",
+        "Waibalavu",
+        "Nawaisomo",
+        "Wairuarua",
+        "Nasalia",
+        "Laselevu",
+        "Udu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a6f5cbe0545905",
+      "province": "Naitasiri",
+      "district": "Wainimala",
+      "subdistrict": "Noimalu",
+      "title": "Railevu na Tui Nakurukuruvakatini",
+      "otherTitles": [],
+      "villages": [
+        "Nakorokoroyawa",
+        "Korovou",
+        "Matawailevu",
+        "Nasava",
+        "Nasauvere",
+        "Tubarua"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "7c75d297571b07",
+      "province": "Naitasiri",
+      "district": "Wainimala",
+      "subdistrict": "Muaira",
+      "title": "Navunitivi na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Lutu",
+        "Matainasau",
+        "Waibasaga",
+        "Botenaulu",
+        "Sawanikula",
+        "Nabukunivatu",
+        "Bulibulinakuro",
+        "Nadovu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "96acad9efbd469",
+      "province": "Naitasiri",
+      "district": "Wainimala",
+      "subdistrict": "Nadaravakawalu",
+      "title": "Navatusila na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Naivucini",
+        "Saumakia",
+        "Naitauvoli",
+        "Nuku"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 13,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "1be31b12a79f93",
+      "province": "Naitasiri",
+      "district": "Wainimala",
+      "subdistrict": "Nabobuco",
+      "title": "Bureca Turaga na Tui Nabobuco",
+      "otherTitles": [],
+      "villages": [
+        "Naqelewai",
+        "Rewasau",
+        "Nasiriti",
+        "Nasoqo",
+        "Roma"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "37fac533c5dd1d",
+      "province": "Namosi",
+      "district": "Namosi",
+      "subdistrict": "Namosi",
+      "title": "Nabukebuke na Turaga na Tui Namosi",
+      "otherTitles": [],
+      "villages": [
+        "Namosi",
+        "Navunibau",
+        "Navuniyasitu",
+        "Narukunibua",
+        "Waivaka",
+        "Naduruyasi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c8f3a1bcdcd596",
+      "province": "Namosi",
+      "district": "Wainikoroiluva",
+      "subdistrict": "Wainikoroiluva",
+      "title": "Namuamua Nabukebuke na Turaga na Tui Namosi",
+      "otherTitles": [],
+      "villages": [
+        "Namuamua",
+        "Nukusere",
+        "Nakavika",
+        "Navunikabi",
+        "Saliyadrau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0f7286f67bf038",
+      "province": "Namosi",
+      "district": "Wainikoroiluva",
+      "subdistrict": "Veinuqa",
+      "title": "",
+      "otherTitles": [],
+      "villages": [
+        "Nasoqo",
+        "Wainilotulevu",
+        "Korovou",
+        "Wainiyavu",
+        "Burotu",
+        "Vunidovu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "79e4aa047f387f",
+      "province": "Namosi",
+      "district": "Wainikoroiluva",
+      "subdistrict": "Naqarawai",
+      "title": "Gone Turaga na Tui Namosi",
+      "otherTitles": [],
+      "villages": [
+        "Naqarawai",
+        "Wainimakutu",
+        "Naraiyawa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "740eb59a970368",
+      "province": "Namosi",
+      "district": "Veitvatuloa",
+      "subdistrict": "Veitvatuloa",
+      "title": "Nabukebuke na Turaga na Tui Namosi",
+      "otherTitles": [],
+      "villages": [
+        "Veivatuloa",
+        "Mau",
+        "Nabukavesi",
+        "Qilai",
+        "Navunisoco",
+        "Lobau",
+        "Namelimeli",
+        "Nakavu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "264d0a95a727fa",
+      "province": "Ra",
+      "district": "Saivou",
+      "subdistrict": "Naroko",
+      "title": "Turaga na Leweivatudamu",
+      "otherTitles": [],
+      "villages": [
+        "Rewasa",
+        "Vatukacevaceva"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "470eafe6f1e2b5",
+      "province": "Ra",
+      "district": "Saivou",
+      "subdistrict": "Naroko",
+      "title": "Tui Yavulevu",
+      "otherTitles": [],
+      "villages": [
+        "Nokonoko",
+        "Vaidoko",
+        "Narara",
+        "Danivau",
+        "Naboutolu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 14,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "630ce36b9b8e82",
+      "province": "Ra",
+      "district": "Saivou",
+      "subdistrict": "Tokaimalo",
+      "title": "Navunivau na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Nayaulevu",
+        "Mataveikai",
+        "Nabalebale",
+        "Vunisea",
+        "Vuniyaumunu",
+        "Nailwa",
+        "Naraviravi",
+        "Naivutu",
+        "Navarai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "925032063ad122",
+      "province": "Ra",
+      "district": "Saivou",
+      "subdistrict": "Saivou",
+      "title": "Turaga na Ratu ni Natauiya",
+      "otherTitles": [],
+      "villages": [
+        "Nanukuloa",
+        "Barotu",
+        "Naiserelagi",
+        "Tokio",
+        "Rokoroko"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c1d506de3bbefb",
+      "province": "Ra",
+      "district": "Saivou",
+      "subdistrict": "Nailuva",
+      "title": "Turaga na Tui Korosovaulevu",
+      "otherTitles": [],
+      "villages": [
+        "Nailuva",
+        "Nararavou",
+        "Balasere",
+        "Naqelecibi",
+        "Namasia"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4210695f4c5acd",
+      "province": "Ra",
+      "district": "Saivou",
+      "subdistrict": "Nalaba",
+      "title": "Tokineke na Turaga na Leweitokineke",
+      "otherTitles": [],
+      "villages": [
+        "Burelevu",
+        "Nativi",
+        "Namata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a9200694cfd17a",
+      "province": "Ra",
+      "district": "Rakiraki",
+      "subdistrict": "Rakiraki",
+      "title": "Turaga na Tuinavitilevu",
+      "otherTitles": [],
+      "villages": [
+        "Navatulevu",
+        "Vatusekiyasawa",
+        "Navuavua",
+        "Vitawa",
+        "Malake"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5a2fab23dc84cb",
+      "province": "Ra",
+      "district": "Rakiraki",
+      "subdistrict": "Raviravi",
+      "title": "Raviravi na Turaga Tunavatu",
+      "otherTitles": [],
+      "villages": [
+        "Nadrauniivi",
+        "Togavere",
+        "Vunitogoloa",
+        "Naivunivuni",
+        "Narewa",
+        "Narabuli",
+        "Naseyani",
+        "Nananu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "ed832aa8e71a8b",
+      "province": "Ra",
+      "district": "Rakiraki",
+      "subdistrict": "Navolau",
+      "title": "Turaga na Ratu ni Natokea",
+      "otherTitles": [],
+      "villages": [
+        "Navolau No.1",
+        "Namuaimada",
+        "Navolau No.2"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "149e33ecb74bef",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Nakorotubu",
+      "title": "Turaga na Gonesau",
+      "otherTitles": [],
+      "villages": [
+        "Namarai",
+        "Naocobau",
+        "Verevere",
+        "Saioko",
+        "Nadavacia"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "91a66165465e51",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Bureiwai",
+      "title": "Burenitu na Turaga na Tui Dama",
+      "otherTitles": [],
+      "villages": [
+        "Delaiyadua",
+        "Nadogoloa",
+        "Matainananu",
+        "Naivoco"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "ce7f47e4f07949",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Kavula",
+      "title": "Turaga na Gonesau",
+      "otherTitles": [],
+      "villages": [
+        "Nabukadra",
+        "Nayavutoka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "23f122214c956f",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Bureivanua",
+      "title": "Leweinamatagi na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Sowa",
+        "Balekinaga",
+        "Nalidi",
+        "Matuku"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "1c1edb5bfb51ba",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Nakuilava",
+      "title": "Leweinamatagi na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Bucalevu",
+        "Toki",
+        "Draunaleka",
+        "Tobu",
+        "Savulotu",
+        "Dama"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "658f8b4717a57a",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Mataso",
+      "title": "",
+      "otherTitles": [],
+      "villages": [
+        "Nakorovou",
+        "Natikoso"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "81cb1fd2baaa36",
+      "province": "Ra",
+      "district": "Nakorotubu",
+      "subdistrict": "Navitilevu",
+      "title": "Turaga na Tui Navitilevu",
+      "otherTitles": [],
+      "villages": [
+        "Nayavuira",
+        "Navuniivi",
+        "Nasau",
+        "Veidrala"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c549b235112e43",
+      "province": "Ra",
+      "district": "Nalawa",
+      "subdistrict": "Lawaki",
+      "title": "",
+      "otherTitles": [],
+      "villages": [
+        "Nakorovou",
+        "Nawairuku",
+        "Namara",
+        "Sawenivo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 15,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "81d639b8818c64",
+      "province": "Ra",
+      "district": "Nalawa",
+      "subdistrict": "Nasau",
+      "title": "Nasau na Turaga na Tui Nasau",
+      "otherTitles": [],
+      "villages": [
+        "Nadawa",
+        "Ovalau",
+        "Vanuakula",
+        "Nubumakita",
+        "Nukulau",
+        "Nasukamai",
+        "Nauria"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "8367a00ce53e06",
+      "province": "Ra",
+      "district": "Nalawa",
+      "subdistrict": "Nalawa",
+      "title": "Nacobicibici na Turaga na Tui Nalawa",
+      "otherTitles": [],
+      "villages": [
+        "Matawailevu",
+        "Nausori",
+        "Burenitu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "d73a96b43ec5dc",
+      "province": "Ra",
+      "district": "Nalawa",
+      "subdistrict": "Nababa",
+      "title": "Nababa na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Rokovuaka",
+        "Navitilevu",
+        "Nalalawa"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4046656e275879",
+      "province": "Rewa",
+      "district": "Rewa",
+      "subdistrict": "Rewa",
+      "title": "Burebasaga na Gone Marama na Roko Tui Dreketi na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Lomanikoro",
+        "Nasigatoka",
+        "Nukutubu",
+        "Nabua",
+        "Nasilai",
+        "Drekena",
+        "Vunuku",
+        "Tavuya",
+        "Nukui",
+        "Narocivo",
+        "Lokia"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "07b0401851573a",
+      "province": "Rewa",
+      "district": "Rewa",
+      "subdistrict": "Vutia",
+      "title": "Turaga na Tunidau",
+      "otherTitles": [],
+      "villages": [
+        "Muanaicake",
+        "Muanaira",
+        "Laucala"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "525f486e8b72a8",
+      "province": "Rewa",
+      "district": "Rewa",
+      "subdistrict": "Toga",
+      "title": "Vunisalevu na Turaga na Tui Toga",
+      "otherTitles": [],
+      "villages": [
+        "Navatuyaba",
+        "Vunisei",
+        "Muana"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "8a6b42364a826c",
+      "province": "Rewa",
+      "district": "Noco",
+      "subdistrict": "Noco",
+      "title": "Vunisa na Turaga na Tui Noco",
+      "otherTitles": [],
+      "villages": [
+        "Nabudrau",
+        "Nakuruwai",
+        "Nacuru",
+        "Taci",
+        "Nakauwaru",
+        "Navaka",
+        "Matanimoli",
+        "Naqarani",
+        "Naivilaca",
+        "Narocake"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "b4850bc4b8c50d",
+      "province": "Rewa",
+      "district": "Noco",
+      "subdistrict": "Burebasaga",
+      "title": "Gone Turaga na Roko Tuni",
+      "otherTitles": [],
+      "villages": [
+        "Burebasaga",
+        "Waivou",
+        "Naivikasara",
+        "Suva Lailai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "34b345a1885a01",
+      "province": "Rewa",
+      "district": "Noco",
+      "subdistrict": "Dreketi",
+      "title": "Turaga na Roko Tui Nadugaca",
+      "otherTitles": [],
+      "villages": [
+        "Vunisinu",
+        "Nalase",
+        "Nabuli",
+        "Nadoria",
+        "Nakorovou"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e96da674e3c4e8",
+      "province": "Rewa",
+      "district": "Suva",
+      "subdistrict": "Suva",
+      "title": "Turaga na Tui Suva",
+      "otherTitles": [],
+      "villages": [
+        "Suvavou",
+        "Waiqanake",
+        "Muaivuso",
+        "Togalevu",
+        "Lami",
+        "Nabaka",
+        "Wainawa",
+        "Naivikinikini"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 16,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "dd71708b7b9d45",
+      "province": "Rewa",
+      "district": "Beqa",
+      "subdistrict": "Sawau",
+      "title": "Nacurumoce na Turaga na Tui Sawau",
+      "otherTitles": [],
+      "villages": [
+        "Dakuibeqa",
+        "Naceva",
+        "Rukua",
+        "Lalati"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "93f0ed550073df",
+      "province": "Rewa",
+      "district": "Beqa",
+      "subdistrict": "Raviravi",
+      "title": "Turaga na Tui Raviravi",
+      "otherTitles": [],
+      "villages": [
+        "Soliyaga",
+        "Dakuni",
+        "Raviravi",
+        "Nawaisomo"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "8e783eae86c735",
+      "province": "Serua",
+      "district": "Serua",
+      "subdistrict": "Serua",
+      "title": "Korolevu na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Serua",
+        "Navatulevu",
+        "Nabukelevu",
+        "Nabotini",
+        "Namaqumaqua",
+        "Vunaniu",
+        "Korovisilou",
+        "Yanuca",
+        "Culanuka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "ab6c3ceca8783e",
+      "province": "Serua",
+      "district": "Serua",
+      "subdistrict": "Deuba",
+      "title": "Dravuni na Turaga Tui Dravuni",
+      "otherTitles": [],
+      "villages": [
+        "Sadro",
+        "Nasavu",
+        "Saniveiuto",
+        "Vunibau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "7b33915908738c",
+      "province": "Serua",
+      "district": "Nuku",
+      "subdistrict": "Nuku",
+      "title": "Sayake na Turaga na Tanisayake",
+      "otherTitles": [],
+      "villages": [
+        "Nuku",
+        "Waibogi",
+        "Wainadiro",
+        "Masi",
+        "Naimasimasi",
+        "Sabata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "0c84e5767d4eb1",
+      "province": "Serua",
+      "district": "Nuku",
+      "subdistrict": "Batiwai",
+      "title": "Vusu na Turaga na Tani Vusu",
+      "otherTitles": [],
+      "villages": [
+        "Galoa",
+        "Nakorovou",
+        "Dranikula",
+        "Wainiyabia",
+        "Qarasarau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "fe31309c750448",
+      "province": "Tailevu",
+      "district": "Bau",
+      "subdistrict": "Bau",
+      "title": "Kubuna na Tui Kaba na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Bau",
+        "Soso",
+        "Lasakau",
+        "Namuka",
+        "Nakoroivau",
+        "Natila",
+        "Cautata",
+        "Dromuna",
+        "Ovea",
+        "Vatanni",
+        "Vatoa",
+        "Viwa",
+        "Waicoka"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "3469cd4049bc8d",
+      "province": "Tailevu",
+      "district": "Bau",
+      "subdistrict": "Bau",
+      "title": "Natena na Roko Tui Kiuva",
+      "otherTitles": [],
+      "villages": [
+        "Kiuva",
+        "Muanaira",
+        "Naqeledamu",
+        "Logani",
+        "Natila"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 17,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "5401bfd9a11b36",
+      "province": "Tailevu",
+      "district": "Bau",
+      "subdistrict": "Namara",
+      "title": "Turaga na Roko Tui Veikau",
+      "otherTitles": [],
+      "villages": [
+        "Naisausau",
+        "Nakorolevu",
+        "Matamaivere",
+        "Tubalevu",
+        "Naikawaga",
+        "Nakalawaca"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "f1f725a18da23f",
+      "province": "Tailevu",
+      "district": "Bau",
+      "subdistrict": "Nausori",
+      "title": "Na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Nausori",
+        "Vunimono",
+        "Nadali",
+        "Verata-wailevu",
+        "Naduru",
+        "Molituva",
+        "Namono"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "65ceb8b1cb681f",
+      "province": "Tailevu",
+      "district": "Bau",
+      "subdistrict": "Dravo",
+      "title": "Navitomi na Turaga na Tudrau",
+      "otherTitles": [],
+      "villages": [
+        "Dravo",
+        "Naisogovau",
+        "Naila",
+        "Mokani",
+        "Maumi"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "33ab9f0c607df0",
+      "province": "Tailevu",
+      "district": "Bau",
+      "subdistrict": "Namata",
+      "title": "Nacobua na Turaga na Roko Tui Namata",
+      "otherTitles": [],
+      "villages": [
+        "Raralevu",
+        "Namata"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "3da42cf63620ae",
+      "province": "Tailevu",
+      "district": "Nakelo",
+      "subdistrict": "Nakelo",
+      "title": "Rara o Nakelo na Turaga na Tui Nakelo",
+      "otherTitles": [],
+      "villages": [
+        "Nauluvatu",
+        "Namuka-Vakali",
+        "Visama",
+        "Tumavia",
+        "Muana",
+        "Naluna",
+        "Vutuvo",
+        "Waikete",
+        "Naimalovau",
+        "Vaturua",
+        "Nasilai",
+        "Nakualevu",
+        "Anitioki",
+        "Kelili",
+        "Nukulau",
+        "Vunivaivai",
+        "Vadrai"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a867e9d101d7cc",
+      "province": "Tailevu",
+      "district": "Nakelo",
+      "subdistrict": "Nuku",
+      "title": "Turaga na Tui Nabou",
+      "otherTitles": [],
+      "villages": [
+        "Natogadravu",
+        "Naselai",
+        "Natoveya"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "8facfb2667d953",
+      "province": "Tailevu",
+      "district": "Nakelo",
+      "subdistrict": "Tokatoka",
+      "title": "Naceruku na Turaga na Tora Dreketi",
+      "otherTitles": [],
+      "villages": [
+        "Nabitu",
+        "Vuci",
+        "Draubuta",
+        "Lomainasau",
+        "Vanuadina",
+        "Nakaile",
+        "Vanualevu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "85f480ea10482b",
+      "province": "Tailevu",
+      "district": "Nakelo",
+      "subdistrict": "Buretu",
+      "title": "Naibati na Turaga na Tora Naibati",
+      "otherTitles": [],
+      "villages": [
+        "Buretu",
+        "Matainoco",
+        "Nabouciwa",
+        "Naivakacau",
+        "Daku"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "86b622264854d0",
+      "province": "Tailevu",
+      "district": "Verata",
+      "subdistrict": "Verata",
+      "title": "Burelevu i Naisanokonoko na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Ucunivanua",
+        "Naivuruvuru",
+        "Navunimono",
+        "Naloto",
+        "Sawa",
+        "Kumi",
+        "Naigani",
+        "Uluiloli"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "c0195365ce2dca",
+      "province": "Tailevu",
+      "district": "Verata",
+      "subdistrict": "Namalata",
+      "title": "Waimarolevulevu na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Matacaucau",
+        "Matacula",
+        "Nailega",
+        "Nakorovou",
+        "Veinuqa",
+        "Naitutu",
+        "Navunisole",
+        "Nakalawaca",
+        "Delasui",
+        "Nayawasara",
+        "Davetalevu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "caece2320eecac",
+      "province": "Tailevu",
+      "district": "Verata",
+      "subdistrict": "Tai",
+      "title": "Turaga na Roko Tui Tai",
+      "otherTitles": [],
+      "villages": [
+        "Dravuni",
+        "Naisaumua",
+        "Naiborebore"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "d66edb0194bc7c",
+      "province": "Tailevu",
+      "district": "Verata",
+      "subdistrict": "Vugalei",
+      "title": "Vunisalevu na Turaga na Tui Vugalei",
+      "otherTitles": [],
+      "villages": [
+        "Natobuniqio",
+        "Namulomulo",
+        "Nadaro",
+        "Sote",
+        "Visa",
+        "Savu",
+        "Naimasimasi",
+        "Naqeledamu",
+        "Logani"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 18,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "94fe94fb44a726",
+      "province": "Tailevu",
+      "district": "Verata",
+      "subdistrict": "Taivugalei",
+      "title": "Burerua na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Natuva",
+        "Nameka",
+        "Vatukarasa",
+        "Tonia"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "a01c5c621e7cb6",
+      "province": "Tailevu",
+      "district": "Sawakasa",
+      "subdistrict": "Sawakasa",
+      "title": "Nadereivalu na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Sawakasa No.1",
+        "Sawakasa No. 2",
+        "Burerua",
+        "Dakuinuku",
+        "Lodoni",
+        "Vorovoro"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "6a45711fa55794",
+      "province": "Tailevu",
+      "district": "Sawakasa",
+      "subdistrict": "Namena",
+      "title": "Nawainovo na Tui Wainovo",
+      "otherTitles": [],
+      "villages": [
+        "Nburenivalu",
+        "Nananu",
+        "Bureevu",
+        "Lawaki",
+        "Qoma",
+        "Qelekuro",
+        "Nabualau",
+        "Delaikuku",
+        "Nadrano"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "3f687f13476c6e",
+      "province": "Tailevu",
+      "district": "Sawakasa",
+      "subdistrict": "Dawasamu",
+      "title": "Dawasamu na Turaga na Ratu",
+      "otherTitles": [],
+      "villages": [
+        "Driti",
+        "Delakado",
+        "Luvunavuaka",
+        "Nataleira",
+        "Silana",
+        "Nasinu",
+        "Nabualau",
+        "Delasui",
+        "Natadrave"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "904e3529b63b03",
+      "province": "Tailevu",
+      "district": "Wainibuka",
+      "subdistrict": "Naloto",
+      "title": "Naloto na Turaga na Tui Naloto",
+      "otherTitles": [],
+      "villages": [
+        "Naivicula",
+        "Naveicovatu",
+        "Nasau"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "dcc33c28f4ec2f",
+      "province": "Tailevu",
+      "district": "Wainibuka",
+      "subdistrict": "Wailotua",
+      "title": "Wailevu na Turaga na Tui Wailevu",
+      "otherTitles": [],
+      "villages": [
+        "Wailotua No. 2",
+        "Nalabe",
+        "Natokalau",
+        "Wailotua No. 1"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "4a4245ff0f6480",
+      "province": "Tailevu",
+      "district": "Wainibuka",
+      "subdistrict": "Nasautoka",
+      "title": "Turaga Sau na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Nasautoka",
+        "Nabouva"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "8bbbd55a2daf81",
+      "province": "Tailevu",
+      "district": "Wainibuka",
+      "subdistrict": "Nayavu",
+      "title": "Bau na Roko Tui Bau",
+      "otherTitles": [],
+      "villages": [
+        "Nayavu",
+        "Naqia",
+        "Naseibitu",
+        "Namoka",
+        "Naveiveiwali",
+        "Natuvatuvavatu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    },
+    {
+      "scope": "tikina",
+      "id": "e9c0a4d08429f3",
+      "province": "Tailevu",
+      "district": "Wainibuka",
+      "subdistrict": "Nailega",
+      "title": "Naduadua na Turaga na Vunivalu",
+      "otherTitles": [],
+      "villages": [
+        "Naibita",
+        "Nailega",
+        "Wailevu",
+        "Nabulini",
+        "Manu"
+      ],
+      "source": "A icavuti.pdf",
+      "page": 19,
+      "status": "needs local confirmation"
+    }
+  ]
+}

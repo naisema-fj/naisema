@@ -1,0 +1,231 @@
+<main id="main">
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">DESIGN INQUIRY · WAQA</p>
+        <h1 id="page-title">A drua you can <em>investigate.</em></h1>
+        <p>What can you see before you know its name? Choose a view and a ring. Follow the part, compare the source clues, then decide what you would ask a sailor or builder.</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    </section>
+    <section id="explore" class="explore" aria-label="Interactive drua parts">
+      <div class="section-head"><div><p class="eyebrow">01 · LOOK, THEN NAME</p><h2>Where does your eye go first?</h2><p>Choose a view, then tap a ring to reveal its Fijian name. The close-up marks the same point.</p></div><span id="progress" class="progress" role="status" aria-live="polite">Names explored</span></div>
+      <div id="sceneButtons" class="scene-buttons" role="group" aria-label="Choose a canoe view or language activities"></div>
+      <section id="languageLab" class="language-lab" aria-labelledby="languageTitle" hidden>
+        <div class="language-heading">
+          <div><p class="eyebrow">LOOK · BUILD · EXPLAIN · USE</p><h3 id="languageTitle">Language activities</h3><p>Find a part in a view, build its name, then put a sourced or speaker-reviewed Fijian sentence together. Use those words and the evidence you find to explain an idea of your own.</p></div>
+          <button id="closeLanguage" type="button" aria-label="Close language activities">Close ×</button>
+        </div>
+        <article class="language-card language-word">
+          <span class="language-step">01 · BUILD A PART NAME</span>
+          <h4>Which name belongs to this part?</h4>
+          <p>Choose a clue, inspect its ring, then arrange all the syllable blocks. These are spelling pieces, not separate meanings.</p>
+          <label for="wordLesson">Choose a part to investigate</label>
+          <select id="wordLesson"></select>
+          <p id="wordClue" class="language-prompt"></p>
+          <div id="wordSlot" class="sentence-slot" role="group" aria-label="Your Fijian part name"></div>
+          <p class="language-output-label">Jumbled spelling blocks</p>
+          <div id="wordPieces" class="word-bank" role="group" aria-label="Spelling blocks to arrange"></div>
+          <div class="block-actions"><button id="checkWord" class="language-save" type="button">Check the name</button><button id="resetWord" class="language-small-button" type="button">Start again</button><button id="findWordRing" class="language-small-button waqa-part-link" data-open-part="laca" data-scene="model" type="button">Find its ring in the canoe →</button><button id="wordSentence" class="language-small-button" type="button" disabled>Build a related sentence →</button></div>
+          <p id="wordFeedback" class="block-feedback" role="status" aria-live="polite">Choose a spelling block to begin.</p>
+        </article>
+        <article class="language-card language-guided">
+          <span class="language-step">02 · BUILD FROM BLOCKS</span>
+          <h4>Can you put the Fijian sentence together?</h4>
+          <label for="blockLesson">Choose a sentence</label>
+          <select id="blockLesson"></select>
+          <p id="blockEnglish" class="block-english"></p>
+          <p class="block-instruction">Tap the blocks in order, or drag them into the sentence. Tap a placed block to return it to the bank.</p>
+          <div id="sentenceSlot" class="sentence-slot" role="group" aria-label="Your Fijian sentence"></div>
+          <p id="blockRoleToast" class="block-role-toast" role="status" aria-live="polite" hidden></p>
+          <p class="language-output-label">Jumbled Fijian blocks</p>
+          <div id="wordBank" class="word-bank" role="group" aria-label="Fijian word blocks to arrange"></div>
+          <div class="block-actions"><button id="checkBlocks" class="language-save" type="button">Check my sentence</button><button id="hintBlocks" class="language-small-button" type="button">Give me a clue</button><button id="resetBlocks" class="language-small-button" type="button">Start again</button><button id="nextBlocks" class="language-small-button" type="button">Next sentence →</button></div>
+          <p id="blockFeedback" class="block-feedback" role="status" aria-live="polite">Choose a block to begin.</p>
+          <div id="blockLearning" class="block-learning" hidden></div>
+          <p class="language-source">Source context and language review: <a id="blockSource" target="_blank" rel="noopener noreferrer"></a>. The linked source may provide background rather than the exact sentence. Most sentences here were checked by a native speaker; the counting example still needs that review. English meanings and grammar roles remain working interpretations, not word-for-word matches or claims about every canoe.</p>
+        </article>
+        <article id="applicationCard" class="language-card language-application">
+          <span class="language-step">03 · APPLY WITH A BOAT WORD</span>
+          <h4>What happens when you change the boat noun?</h4>
+          <p>Use a structure you just built. Replace its noun, then ask a speaker whether your new phrase sounds right in context.</p>
+          <label for="applyPattern">Choose a pattern to test</label>
+          <select id="applyPattern"><option value="count">E · tolu · na · waqa</option><option value="possessive">na · noqu · waqa</option></select>
+          <label for="applyNoun">Choose a boat noun</label>
+          <select id="applyNoun"></select>
+          <button id="useBuiltWord" class="language-small-button" type="button" disabled>Use the part name I built in 01</button>
+          <label for="otherBoatNoun">Or write another boat noun</label>
+          <input id="otherBoatNoun" type="text" lang="fj" maxlength="80" placeholder="A word from a ring, a speaker, or your community">
+          <p id="applyPatternNote" class="language-prompt"></p>
+          <p class="language-output-label">Your practice phrase · needs speaker review</p>
+          <p id="applyPreview" class="language-output" lang="fj" aria-live="polite"></p>
+          <button id="saveApplication" class="language-save" type="button">Keep this practice draft</button>
+        </article>
+        <div class="language-grid language-progress">
+          <article class="language-card">
+            <span class="language-step">04 · CONNECT THE WORD AND SENTENCE</span>
+            <h4>What happened to the name you built?</h4>
+            <p>Look at your completed word from 01 and sentence from 02. Does the same name appear, does its form look different, or is this sentence about something else?</p>
+            <p id="connectPair" class="language-output">Build a part name and check a sentence to compare them here.</p>
+            <div id="connectChoices" class="connect-choices" role="group" aria-label="Compare your word and sentence">
+              <button type="button" data-connection="same" disabled>Same form</button>
+              <button type="button" data-connection="changed" disabled>Looks different</button>
+              <button type="button" data-connection="absent" disabled>Not in this sentence</button>
+            </div>
+            <p id="connectFeedback" class="block-feedback" role="status" aria-live="polite">Complete 01 and 02 first.</p>
+          </article>
+          <article class="language-card">
+            <span class="language-step">05 · EXAMINE YOUR WORD CHANGE</span>
+            <h4>What changed in the phrase you tried?</h4>
+            <p>Use the part name you built in 01. Compare what your completed sentence says about it with the new phrase you tried in 03. What can each phrase tell someone?</p>
+            <p class="language-output-label">Sentence you built in 02</p>
+            <p id="changeSentence" class="language-output" lang="fj">Complete a sentence in 02 first.</p>
+            <p class="language-output-label">Pattern you started from</p>
+            <p id="changeBefore" class="language-output" lang="fj"></p>
+            <p class="language-output-label">Your practice draft · needs speaker review</p>
+            <p id="changeAfter" class="language-output" lang="fj"></p>
+            <label for="changeObservation">What does each phrase help you say, and what needs checking?</label>
+            <textarea id="changeObservation" rows="3" maxlength="400" placeholder="Compare the meanings, then name a question for a speaker"></textarea>
+            <button id="saveChange" class="language-save" type="button">Keep my comparison</button>
+          </article>
+          <article class="language-card">
+            <span class="language-step">06 · TURN MEANING INTO INQUIRY</span>
+            <h4>What could this sentence help you investigate?</h4>
+            <p>Bring together your part name, the completed sentence, and the noun change you examined. What can they help you ask about a real canoe part or skill?</p>
+            <p id="inquiryAnchor" class="language-output">Your completed word and sentence will appear here.</p>
+            <label for="nextQuestion">What would you ask a sailor or builder to show or explain?</label>
+            <textarea id="nextQuestion" rows="3" maxlength="400" placeholder="Ask about a visible part, an action, or when this knowledge matters"></textarea>
+            <button id="carryQuestion" class="language-save" type="button">Carry this into the design inquiry ↓</button>
+            <p id="carryFeedback" class="block-feedback" role="status" aria-live="polite">Complete the word, sentence, and noun-change comparison first.</p>
+          </article>
+        </div>
+        <div class="language-drafts"><div><h4>My working phrases and notes</h4><p>Saved on this device. These frames are prompts for inquiry, not checked answers or automatic translations.</p></div><ul id="languageDrafts" aria-live="polite"></ul><p id="languageStatus" class="language-status" role="status" aria-live="polite"></p></div>
+      </section>
+      <div class="lab-layout">
+        <div class="map-panel">
+          <div class="map-topline"><span class="live-dot" aria-hidden="true"></span><span>NA DRUA · <span id="sceneKind">SUPPLIED MODEL</span></span><span class="map-topline-end">Choose a ring</span></div>
+          <div class="image-wrap"><div class="image-stage"><img id="sceneImage" src="references/model-colour.png" alt="Supplied colour photograph of a drua model" width="1270" height="1226"><div id="hotspots" class="hotspots" role="group" aria-label="Points to explore on the drua"></div></div></div>
+          <div class="map-footer"><span>Names appear after you select a ring. Use Tab and Enter with a keyboard. On a phone, swipe the image sideways to inspect separate points.</span><span id="sceneCaption">Supplied reference model.</span></div>
+        </div>
+        <aside id="detailPanel" class="detail-panel" aria-labelledby="detailTitle">
+          <div class="detail-top"><span class="detail-kicker">PART IN FOCUS</span><span id="sourceBadge" class="source-badge" hidden></span><button id="backToImage" class="back-image" type="button">↑ Image</button></div>
+          <div id="zoomPanel" class="zoom-panel"><div id="zoomImage" class="zoom-image" role="img" aria-label="Close-up will appear after a ring is selected"></div><div id="zoomPointer" class="zoom-pointer" hidden aria-hidden="true"></div><span id="zoomHint" class="zoom-hint">Choose a ring to see it close up</span></div>
+          <div class="detail-body">
+            <p id="groupName" class="group-name">Begin with a question</p>
+            <h3 id="detailTitle" lang="fj">Choose a point</h3>
+            <p id="english" class="english">Which visible feature might this ring mark?</p>
+            <div id="partContent" hidden>
+              <div class="fact-block"><h4>What can you see?</h4><p id="seeText"></p></div>
+              <div class="fact-block"><h4>What do the sources suggest?</h4><p id="knowText"></p></div>
+              <div class="thinking"><span aria-hidden="true">✦</span><div><h4>What would you ask next?</h4><p id="questionText"></p></div></div>
+              <details class="sources"><summary>Which sources can you check?</summary><ul id="sourceList"></ul></details>
+              <div class="field-note"><h4>Build your next question</h4><label for="noticeText">What did you notice?</label><textarea id="noticeText" rows="2" maxlength="1000" placeholder="I noticed..."></textarea><label for="ownQuestionText">What do you wonder now?</label><textarea id="ownQuestionText" rows="2" maxlength="1000" placeholder="How could we tell whether...?"></textarea><label for="checkText">What could help you check?</label><textarea id="checkText" rows="2" maxlength="1000" placeholder="I could compare this with..."></textarea><small id="noteStatus" role="status" aria-live="polite">Notes stay on this device.</small></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </section>
+    <section class="next-inquiry" aria-labelledby="next-title">
+      <p class="eyebrow">02 · FOLLOW THE EVIDENCE</p><h2 id="next-title">Which names need a different view?</h2>
+      <div class="inquiry-grid"><article><h3>Two hulls: which name?</h3><p>The <em>Viti</em> chapter describes two <em>kata</em>. The supplied terminology uses <em>kata</em> for both hulls of a drua. A <a href="https://collections.maa.cam.ac.uk/photographs/393073/">museum photograph</a> uses <em>kata</em> and <em>cama</em> for its unequal hulls. What vessel, speaker and complete phrase would help us compare these uses?</p></article><article><h3>Over or through?</h3><p><a href="https://upload.wikimedia.org/wikipedia/commons/6/6a/A_Fijian_and_English_and_an_English_and_Fijian_dictionary%3B_%28IA_fijianenglishan00hazl%29.pdf">Hazlewood</a> says <em>yarabale</em> passes over the <em>domodomo</em>, not through its hole. <em>Domodali</em> describes fastening or passing a rope there. The <a href="https://prize.equatorinitiative.org/wp-content/uploads/formidable/6/Uto-Ni-Yalo_Fact-Sheet.pdf">Uto ni Yalo Trust</a> calls a halyard <em>viribale</em>. Can a sailor show which line goes through on a particular rig?</p></article><article><h3>What needs a real model?</h3><p>The house, raised shelf, mast support and steering oar now have their own views. Which smaller joins—<em>kola</em>, <em>taka</em>, <em>masi</em>, <em>drega</em>—would still need a close-up of construction? What would you ask a builder to show?</p></article></div>
+      <p class="review-note">The supplied photographs and concept diagrams offer different things to inspect. The <em>Viti</em> readers, a historical dictionary, museum records and a modern voyaging trust offer further clues. A Fijian builder, sailor and qualified speaker should review the forms and words before they become established teaching claims.</p>
+    </section>
+    <section class="cross-inquiry" aria-labelledby="cross-inquiry-title">
+      <p class="eyebrow">HERITAGE · SCIENCE · DESIGN · TOMORROW</p>
+      <h2 id="cross-inquiry-title">What could this drua set in motion?</h2>
+      <div class="inquiry-story">
+        <p class="story-lede">Imagine a young Fijian designer beside this drua, asking a builder to trace the <em>karikaritu</em> down to the <em>tau</em>. Each name opens a design question: how the sail is held, how the two <em>kata</em> carry a load, and how a damaged part might be repaired. The next sketch could serve a short coastal journey, a fishing trip, or a boat carrying supplies where fuel is costly. Which idea is worth exploring?</p>
+        <p>People are already asking related questions. A <a href="https://prdrse4all.spc.int/system/files/day1_fnu_hybrid_canoes.pdf" target="_blank" rel="noopener noreferrer">Fiji National University proposal</a> explores a sailing outrigger with a small backup motor and possible solar or wind assistance. A <a href="https://mtccpacific.spc.int/wp-content/uploads/2018/05/Annex-4-Presentations-min.pdf" target="_blank" rel="noopener noreferrer">Pacific maritime presentation</a> describes voyaging craft that bring traditional lashings together with modern navigation and solar-electric propulsion. These are other vessels and design efforts. They give us examples to question, test, and learn from as we study this drua.</p>
+        <p><a href="https://prize.equatorinitiative.org/wp-content/uploads/formidable/6/Uto-Ni-Yalo_Fact-Sheet.pdf" target="_blank" rel="noopener noreferrer">The Uto ni Yalo Trust</a> offers a living example in Fiji: its wind- and solar-powered canoe helps people practise voyaging, navigation and ocean care today. What might begin in your community if an experienced sailor taught one young person to read the wind—and that learner returned to teach another?</p>
+        <p>Names, measurements, experiments, and stories could all change the sketch. A learner might compare the hulls, test a small sail in different winds, ask a sailor where a rope leads, or ask a community which knowledge may be taught or adapted. Then comes the harder question: would a new boat actually be safe, useful, affordable to repair, and respectful of the people whose knowledge helped shape it?</p>
+        <p class="story-turn">One beginning is close at hand: choose a ring that might be wrong. Ask a knowledgeable person to show what they see, record their account with permission, and let that correction change the next drawing.</p>
+      </div>
+      <div class="waqa-challenge-panel" aria-labelledby="waqa-challenge-title">
+        <div class="waqa-challenge-intro">
+          <p class="eyebrow">THREE DESIGN INVESTIGATIONS</p>
+          <h3 id="waqa-challenge-title">What would you carry forward—and what would you test?</h3>
+          <p>Imagine a young Fijian who has travelled by outboard but has never learned to set a <em lang="fj">laca</em>. A sailor invites them to name a part, feel a change in the wind, and help with a small supervised practice craft. What would make them eager to return and learn the next skill? Where could that skill matter on a journey people make today?</p>
+          <p>Begin with a Fijian part name, open its ring, and follow what someone does with it. Build a sentence about what you observe. Then combine a view, a source and a sailor's or builder's account to propose one thing to try. Which idea from this drua could guide a new design or a new way to teach? What evidence or local account could change your mind?</p>
+          <p class="inquiry-path"><strong>Know:</strong> name and locate the parts. <strong>Do:</strong> trace, describe and compare what they do. <strong>Decide:</strong> use the evidence to design a small trial, explain why it matters, and revise your idea.</p>
+          <p class="waqa-part-hint">Select an underlined Fijian name to find it in a view above.</p>
+        </div>
+        <div class="waqa-challenges">
+          <article class="waqa-challenge-card">
+            <span class="waqa-challenge-number">01 · FOLLOW THE WIND</span>
+            <h4>Which line could change the whole sail?</h4>
+            <p>Begin with the <button type="button" class="waqa-part-link" data-open-part="laca" data-scene="model" lang="fj">laca</button>, the <button type="button" class="waqa-part-link" data-open-part="karikaritu" data-scene="rigging" lang="fj">karikaritu</button>, and the <button type="button" class="waqa-part-link" data-open-part="domodomo" data-scene="rigging" lang="fj">domodomo</button>. Which parts are timber, cloth or rope, and which can move?</p>
+            <p class="inquiry-stage"><strong>Build the tools:</strong> point to each part in the rigging view. Build a related sentence in Activity 02, then ask a speaker how to describe one connection. Which word would tell you about the action or relationship?</p>
+            <ol>
+              <li>Trace a possible path from the sail to the <button type="button" class="waqa-part-link" data-open-part="karikarisila" data-scene="rigging" lang="fj">karikarisila</button> and <button type="button" class="waqa-part-link" data-open-part="sila" data-scene="rigging" lang="fj">sila</button>. What would a sailor point to when explaining how the sail is controlled? What complete Fijian phrase would they use?</li>
+              <li>The diagram compares a rope over the masthead with a possible route through its hole. What would you need to see before calling one route <button type="button" class="waqa-part-link" data-open-part="yarabale" data-scene="rigging" lang="fj">yarabale</button> on a particular canoe?</li>
+              <li>In a supervised practice session, how could a sailor teach a learner to notice a wind shift, predict rope tension, then adjust the sail? What repeated observation would tell you the learner understands the movement rather than only the name?</li>
+            </ol>
+            <p class="inquiry-synthesis"><strong>Bring it together:</strong> draw the rope path you can actually trace, mark one uncertain link, and ask a sailor to demonstrate it. How might that demonstration become the first lesson in a local sail-skills practice group?</p>
+          </article>
+          <article class="waqa-challenge-card">
+            <span class="waqa-challenge-number">02 · TEST THE LOAD</span>
+            <h4>Could two hulls serve a new journey?</h4>
+            <p>Look at the two <button type="button" class="waqa-part-link" data-open-part="kata" data-scene="model" lang="fj">kata</button>, then follow the <button type="button" class="waqa-part-link" data-open-part="kaso" data-scene="cutaway" lang="fj">kaso</button> beneath the <button type="button" class="waqa-part-link" data-open-part="rara" data-scene="cutaway" lang="fj">rara</button>. Where might the weight travel?</p>
+            <p class="inquiry-stage"><strong>Build the tools:</strong> name both hulls, the beam and the deck. Build the carrying-capacity comparison in Activity 02. Which words would you need to change to compare these hulls? Ask a speaker before using a new version.</p>
+            <ol>
+              <li>If people and supplies move toward one side, what would you measure: each hull, the gap between them, the cargo, or something else? How would you record the difference between two small models?</li>
+              <li>Sketch a route for the load from deck to beam to hull. Which join would you test first? What result would challenge your first claim about balance or strength?</li>
+              <li>Could a small training craft make sail skills useful alongside an outboard on a familiar route? Compare fuel use, trip time, safe load, weather limits and repair cost. What could the <button type="button" class="waqa-part-link" data-open-part="uli" data-scene="steering" lang="fj">uli</button> make you ask about control? Which trial would persuade a local skipper to test the idea again?</li>
+            </ol>
+            <p class="inquiry-synthesis"><strong>Bring it together:</strong> combine your measurements, a sailor's weather limits and a familiar route in one proposal. What small, safe model test would tell you whether sail assistance could reduce fuel use without losing useful carrying space?</p>
+          </article>
+          <article class="waqa-challenge-card">
+            <span class="waqa-challenge-number">03 · KEEP THE RELATIONSHIPS</span>
+            <h4>Who will carry the skills into the next voyage?</h4>
+            <p>Compare the <button type="button" class="waqa-part-link" data-open-part="valevale" data-scene="cutaway" lang="fj">valevale</button> and the <button type="button" class="waqa-part-link" data-open-part="vatalaca" data-scene="cutaway" lang="fj">vatalaca</button>. A name can open a conversation about a place, its use, and a skill someone can demonstrate.</p>
+            <p class="inquiry-stage"><strong>Build the tools:</strong> locate the house and the raised shelf, then use their names in a question to a knowledgeable person. What can the model show, and what can only a person explain?</p>
+            <ol>
+              <li>This inquiry uses two <em lang="fj">kata</em> for the drua, while another source distinguishes <em lang="fj">kata</em> and <em lang="fj">cama</em>. Which canoe, community and complete Fijian phrase would you compare before deciding whether the accounts differ?</li>
+              <li>Who could still show a learner how to rig, steer, read local winds or repair a join? How might several short lessons and a shared task help the learner practise the words and the movements with that person's permission?</li>
+              <li>If new equipment changed the house or shelf, whose work or practices might change too? Could local builders repair the proposal after rough weather? What would their answers make you keep or change before inviting another young person aboard?</li>
+            </ol>
+            <p class="inquiry-synthesis"><strong>Bring it together:</strong> with permission, plan one short lesson that pairs a Fijian part name with a real action, such as rigging, steering or repairing. What could the learner teach next, and what must remain in the knowledge holder's care?</p>
+          </article>
+        </div>
+        <form id="synthesisForm" class="synthesis-form">
+          <p class="eyebrow">BRING THE CLUES TOGETHER</p>
+          <h4>What could you investigate next?</h4>
+          <p>Use a name, an observation and another person's or source's account to make a proposal. Your idea can change when new evidence arrives.</p>
+          <div class="synthesis-fields">
+            <label for="synthesisPart">Which Fijian part name starts your inquiry?<input id="synthesisPart" type="text" lang="fj" maxlength="80" placeholder="Choose a ring or a name you built"></label>
+            <label for="synthesisSeen">What can you point to in the view?<textarea id="synthesisSeen" rows="2" maxlength="400" placeholder="Describe what you can actually see"></textarea></label>
+            <label for="synthesisSource">What did a source, builder or sailor add?<textarea id="synthesisSource" rows="2" maxlength="400" placeholder="Record whose account this is and what it suggests"></textarea></label>
+            <label for="synthesisChallenge">Which skill or present-day journey might this help?<textarea id="synthesisChallenge" rows="2" maxlength="400" placeholder="For example: learning to sail, carrying supplies, fuel or repairs"></textarea></label>
+            <label for="synthesisTrial">What small action would you try, and what result would change your mind?<textarea id="synthesisTrial" rows="2" maxlength="400" placeholder="A sketch, comparison, supervised practice or model test"></textarea></label>
+          </div>
+          <div class="synthesis-actions"><button id="synthesisRing" type="button">Use my selected ring</button><button type="submit">Build my inquiry</button><button id="saveSynthesis" type="button">Keep this inquiry</button></div>
+          <p id="synthesisStatus" role="status" aria-live="polite">Your draft stays here until you save it on this device.</p>
+          <div id="synthesisResult" class="synthesis-result" hidden></div>
+          <ul id="synthesisSaved" class="synthesis-saved"></ul>
+        </form>
+      </div>
+      <div class="question-invitation"><h3>Where would your own inquiry begin?</h3><p>Choose a question if it catches your attention. Open it to push the idea one step further.</p></div>
+      <div class="seed-questions">
+        <details><summary>If two sources use different names, what else might differ?</summary><p>Could the canoe type, community, time, or action explain the difference? Whose complete Fijian phrase and demonstration would you seek before deciding?</p></details>
+        <details><summary>Would two similar-looking <em>kata</em> make a safer boat?</summary><p>What would you measure besides length? How could a small model test load and wind, and what result would make you revise your first guess?</p></details>
+        <details><summary>Which drua idea could help a present-day journey?</summary><p>Could sail power, connected hulls, or repairable joins inform a coastal service or a modern ferry? What would you compare with today's option—fuel use, safety, cost, or local repair? Which small skill could a sailor teach on a safe first trial, and what might bring the learner back?</p></details>
+        <details><summary>What should travel into the future, and who decides?</summary><p>What can young people learn or document with permission? Which choices belong with builders, sailors, and communities, and how would their answer change your proposed design? How could more young people practise without placing all the work on a few knowledge holders?</p></details>
+      </div>
+      <p class="source-foot">The modern examples above are prompts for comparison. Neither source establishes that its design would work on this particular drua or route.</p>
+    </section>
+    <section class="lexicon-section" aria-labelledby="lexicon-title">
+      <p class="eyebrow">03 · KEEP EVERY TERM IN VIEW</p>
+      <h2 id="lexicon-title">Canoe vocabulary for translation research</h2>
+      <p>Search the full supplied list. A model view or diagram is shown where the point can be located; the other terms stay in the research bank until the right model or demonstration is available.</p>
+      <label for="lexiconSearch">Find a Fijian term or working English clue</label>
+      <input id="lexiconSearch" type="search" placeholder="Try dreke, rope, house, join…" autocomplete="off">
+      <p id="lexiconCount" class="lexicon-count" role="status" aria-live="polite"></p>
+      <div id="lexiconResults" class="lexicon-results"></div>
+      <p class="review-note">These are translation research leads, not approved dictionary entries. Original spellings, current usage and boat type need review. Use the sources shown with each visible part as starting points for checking.</p>
+    </section>
+    <section class="reference-section" aria-labelledby="reference-title">
+      <p class="eyebrow">04 · COMPARE REAL FORMS</p><h2 id="reference-title">Models and sailing views supplied for comparison</h2>
+      <div class="reference-grid"><figure><img src="references/historic-sailing.png" alt="Historical black-and-white image of a sailing Fijian double canoe"><figcaption>Under sail: what moves that a static model cannot show?</figcaption></figure><figure><img src="references/model-light.png" alt="Light-background model showing sail, mast, house and two hulls"><figcaption>Model form: how do the two spars meet?</figcaption></figure><figure><img src="references/museum-display.png" alt="Museum display of a double canoe with large sail and deck house"><figcaption>Display view: what is hidden behind the sail and house?</figcaption></figure></div>
+      <p class="review-note">These images were supplied for comparison. If you know their original collection or creator, please use the correction form so we can improve attribution.</p>
+    </section>
+  </main>
+  <footer><strong>NAISEMA</strong><span>Look closely. Ask what the evidence shows. Follow the word.</span></footer>

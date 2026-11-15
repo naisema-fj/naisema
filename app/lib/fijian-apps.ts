@@ -1,25 +1,43 @@
 import type { FormKey } from "./forms";
 
 /**
- * The Fijian apps (apps.naisema.com), shown on NAISEMA at /apps. The apps site stays live on its own
- * host. Its material isn't served from NAISEMA until it has been through NAISEMA's own review,
- * so each app here says plainly where it is and what still has to happen (PUB-01). What
- * people send about an app comes in through NAISEMA's forms as a Submission and is never published
- * from there.
+ * The Fijian apps, first built on apps.naisema.com and now part of NAISEMA under /apps
+ * (docs/decision-log.md, "The Fijian apps join NAISEMA"). They are previews: every dictionary
+ * entry, lesson and term keeps the review state the apps site gave it and says so on the page
+ * (PUB-01). None of it is a Content Item, so none of it carries a Review Label. What people send
+ * about an app comes in through NAISEMA's forms as a Submission and is never published from there.
  */
 
-export const APPS_SITE = "https://apps.naisema.com";
+/** The apps, as the apps site grouped them. */
+export type FijianAppKey = "vosa" | "lessons" | "translation";
+
+/** Each app page, at the address it had on the apps site, under /apps/ (app/lib/fijian-app-pages.server.ts). */
+export const APP_PAGE_PATHS = {
+  dictionary: "/apps/dictionary/",
+  pronunciation: "/apps/dictionary/pronunciation/",
+  lessons: "/apps/lessons/",
+  "body-parts": "/apps/lessons/body-parts/",
+  "vale-vakaviti": "/apps/vale-vakaviti/",
+  "waqa-vakaviti": "/apps/waqa-vakaviti/",
+  translation: "/apps/translation/",
+} as const;
+
+export type AppPageKey = keyof typeof APP_PAGE_PATHS;
 
 export type FijianApp = {
-  key: string;
+  key: FijianAppKey;
   name: string;
+  /** What kind of app it is, under its name. */
+  kind: string;
   summary: string;
-  /** Where the app runs now, on the apps site. */
+  /** Where the app opens. */
   href: string;
-  /** What is still needed before it is part of NAISEMA, in the visitor's words. */
-  notYetOpen: string;
-  /** Where its reviewed part is on NAISEMA, once there is one. */
-  onNaisema?: string;
+  /** How far along it is, in the visitor's words. */
+  state: string;
+  /** What visitors should know before relying on it. */
+  caution: string;
+  /** The words on its link. */
+  open: string;
   /** The forms that send something about this app to the team. */
   forms: FormKey[];
 };
@@ -27,30 +45,35 @@ export type FijianApp = {
 export const FIJIAN_APPS: FijianApp[] = [
   {
     key: "vosa",
-    name: "Vosa, the Fijian dictionary",
-    summary:
-      "Fijian and English words, themes, grammar terms (Tuvavosa), proverbs and idioms (Vosavosavakaviti), a guide to veiqaravi vakavanua and icavuti by place.",
-    href: `${APPS_SITE}/dictionary/`,
-    notYetOpen:
-      "Vosa is a learning guide, not an official dictionary. Its entries come to NAISEMA once each is reviewed.",
+    name: "Vosa",
+    kind: "Fijian dictionary",
+    summary: "Search Fijian and English words, themes, grammar terms and sayings in the existing Vosa collection.",
+    href: APP_PAGE_PATHS.dictionary,
+    state: "Available in preview",
+    caution: "Vosa is a learning guide, not an official dictionary. Meanings may change after review.",
+    open: "Open the dictionary",
     forms: ["suggest-word", "correct-word"],
   },
   {
     key: "lessons",
-    name: "Language lessons",
-    summary:
-      "Short interactive lessons: body words and possession, and inquiries into a drua (canoe) and a vale vakaviti (house).",
-    href: `${APPS_SITE}/lessons/`,
-    notYetOpen: "The lessons are previews. Their Fijian wording is waiting for a qualified speaker's review.",
+    name: "Language learning",
+    kind: "Lessons",
+    summary: "Meet the body words, hide the labels, and unlock a first lesson on possession.",
+    href: APP_PAGE_PATHS.lessons,
+    state: "Lesson preview",
+    caution: "The lessons are previews. Their Fijian wording is waiting for a qualified speaker's review.",
+    open: "Explore lessons",
     forms: [],
   },
   {
     key: "translation",
     name: "Community translation",
-    summary:
-      "Explore an idea, like the water cycle, and propose how it could be said in Fijian, with the reasons your wording fits.",
-    href: `${APPS_SITE}/translation/`,
-    notYetOpen: "This is a design preview. No Fijian term shown there has been approved yet.",
+    kind: "Design preview",
+    summary: "Explore an idea, compare possible Fijian expressions and explain why they fit.",
+    href: APP_PAGE_PATHS.translation,
+    state: "Design preview",
+    caution: "No Fijian term shown there has been approved yet.",
+    open: "View page design",
     forms: ["suggest-translation"],
   },
 ];
