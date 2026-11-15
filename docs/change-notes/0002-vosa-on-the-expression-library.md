@@ -9,7 +9,7 @@
 
 Since 14 November, Vosa is on NAISEMA as a copy of the apps site: its markup, scripts and a 1 MB data file under `/apps/dictionary/`. Staff can't edit it, nothing in it can be reviewed on NAISEMA, and an approved "suggest a word" has nowhere to go, so the Suggest → Review → Publish steps the page promises stop at Review. Learning Layers already keep an Expression library, and change note 0001 says Lessons must point to it. This note moves Vosa onto that library, so there is one Fijian word list, reviewed once, used by the dictionary, the Learning Layers and the Lessons.
 
-This is the first of three steps for the Fijian apps; the other two are Lessons (change note 0001) and the remaining apps (pronunciation, Icavuti, community translation). Each has its own issue.
+This is the first of three steps for the Fijian apps, each with its own issue: this one (#116), Lessons (change note 0001, #117) and the remaining apps: pronunciation, Icavuti and community translation (#118).
 
 ## The change
 
