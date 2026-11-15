@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # Expressions carry their own language review, so Vosa can be built on them

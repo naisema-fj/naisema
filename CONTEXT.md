@@ -35,6 +35,10 @@ _Avoid_: Lesson (a Lesson has no video), VideoLearningObject, learning object, p
 An interactive Content Item in Learn that isn't built on a video (ADR-0014): pictures, words and Activities with its own Completion Rule, reviewed and published by Revision like any Content Item. Its Fijian points to Expressions.
 _Avoid_: Learning Layer (that is on a video), course, module
 
+**Vosa**:
+The public Fijian dictionary at `/vosa`: the Standard Fijian Expression library, drafts included and labelled as drafts.
+_Avoid_: Dictionary entry (for an Expression), word list
+
 **Fijian app**:
 One of the interactive previews first built on apps.naisema.com and now served under `/apps`: Vosa (the dictionary and its pronunciation library), the lesson previews and community translation. Not a Content Item: it has no Revisions and no Review Label, and shows the review state its material came with.
 _Avoid_: Lesson (for a lesson preview, until it is a Lesson), app (for the whole site)
@@ -48,7 +52,7 @@ One word of a Segment's Fijian text (each part of a hyphenated compound is its o
 _Avoid_: Character offset (as an anchor)
 
 **Expression**:
-A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save. Expressions are kept in a library for each Language Variety and reused across Learning Layers.
+A word, multiword phrase, saying or grammar term, with its general meaning, kept in a library for each Language Variety. Annotations point to it, Learners save it, and Vosa shows it. It has its own language review of its exact wording (ADR-0017); until a Language Reviewer approves its current wording it is a draft.
 _Avoid_: Vocab item, word (when a phrase or idiom is meant)
 
 **Annotation**:

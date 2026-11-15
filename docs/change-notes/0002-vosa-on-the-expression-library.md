@@ -1,6 +1,6 @@
 # Change note 0002: Vosa on the Expression library
 
-**Status:** proposed, not yet agreed. Nothing below is built, and nothing should be built until the sign-off at the end is complete.
+**Status:** agreed by the founder on 15 November 2026, with the decisions recorded under "Decisions".
 **Date:** 15 November 2026
 **Changes:** the v1 scope in the decision log ("v1 launch rewrite"), which dropped the Vosa dictionary pages, and the 14 November entry "The Fijian apps join NAISEMA", which brought them back as a static preview.
 **Design:** ADR-0017, "Expressions carry their own language review, so Vosa can be built on them".
@@ -58,13 +58,13 @@ This change is done when:
 - the old `/apps/dictionary/` addresses lead to the new ones;
 - tests cover the review fingerprint, the import counts, the Submission step and the public search, at the level the Content Item rules have.
 
-## Open decisions for the founder
+## Decisions (founder, 15 November 2026)
 
-- **Drafts on the public site:** show every Expression, with drafts labelled "not reviewed yet" (as the preview does now), or only reviewed ones? (Recommended: show drafts, labelled. An empty dictionary helps nobody, and the label says exactly what was reviewed. Reviewed entries come first in results.)
-- **Who reviews:** the same Language Reviewer (#7) who reviews Learning Layers, for about 1,580 entries? Is a second reviewer wanted, and in what order: the most-used words, a theme at a time, or the suggestions first?
-- **Address:** `/vosa/{word}` at the top level, or under Learn? (Recommended: `/vosa/`. It is a tool, not a piece in an area, and a short address is easy to share.)
-- **Rights:** confirm a Rights Record can be made for the two hosted source documents, and for the image links' pictures if any are copied rather than linked.
-- **Time and cost** of the build: _to be estimated by the developer once the decisions above are made._
+- **Drafts on the public site:** shown, labelled "not reviewed yet". Reviewed entries come first in results.
+- **Who reviews:** the founder, as Language Reviewer for Standard Fijian. They need the Language Reviewer role for Standard Fijian on the staff list. As for Revisions, nobody approves an Expression whose current wording they wrote.
+- **Address:** `/vosa/`, with one address per headword (`/vosa/{word}`).
+- **Rights:** yes: Rights Records are to be made for the two hosted source documents (the volavosa scan and the 1893 handbook). The image links stay links to other sites, so they need none.
+- **Time and cost:** built by Claude Code at the founder's request.
 
 ## Risks
 
@@ -78,5 +78,7 @@ This change takes effect when both lines are completed, and the decision log get
 
 | | Name | Date | Agreed |
 | --- | --- | --- | --- |
-| Founder | | | |
+| Founder | The founder (in a Claude Code session) | 15 November 2026 | Yes |
 | Developer | | | |
+
+The founder asked for the build to start on these decisions. The developer line is left for the Founding Developer, if the MOU needs it for a change built by Claude Code at the founder's request.
