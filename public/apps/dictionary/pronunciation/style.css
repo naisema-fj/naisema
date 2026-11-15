@@ -51,3 +51,28 @@
 @media(max-width:720px){.fijian-app .sound-tile{min-height:157px;padding:11px 9px}.fijian-app .sound-tile .char{font-size:36px}.fijian-app .sound-tile .tile-ipa{font-size:18px}.fijian-app .sound-tile .tile-English{font-size:11px}.fijian-app .phonetic-summary{gap:7px}.fijian-app .ipa-box{flex:0 0 98px}.fijian-app .english-box strong{font-size:15px}}
 
 
+/* The sound guide is built on the server from NAISEMA's records: each letter is a list item with its own audio control, and the featured letter and tap-to-listen are added by app.js. */
+.fijian-app ul.sound-list{list-style:none;margin:0;padding:0}
+.fijian-app .sound-tile{cursor:default}
+.fijian-app .sound-tile .tile-link{display:flex;flex-direction:column;align-items:start;gap:3px;flex:1;width:100%;color:inherit;text-decoration:none}
+.fijian-app .sound-tile .tile-link:focus-visible{outline:3px solid #ffbb64;outline-offset:3px;border-radius:10px}
+.fijian-app .sound-tile:target,.fijian-app .sound-tile.selected{border-color:#168e8a;background:#e9f8f2;box-shadow:0 0 0 2px #168e8a33}
+.fijian-app .sound-tile.selected .icon{background:#0e948a;color:white}
+.fijian-app .native-audio{width:100%;max-width:100%;height:34px;margin-top:8px}
+.fijian-app .no-audio{margin-top:8px;font-size:11px;color:#6b5a3a}
+.fijian-app .review-state{margin-top:6px;font-size:11px;line-height:1.3;color:#6b5a3a}
+.fijian-app .sound-tile.reviewed .review-state{color:#136c72;font-weight:700}
+.fijian-app .hero[hidden]{display:none}
+.fijian-app:not(.enhanced) .sound-tile .icon{display:none}
+.fijian-app.enhanced .native-audio{display:none}
+.fijian-app:not(.enhanced) .sound-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fijian-app .shell>.eyebrow{margin-top:6px}
+.fijian-app .shell>h1{margin:0 0 10px}
+@media(max-width:560px){.fijian-app:not(.enhanced) .sound-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Text colours darkened from the preview's so every line meets the 4.5:1 contrast the rest of NAISEMA meets. */
+.fijian-app .eyebrow{color:#0b6561}
+.fijian-app .footer{color:#3f5f61}
+.fijian-app .sound-tile .details,.fijian-app .no-audio,.fijian-app .review-state{color:#4a4a3a}
+.fijian-app .sound-tile.reviewed .review-state{color:#0b5f66}
+/* The one recording under review is a single tile, not a sixth of the grid. */
+.fijian-app .unclassified-sound .sound-list,.fijian-app:not(.enhanced) .unclassified-sound .sound-list{grid-template-columns:minmax(0,1fr);max-width:220px}

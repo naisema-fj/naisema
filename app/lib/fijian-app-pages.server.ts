@@ -4,7 +4,6 @@ import { NoticeField, TurnstileField } from "~/components/public/form-fields";
 import bodyParts from "~/fijian-apps/pages/body-parts.html?raw";
 import dictionary from "~/fijian-apps/pages/dictionary.html?raw";
 import lessons from "~/fijian-apps/pages/lessons.html?raw";
-import pronunciation from "~/fijian-apps/pages/pronunciation.html?raw";
 import translation from "~/fijian-apps/pages/translation.html?raw";
 import valeVakaviti from "~/fijian-apps/pages/vale-vakaviti.html?raw";
 import waqaVakaviti from "~/fijian-apps/pages/waqa-vakaviti.html?raw";
@@ -70,7 +69,8 @@ const PAGES: Record<AppPageKey, AppPage> = {
     title: "Fijian pronunciation library",
     description: "Learn Fijian letter sounds with voice recordings. Tap any letter to listen.",
     app: "vosa",
-    body: pronunciation,
+    // Built from the sound guide on each request (app/lib/pronunciation-page.server.tsx, change note 0003).
+    body: "",
     styles: ["style.css"],
     scripts: ["app.js"],
     correctable: false,
@@ -170,10 +170,13 @@ const formCheck = (siteKey: string) =>
     ),
   );
 
-/** What the page needs: its markup with NAISEMA's parts put in, and its files at their addresses. */
-export function renderAppPage(page: NonNullable<ReturnType<typeof findAppPage>>, siteKey: string) {
+/**
+ * What the page needs: its markup with NAISEMA's parts put in, and its files at their addresses.
+ * A page built from NAISEMA's records, not written out here, brings its own `markup`.
+ */
+export function renderAppPage(page: NonNullable<ReturnType<typeof findAppPage>>, siteKey: string, markup?: string) {
   const path = APP_PAGE_PATHS[page.key];
-  let body = page.body;
+  let body = markup ?? page.body;
   const turnstile = body.includes(FORM_CHECK_MARK);
   if (turnstile) body = body.replace(FORM_CHECK_MARK, formCheck(siteKey));
   if (page.correctable) body = body.replace(/<\/main>/, `${correctionNote(path)}</main>`);

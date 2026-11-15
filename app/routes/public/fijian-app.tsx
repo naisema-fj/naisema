@@ -1,8 +1,11 @@
 import { redirect } from "react-router";
 import { cloudflareContext } from "~/lib/cloudflare";
+import { getDb } from "~/lib/db.server";
 import { findAppPage, renderAppPage } from "~/lib/fijian-app-pages.server";
 import { publicHeaders } from "~/lib/http";
+import { pronunciationBody } from "~/lib/pronunciation-page.server";
 import type { RouteHandle } from "~/lib/route-handle";
+import { publicSounds } from "~/lib/sounds.server";
 import type { Route } from "./+types/fijian-app";
 
 /**
@@ -22,12 +25,15 @@ export const headers = publicHeaders;
  * wrote its addresses with a closing slash, and its pages find their files relative to that, so an
  * address without one is sent to the one with it.
  */
-export function loader({ request, context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const page = findAppPage(url.pathname.endsWith("/") ? url.pathname : `${url.pathname}/`);
   if (!page) throw new Response("Not found", { status: 404 });
   if (!url.pathname.endsWith("/")) throw redirect(`${url.pathname}/${url.search}`, 301);
-  return renderAppPage(page, context.get(cloudflareContext).env.TURNSTILE_SITE_KEY);
+  const { env } = context.get(cloudflareContext);
+  // The pronunciation library is built from the sound guide, with each recording's rights asked now.
+  const markup = page.key === "pronunciation" ? pronunciationBody(await publicSounds(getDb(env.DB))) : undefined;
+  return renderAppPage(page, env.TURNSTILE_SITE_KEY, markup);
 }
 
 export function meta({ loaderData }: Route.MetaArgs) {

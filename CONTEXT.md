@@ -36,7 +36,7 @@ An interactive Content Item in Learn that isn't built on a video (ADR-0014): pic
 _Avoid_: Learning Layer (that is on a video), course, module
 
 **Fijian app**:
-One of the interactive previews first built on apps.naisema.com and now served under `/apps`: Vosa (the dictionary and its pronunciation library), the lesson previews and community translation. Not a Content Item: it has no Revisions and no Review Label, and shows the review state its material came with.
+One of the interactive previews first built on apps.naisema.com and now served under `/apps`: Vosa (the dictionary and its pronunciation library, which is built from Sounds), the lesson previews and community translation. Not a Content Item: it has no Revisions and no Review Label, and shows the review state its material came with.
 _Avoid_: Lesson (for a lesson preview, until it is a Lesson), app (for the whole site)
 
 **Segment**:
@@ -50,6 +50,10 @@ _Avoid_: Character offset (as an anchor)
 **Expression**:
 A reviewed word or multiword phrase, with its general meaning, that Annotations point to and Learners save. Expressions are kept in a library for each Language Variety and reused across Learning Layers.
 _Avoid_: Vocab item, word (when a phrase or idiom is meant)
+
+**Sound**:
+One letter of a Language Variety's sound guide (the pronunciation library at `/apps/dictionary/pronunciation/`): its broad IPA, an English comparison, a note on how it is made and one recording. Not a Content Item and without Revisions: it has its own language review, which a Language Reviewer gives to its exact wording and recording after listening, and any change to either makes it a draft again (change note 0003). Its recording plays publicly only while the recording's own Rights Record grants Publish. "Dz" is a Sound of the group "recording label": supplied with a recording, not confirmed as a letter.
+_Avoid_: Letter card, tile, phoneme (the IPA is a guide to expected sounds, not a ruling)
 
 **Annotation**:
 A link from a range of tokens in one Segment to an Expression, carrying the contextual meaning at that moment.

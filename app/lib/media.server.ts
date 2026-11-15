@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { media, rightsRecord } from "~db/schema";
 import { audit } from "./audit.server";
 import { parseRange } from "./byte-range";
@@ -85,6 +85,21 @@ export async function mediaIsPublic(db: Database, mediaId: string) {
     .where(and(eq(rightsRecord.subjectType, "media"), eq(rightsRecord.subjectId, mediaId)));
   const today = fijiToday();
   return records.some((record) => isCurrent(record, today) && record.permittedUses.includes("publish"));
+}
+
+/** Which of these media files may be shown on the public site today, in one query. */
+export async function publicMediaIds(db: Database, mediaIds: string[]) {
+  if (!mediaIds.length) return new Set<string>();
+  const records = await db
+    .select()
+    .from(rightsRecord)
+    .where(and(eq(rightsRecord.subjectType, "media"), inArray(rightsRecord.subjectId, mediaIds)));
+  const today = fijiToday();
+  return new Set(
+    records
+      .filter((record) => isCurrent(record, today) && record.permittedUses.includes("publish"))
+      .map((record) => record.subjectId),
+  );
 }
 
 /**
