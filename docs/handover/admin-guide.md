@@ -51,6 +51,15 @@ From an item's page, press **Rights Records**, or use **Rights Records** beside 
 
 Nothing can be public until a record grants **Publish**. A Video's Learning Layer also needs **Translate**, **Transcribe** and **Educational adaptation**. To take something down at once, withdraw its record.
 
+## The sound guide
+
+**Sound guide** in the menu lists the letters of the pronunciation library at `/apps/dictionary/pronunciation/` and where each stands. Press a letter to open it. Editors and Language Reviewers see this page.
+
+- **To change a sound** (editors): change the IPA, the English comparison or the note, and press **Save**. Saving makes it a draft again, because a reviewer approved the wording as it was.
+- **To give a sound its own recording** (editors): upload the MP3 or M4A in **Media library**, press **Rights Records** beside it and add who spoke and what they permit (Publish at least, with their written permission attached). Then choose it under **Recording from the media library** on the sound. Until then the page plays the preview's own file, which has no Rights Record. If a recording's record is withdrawn or runs out, the page stops playing it and says so.
+- **To review a sound** (Language Reviewers, for the Language Variety on your staff record): play the recording, tick **I have listened to this recording and checked the wording against it**, and press **Approve this sound**. You can't approve a sound you last changed. The page then shows "Language reviewed", with your variety and the date. The IPA and the English comparison describe expected sounds, not this recording, so review by ear, not from the symbols alone.
+- **"Dz"** is a recording label, not a confirmed letter. It stays under **Recording under review** until a reviewer decides what it is.
+
 ## Publish
 
 On the item's page, **Where it stands** says either "This version can be published", or exactly what is missing. When it can be published, press **Publish version N**. It is on the public site at once.

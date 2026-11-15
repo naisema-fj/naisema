@@ -48,6 +48,8 @@ export default [
       route("media", "routes/admin/media.tsx"),
       route("media/upload", "routes/admin/media-upload.ts"),
       route("topics", "routes/admin/topics.tsx"),
+      route("sounds", "routes/admin/sounds.tsx"),
+      route("sounds/:id", "routes/admin/sound.tsx"),
       route("submissions", "routes/admin/submissions.tsx", { id: "submissions" }),
       route("submissions/:id", "routes/admin/submissions.tsx", { id: "submission" }),
       route("staff", "routes/admin/staff.tsx"),

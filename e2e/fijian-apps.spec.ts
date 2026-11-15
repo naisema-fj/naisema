@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { expectNoAxeViolations, stubTurnstile } from "./support";
+import { expectNoAxeViolations, expectReflow, stubTurnstile } from "./support";
 
 /**
  * The Fijian apps, brought over from apps.naisema.com (docs/decision-log.md, "The Fijian apps join
@@ -134,4 +134,38 @@ test("an app page's correction note opens the correction form for that page", as
   await page.getByLabel("What should we correct or investigate?").fill("The bou is the main house post.");
   await page.getByLabel("I've read how NAISEMA keeps what I send").check();
   await sendWhenChecked(page, "Send");
+});
+
+test.describe("the pronunciation library", () => {
+  test("shows the featured letter, plays another when tapped, and keeps the letter in the address", async ({
+    page,
+  }) => {
+    const problems = watchForProblems(page);
+    await page.goto("/apps/dictionary/pronunciation/#B");
+    await expect(page.locator("#featured-letter")).toHaveText("B b");
+    await expect(page.locator("#ipa")).toHaveText("/ᵐb/");
+    await expect(page.locator(".fijian-app")).toHaveClass(/enhanced/);
+    await expectNoAxeViolations(page);
+    await expectReflow(page);
+    await page.locator("#sound-list").getByRole("link", { name: /^Q q/ }).click();
+    await expect(page.locator("#featured-letter")).toHaveText("Q q");
+    await expect(page.locator("#english-approx")).toHaveText("ng-g in finger");
+    await expect(page).toHaveURL(/#Q$/);
+    await expect(page.locator("#voice")).toHaveAttribute("src", /\/audio\/Q\.mp3$/);
+    await expect(page.locator("#review-state-note")).toHaveText("Not reviewed yet");
+    expect(problems).toEqual([]);
+  });
+
+  test.describe("with JavaScript off", () => {
+    test.use({ javaScriptEnabled: false });
+
+    test("lists every letter with its own audio control", async ({ page }) => {
+      await page.goto("/apps/dictionary/pronunciation/");
+      await expect(page.locator("#featured")).toBeHidden();
+      await expect(page.locator("li[data-letter]")).toHaveCount(24);
+      await expect(page.locator("audio.native-audio").first()).toBeVisible();
+      await expect(page.locator("li[data-letter] .review-state").first()).toHaveText("Not reviewed yet");
+      // Axe is itself a script, so it can't run here; the same markup is checked with scripts on above.
+    });
+  });
 });

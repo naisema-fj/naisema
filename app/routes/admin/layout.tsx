@@ -10,6 +10,7 @@ import {
   Tags,
   UserRound,
   Users,
+  Volume2,
 } from "lucide-react";
 import { Form, isRouteErrorResponse, Outlet, useLocation, useRouteError, useRouteLoaderData } from "react-router";
 import { Icon } from "~/components/icons";
@@ -42,6 +43,10 @@ function staffNav(person: Staff): NavGroup[] {
         (can(person, "content.edit") || can(person, "video.edit")) && { label: "Content", href: "/admin/items" },
         can(person, "media.upload") && { label: "Media library", href: "/admin/media" },
         can(person, "content.edit") && { label: "Topics", href: "/admin/topics" },
+        (can(person, "content.edit") || can(person, "review.language")) && {
+          label: "Sound guide",
+          href: "/admin/sounds",
+        },
       ],
     },
     {
@@ -69,6 +74,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin/items": FileText,
   "/admin/media": Image,
   "/admin/topics": Tags,
+  "/admin/sounds": Volume2,
   "/admin/submissions": Inbox,
   "/admin/staff": Users,
   "/admin/audit": ScrollText,

@@ -1,6 +1,6 @@
 # Change note 0003: The pronunciation library as NAISEMA's own sound guide
 
-**Status:** proposed, not yet agreed. Nothing below is built, and nothing should be built until the sign-off at the end is complete.
+**Status:** built on the founder's instruction of 15 November 2026 ("Build it now"), before the sign-off table at the end was completed. See "As built" for what differs from the proposal and what is still to do.
 **Date:** 15 November 2026
 **Changes:** the 14 November entry in the decision log, "The Fijian apps join NAISEMA", which brought the pronunciation library over as a static preview. This is the pronunciation part of issue #118, "Pronunciation, Icavuti and community translation on NAISEMA's model".
 **Design:** reuses the review approach proposed in ADR-0017 ("Expressions carry their own language review"), which is itself proposed, not yet accepted.
@@ -46,6 +46,14 @@ Each letter's sound becomes a **Sound** record in Standard Fijian's library, wit
 ### Why a record of its own, not a Content Item
 
 Making each letter a Content Item with Revisions was considered and rejected. It would add 24 Content Items, each needing an area, a Topic and the publishing steps built for articles and videos, for records of a few lines each, and none of the existing kinds fits: a Resource is a download or a link, and a Page is one of the fixed footer pages. A Sound needs review per letter, and an approval on a fingerprint gives that without the rest. This is the same reasoning ADR-0017 gives for dictionary entries.
+
+## As built
+
+- **Done:** steps 2 to 6. Sounds and their approvals are in migration 0004, with the 24 entries imported from the preview as they stood (IPA kept without its slashes, which the page adds). The staff screens are `/admin/sounds` and `/admin/sounds/:id`. The public page is built on the server and lists and plays every letter without JavaScript; `app.js` adds the featured letter, tap-to-listen, the seek bar and the speed control.
+- **A change from the proposal:** a Sound plays the preview's own file until a library recording is attached (`preview_audio`), so the live page doesn't go silent while the Rights Records are still to be made. A Sound approved against the preview's file is a draft again once a library recording replaces it, because the approval covers the recording as well as the wording.
+- **Not done: step 1** (the 24 recordings in the media library with Rights Records) waits for the speakers' names and written permission. **Step 7** (retire `public/apps/dictionary/pronunciation/audio` and the dictionary-data copy in `app.js`) waits for step 1.
+- **Contrast:** a few text colours in the preview's stylesheet were darkened so the page meets the 4.5:1 contrast the rest of NAISEMA meets. Its recorded wording is unchanged.
+- **Tests:** unit tests for the fingerprint and review rules; integration tests for the import counts, the public page, the review gates, and a library recording playing only while its rights allow; browser tests with axe and reflow checks on desktop and phone, and the page with JavaScript off (without axe, which is itself a script).
 
 ## Effect on launch
 

@@ -13,9 +13,10 @@ import type { LearningLayer } from "../app/lib/learning-layer-fields";
 import type { MediaKind } from "../app/lib/media-rules";
 import type { PermittedUse } from "../app/lib/rights-rules";
 import type { Role } from "../app/lib/roles";
+import type { SoundGroup } from "../app/lib/sound-rules";
 
 /**
- * The v1 data model (ADR-0015, ADR-0016): eleven tables. Content is a Content Item with write-once Revisions;
+ * The v1 data model (ADR-0015, ADR-0016, change note 0003): fourteen tables. Content is a Content Item with write-once Revisions;
  * Review Approvals and Rights Records decide, on every request, whether a Revision is public
  * (ADR-0003, ADR-0007). A Video's Learning Layer lives inside its Revision.
  */
@@ -179,6 +180,59 @@ export const expression = sqliteTable(
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
   (table) => [index("expression_variety").on(table.variety, table.headword)],
+);
+
+/**
+ * A letter of a Language Variety's sound guide (change note 0003): its IPA, an English comparison
+ * and a note on how it is made, heard with one recording. Not a Content Item and without
+ * Revisions: its review state is the Language Reviewer's approval that matches its current wording
+ * and recording, or none (`sound_approval`, app/lib/sound-rules.ts).
+ */
+export const sound = sqliteTable(
+  "sound",
+  {
+    id: text("id").primaryKey(),
+    variety: text("variety").notNull(),
+    /** The letter as the guide names it, like "A" or "Dz"; the address of its section, `#A`. */
+    letter: text("letter").notNull(),
+    /** The letter as shown, like "A a". */
+    display: text("display").notNull(),
+    group: text("sound_group").$type<SoundGroup>().notNull(),
+    ipa: text("ipa").notNull().default(""),
+    englishComparison: text("english_comparison").notNull().default(""),
+    note: text("note").notNull().default(""),
+    /** The recording in the media library; it plays only while its own Rights Record grants Publish. */
+    mediaId: text("media_id").references(() => media.id),
+    /** The preview's own file, under /apps/dictionary/pronunciation/, played until a library recording is attached. */
+    previewAudio: text("preview_audio"),
+    durationMs: integer("duration_ms"),
+    /** Where the recording came from, as the preview recorded it. */
+    origin: text("origin").notNull().default(""),
+    position: integer("position").notNull(),
+    updatedBy: text("updated_by").notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("sound_letter").on(table.variety, table.letter),
+    check("sound_group", sql`${table.group} in ('vowel', 'consonant', 'label')`),
+  ],
+);
+
+/** A Language Reviewer's approval of one Sound's exact wording and recording, by fingerprint. Only added. */
+export const soundApproval = sqliteTable(
+  "sound_approval",
+  {
+    id: text("id").primaryKey(),
+    soundId: text("sound_id")
+      .notNull()
+      .references(() => sound.id),
+    fingerprint: text("fingerprint").notNull(),
+    variety: text("variety").notNull(),
+    reviewerEmail: text("reviewer_email").notNull(),
+    notes: text("notes").notNull().default(""),
+    createdAt: createdAt(),
+  },
+  (table) => [index("sound_approval_sound").on(table.soundId)],
 );
 
 /** A Topic: a theme across areas, with at most one level of subtopics. */
