@@ -1,0 +1,187 @@
+[
+  {
+    "id": "animals",
+    "title": "Animals & birds",
+    "description": "Land animals, birds, and insects"
+  },
+  {
+    "id": "baked-foods",
+    "title": "Bread, cakes & pastries",
+    "description": "Baked staples, treats, and pastry dishes"
+  },
+  {
+    "id": "body",
+    "title": "Body & health",
+    "description": "Body parts, illness, and care"
+  },
+  {
+    "id": "boats",
+    "title": "Boats & travel",
+    "description": "Vessels, journeys, and travel"
+  },
+  {
+    "id": "calendar",
+    "title": "Calendar & traditional months",
+    "description": "Seasonal month names and calendar terms. Gregorian month pairings are approximate; an older calendar had 11 months"
+  },
+  {
+    "id": "clothes",
+    "title": "Clothes & dress",
+    "description": "Garments and things worn"
+  },
+  {
+    "id": "colors",
+    "title": "Colors & appearance",
+    "description": "Color, size, and appearance"
+  },
+  {
+    "id": "deep-water-fish",
+    "title": "Deep-water fish",
+    "description": "Fish placed in the deep-bottom group on the Fiji food-fish poster"
+  },
+  {
+    "id": "edible-greens",
+    "title": "Edible greens",
+    "description": "Leafy vegetables and edible fern or taro leaves"
+  },
+  {
+    "id": "counting",
+    "title": "Wiliwili Vakaviti · counting",
+    "description": "Counting words from one to ten"
+  },
+  {
+    "id": "family",
+    "title": "Family & people",
+    "description": "Relatives, people, and relationships"
+  },
+  {
+    "id": "farming",
+    "title": "Farming & tools",
+    "description": "Growing, harvesting, and tools"
+  },
+  {
+    "id": "feelings",
+    "title": "Feelings & character",
+    "description": "Emotions and personal qualities"
+  },
+  {
+    "id": "fiji-fish",
+    "title": "Fish of Fiji",
+    "description": "Fijian fish names with the species kept distinct"
+  },
+  {
+    "id": "fiji-birds",
+    "title": "Birds of Fiji",
+    "description": "Fijian bird names and their distinct species"
+  },
+  {
+    "id": "fishing-traps",
+    "title": "Fishing & traps",
+    "description": "Fishing grounds, nets, lines, hooks, and ways to catch fish"
+  },
+  {
+    "id": "sea-life",
+    "title": "Fish & sea life",
+    "description": "Fish and other sea creatures"
+  },
+  {
+    "id": "food",
+    "title": "Food & cooking",
+    "description": "Food, drinks, and preparing meals"
+  },
+  {
+    "id": "house",
+    "title": "House & home",
+    "description": "Buildings, rooms, and their parts"
+  },
+  {
+    "id": "learning",
+    "title": "Learning & school",
+    "description": "School, books, and learning"
+  },
+  {
+    "id": "writing-marks",
+    "title": "Writing marks",
+    "description": "Fijian names for punctuation and written symbols"
+  },
+  {
+    "id": "language-varieties",
+    "title": "Language & varieties",
+    "description": "Home language, shared Fijian, informal speech, and historical labels"
+  },
+  {
+    "id": "materials",
+    "title": "Making & materials",
+    "description": "Materials and things people make"
+  },
+  {
+    "id": "movement",
+    "title": "Movement & action",
+    "description": "Moving and doing"
+  },
+  {
+    "id": "numbers",
+    "title": "Numbers & quantity",
+    "description": "Counting and amounts"
+  },
+  {
+    "id": "open-water-fish",
+    "title": "Open-water fish",
+    "description": "Pelagic fish placed in the open-water group on the Fiji food-fish poster"
+  },
+  {
+    "id": "places",
+    "title": "Places & direction",
+    "description": "Land, settlements, and direction"
+  },
+  {
+    "id": "plants",
+    "title": "Plants & trees",
+    "description": "Plants and their parts"
+  },
+  {
+    "id": "pronouns",
+    "title": "Pronouns",
+    "description": "People in speech, including inclusive and exclusive forms"
+  },
+  {
+    "id": "coast",
+    "title": "Sea & coast",
+    "description": "Sea, shores, and reef places"
+  },
+  {
+    "id": "sky",
+    "title": "Sky & stars",
+    "description": "Sky, lights, and weather"
+  },
+  {
+    "id": "speaking",
+    "title": "Speaking & listening",
+    "description": "Words, voices, and communication"
+  },
+  {
+    "id": "sounds",
+    "title": "Speech sounds",
+    "description": "Pronunciation terms from Rorogo"
+  },
+  {
+    "id": "time",
+    "title": "Time & seasons",
+    "description": "Days, times, and seasons"
+  },
+  {
+    "id": "work",
+    "title": "Work & trade",
+    "description": "Jobs, businesses, trade, and money"
+  },
+  {
+    "id": "customs",
+    "title": "Traditions & ceremonies",
+    "description": "Ceremonies, custom, and shared life"
+  },
+  {
+    "id": "veiqaraqaravi-vakavanua",
+    "title": "Veiqaravi Vakavanua",
+    "description": "Terms for Fijian ceremonial visiting, welcome, relationships, and departure"
+  }
+]

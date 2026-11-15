@@ -7,7 +7,8 @@ const PUBLIC = "http://localhost";
 const visit = (path: string, init: RequestInit = {}) => SELF.fetch(`${PUBLIC}${path}`, { redirect: "manual", ...init });
 
 const APP_PAGES = [
-  "/apps/dictionary/",
+  "/apps/dictionary/?view=icavuti",
+  "/apps/dictionary/?view=culture",
   "/apps/dictionary/pronunciation/",
   "/apps/lessons/",
   "/apps/lessons/body-parts/",
@@ -33,7 +34,7 @@ describe("the Fijian apps' pages", () => {
   });
 
   it("load Turnstile only where a form sends something", async () => {
-    expect(scriptPolicy(await visit("/apps/dictionary/"))).toContain("challenges.cloudflare.com");
+    expect(scriptPolicy(await visit("/apps/dictionary/?view=icavuti"))).toContain("challenges.cloudflare.com");
     expect(scriptPolicy(await visit("/apps/translation/"))).toBe("'self'");
   });
 
@@ -45,7 +46,7 @@ describe("the Fijian apps' pages", () => {
   });
 
   it("keep the apps site's browser-only word editor off the public dictionary", async () => {
-    const html = await (await visit("/apps/dictionary/")).text();
+    const html = await (await visit("/apps/dictionary/?view=icavuti")).text();
     for (const id of ["edit-dialog", "proverb-dialog", "import-button", "export-button", "add-button"]) {
       expect(html).not.toContain(`id="${id}"`);
     }
@@ -59,7 +60,7 @@ describe("the Fijian apps' pages", () => {
 
   it("are listed on the apps' home, whose suggestion form sends to the team", async () => {
     const html = await (await visit("/apps")).text();
-    for (const path of ["/apps/dictionary/", "/apps/lessons/", "/apps/translation/"]) expect(html).toContain(path);
+    for (const path of ["/vosa", "/apps/lessons/", "/apps/translation/"]) expect(html).toContain(path);
     expect(html).toContain('action="/forms/suggest-word"');
   });
 });

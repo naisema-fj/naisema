@@ -134,3 +134,29 @@
     margin-left: 0;
   }
 }
+
+/* The Vakavanua and Icavuti preview's opening, in place of the old dictionary search (#118). */
+.fijian-app .preview-intro {
+  margin: 0 clamp(16px, 3vw, 48px);
+  padding: 32px clamp(20px, 3vw, 40px);
+  border-radius: 18px;
+  background: #0f2b35;
+  color: #f6f5f2;
+}
+
+.fijian-app .preview-intro h1 {
+  margin: 0 0 10px;
+  color: #f6f5f2;
+  font: 800 clamp(2rem, 3.4vw, 3rem) / 1.05 Bricolage, "Arial Narrow", system-ui, sans-serif;
+}
+
+.fijian-app .preview-intro p {
+  max-width: 44rem;
+  margin: 0;
+  color: #e6eeec;
+}
+
+.fijian-app .preview-intro a {
+  color: #f1cd78;
+  font-weight: 700;
+}

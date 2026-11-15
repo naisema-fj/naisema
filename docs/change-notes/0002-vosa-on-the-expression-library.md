@@ -72,6 +72,17 @@ This change is done when:
 - The import must reproduce what the page shows after its repairs; a raw import of the data file would show older meanings for some entries.
 - The quizzes are hand-written code tied to entry ids; renaming or merging an Expression can orphan its quiz.
 
+## As built (15 November 2026)
+
+What differs from the plan above, and why:
+
+- **The quizzes** became data, not code: the apps site's quiz scripts were run once and their result kept in `app/lib/vosa-data/word-play.json`, keyed by headword as before. The server renders them, so they work without JavaScript; one small script (`public/vosa/quiz.js`) answers a choice at once. A quiz shows on the sense the apps site showed it on, the first whose English it had checked.
+- **The import** is four migrations (`0005` to `0008`), made from the dictionary page's own data after its load-time repairs, so production gets the library when it deploys. Each Expression keeps the apps site's id, and its record from the apps site (whether its English had been checked there, and its working notes) is kept for staff; it isn't a NAISEMA review.
+- **Addresses:** each headword has one page at `/vosa/{word}`, keeping macrons and a trailing hyphen (`vūtū` and `vutu`, `vaka-` and `vaka` are different pages). Vosa's views are `/vosa?view=themes`, `tuvavosa` and `sayings`, so no word's address is taken by a view.
+- **The old copy:** `/apps/dictionary/` sends people to `/vosa`, except its Vakavanua and Icavuti views, which stay on the preview until #118. Their scripts still read the apps site's data file, so that file stays in `public/apps` until then.
+- **Data dictionary:** v1 has no generated data dictionary (it was dropped in the rewrite), so the new columns and the `expression_review` table are described in `db/schema.ts` and `migrations/0004_vosa_expressions.sql`. The weekly backup and `pnpm db:export` copy the whole database, so they include them.
+- **Staff screens:** **Expressions (Vosa)** on the staff site, for editors (who change wording) and Language Reviewers (who approve it). An approval carries the fingerprint of the wording the reviewer was shown, so a wording changed in the meantime is never approved by mistake.
+
 ## Sign-off
 
 This change takes effect when both lines are completed, and the decision log gets a line pointing here.

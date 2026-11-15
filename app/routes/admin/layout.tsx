@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   FileText,
   House,
   Image,
@@ -42,6 +43,10 @@ function staffNav(person: Staff): NavGroup[] {
         (can(person, "content.edit") || can(person, "video.edit")) && { label: "Content", href: "/admin/items" },
         can(person, "media.upload") && { label: "Media library", href: "/admin/media" },
         can(person, "content.edit") && { label: "Topics", href: "/admin/topics" },
+        (can(person, "content.edit") || can(person, "review.language")) && {
+          label: "Expressions (Vosa)",
+          href: "/admin/expressions",
+        },
       ],
     },
     {
@@ -69,6 +74,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin/items": FileText,
   "/admin/media": Image,
   "/admin/topics": Tags,
+  "/admin/expressions": BookOpen,
   "/admin/submissions": Inbox,
   "/admin/staff": Users,
   "/admin/audit": ScrollText,

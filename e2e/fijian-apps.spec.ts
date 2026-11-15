@@ -1,5 +1,5 @@
 import { expect, type Page, test } from "@playwright/test";
-import { expectNoAxeViolations, stubTurnstile } from "./support";
+import { expectNoAxeViolations, expectReflow, stubTurnstile } from "./support";
 
 /**
  * The Fijian apps, brought over from apps.naisema.com (docs/decision-log.md, "The Fijian apps join
@@ -8,7 +8,8 @@ import { expectNoAxeViolations, stubTurnstile } from "./support";
  */
 
 const APP_PAGES = [
-  "/apps/dictionary/",
+  "/apps/dictionary/?view=icavuti",
+  "/apps/dictionary/?view=culture",
   "/apps/dictionary/pronunciation/",
   "/apps/lessons/",
   "/apps/lessons/body-parts/",
@@ -53,8 +54,8 @@ test("each app page runs its scripts with no errors, inside NAISEMA's header and
 });
 
 test("an address without its closing slash goes to the app page", async ({ page }) => {
-  await page.goto("/apps/dictionary");
-  await expect(page).toHaveURL(/\/apps\/dictionary\/$/);
+  await page.goto("/apps/lessons/body-parts");
+  await expect(page).toHaveURL(/\/apps\/lessons\/body-parts\/$/);
 });
 
 test("someone suggests a word from the apps' home", async ({ page }) => {
@@ -62,7 +63,7 @@ test("someone suggests a word from the apps' home", async ({ page }) => {
   await page.goto("/apps");
   await expectNoAxeViolations(page);
   await page.getByRole("link", { name: "Open the dictionary" }).click();
-  await expect(page).toHaveURL(/\/apps\/dictionary\/$/);
+  await expect(page).toHaveURL(/\/vosa$/);
   await page.goto("/apps#suggest");
   await page.getByLabel("The Fijian word or phrase").fill("vakarorogo");
   await page.getByLabel("What it means in English").fill("To listen carefully.");
@@ -72,11 +73,16 @@ test("someone suggests a word from the apps' home", async ({ page }) => {
 
 test("a reader finds a word in Vosa and sends a correction about it", async ({ page }) => {
   await stubTurnstile(page);
-  await page.goto("/apps/dictionary/");
-  await page.getByLabel("Search Fijian and English words").fill("baca");
-  await expect(page.locator("#entry-list .entry-row").first()).toContainText("Baca");
-  await expect(page.locator("#entry-detail")).toContainText("Bait");
-  await page.locator("#entry-detail").getByRole("link", { name: "Suggest a correction" }).first().click();
+  await page.goto("/vosa");
+  await expectNoAxeViolations(page);
+  await page.getByLabel("Search Fijian and English words").fill("bait");
+  await page.getByRole("button", { name: "Search" }).click();
+  await page.getByRole("link", { name: "Baca", exact: true }).click();
+  await expect(page).toHaveURL(/\/vosa\/baca$/);
+  await expect(page.getByText("Bait put on a fishhook or in a fishing trap.")).toBeVisible();
+  await expect(page.getByText("Not reviewed yet").first()).toBeVisible();
+  await expectNoAxeViolations(page);
+  await page.getByRole("link", { name: "Suggest a correction" }).first().click();
   await expect(page).toHaveURL(/\/forms\/correct-word\?word=Baca/);
   await expect(page.getByLabel("The word")).toHaveValue("Baca");
   await page.getByLabel("What it should say").fill("Baca is also used for earthworms in our village.");
@@ -85,15 +91,30 @@ test("a reader finds a word in Vosa and sends a correction about it", async ({ p
 });
 
 test("a reader browses Vosa's themes, Tuvavosa, sayings and the cultural guide", async ({ page }) => {
-  await page.goto("/apps/dictionary/");
-  await page.locator(".tab", { hasText: "Themes" }).click();
-  await expect(page.locator("#theme-list li").first()).toBeVisible();
-  await page.locator(".tab", { hasText: "Tuvavosa" }).click();
-  await expect(page.locator("#grammar-list .entry-row").first()).toBeVisible();
-  await page.locator(".tab", { hasText: "Vosavosavakaviti" }).click();
-  await expect(page.locator("#proverb-list .entry-row").first()).toBeVisible();
-  await page.locator(".tab", { hasText: "Vakavanua" }).click();
+  await page.goto("/vosa");
+  await page.getByRole("navigation", { name: "Vosa" }).getByRole("link", { name: "Themes" }).click();
+  await page.getByRole("link", { name: /Fish of Fiji/ }).click();
+  await expect(page.getByRole("heading", { name: "Fish of Fiji" })).toBeVisible();
+  await expect(page.locator(".vosa-list li").first()).toBeVisible();
+  await page.getByRole("navigation", { name: "Vosa" }).getByRole("link", { name: "Tuvavosa" }).click();
+  await expect(page.locator(".vosa-list li").first()).toBeVisible();
+  await page.getByRole("navigation", { name: "Vosa" }).getByRole("link", { name: "Vosavosavakaviti" }).click();
+  await expect(page.locator(".vosa-list li").first()).toBeVisible();
+  await page
+    .getByRole("navigation", { name: "Vosa" })
+    .getByRole("link", { name: /Vakavanua/ })
+    .click();
   await expect(page.locator("#culture-view")).not.toBeEmpty();
+});
+
+test("a learner answers a Vosa quiz, and its grammar tables reflow on a phone", async ({ page }) => {
+  await page.goto("/vosa/durusau");
+  const card = page.locator(".vosa-quiz-card").first();
+  await card.getByRole("button", { name: "Au", exact: true }).click();
+  await expect(card.getByRole("status")).toHaveText("Yes. Read why below.");
+  await expect(card.locator(".vosa-quiz-answer")).toHaveAttribute("open", "");
+  await expectNoAxeViolations(page);
+  await expectReflow(page);
 });
 
 test("someone adds a missing icavuti from Vosa", async ({ page }) => {

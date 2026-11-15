@@ -48,9 +48,10 @@ export const FIJIAN_APPS: FijianApp[] = [
     name: "Vosa",
     kind: "Fijian dictionary",
     summary: "Search Fijian and English words, themes, grammar terms and sayings in the existing Vosa collection.",
-    href: APP_PAGE_PATHS.dictionary,
-    state: "Available in preview",
-    caution: "Vosa is a learning guide, not an official dictionary. Meanings may change after review.",
+    href: "/vosa",
+    state: "Being reviewed",
+    caution:
+      "Vosa is a learning guide, not an official dictionary. Each entry says whether our Language Reviewer has checked it yet.",
     open: "Open the dictionary",
     forms: ["suggest-word", "correct-word"],
   },

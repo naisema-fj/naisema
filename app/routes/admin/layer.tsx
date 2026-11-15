@@ -18,6 +18,7 @@ import {
 import { orientation } from "~/lib/public-view.server";
 import { clipDuration, readSegments, segmentProblems } from "~/lib/segment-rules";
 import { requireStaff } from "~/lib/staff.server";
+import { type ExpressionWording, searchText, vosaSlug } from "~/lib/vosa";
 import { expression, media } from "~db/schema";
 import type { Route } from "./+types/layer";
 
@@ -40,7 +41,12 @@ async function loadVideo(env: Env, request: Request, itemId: string) {
 export async function loader({ params, request, context }: Route.LoaderArgs) {
   const { env } = context.get(cloudflareContext);
   const { db, found, footage } = await loadVideo(env, request, params.id);
-  const library = await db.select().from(expression).where(eq(expression.variety, LAYER_LANGUAGE_VARIETY));
+  // The whole library, in headword order, so the editor's list can be read and typed into.
+  const library = await db
+    .select()
+    .from(expression)
+    .where(eq(expression.variety, LAYER_LANGUAGE_VARIETY))
+    .orderBy(expression.headword);
   const layer = withDefaults(found.latest.layer ?? { title: found.latest.title, level: "beginner" });
   return {
     itemId: found.item.id,
@@ -160,17 +166,31 @@ export async function action({ params, request, context }: Route.ActionArgs) {
   try {
     if (added.length) {
       await db.insert(expression).values(
-        added.map((item) => ({
-          id: item.id,
-          variety: LAYER_LANGUAGE_VARIETY,
-          headword: item.details.headword,
-          generalMeaning: item.details.generalMeaning,
-          literalMeaning: item.details.literalMeaning ?? "",
-          grammarNote: item.details.grammarNote,
-          pronunciation: item.details.pronunciation,
-          createdBy: actor.email,
-          updatedAt: new Date(),
-        })),
+        added.map((item) => {
+          const wording: ExpressionWording = {
+            kind: "word",
+            headword: item.details.headword,
+            partOfSpeech: "",
+            generalMeaning: item.details.generalMeaning,
+            literalMeaning: item.details.literalMeaning ?? "",
+            grammarNote: item.details.grammarNote,
+            pronunciation: item.details.pronunciation,
+            notes: "",
+            details: {},
+            citations: [],
+            themes: [],
+          };
+          return {
+            id: item.id,
+            variety: LAYER_LANGUAGE_VARIETY,
+            ...wording,
+            slug: vosaSlug(wording.headword),
+            searchText: searchText(wording),
+            createdBy: actor.email,
+            updatedBy: actor.email,
+            updatedAt: new Date(),
+          };
+        }),
       );
     }
     await saveRevision(db, actor, found.item.id, field("baseRevisionId"), {

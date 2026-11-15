@@ -125,6 +125,19 @@ export default function Submissions({ loaderData, actionData }: Route.ComponentP
             </div>
           ))}
         </dl>
+        {one.form === "suggest-word" && (
+          <p>
+            <a href={`/admin/expressions/new?submission=${one.id}`}>Make a draft Expression from this suggestion</a>.
+            Vosa shows it as a draft until a Language Reviewer approves it.
+          </p>
+        )}
+        {(one.form === "correct-word" || one.form === "suggest-word") && one.fields.word && (
+          <p>
+            <a href={`/admin/expressions?q=${encodeURIComponent(one.fields.word)}`}>
+              Find {one.fields.word} in the Expression library
+            </a>
+          </p>
+        )}
         {item && (
           <p>
             It is about <a href={`/admin/items/${item.id}`}>{item.title}</a>

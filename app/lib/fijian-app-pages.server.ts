@@ -137,7 +137,7 @@ const escapeHtml = (text: string) =>
 function appSwitcher(current: FijianAppKey, path: string) {
   const links: [string, string, FijianAppKey | null][] = [
     ["/apps/#apps", "All apps", null],
-    [APP_PAGE_PATHS.dictionary, "Vosa dictionary", "vosa"],
+    ["/vosa", "Vosa dictionary", "vosa"],
     [APP_PAGE_PATHS.lessons, "Language lessons", "lessons"],
     [APP_PAGE_PATHS.translation, "Community translation", "translation"],
   ];

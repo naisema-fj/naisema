@@ -17,6 +17,9 @@ export const handle: RouteHandle = {
 
 export const headers = publicHeaders;
 
+/** The parts of Vosa still served from the apps preview until they move onto NAISEMA's model (#118). */
+const DICTIONARY_PREVIEW_VIEWS = ["culture", "icavuti"];
+
 /**
  * GET /apps/*: one page of a Fijian app, at the address it had on apps.naisema.com. The apps site
  * wrote its addresses with a closing slash, and its pages find their files relative to that, so an
@@ -27,6 +30,10 @@ export function loader({ request, context }: Route.LoaderArgs) {
   const page = findAppPage(url.pathname.endsWith("/") ? url.pathname : `${url.pathname}/`);
   if (!page) throw new Response("Not found", { status: 404 });
   if (!url.pathname.endsWith("/")) throw redirect(`${url.pathname}/${url.search}`, 301);
+  // The dictionary is at /vosa now (change note 0002); only Vakavanua and Icavuti stay here (#118).
+  if (page.key === "dictionary" && !DICTIONARY_PREVIEW_VIEWS.includes(url.searchParams.get("view") ?? "")) {
+    throw redirect("/vosa", 301);
+  }
   return renderAppPage(page, context.get(cloudflareContext).env.TURNSTILE_SITE_KEY);
 }
 

@@ -45,6 +45,20 @@ Open the item from **Waiting for your review**. Under **Your review of version N
 
 For a **Knowledge Holder Approval**, an editor records it with the Knowledge Holder's name and how they approved (in person, by phone, by email). You can't review a version you wrote: someone else must.
 
+## Vosa: review a word
+
+Vosa, the Fijian dictionary at `/vosa`, shows the Standard Fijian Expression library. Every word, grammar term and saying in it is a draft until a Language Reviewer approves its exact wording; Vosa shows drafts too, marked **Not reviewed yet** (change note 0002).
+
+To review words you need the **Language Reviewer** role for Standard Fijian on the staff list (**Staff**). Then:
+
+1. Open **Expressions (Vosa)**, choose **Drafts only**, and search for the words you want to check.
+2. Open one, read its wording, and press **Approve this wording**. Vosa shows it as **Language reviewed** with the date.
+3. You can't approve wording you wrote yourself: someone else must. If the wording changed since you opened it, nothing is approved; read it again first.
+
+Editors change an Expression's wording on the same page. Any change makes it a draft again until it is approved again. Its sources, grammar tables, phrase roles and quiz came from the apps site and aren't edited here.
+
+From a **Suggest a Fijian word** message, choose **Make a draft Expression from this suggestion**. From a **Correct a dictionary entry** message, choose **Find … in the Expression library**, and change the wording there.
+
 ## Rights
 
 From an item's page, press **Rights Records**, or use **Rights Records** beside a file in **Media library**. Add who holds the rights, what they permit, their last day if there is one, and the signed permission as a PDF or photo.

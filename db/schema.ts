@@ -13,9 +13,10 @@ import type { LearningLayer } from "../app/lib/learning-layer-fields";
 import type { MediaKind } from "../app/lib/media-rules";
 import type { PermittedUse } from "../app/lib/rights-rules";
 import type { Role } from "../app/lib/roles";
+import type { Citation, ExpressionDetails, ExpressionKind } from "../app/lib/vosa";
 
 /**
- * The v1 data model (ADR-0015, ADR-0016): eleven tables. Content is a Content Item with write-once Revisions;
+ * The v1 data model (ADR-0015, ADR-0016, ADR-0017): thirteen tables. Content is a Content Item with write-once Revisions;
  * Review Approvals and Rights Records decide, on every request, whether a Revision is public
  * (ADR-0003, ADR-0007). A Video's Learning Layer lives inside its Revision.
  */
@@ -164,21 +165,61 @@ export const media = sqliteTable(
   (table) => [check("media_kind", sql`${table.kind} in ('image', 'audio', 'video', 'document')`)],
 );
 
-/** A reviewed word or phrase in a Language Variety's library, which Annotations point to. */
+/**
+ * A word, phrase, saying or grammar term in a Language Variety's library, which Annotations point
+ * to and Vosa shows (ADR-0017). Its language review is an `expressionReview` of its exact wording.
+ */
 export const expression = sqliteTable(
   "expression",
   {
     id: text("id").primaryKey(),
     variety: text("variety").notNull(),
+    kind: text("kind").$type<ExpressionKind>().notNull().default("word"),
     headword: text("headword").notNull(),
+    /** The headword's address under /vosa/ (`vosaSlug`); Expressions with the same headword share it. */
+    slug: text("slug").notNull().default(""),
+    partOfSpeech: text("part_of_speech").notNull().default(""),
     generalMeaning: text("general_meaning").notNull(),
     literalMeaning: text("literal_meaning").notNull().default(""),
     grammarNote: text("grammar_note").notNull().default(""),
     pronunciation: text("pronunciation").notNull().default(""),
+    /** A note for learners on the meaning or its use. */
+    notes: text("notes").notNull().default(""),
+    /** What Vosa adds: examples, roles, tables, links and the apps site's own record. */
+    details: text("details", { mode: "json" }).$type<ExpressionDetails>().notNull().default({}),
+    citations: text("citations", { mode: "json" }).$type<Citation[]>().notNull().default([]),
+    themes: text("themes", { mode: "json" }).$type<string[]>().notNull().default([]),
+    /** What a search matches (`searchText`), kept so search is one query. */
+    searchText: text("search_text").notNull().default(""),
     createdBy: text("created_by").notNull(),
+    /** Who wrote the current wording, who may therefore not approve it. */
+    updatedBy: text("updated_by").notNull().default(""),
     updatedAt: integer("updated_at", { mode: "timestamp_ms" }).notNull(),
   },
-  (table) => [index("expression_variety").on(table.variety, table.headword)],
+  (table) => [
+    index("expression_variety").on(table.variety, table.headword),
+    index("expression_slug").on(table.variety, table.slug),
+    check("expression_kind", sql`${table.kind} in ('word', 'grammar-term', 'saying')`),
+  ],
+);
+
+/**
+ * A Language Reviewer's approval of one exact wording of an Expression (ADR-0017). It counts only
+ * while the Expression's wording still has this fingerprint (`reviewStanding` in app/lib/vosa.ts).
+ */
+export const expressionReview = sqliteTable(
+  "expression_review",
+  {
+    id: text("id").primaryKey(),
+    expressionId: text("expression_id")
+      .notNull()
+      .references(() => expression.id),
+    variety: text("variety").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    reviewerEmail: text("reviewer_email").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [index("expression_review_expression").on(table.expressionId)],
 );
 
 /** A Topic: a theme across areas, with at most one level of subtopics. */

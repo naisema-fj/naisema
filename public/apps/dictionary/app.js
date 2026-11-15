@@ -1266,14 +1266,10 @@
       setView(button.dataset.openView);
       $(button.dataset.openView+"-view").scrollIntoView({block:"start",behavior:"smooth"});
     }));
+    // A word in the Vakavanua guide opens its entry in Vosa (/vosa), where the dictionary now lives.
+    const vosaSlug=word=>String(word||"").normalize("NFC").toLocaleLowerCase("en").trim().replace(/[\s/]+/g,"-").replace(/[^\p{L}\p{N}-]/gu,"").replace(/-{2,}/g,"-").replace(/^-+/,"");
     document.querySelectorAll("[data-culture-word]").forEach(button=>button.addEventListener("click",()=>{
-      $("search").value=button.dataset.cultureWord;
-      $("pos-filter").value="";
-      $("status-filter").value="";
-      selectedId=headKey(button.dataset.cultureWord);
-      selectedSenseId=null;
-      setView("dictionary");
-      $("dictionary-view").scrollIntoView({block:"start",behavior:"smooth"});
+      location.href="/vosa/"+encodeURIComponent(vosaSlug(button.dataset.cultureWord));
     }));
     const showSearchResults=()=>{setView("dictionary");$("dictionary-view").scrollIntoView({block:"start",behavior:"smooth"});};
     $("search").addEventListener("input",()=>{entryLimit=60;selectedSenseId=null;const exact=entries().find(entry=>headKey(entry.fijian)===headKey($("search").value));selectedId=exact?headKey(exact.fijian):null;if(view!=="dictionary")setView("dictionary");else renderEntries();});
@@ -1283,7 +1279,9 @@
     $("proverb-search").addEventListener("input",()=>{proverbLimit=50;renderProverbs();});
     $("theme-select").addEventListener("change",()=>{selectedThemeId=$("theme-select").value;themeLimit=80;renderThemes();});
     $("grammar-search").addEventListener("input",()=>{selectedGrammarId=null;renderGrammar();});$("grammar-group").addEventListener("change",()=>{selectedGrammarId=null;renderGrammar();});
-    if(new URLSearchParams(location.search).get('view')==='icavuti')setView('icavuti');
+    // Only Vakavanua and Icavuti are still served here; the rest of Vosa is at /vosa.
+    const requested=new URLSearchParams(location.search).get('view');
+    if(requested==='icavuti'||requested==='culture')setView(requested);
   }
   init();
 })();

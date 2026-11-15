@@ -1,0 +1,1336 @@
+[
+  {
+    "id": "a2056948d246",
+    "name": "fijian english volavosa.pdf",
+    "role": "dictionary",
+    "coverage": "Historical OCR candidates and page transcriptions; consult the original document before review",
+    "href": "/apps/dictionary/sources/fijian%20english%20volavosa.pdf"
+  },
+  {
+    "id": "6c1d945a54cd",
+    "name": "Handbook of the Fijian language ( PDFDrive ).pdf",
+    "role": "pronoun grammar reference",
+    "coverage": "18 pronoun forms from PDF pages 9 and 11; historical wording needs review",
+    "href": "/apps/dictionary/sources/Handbook%20of%20the%20Fijian%20language%20(%20PDFDrive%20).pdf"
+  },
+  {
+    "id": "5e23d2fe8a98",
+    "name": "Fijian-English_Dictionary.pdf",
+    "role": "dictionary",
+    "coverage": "Referenced for qalova uaua na moka on PDF page 176; full entries are not bundled",
+    "href": "https://www.folksong.org.nz/isa_lei/Fijian-English_Dictionary.pdf"
+  },
+  {
+    "id": "20dd194810b2",
+    "name": "Fiji NDMO traditional iTaukei calendar",
+    "role": "online reference",
+    "coverage": "Traditional seasonal calendar; Annex 8 credits iTaukei Affairs",
+    "href": "https://www.ndmo.gov.fj/wp-content/uploads/2024/04/CBDRM-Training-Manual.pdf"
+  },
+  {
+    "id": "31615c62afbd",
+    "name": "Te Papa Fijian Language Activity Book",
+    "role": "online reference",
+    "coverage": "Fijian counting words from one to ten",
+    "href": "https://www.tepapa.govt.nz/assets/76067/1693189257-fijian_language_activity_book_a4_0.pdf"
+  },
+  {
+    "id": "cfe9904fa587",
+    "name": "WWF Fiji Climate Witness Community Toolkit",
+    "role": "online reference",
+    "coverage": "i vola ni vula seasonal calendar expression",
+    "href": "https://awsassets.panda.org/downloads/cw_toolkit_fijian.pdf"
+  },
+  {
+    "id": "534756bd7910",
+    "name": "Tuvavosa_Visual_Guide_PREVIEW.pdf",
+    "role": "Fijian grammar reference",
+    "coverage": "35 short Tuvavosa terms and English descriptions; visual guide stays local"
+  },
+  {
+    "id": "tuvavosa-review-scan-2026-10-30",
+    "name": "Tuvavosa Review Scan.txt",
+    "role": "Fijian grammar reference",
+    "coverage": "Selected concepts from sections 3 and 4; OCR and terminology require team review"
+  },
+  {
+    "id": "balawa-ichlinks",
+    "name": "ICHLinks · Traditional Iconic Mats of Fiji",
+    "role": "Independent cultural account of balawa leaves and large coarse mats",
+    "href": "https://ichlinks.com/archive/materials/publicationsV.do?ichDataUid=13888563005083845858&nation=FJ&page="
+  },
+  {
+    "id": "balawa-jica",
+    "name": "JICA · Fiji study report",
+    "role": "Independent account naming balawa as screw pine and describing its mat use",
+    "href": "https://openjicareport.jica.go.jp/pdf/12263562_05.pdf"
+  },
+  {
+    "id": "balawa-usp",
+    "name": "University of the South Pacific · Makaluva plant survey",
+    "role": "Botanical source listing balawa as a Fijian name for pandanus",
+    "href": "https://fjdigitallib.usp.ac.fj/greenstone3/aquatic/sites/aquaticsite/collect/aquatic/index/assoc/HASH0154/999bd891.dir/doc.pdf"
+  },
+  {
+    "id": "balawa-fao",
+    "name": "FAO Ecocrop · Pineapple",
+    "role": "Agricultural source listing balawa among pineapple common names",
+    "href": "https://ecocrop.apps.fao.org/ecocrop/srv/en/cropView?id=402"
+  },
+  {
+    "id": "bale-anu-glossary",
+    "name": "Australian National University · Fiji glossary",
+    "role": "Independent explanation of turaga bale as high chief",
+    "href": "https://openresearch-repository.anu.edu.au/server/api/core/bitstreams/748b5a0b-a971-4f0a-b814-4532a68b4dd3/content"
+  },
+  {
+    "id": "bati-goettingen",
+    "name": "University of Göttingen · Fijian tattooing tools",
+    "role": "Independent account of bati ni qia tattooing tools",
+    "href": "https://univerlag.uni-goettingen.de/bitstream/handle/3/isbn-978-3-86395-633-2.15/ESG_BUCH_15_vunidilo.pdf?sequence=1"
+  },
+  {
+    "id": "batikadi-fiji-times",
+    "name": "The Fiji Times · Batikadi in current reporting",
+    "role": "Fijian-language usage of batikadi for an armed group",
+    "href": "https://www.fijitimes.com.fj/vakatakilai-koya-na-komupiuta/"
+  },
+  {
+    "id": "benu-acd",
+    "name": "Austronesian Comparative Dictionary · benu",
+    "role": "Lexical comparison distinguishing benu from benubenu",
+    "href": "https://acd.clld.org/cognatesets/30413"
+  },
+  {
+    "id": "bewa-fiji-times",
+    "name": "The Fiji Times · Counting the iTaukei way",
+    "role": "Independent explanation of bewa as ten banana bunches",
+    "href": "https://www.fijitimes.com.fj/counting-the-itaukei-way/"
+  },
+  {
+    "id": "bila-kaikki",
+    "name": "Kaikki · Fijian bila",
+    "role": "Modern lexical lead for bila; review against speaker use",
+    "href": "https://kaikki.org/dictionary/Fijian/meaning/b/bi/bila.html"
+  },
+  {
+    "id": "bilo-tepapa",
+    "name": "Te Papa · Fijian coconut shell cups",
+    "role": "Museum object description of bilo as a yaqona cup",
+    "href": "https://collections.tepapa.govt.nz/object/1536401"
+  },
+  {
+    "id": "bitu-jica",
+    "name": "JICA · Fiji screw pine and bamboo report",
+    "role": "Independent use of bitu for bamboo",
+    "href": "https://openjicareport.jica.go.jp/pdf/12263562_05.pdf"
+  },
+  {
+    "id": "bogi-tepapa",
+    "name": "Te Papa · Fijian Language Activity Book",
+    "role": "Fijian night vocabulary",
+    "href": "https://www.tepapa.govt.nz/assets/76067/1693189257-fijian_language_activity_book_a4_0.pdf"
+  },
+  {
+    "id": "bogi-moore",
+    "name": "Handbook of the Fijian Language (1893)",
+    "role": "Historical body-part list giving bogi ni gone",
+    "href": "https://theswissbay.ch/pdf/Books/Linguistics/Mega%20linguistics%20pack/Austronesian/Fijian%20Language%2C%20Handbook%20of%20the%20%28Moore%29%20%281893%29.pdf"
+  },
+  {
+    "id": "bose-fiji-government",
+    "name": "Fiji Government · Bose Levu Vakaturaga",
+    "role": "Official use of bose for a council or assembly",
+    "href": "https://www.fiji.gov.fj/decisions-made-at-the-cabinet-meeting-held-on-14-february-2024/"
+  },
+  {
+    "id": "bolebole-fiji-fijians",
+    "name": "Fiji and the Fijians · historical bolebole account",
+    "role": "Independent historical account of the challenge ceremony",
+    "href": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Fiji_and_the_Fijians_%28IA_01160260R.nlm.nih.gov%29.pdf"
+  },
+  {
+    "id": "bowai-smithsonian",
+    "name": "Smithsonian · Bowai war club",
+    "role": "Museum object identification of a bowai club",
+    "href": "https://www.si.edu/object/war-club-bowai%3Anmnhanthropology_8384053"
+  },
+  {
+    "id": "bui-moore",
+    "name": "Handbook of the Fijian Language · bui",
+    "role": "Independent historical vocabulary giving bui as grandmother",
+    "href": "https://upload.wikimedia.org/wikipedia/commons/f/fb/Handbook_of_the_Fijian_language_%28IA_handbookoffijian00moorrich%29.pdf"
+  },
+  {
+    "id": "bu-pawley",
+    "name": "The Lexicon of Proto Oceanic · coconut stages",
+    "role": "Linguistic study distinguishing bu as a drinkable coconut stage",
+    "href": "https://tlopo.clld.org/contributions/3-12"
+  },
+  {
+    "id": "bula-usp",
+    "name": "University of the South Pacific · Say bula",
+    "role": "Independent explanation of bula as life and greeting",
+    "href": "https://repository.usp.ac.fj/id/eprint/4668/"
+  },
+  {
+    "id": "buku-jespersen",
+    "name": "Jespersen · Fijian coconut counting example",
+    "role": "Independent historical account of a buku niu as two coconuts",
+    "href": "https://pure.mpg.de/pubman/item/item_2350913_3/component/file_2350912/Jespersen_1922_Language_Its_nature.pdf"
+  },
+  {
+    "id": "bukawaqa-abvd",
+    "name": "Austronesian Basic Vocabulary Database · fire",
+    "role": "Comparative lexical evidence for buka and bukawaqa",
+    "href": "https://abvd.eva.mpg.de/austronesian/word.php?v=143"
+  },
+  {
+    "id": "bulibuli-auckland",
+    "name": "Auckland Museum · Bulibuli club",
+    "role": "Museum object named bulibuli",
+    "href": "https://www.aucklandmuseum.com/collection/object/74848"
+  },
+  {
+    "id": "bure-tepapa",
+    "name": "Te Papa · Bure kalou spirit house",
+    "role": "Museum object and historical explanation of bure kalou",
+    "href": "https://collections.tepapa.govt.nz/object/206948"
+  },
+  {
+    "id": "buno-anu",
+    "name": "ANU lexical study · buno",
+    "role": "Comparative lexical note about buno sweat and perspiration",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/61b3d7a6-0816-46d2-9a1e-5907b6a2dca1/download"
+  },
+  {
+    "id": "bure-fiji-housing",
+    "name": "Fiji Ministry of Housing · Bure glossary",
+    "role": "Fiji government glossary explaining bure as a traditional house",
+    "href": "https://www.housing.gov.fj/_files/ugd/01d667_5e73ee03b1054cfaa0d278f77054511b.pdf"
+  },
+  {
+    "id": "bure-ni-sa-fiji-times",
+    "name": "The Fiji Times · Bure ni sa history",
+    "role": "Independent historical explanation of the communal men’s house",
+    "href": "https://www.fijitimes.com.fj/discovering-fiji-a-sickly-child-abstinence-and-mens-only-bure/"
+  },
+  {
+    "id": "counting-fiji-times",
+    "name": "The Fiji Times · Traditional counting units",
+    "role": "Traditional counting of ten clubs and ten coconuts",
+    "href": "https://www.fijitimes.com.fj/keeping-alive-a-unique-way-of-life/"
+  },
+  {
+    "id": "burotu-anu",
+    "name": "ANU Press · Burotu traditions",
+    "role": "Independent discussion of Burotu as a spiritual place",
+    "href": "https://press.anu.edu.au/downloads/press/p289571/html/ch03.xhtml?page=9&referer="
+  },
+  {
+    "id": "ca-abvd",
+    "name": "Austronesian Basic Vocabulary Database · ca",
+    "role": "Independent comparative record of ca for bad",
+    "href": "https://abvd.eva.mpg.de/austronesian/word.php?v=165"
+  },
+  {
+    "id": "caga-pollex",
+    "name": "POLLEX · caga hand span",
+    "role": "Comparative lexical record for caga as span",
+    "href": "https://pollex.eva.mpg.de/entry/haga.1/"
+  },
+  {
+    "id": "cagi-fiji-times",
+    "name": "The Fiji Times · wind direction report",
+    "role": "Current Fijian-language use of cagi for wind",
+    "href": "https://www.fijitimes.com.fj/forecaster-explains-wind-direction/"
+  },
+  {
+    "id": "camakau-boat-guild",
+    "name": "Australian Wooden Boat Guild · Camakau",
+    "role": "Museum boat collection identifying camakau as a single-outrigger sailing canoe",
+    "href": "https://www.woodenboatguildtas.org.au/wp/wp-content/uploads/2018/11/MAGNT-Boat-Collection-reduced-sz.pdf"
+  },
+  {
+    "id": "cakau-pollex",
+    "name": "POLLEX · cakau reef",
+    "role": "Comparative lexical evidence for cakau as coral reef",
+    "href": "https://pollex.eva.mpg.de/entry/hakau/"
+  },
+  {
+    "id": "cakacaka-unitec",
+    "name": "Unitec · Fijian vocabulary work",
+    "role": "Independent vocabulary gloss for cakacaka",
+    "href": "https://www.unitec.ac.nz/umisc/jmctest/fijian_english_dictionary/fijian_eng_dict.html"
+  },
+  {
+    "id": "hazlewood-1890-lade",
+    "name": "Hazlewood · A Fijian and English Dictionary (1890)",
+    "role": "Independent historical meaning cross-check for lade as jump or leap",
+    "href": "https://upload.wikimedia.org/wikipedia/commons/8/80/A_Fijian_and_English_and_an_English_and_Fijian_dictionary%2C_with_examples_of_common_and_peculiar_modes_of_expression_and_uses_of_words%2C_also%2C_containing_brief_hints_on_native_customs_%28IA_fijianenglishand00hazl%29.pdf"
+  },
+  {
+    "id": "nanuma-lesu-12-online-mata",
+    "name": "Nanuma Lesu Na Noda Vosa 12 · matanauni exercise",
+    "role": "Online school example labelling e na motoka as m · m · NR",
+    "href": "https://fliphtml5.com/gjgbb/jecb/Year_12_Nanuma_Lesu_Na_Noda_Vosa_12/12/"
+  },
+  {
+    "id": "fiji-times-lade-2015",
+    "name": "The Fiji Times · Rau tawase na veitacini ena rakavi",
+    "role": "Independent natural-use cross-check for lade ena marau",
+    "href": "https://www.fijitimes.com.fj/rau-tawase-na-veitacini-ena-rakavi/"
+  },
+  {
+    "id": "nanuma-lesu-12-online-mnd-mnyt",
+    "name": "Year 12 Nanuma Lesu Na Noda Vosa 12 - MND and MNYt exercises",
+    "role": "Online school examples for matanauni dusi and matanauni yatuvosa",
+    "href": "https://fliphtml5.com/gjgbb/jecb/Year_12_Nanuma_Lesu_Na_Noda_Vosa_12/"
+  },
+  {
+    "id": "sangam-kilanauni-worksheet-2021",
+    "name": "Sangam Education Board - Year 13 Kilanauni worksheet",
+    "role": "Independent teaching source naming the four kilanauni types",
+    "href": "https://sangamedu.ac.fj/wp-content/uploads/2021/08/Vosa-Vakaviti-Worksheet-10.pdf"
+  },
+  {
+    "id": "fijian-pronoun-paradigm-study",
+    "name": "ANU thesis: Standard Fijian pronoun paradigm (Table 7.2)",
+    "role": "Independent cross-check for person and number forms",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/ad8ffd53-3125-4166-885e-a761ec8bf989/download"
+  },
+  {
+    "id": "cambridge-dauqoli-study",
+    "name": "Evolutionary Human Sciences: God's mind on morality",
+    "role": "Independent research example of dauqoli",
+    "href": "https://www.cambridge.org/core/journals/evolutionary-human-sciences/article/gods-mind-on-morality/53C5F1DFAD331EEE3430536C0307163F"
+  },
+  {
+    "id": "sprep-veidogo-report",
+    "name": "SPREP: Navakavu marine area report",
+    "role": "Independent environmental use of veidogo",
+    "href": "https://library.sprep.org/sites/default/files/58_5.pdf"
+  },
+  {
+    "id": "anu-veitacini-study",
+    "name": "ANU: Focality and Extension in Kinship",
+    "role": "Independent kinship use of veitacini",
+    "href": "https://press-files.anu.edu.au/downloads/press/n4128/html/ch02.xhtml?page=9&referer="
+  },
+  {
+    "id": "ucdavis-fijian-quantification",
+    "name": "AFLA 21: Fijian Weak Quantification as Head-Internal",
+    "role": "Independent analysis of Fijian quantity words",
+    "href": "https://linguistics.ucdavis.edu/sites/g/files/dgvnsk12211/files/inline-files/Aranovich_AFLA_21_2015.pdf"
+  },
+  {
+    "id": "qmul-fijian-possession-2019",
+    "name": "QMUL GLOW 42: Fijian possessive classifiers as nominal Appl heads",
+    "role": "Independent analysis of ne-i, ke-i, me- and direct -i",
+    "href": "https://glowlinguistics.org/42/wp-content/uploads/sites/4/2019/03/GLOW_FJPoss.pdf"
+  },
+  {
+    "id": "qmul-fijian-noun-phrase-2019",
+    "name": "QMUL and Padova: Fijian Possession in the Noun Phrase",
+    "role": "Independent examples with named and pronoun owners",
+    "href": "https://pietrobaggio.wordpress.com/wp-content/uploads/2019/03/igg_handout___unabridged.pdf"
+  },
+  {
+    "id": "fijian-tama-i-jone-example",
+    "name": "Fijian prose example using tama i Jone",
+    "role": "Independent usage example of separate i in running text",
+    "href": "https://www.churchofjesuschrist.org/bc/content/shared/content/fijian/pdf/language-materials/31125_fij.pdf?lang=fij"
+  },
+  {
+    "id": "anu-fijian-verb-phrase-surface-order",
+    "name": "ANU: Surface order in the Standard Fijian verb phrase",
+    "role": "Independent check for ordered pre- and post-predicate elements and connector usage",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/86dd578b-ce08-4a6a-902b-302e765e5286/download"
+  },
+  {
+    "id": "tuvavosa-4-3-photos-2026-10-31",
+    "name": "Tuvavosa page photos, sections 4.3.1–4.3.5 (source details pending)",
+    "role": "Local grammar evidence pending NAISEMA team review"
+  },
+  {
+    "id": "tuvavosa-4-4-4-5-photos-2026-10-31",
+    "name": "Tuvavosa page photos, sections 4.4–4.5 (source details pending)",
+    "role": "Local printed-page grammar evidence pending NAISEMA team review"
+  },
+  {
+    "id": "unitec-fijian-english-vocabulary-2026-10-31",
+    "name": "Unitec Fijian-English vocabulary",
+    "role": "Independent check for a short English word gloss; not a source for Tuvavosa roles",
+    "href": "https://www.unitec.ac.nz/umisc/jmctest/fijian_english_dictionary/fijian_eng_dict.html"
+  },
+  {
+    "id": "tuvavosa-matanauni-set-01-photos-2026-10-31",
+    "name": "Tuvavosa matanauni photo set 01, sections 3.3–3.5",
+    "role": "Private printed-page evidence; language and publication review pending"
+  },
+  {
+    "id": "spc-rourou-taro",
+    "name": "Pacific Community · Taro",
+    "role": "Independent check of rourou as taro leaves.",
+    "href": "https://www.spc.int/sites/default/files/wordpresscontent/wp-content/uploads/2017/06/taro.pdf"
+  },
+  {
+    "id": "fiji-marinas-pandanus-guide",
+    "name": "Fiji Shores and Marinas pandanus guide",
+    "role": "Independent link between balawa and Pandanus tectorius",
+    "href": "https://www.fijimarinas.com/?download_id=5569&smd_process_download=1"
+  },
+  {
+    "id": "anu-fiji-crop-names",
+    "name": "ANU Fiji crop names appendix",
+    "role": "Independent Fijian, English and botanical names for cultivated plants",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/092387e5-91e9-479a-b434-09b5b309162a/download"
+  },
+  {
+    "id": "naisema-user-practice-20261031",
+    "name": "NAISEMA user practice sentence",
+    "role": "User-provided sentence; English and phrase analysis await team review"
+  },
+  {
+    "id": "hawaii-native-plants-hala",
+    "name": "University of Hawaiʻi Native Hawaiʻi Plants, hala",
+    "role": "Independent identification of Hawaiian hala as Pandanus tectorius",
+    "href": "https://nativeplants.hawaii.edu/plants/pandanus-tectorius/"
+  },
+  {
+    "id": "sangam-year9-tuvavosa-2021",
+    "name": "Sangam Education Society · Year 9 Fijian worksheet",
+    "role": "Independent grammar explanation and example; English gloss remains a NAISEMA draft",
+    "href": "https://sangamedu.ac.fj/wp-content/uploads/2021/07/Home-Study-Package-Year-9.pdf"
+  },
+  {
+    "id": "5ce638b62379",
+    "name": "Anare K. Raiwalui · Na i vosavosa vakaviti e so (1954)",
+    "role": "Fijian expression wording; English explanations need independent review"
+  },
+  {
+    "id": "auckland-museum-navakavu-swordfish-2024",
+    "name": "Auckland Museum · Navakavu fish names (2024)",
+    "role": "Navakavu record pairing saku vorowaqa with swordfish, Xiphias gladius",
+    "href": "https://www.aucklandmuseum.com/discover/stories/blog/2024/sharing-biodiversity-records-in-fiji"
+  },
+  {
+    "id": "fishbase-fiji-swordfish-saku-vorowaqa",
+    "name": "FishBase · Fiji common names for Xiphias gladius",
+    "role": "Fijian common name saku vorowaqa for swordfish",
+    "href": "https://fishbase.net.br/country/CountrySpeciesSummary.php?c_code=242&id=226"
+  },
+  {
+    "id": "7c18e6d64894",
+    "name": "Nanuma_Lesu_12_2015.pdf",
+    "role": "local-only school language workbook",
+    "coverage": "16 selected terms and 25 explained idioms; local only"
+  },
+  {
+    "id": "unitec-vocab-english-review",
+    "name": "Unitec · Fijian-English vocabulary",
+    "role": "Independent short vocabulary cross-check",
+    "href": "https://www.unitec.ac.nz/umisc/jmctest/fijian_english_dictionary/fijian_eng_dict.html"
+  },
+  {
+    "id": "fiji-fisheries-grouper-poster",
+    "name": "Fiji Ministry of Fisheries grouper poster in FAO field manual",
+    "role": "Lists multiple grouper species under the Fijian name kawakawa",
+    "href": "https://www.fao.org/fileadmin/templates/ess/ess_test_folder/World_Census_Agriculture/WCA_2020/WCA_2020_new_doc/FIJ_MAN_ENG_2020.pdf"
+  },
+  {
+    "id": "wcs-fiji-groupers",
+    "name": "WCS Fiji grouper guide",
+    "role": "Independent confirmation that kawakawa names more than one grouper species",
+    "href": "https://fiji.wcs.org/Wild-Places/Groupers-and-Coralgroupers.aspx"
+  },
+  {
+    "id": "8e2f79f67c00",
+    "name": "Ivolavosavakaviti - Copy.pdf",
+    "role": "combined historical dictionary scan",
+    "coverage": "16 reviewed candidate senses from photographed pages 27–31; local only"
+  },
+  {
+    "id": "benthos-balolo-fiji-2024",
+    "name": "Japanese Journal of Benthology, report on balolo in Fiji",
+    "role": "Identifies Fijian edible balolo as Eunice viridis",
+    "href": "https://www.jstage.jst.go.jp/article/benthos/79/1/79_79/_article/-char/en"
+  },
+  {
+    "id": "usp-fiji-seasonal-foods-balolo",
+    "name": "University of the South Pacific, coastal food systems",
+    "role": "Documents the seasonal food context and Fijian phrases vula i balolo lalai and vula i balolo levu",
+    "href": "https://repository.usp.ac.fj/id/eprint/13419/1/2021_Expert_Meeting_Maritime_ICH_FINAL.pdf"
+  },
+  {
+    "id": "f6bf0e8e32e8",
+    "name": "Rorogo vaaviti.pdf",
+    "role": "Fijian phonetics vocabulary",
+    "coverage": "31 hand-selected terms from Vosa vovou lists; English glosses need review; 6 more page-checked terms"
+  },
+  {
+    "id": "hawaii-rotuman-fijian-vuaka",
+    "name": "University of Hawai‘i, Loanword Strata in Rotuman",
+    "role": "Independent linguistic evidence for Standard Fijian vuaka as pig",
+    "href": "https://www.hawaii.edu/oceanic/rotuma/os/schmidtloanwords.pdf"
+  },
+  {
+    "id": "fishbase-bakewa",
+    "name": "FishBase · Fiji common fish names",
+    "role": "Bakewa as a remora",
+    "href": "https://www.fishbase.se/country/CountryComNamesSearchList.php?Country=242&showAll=yes"
+  },
+  {
+    "id": "fiji-tv-2018-adi-senitoa",
+    "name": "Fiji TV annual report 2018, bilingual events list",
+    "role": "Independent Fijian use of Adi Senitoa for the Hibiscus Festival",
+    "href": "https://announcements.spx.com.fj/ftp/news/021726927.PDF"
+  },
+  {
+    "id": "sidestone-basa-bazaar",
+    "name": "Sidestone Press, Trophies, Relics and Curiosities, discussion of Fiji bazaars",
+    "role": "Independent research describing basā as a community fund-raising bazaar",
+    "href": "https://www.sidestone.com/openaccess/9789088902710.pdf"
+  },
+  {
+    "id": "pacific-invasives-baka",
+    "name": "Pacific Invasives Initiative · Monuriki tree survey",
+    "role": "Fijian baka as a banyan tree",
+    "href": "https://www.pacificinvasivesinitiative.org/site/pii/files/DRAFTFeasibilityStudy_Monuriki_FJ_2013.pdf"
+  },
+  {
+    "id": "fiji-government-vonu-dina",
+    "name": "Fiji Government, World Oceans Day address",
+    "role": "Independent confirmation that vonu dina is a green sea turtle",
+    "href": "https://www.fiji.gov.fj/his-excellency-the-president-ratu-wiliame-katoniveres-address-at-the-world-oceans-day-celebrations/"
+  },
+  {
+    "id": "fao-dalo",
+    "name": "FAO · Taro in the Pacific",
+    "role": "Dalo as taro, Colocasia esculenta",
+    "href": "https://www.fao.org/4/i1950e/i1950e04.pdf"
+  },
+  {
+    "id": "pollex-bebe",
+    "name": "POLLEX · butterfly cognates",
+    "role": "Regional butterfly and moth usage",
+    "href": "https://pollex.eva.mpg.de/entry/pepe/"
+  },
+  {
+    "id": "usp-fiji-mangrove-names",
+    "name": "USP Institute of Applied Sciences, Fiji mangrove names",
+    "role": "Independent documentation of regional dogo naming",
+    "href": "https://www.usp.ac.fj/the-institute-of-applied-sciences/news/mangroves-an-important-resource-for-integrated-coastal-management-in-the-province-of-ra/"
+  },
+  {
+    "id": "fiji-gov-akaude-ni-baqe",
+    "name": "Fiji Government, Help for Homes application",
+    "role": "Fijian phrase akaude ni baqe for bank account",
+    "href": "https://www.fiji.gov.fj/getattachment/5cdbb97e-20ae-4820-8dd9-0c73fd830891/HELP-FOR-HOMES---APPLICATION-FOR-A-GRANT.aspx"
+  },
+  {
+    "id": "aosfiji-ajibisovi",
+    "name": "Archdiocese of Suva, Archbishop's Annual Appeal",
+    "role": "Fijian use of Ajibisovi alongside English Archbishop",
+    "href": "https://aosfiji.org/wp-content/uploads/2022/06/AAA-final-final-1.pdf"
+  },
+  {
+    "id": "tlopo-bala",
+    "name": "The Lexicon of Proto Oceanic · turtle terms",
+    "role": "Fijian bala as male turtle",
+    "href": "https://tlopo.clld.org/contributions/4-5"
+  },
+  {
+    "id": "learn-fijian-apolo",
+    "name": "Learn Fijian, Time and Plans",
+    "role": "Fijian sentence with apolo translated as apple",
+    "href": "https://www.learnfijian.org/phrases-topics/time-plans?comp-mktaw2y1_page=2"
+  },
+  {
+    "id": "tlopo-ba-ni-ika",
+    "name": "The Lexicon of Proto Oceanic, fish weirs",
+    "role": "Independent comparative record of ba ni ika as a fish weir",
+    "href": "https://tlopo.clld.org/contributions/1-8"
+  },
+  {
+    "id": "tepapa-fijian-tree-ferns",
+    "name": "Te Papa, Fijian tree ferns",
+    "role": "Identifies balabala as a Fijian name shared by several tree fern species",
+    "href": "https://collections.tepapa.govt.nz/topic/4060"
+  },
+  {
+    "id": "fison-1904-bokola",
+    "name": "Lorimer Fison, Tales from Old Fiji, 1904",
+    "role": "Historical independent account of bokola and its use as an insult",
+    "href": "https://books.google.com/books/about/Tales_from_Old_Fiji.html?id=p8QWAAAAYAAJ"
+  },
+  {
+    "id": "fiji-marinas-geraghty-proverb-2020",
+    "name": "Paul A. Geraghty · Fijian proverb in Fiji Shores & Marinas Guide 2020",
+    "role": "independent Fijian proverb explanation",
+    "href": "https://www.fijimarinas.com/pdf/2020_Fiji_Shores_And_Marinas_Guide.pdf"
+  },
+  {
+    "id": "naisema-founder-pronouns-2026-11-01",
+    "name": "NAISEMA founder pronoun set, 1 November 2026",
+    "role": "Founder-supplied forms and English meanings; sentence examples pending"
+  },
+  {
+    "id": "fijian-object-licensing-2019",
+    "name": "Object licensing in Fijian and the role of adjacency (2019)",
+    "role": "Independent check for singular, dual, paucal, plural and inclusive/exclusive pronoun categories",
+    "href": "https://link.springer.com/article/10.1007/s11049-019-09442-1"
+  },
+  {
+    "id": "fijian-wekadatou-acts-15-1864",
+    "name": "Fijian Bible, Acts 15:36 (1864)",
+    "role": "Attested Fijian use of wekadatou; no English gloss copied",
+    "href": "https://www.bible.com/bible/3839/ACT.15.FIJ1864"
+  },
+  {
+    "id": "naisema-founder-food-2026-11-01",
+    "name": "NAISEMA owner food words, 1 November 2026",
+    "role": "Owner supplied the Fijian forms and English meanings; sentence examples and phrase roles are pending"
+  },
+  {
+    "id": "te-papa-ota-ferns",
+    "name": "Te Papa · Ota ferns in Fiji",
+    "role": "Illustrates more than one edible Diplazium fern called ota; does not identify every ota plant as one species",
+    "href": "https://blog.tepapa.govt.nz/2012/06/22/te-radars-vegetable-with-charisma/"
+  },
+  {
+    "id": "fiji-foodfish2-poster-spc-2008",
+    "name": "Common food fish of Fiji (2), SPC / Fiji Ministry of Fisheries and Forests, 2008",
+    "role": "Fijian and English fish names and scientific labels; current local usage needs checking"
+  },
+  {
+    "id": "fiji-corrections-veiqaraqaravi-2025",
+    "name": "Fiji Corrections Service · Northern Division opening, 2025",
+    "role": "Attests the spelling veiqaraqaravi vakavanua and its use for a formal traditional welcome.",
+    "href": "https://www.corrections.gov.fj/opening-of-the-northern-division-headquarters-in-vaturekuka-labasa/"
+  },
+  {
+    "id": "fiji-foreign-affairs-veiqaravi-2026",
+    "name": "Fiji Ministry of Foreign Affairs · traditional welcome, 2026",
+    "role": "Attests the shorter spelling veiqaravi vakavanua in a formal welcome context.",
+    "href": "https://www.foreignaffairs.gov.fj/a-traditional-welcoming-ceremony-accorded-to-australian-prime-minister/"
+  },
+  {
+    "id": "isa-fiji-welcome-2026",
+    "name": "International Seabed Authority · Fiji welcome account, 2026",
+    "role": "Describes a Fijian welcome and identifies i sevusevu, yaqona, and tabua in that event.",
+    "href": "https://isa.org.jm/news/madam-secretary-general-reflects-on-her-mission-to-fiji-and-the-opening-of-the-pacific-sids-regional-workshop/"
+  },
+  {
+    "id": "bula-vakavanua-wase-5-owner-2026-11-01",
+    "name": "Bula Vakavanua · Wase 5, pp. 54–63 · owner-supplied learning material",
+    "role": "Guides an original English summary of named ceremonies and the visiting sequence; exact local use and Fijian examples still need review."
+  },
+  {
+    "id": "naisema-owner-leva-2026-11-02",
+    "name": "NAISEMA owner correction · leva, 2 November 2026",
+    "role": "Corrects the public headword and explains the offended or resentful sense"
+  },
+  {
+    "id": "fiji-times-leva-questioning-2016",
+    "name": "The Fiji Times · Vola ni Kawa Bula",
+    "role": "Attests leva with cudru when responding to questioning",
+    "href": "https://www.fijitimes.com.fj/vola-ni-kawa-bula/"
+  },
+  {
+    "id": "fijian-leva-rai-cala-2015",
+    "name": "Yadra! · iTuvaki Dredre: Rai Cala",
+    "role": "Attests leva as distinct from cudru in a discussion of difficult feelings",
+    "href": "https://www.jw.org/fj/ka-e-vakarautaki/mekesini/g201507/lewa-vinaka-rai-cala/"
+  },
+  {
+    "id": "rbf-fijian-commercial-banks-2010",
+    "name": "Reserve Bank of Fiji, Fijian-language Cyclone Tomas lending notice (2010)",
+    "role": "Uses baqe for commercial banks and names Fiji's Reserve Bank separately",
+    "href": "https://www.rbf.gov.fj/solia-na-baqe-ni-lavo-maroroi-ni-matanitu-ko-viti-e-20-milioni-me-rawa-ni-ra-kerekere-kina-na-bisinisi-vakacacaniena-cava-o-tomas/"
+  },
+  {
+    "id": "massey-fijian-waste-practice-2011",
+    "name": "Massey University research on Fijian community waste practice",
+    "role": "Records local use of benu for rubbish and the phrase viritaka na benu",
+    "href": "https://mro.massey.ac.nz/server/api/core/bitstreams/317c53b9-ae07-4715-a7f5-6fd10de2f8ea/content"
+  },
+  {
+    "id": "peace-corps-lessons-fijian-1968",
+    "name": "Schutz and Komaitai, Lessons in Fijian, Peace Corps (1968)",
+    "role": "Independent Fijian usage and phrase context",
+    "href": "https://files.eric.ed.gov/fulltext/ED131693.pdf"
+  },
+  {
+    "id": "hong-fijian-pronouns-1994",
+    "name": "Joseph Hong, Special Features of Fijian Pronouns (1994)",
+    "role": "Distinguishes drinkable possession and illustrates mequ bia",
+    "href": "https://translation.bible/wp-content/uploads/2024/06/hong-1994-special-features-of-fijian-pronouns-and-their-use-in-bible-translation.pdf"
+  },
+  {
+    "id": "ratawa-babasiga-macuata",
+    "name": "Peceli and Wendy Ratawa, Babasiga account of Macuata",
+    "role": "Locates Babasiga in the dry land of Macuata in northern Fiji",
+    "href": "https://babasiga.blogspot.com/2008/03/"
+  },
+  {
+    "id": "qagoma-ibe-vakabati",
+    "name": "QAGOMA Collection, Ibe vakabati",
+    "role": "Independent Fijian mat context",
+    "href": "https://collection.qagoma.qld.gov.au/stories/152/"
+  },
+  {
+    "id": "tourism-fiji-lovo",
+    "name": "Tourism Fiji, All About Lovo",
+    "role": "Independent explanation of earth-oven preparation",
+    "href": "https://www.fiji.travel/things-to-do/local-eats/all-about-lovo"
+  },
+  {
+    "id": "peace-corps-fijian-lessons-english-review",
+    "name": "Peace Corps Fijian lessons, ERIC ED131693",
+    "role": "Separate vocabulary and usage cross-check",
+    "href": "https://files.eric.ed.gov/fulltext/ED131693.pdf"
+  },
+  {
+    "id": "nanuma-lesu-12-2015-usage",
+    "name": "Fiji Ministry of Education, Nanuma Lesu Na Noda Vosa 12 (2015)",
+    "role": "Usage cross-check; page numbers in notes refer to the local PDF copy",
+    "href": "https://fliphtml5.com/gjgbb/jecb/Year_12_Nanuma_Lesu_Na_Noda_Vosa_12/"
+  },
+  {
+    "id": "fao-fiji-agriculture-census-questionnaire-2020",
+    "name": "FAO, Fiji 2020 Agriculture Census questionnaire",
+    "role": "Fijian names and English fish groups used in a Fiji fisheries survey",
+    "href": "https://www.fao.org/fileadmin/templates/ess/ess_test_folder/World_Census_Agriculture/WCA_2020/WCA_2020_new_doc/FJI_QUE_ENG_2020.pdf"
+  },
+  {
+    "id": "fishbase-fiji-common-names",
+    "name": "FishBase, common names used in Fiji",
+    "role": "Fijian fish names, including names recorded for multiple species",
+    "href": "https://www.fishbase.se/country/CountryComNamesSearchList.php?Country=242&showAll=yes"
+  },
+  {
+    "id": "fao-fiji-agriculture-census-field-manual-2020",
+    "name": "FAO, Fiji 2020 Agriculture Census field operation manual",
+    "role": "Fiji Fisheries Department Fijian names with English and scientific identifications",
+    "href": "https://www.fao.org/fileadmin/templates/ess/ess_test_folder/World_Census_Agriculture/WCA_2020/WCA_2020_new_doc/FIJ_MAN_ENG_2020.pdf"
+  },
+  {
+    "id": "wcs-nadi-ecosystem-management-plan-2016",
+    "name": "WCS Fiji, Nadi District ecosystem management plan",
+    "role": "Distinguishes local grouper names and species",
+    "href": "https://fiji.wcs.org/Portals/82/management_tools/NADI%20MANAGEMENT%20PLAN_12102016.pdf?ver=2016-10-12-195312-890"
+  },
+  {
+    "id": "wcs-wainunu-management-plan-2012",
+    "name": "WCS Fiji, Wainunu management plan",
+    "role": "Local Wainunu fish names including vai",
+    "href": "https://fiji.wcs.org/Portals/82/Wainunu%20Management%20plan%20FINAL060712.pdf"
+  },
+  {
+    "id": "wcs-fiji-fisheries-resource-profiles-2020",
+    "name": "WCS Fiji, Fiji Fishery Resource Profiles",
+    "role": "Fiji mullet names, species and habitats",
+    "href": "https://fiji.wcs.org/Portals/82/WCS%20Fisheries%20Profile%20290920%20WEB%20%281%29.pdf?ver=2020-10-14-024200-580"
+  },
+  {
+    "id": "fiji-fish-poisoning-local-knowledge-2023",
+    "name": "Local and Traditional Ecological Knowledge of Fish Poisoning in Fiji",
+    "role": "Identifies sumusumu as pufferfish in Fiji context",
+    "href": "https://www.mdpi.com/2072-6651/15/3/223"
+  },
+  {
+    "id": "spc-vanua-navakavu-finfishes-2008",
+    "name": "Biodiversity and ethnobiodiversity of finfishes of Vanua Navakavu, Fiji",
+    "role": "Local names for reef fish including guru",
+    "href": "https://spccfpstore1.blob.core.windows.net/digitallibrary-docs/files/88/88a1f351144fda547a2b74821378837f.pdf"
+  },
+  {
+    "id": "proto-oceanic-fish-lexicon",
+    "name": "The lexicon of Proto Oceanic, fish names chapter",
+    "role": "Fijian eel names bonu and related words",
+    "href": "https://tlopo.clld.org/contributions/4-2"
+  },
+  {
+    "id": "fiji-indigenous-fishing-knowledge-2021",
+    "name": "Na Vuku Makawa ni Qoli: Indigenous Fishing Knowledge in Fiji and the Pacific",
+    "role": "Explains local use of guru for damselfish in Vanua Navakavu",
+    "href": "https://www.vliz.be/imisdocs/publications/367664.pdf"
+  },
+  {
+    "id": "cicia-tugadra-study-2022",
+    "name": "Research on fishing practices on Cicia Island, Fiji",
+    "role": "Documents the bigeye scad name tugadra and local fishing practices",
+    "href": "https://horizon.documentation.ird.fr/exl-doc/pleins_textes/2022-02/010083954.pdf"
+  },
+  {
+    "id": "wcs-profiles-2020",
+    "name": "WCS Fiji Fishery Resource Profiles",
+    "role": "Fiji eel, river trap, crab and lobster identifications",
+    "href": "https://fiji.wcs.org/Portals/82/WCS%20Fisheries%20Profile%20290920%20WEB%20%281%29.pdf?ver=2020-10-14-024200-580"
+  },
+  {
+    "id": "naturefiji-humphead-wrasse",
+    "name": "NatureFiji, Humphead Maori Wrasse",
+    "role": "Local names, age-related appearance, and reef habitat",
+    "href": "https://www.naturefiji.org/cheilinus-undulatus-humphead-maori-wrasse/"
+  },
+  {
+    "id": "fao-deep-sea-fish",
+    "name": "FAO, Fiji deep-sea fisheries names",
+    "role": "Fiji fish name and scientific identification",
+    "href": "https://www.fao.org/4/a0337e/A0337E10.htm"
+  },
+  {
+    "id": "fiji-mangrove-checklist",
+    "name": "Fiji mangrove reforestation project fauna checklist",
+    "role": "Mudskipper and mangrove habitat names",
+    "href": "https://gec.jp/jpn/cdm-fs/2005/200516JPAnnex-TaishiDesignOffice-Fiji-MangroveReforestation.pdf"
+  },
+  {
+    "id": "fijitimes-koro-moka",
+    "name": "Fiji Times, stone fish traps on Koro",
+    "role": "Community use and tidal function of a moka",
+    "href": "https://www.fijitimes.com.fj/discovering-fiji-the-fish-trap-and-leka-the-spirit/"
+  },
+  {
+    "id": "proto-oceanic-fishing",
+    "name": "The Lexicon of Proto Oceanic, fishing and hunting",
+    "role": "Independent historical evidence for traps and snares",
+    "href": "https://tlopo.clld.org/contributions/1-8"
+  },
+  {
+    "id": "spc-vanua-navakavu-fish",
+    "name": "SPC, finfishes of Vanua Navakavu",
+    "role": "Fiji fish-name and habitat associations",
+    "href": "https://spccfpstore1.blob.core.windows.net/digitallibrary-docs/files/88/88a1f351144fda547a2b74821378837f.pdf"
+  },
+  {
+    "id": "usp-food-fishes",
+    "name": "University of the South Pacific, Explanation for Fiji Fishes",
+    "role": "Reef snapper names and distinguishing appearance",
+    "href": "https://fjdigitallib.usp.ac.fj/greenstone3/pimris/sites/pimrissite/collect/pimris/index/assoc/HASH5247.dir/doc.pdf"
+  },
+  {
+    "id": "women-in-fisheries-moci",
+    "name": "Women in Fisheries Fiji, Role and Engagement of Women in Fisheries",
+    "role": "Moci habitat, collection and food use",
+    "href": "https://womeninfisheriesfiji.org/wp-content/uploads/2016/10/The-Role-Engagement-of-Women-in-Fisheries-in-Fiji-1.pdf"
+  },
+  {
+    "id": "fiji-school-itaraki",
+    "name": "Fiji school Fijian language study package, Year 8",
+    "role": "Attested use of itaraki in a fishing context",
+    "href": "https://sangamedu.ac.fj/wp-content/uploads/2021/12/Home-Study-Package-Year-8-2.pdf"
+  },
+  {
+    "id": "ambio-kadavu-fishing",
+    "name": "Ambio, Marine resources and their value in Kadavu",
+    "role": "Taraki hand-net in fisherwomen's accounts",
+    "href": "https://link.springer.com/article/10.1007/s13280-022-01794-0"
+  },
+  {
+    "id": "auckland-fiji-fishing-tools",
+    "name": "Auckland War Memorial Museum, Fiji fishing tools",
+    "role": "Bati ni siwa fish-hook in a museum collection",
+    "href": "https://artsandculture.google.com/story/nai-ya-vakaviki-na-ka-mareqeti-fiji-auckland-war-memorial-museum/FwXhbA0kX3gnJw?hl=en"
+  },
+  {
+    "id": "peace-corps-fijian-dialogue",
+    "name": "Peace Corps, Fijian language lesson 8",
+    "role": "Attested phrase and translation for fishing line",
+    "href": "https://fsi-languages.yojik.eu/languages/PeaceCorps/Fijian/ED131693.pdf"
+  },
+  {
+    "id": "fijitimes-qoliva",
+    "name": "Fiji Times, Yavu ni veiqaravi",
+    "role": "Fijian sentence using qoliva",
+    "href": "https://www.fijitimes.com.fj/yavu-ni-veiqaravi-o-keda-kei-na-iyaubula/"
+  },
+  {
+    "id": "tourism-fiji-fishing",
+    "name": "Tourism Fiji, Fishing in Fiji",
+    "role": "Community fishing grounds",
+    "href": "https://www.fiji.travel/things-to-do/charters/fiji-fishing"
+  },
+  {
+    "id": "frontiers-fisherwomen-fiji",
+    "name": "Frontiers in Marine Science, fisherwomen's knowledge in Fiji",
+    "role": "Local names for land and mangrove crabs and net types",
+    "href": "https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2022.991253/full"
+  },
+  {
+    "id": "fao-fiji-prawn",
+    "name": "FAO, Fiji aquaculture station feasibility study",
+    "role": "Ura and freshwater prawn species",
+    "href": "https://www.fao.org/4/AC891E/AC891E03.htm"
+  },
+  {
+    "id": "usp-coconut-crab",
+    "name": "University of the South Pacific, Coconut crab report",
+    "role": "Ugavule name, habitat and biology",
+    "href": "https://www.usp.ac.fj/institute-of-marine-resources/wp-content/uploads/sites/138/2021/08/Coconut-Crab-Report-.pdf"
+  },
+  {
+    "id": "frontiers-qoma-marine",
+    "name": "Frontiers in Marine Science, marine resources in Qoma",
+    "role": "Urau and spiny lobster identification",
+    "href": "https://www.frontiersin.org/journals/marine-science/articles/10.3389/fmars.2022.993103/full"
+  },
+  {
+    "id": "pacific-science-nasoata",
+    "name": "Pacific Science, Nasoata mangrove island fauna",
+    "role": "Visako mangrove heron name and species",
+    "href": "https://panorama.solutions/sites/default/files/2005_Thaman__R._et_al._Nasaota_Mangrove_Island__the_PABITRA_Coastal_Study_Site_for_Viti_Levu__Fiji_Islands.pdf"
+  },
+  {
+    "id": "wcs-sea-cucumber-fiji",
+    "name": "WCS Fiji, Fiji's sea cucumber fishery",
+    "role": "Dairo sandfish name",
+    "href": "https://fiji.wcs.org/Portals/82/reports/WCS%20Sea%20cucumber%20report%20260217.pdf?ver=2017-02-27-213114-827"
+  },
+  {
+    "id": "sprep-fiji-lobsters",
+    "name": "SPREP, Fiji fisheries resources profile",
+    "role": "Vavaba and slipper lobster species",
+    "href": "https://library.sprep.org/sites/default/files/9_7.pdf"
+  },
+  {
+    "id": "2026-11-03-owner-writing-terms",
+    "name": "University of the South Pacific terminology · supplied by owner",
+    "role": "The owner identifies these Fijian terms as University of the South Pacific terminology; the original list has not been independently inspected"
+  },
+  {
+    "id": "jw-fijian-punctuation-guide",
+    "name": "Wilivola Vinaka · Fijian punctuation guide",
+    "role": "Independent examples of punctuation names and signs",
+    "href": "https://wol.jw.org/fj/wol/d/r169/lp-fn/1102001070"
+  },
+  {
+    "id": "ba-sangam-fijian-year-4-punctuation",
+    "name": "Ba Sangam Primary School · Year 4 punctuation",
+    "role": "Independent punctuation chart; some spellings and dash labels differ",
+    "href": "https://sangamedu.ac.fj/wp-content/uploads/2021/07/Home-Study-Package-Year-4-22.pdf"
+  },
+  {
+    "id": "year13-nanuma-lesu-mother-tongue",
+    "name": "Nanuma Lesu Na Noda Vosa · mother-tongue discussion",
+    "role": "Uses vosanisucu and vosanisusu together",
+    "href": "https://fliphtml5.com/gjgbb/elah/Year_13_Nanuma_Lesu_Na_Noda_Vosa_13/7/"
+  },
+  {
+    "id": "anglicare-fijian-interpreter-toolkit",
+    "name": "Fijian interpreter toolkit · informal language",
+    "role": "Uses vosa vakavarada in advice about language that may be hard to interpret",
+    "href": "https://anglicaresq.org.au/wp-content/uploads/2025/02/Fijian-E200010-Anglicare-Inclusive-Engagement-Toolkit.pdf"
+  },
+  {
+    "id": "owner-word-building-2026-11-03",
+    "name": "NAISEMA owner · word-building examples",
+    "role": "Supplied bobula and the three vale + ni compounds"
+  },
+  {
+    "id": "fijian-bible-romans-6-word-building",
+    "name": "Fijian Bible · Romans 6",
+    "role": "Attests bobula, vakabobulataki and veivakabobulataki",
+    "href": "https://www.wordproject.org/bibles/fj/45/6.htm"
+  },
+  {
+    "id": "fijian-lexicon-vale-ni-sili",
+    "name": "Fijian Lexicon · vale ni sili",
+    "role": "Gives vale ni sili as bathroom",
+    "href": "https://ldtcsites.org/languages/fijian/lexicon.pdf"
+  },
+  {
+    "id": "fiji-times-valenikana",
+    "name": "Fiji Times · dining hall in a Fijian village",
+    "role": "Uses Valenikana for a dining hall",
+    "href": "https://www.fijitimes.com.fj/friendly-gesture/"
+  },
+  {
+    "id": "fiji-gov-valenivolavola",
+    "name": "Fiji Ministry of Justice · iTaukei office list",
+    "role": "Uses valenivolavola for offices",
+    "href": "https://www.justice.gov.fj/wp-content/uploads/2024/08/Information-on-Change-of-Name-itaukei-Language.pdf"
+  },
+  {
+    "id": "fijian-school-batiqu",
+    "name": "Sangam Education Board · Fijian Year 7 work",
+    "role": "Uses batiqu for the speaker's teeth",
+    "href": "https://sangamedu.ac.fj/wp-content/uploads/2021/08/Home-Study-Package-Year-7-Solution-5.pdf"
+  },
+  {
+    "id": "peace-corps-fijian-body-parts",
+    "name": "Peace Corps · Lessons in Fijian",
+    "role": "Describes direct possession of body parts",
+    "href": "https://fsi-languages.yojik.eu/languages/PeaceCorps/Fijian/ED131693.pdf"
+  },
+  {
+    "id": "ovalau-community-veiniu",
+    "name": "Ovalau participatory mapping report",
+    "role": "Labels Veiniu as a coconut plantation",
+    "href": "https://www.iapad.org/wp-content/uploads/2015/07/ovalau_report_revised_20050720.pdf"
+  },
+  {
+    "id": "fijian-writing-veiniuniu",
+    "name": "Fijian text · koro ni veiniuniu",
+    "role": "Uses veiniuniu for coconut palms in a place description",
+    "href": "https://www.jw.org/fj/ka-e-vakarautaki/ivola/mo-yaloqaqa-ni-lako-vata-kei-na-kalou/nodra-gauna-na-peteriaki-ina-nodra-gauna-na-dauveilewai/reapi-tovaki-jiova-sega-ni-o-ira-na-lewe-ni-nona-koro/"
+  },
+  {
+    "id": "nz-civil-defence-veilakoyaki",
+    "name": "New Zealand Civil Defence · Fijian information",
+    "role": "Uses veilakoyaki for travel and movement",
+    "href": "https://www.civildefence.govt.nz/assets/Uploads/aog-welfare-factsheet/translations/fijian/where-you-can-get-support_v1c_fijian.pdf"
+  },
+  {
+    "id": "fijian-bible-veiciciyaki",
+    "name": "Fijian Bible · Ezekiel 1 and Joel 2",
+    "role": "Uses veiciciyaki for rapid movement back and forth",
+    "href": "https://www.wordproject.org/bibles/fj/26/1.htm"
+  },
+  {
+    "id": "fiji-times-veivakamocetaki",
+    "name": "Fiji Times · poem by Iliesa Baravilala",
+    "role": "Uses veivakamocetaki when passengers part",
+    "href": "https://www.fijitimes.com.fj/serekali-ni-sa-kacikaci-ni-cagi-o-delaikoro/"
+  },
+  {
+    "id": "fij101-handbook-body-parts",
+    "name": "FIJ101 Hand Book · Tikiniyago body-part list",
+    "role": "Lists kete as stomach among Fijian body-part words.",
+    "href": "https://paperzz.com/doc/8937213/fij101-hand-book"
+  },
+  {
+    "id": "fijian-jeremiah-ketequ",
+    "name": "Fijian Bible · Jeremaia 4:19",
+    "role": "Uses na ketequ in a complete Fijian passage.",
+    "href": "https://www.bible.com/bible/3839/JER.4.FIJ1864"
+  },
+  {
+    "id": "itaukei-affairs-ilakolako-2022",
+    "name": "iTaukei Affairs Board Annual Report 2021–2022",
+    "role": "Uses ilakolako in the phrase e dua na ilakolako ni veisiko.",
+    "href": "https://www.parliament.gov.fj/wp-content/uploads/2024/03/iTaukei-Affairs-Board-Annual-Report-2021%E2%80%932022.pdf"
+  },
+  {
+    "id": "anu-arms-sa-se-aspect",
+    "name": "David G. Arms · Fijian sā and se Aspect",
+    "role": "Explains the current-relevance meaning of sā and its possible combination with future na.",
+    "href": "https://openresearch-repository.anu.edu.au/server/api/core/bitstreams/ed84f88d-599f-4e6b-ad77-cda0bbf73c01/content"
+  },
+  {
+    "id": "pacific-languages-fijian-na-future",
+    "name": "Pacific Languages: An Introduction · Fijian tense markers",
+    "role": "Identifies na as a future marker in a Fijian predicate.",
+    "href": "https://kir.oer4pacific.org/id/eprint/67/1/PacificLanguagesOA.pdf.pdf"
+  },
+  {
+    "id": "naisema-founder-au-yau-aua-auwa-2026-11-03",
+    "name": "NAISEMA founder correction, 3 November 2026",
+    "role": "Confirms that yau can mean me in object use and gives aua/auwa as hour spellings"
+  },
+  {
+    "id": "anu-fijian-np-qualifiers-2026-11-03",
+    "name": "ANU Fijian noun-phrase study",
+    "role": "Independent check of post-head Fijian noun-phrase qualifiers",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/ad8ffd53-3125-4166-885e-a761ec8bf989/download"
+  },
+  {
+    "id": "sangam-year10-yavu-2021",
+    "name": "Sangam SKM College Nadi - Year 10 Vosa Vakaviti worksheet",
+    "role": "Independent explanation of yavu as a nominal or predicate base",
+    "href": "https://sangamedu.ac.fj/wp-content/uploads/2021/06/Vosa-VakaViti-Sheet-2-1.pdf"
+  },
+  {
+    "id": "nanuma-lesu-year13-durugauna",
+    "name": "Nanuma Lesu Na Noda Vosa 13 - Tuvavosa exercises, page 87",
+    "role": "Independent explanation of durugauna as a kind of duruliu",
+    "href": "https://fliphtml5.com/gjgbb/elah/Year_13_Nanuma_Lesu_Na_Noda_Vosa_13/87/"
+  },
+  {
+    "id": "nanuma-lesu-year9-ikurau",
+    "name": "Nanuma Lesu Na Noda Vosa 9 - Year 9 textbook, page 31",
+    "role": "Independent ikurau definition with Isa! in a complete sentence",
+    "href": "https://beaconmedia.com.au/beaconmedia/wp-content/uploads/2025/09/Yr-9-NANUMALESUNANODAVOSA9StudentsTextbook.pdf"
+  },
+  {
+    "id": "nanuma-lesu-year10-nauni-raraba",
+    "name": "Salavata ni Nanuma Lesu 10 - teacher's guide, page 42",
+    "role": "Independent distinction between nauni raraba and nauni taukei",
+    "href": "https://fliphtml5.com/gjgbb/znkq/Year_10_SALAVATA_NI_NANUMA_LESU_10_Teacher_s_Guide/42/"
+  },
+  {
+    "id": "schutz-fijian-language-reduplication",
+    "name": "Albert J. Schütz, The Fijian Language, chapter 18",
+    "role": "Independent treatment of Fijian reduplication, including formal patterns and different functions",
+    "href": "https://manifold.uhpress.hawaii.edu/projects/the-fijian-language"
+  },
+  {
+    "id": "anu-proto-oceanic-dranu",
+    "name": "Ross, Pawley and Osmond, The Lexicon of Proto Oceanic, volume 2, chapter 3",
+    "role": "Bauan dranu in wai dranu, contrasted with saltwater",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/2c665103-7937-4d1b-87a4-1939b258f782/download"
+  },
+  {
+    "id": "acd-danum-dranu",
+    "name": "Austronesian Comparative Dictionary, daNum cognate set",
+    "role": "Wayan dranu and wai dranu, independently recorded",
+    "href": "https://acd.clld.org/cognatesets/30381"
+  },
+  {
+    "id": "anu-proto-oceanic-drano",
+    "name": "Ross, Pawley and Osmond, The Lexicon of Proto Oceanic, volume 2, chapter 3",
+    "role": "Bauan drano for lake or freshwater swamp; Wayan drano for lake or pond",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/2c665103-7937-4d1b-87a4-1939b258f782/download"
+  },
+  {
+    "id": "anu-wolff-drano",
+    "name": "John U. Wolff, Fijian reflexes of the Proto Austronesian phonemes",
+    "role": "Inland body-of-water meaning and distinction from dranu",
+    "href": "https://openresearch-repository.anu.edu.au/bitstreams/0e411d91-8f92-4852-8f60-7002a846cbff/download"
+  },
+  {
+    "id": "naisema-founder-ilakolako-2026-11-05",
+    "name": "NAISEMA founder correction, 5 November 2026",
+    "role": "Confirms ilakolako can mean how someone walks and supplies Na neitou ilakolako i Suva for the separate trip sense; a walking-manner example is pending."
+  },
+  {
+    "id": "fiji-met-rainfall-feb2026",
+    "name": "Fiji Meteorological Service, February 2026 sugarcane rainfall outlook",
+    "role": "Uses tau ni uca in a practical rainfall advisory",
+    "href": "https://www.met.gov.fj/media/climate_product_files/FSCRO_February_2026.pdf"
+  },
+  {
+    "id": "fijian-year10-liliwa",
+    "name": "Year 10 Salavata ni Nanuma Lesu teacher guide, liliwa weather contrast",
+    "role": "Independently pairs liliwa with cold weather",
+    "href": "https://fliphtml5.com/gjgbb/znkq/Year_10_SALAVATA_NI_NANUMA_LESU_10_Teacher_s_Guide/30/"
+  },
+  {
+    "id": "jw-fijian-draki-liliwa",
+    "name": "Fijian article on cold weather",
+    "role": "Attests draki liliwa in a complete climate sentence",
+    "href": "https://www.jw.org/fj/ka-e-vakarautaki/ivola/Na-Cava-Mada-e-Kaya-na-iVolatabu/a-sucu-o-jisu-ena-tiseba/"
+  },
+  {
+    "id": "naisema-founder-tubu-mangrove",
+    "name": "NAISEMA founder-approved mangrove growth sentence",
+    "role": "Confirms natural veidogodogo and tubu wording"
+  },
+  {
+    "id": "fiji-gov-tubu-2022",
+    "name": "Fiji Government iTaukei health statement, 28 March 2022",
+    "role": "Attests tubu for an increase in counted cases",
+    "href": "https://www.fiji.gov.fj/itaukei-statement-by-permanent-secretary-for-health-medical-services-dr-james-fong-28-03-22/"
+  },
+  {
+    "id": "fiji-parliament-babale-species-2016",
+    "name": "Fiji Parliament, Endangered and Protected Species Amendment Bill 2016",
+    "role": "Lists several dolphin species with babale plus a distinguishing word.",
+    "href": "https://parliament.gov.fj/wp-content/uploads/2017/02/FINAL-ENDANGERED-N-PROTECTED-SPECIES-BILL-2016-4-Final-Copy.pdf"
+  },
+  {
+    "id": "fiji-times-babale-silana-2015",
+    "name": "Fiji Times, Dolphins of Takalana Bay",
+    "role": "Quotes a Silana village speaker using babale for dolphins at Moon Reef.",
+    "href": "https://www.fijitimes.com.fj/dolphins-of-takalana-bay/"
+  },
+  {
+    "id": "massey-babakau-breakfast-2019",
+    "name": "Massey University thesis, resort food research, page 127",
+    "role": "Describes babakau as fried yeast bread eaten for breakfast in Fiji.",
+    "href": "https://mro.massey.ac.nz/server/api/core/bitstreams/f0555ec5-f654-4a05-a9d1-c634906130d1/content"
+  },
+  {
+    "id": "fiji-times-babakau-market-2017",
+    "name": "Fiji Times, The pastry seller, 2017",
+    "role": "Reports babakau being sold as a breakfast food at Suva Municipal Market.",
+    "href": "https://www.fijitimes.com.fj/the-pastry-seller/"
+  },
+  {
+    "id": "peace-corps-baca-bait-1968",
+    "name": "Peace Corps Fijian course, lesson 7.9 vocabulary",
+    "role": "Gives baca as bait.",
+    "href": "https://fsi-languages.yojik.eu/languages/PeaceCorps/Fijian/ED131693.pdf"
+  },
+  {
+    "id": "ldtc-baca-ni-qele",
+    "name": "Language Documentation and Technology Centre, Fijian wordlist",
+    "role": "Gives baca ni qele as earthworm.",
+    "href": "https://ldtcsites.org/languages/fijian/wordlist.html"
+  },
+  {
+    "id": "te-papa-fijian-tree-ferns",
+    "name": "Museum of New Zealand Te Papa, Fijian tree ferns",
+    "role": "Explains that balabala covers several tree ferns and records Cyathea affinis in Fiji's uplands.",
+    "href": "https://collections.tepapa.govt.nz/topic/4060"
+  },
+  {
+    "id": "hodel-2010-balaka",
+    "name": "Don Hodel, A Synopsis of the Genus Balaka, Palms 54(4), 2010",
+    "role": "Reports Fijian vernacular balaka/mbalaka for several palms and traditional straight-stem uses.",
+    "href": "https://palms.org/wp-content/uploads/2016/08/Vol54n4.pdf"
+  },
+  {
+    "id": "naturefiji-balaka-streptostachys",
+    "name": "NatureFiji-MareqetiViti, Balaka streptostachys",
+    "role": "Illustrates one Balaka species, not the identification of every palm called balaka.",
+    "href": "https://www.naturefiji.org/balaka-balaka-streptostachys/"
+  },
+  {
+    "id": "pacific-pests-banuve-bean-037",
+    "name": "Pacific Pests, Pathogens, Weeds and Pesticides, Bean pod borer (037), Fiji Fijian edition",
+    "role": "Uses banuve in a complete Fijian description and pairs it with an English photo caption of the caterpillar.",
+    "href": "https://apps.lucidcentral.org/pppw_v12/text/web_mini/entities_fiji_fijian/manumanu_meca_ni_bean_037.htm"
+  },
+  {
+    "id": "fiji-pm-basu-lawa-2020",
+    "name": "Office of the Prime Minister Fiji, iTaukei COVID-19 statement, 25 March 2020",
+    "role": "Uses basuka with lawa in the separate figurative sense of breaking a law.",
+    "href": "https://www.pmoffice.gov.fj/prime-minister-hon-josaia-voreqe-bainimaramas-statement-on-fijis-fifth-covid-19-case-25-03-2020/"
+  },
+  {
+    "id": "fiji-times-bale-tree-2017",
+    "name": "The Fiji Times, Understanding iTaukei figures of speech: Part 14, 2017",
+    "role": "Records a proverb beginning Sa bale na kau and explains its literal fallen-tree image.",
+    "href": "https://www.fijitimes.com.fj/understanding-itaukei-figures-of-speech-part-14/"
+  },
+  {
+    "id": "lds-fijian-balia-bread-2023",
+    "name": "The Church of Jesus Christ of Latter-day Saints, Fijian bread recipe, March 2023",
+    "role": "Uses Balia na ibulifalawa me 10 na miniti in a bread-making instruction.",
+    "href": "https://www.churchofjesuschrist.org/study/friend/2023/03/write-a-parable?id=title2&lang=fij"
+  },
+  {
+    "id": "sprep-voices-pacific-seasonal-2025",
+    "name": "SPREP Library, Voices of the Pacific, seasonal ecological calendar, page 250",
+    "role": "Pairs batikaciwa with Limosa lapponica and records its return to Fiji in the seasonal calendar.",
+    "href": "https://library.sprep.org/sites/default/files/2025-03/Voices-of-the-Pacific.pdf"
+  },
+  {
+    "id": "waikato-fiji-plant-thesis-bati-madramadra",
+    "name": "University of Waikato thesis on iTaukei environmental knowledge, page 102",
+    "role": "Lists bati madramadra with Bidens pilosa among plants used in Fiji; the specific preparation in the original dictionary remains unchecked.",
+    "href": "https://researchcommons.waikato.ac.nz/bitstream/handle/10289/14136/thesis.pdf"
+  },
+  {
+    "id": "fiji-times-scorpion-2017",
+    "name": "The Fiji Times, Common arachnid, 17 June 2017",
+    "role": "Uses batibasaga for scorpions and mentions regional alternatives; checked directly.",
+    "href": "https://www.fijitimes.com.fj/common-arachnid/"
+  },
+  {
+    "id": "smithsonian-thaman-batiri-1992",
+    "name": "R. R. Thaman, Batiri kei Baravi, Atoll Research Bulletin 361, 1992",
+    "role": "Opening note identifies batiri as a Fijian word for a mangrove coast and contrasts baravi as open coast or beach.",
+    "href": "https://repository.si.edu/server/api/core/bitstreams/9956f2e7-f7d1-43a5-a91a-ae8249f07ceb/content"
+  },
+  {
+    "id": "fiji-times-bati-leka-2025",
+    "name": "The Fiji Times, Loyalty to family ties, 7 April 2025",
+    "role": "Uses bati leka for a family's traditional warrior role; checked directly.",
+    "href": "https://www.fijitimes.com.fj/loyalty-to-family-ties/"
+  },
+  {
+    "id": "fijivillage-bati-leka-2015",
+    "name": "Fijivillage, Traditional warriors from Namara take position on Bau Island",
+    "role": "Reports a contemporary guarding duty by bati leka.",
+    "href": "https://www.fijivillage.com/news/Traditional-warriors-from-Namara-take-position-on-Bau-Island--5s9rk2"
+  },
+  {
+    "id": "fao-fiji-biodiversity-bau-vudi",
+    "name": "FAO, Fiji biodiversity study, Sapotaceae species table",
+    "role": "Pairs bau vudi with several Palaquium species rather than just one.",
+    "href": "https://www.fao.org/fileadmin/user_upload/sap/docs/FPAM-Biodiversity%20study%20Fiji.pdf"
+  },
+  {
+    "id": "sprep-navua-beqa-bau-vudi",
+    "name": "SPREP Library, Navua River catchment BioRap terrestrial report, page 51",
+    "role": "Lists bau vudi as a name for multiple endemic Palaquium trees.",
+    "href": "https://library.sprep.org/sites/default/files/2025-07/Navua_Beqa-IEMP-BioRap-Terrestrial-BIEM-PEUMP.pdf"
+  },
+  {
+    "id": "fijian-school-bati-ni-sucu-yr9",
+    "name": "Na Numa Lesu Na Noda Vosa, Year 9 student textbook, Wase 9 Na Bati, page 65",
+    "role": "Uses Na bati ni sucu e 20, ni da se gone lalai in a passage about baby and adult teeth.",
+    "href": "https://beaconmedia.com.au/beaconmedia/wp-content/uploads/2025/09/Yr-9-NANUMALESUNANODAVOSA9StudentsTextbook.pdf"
+  },
+  {
+    "id": "fiji-times-bavelo-2021",
+    "name": "The Fiji Times, A murder and a song, 2021",
+    "role": "Reports a person paddling a wooden canoe called bavelo.",
+    "href": "https://www.fijitimes.com.fj/a-murder-and-a-song-living-life-through-music/"
+  },
+  {
+    "id": "phama-taro-ba-via-2013",
+    "name": "PHAMA, Technical Report 51 on taro imports, 2013",
+    "role": "Identifies Ba via in Fiji as a named taro variety also called Tusi Tusi in an Australian planting.",
+    "href": "https://phamaplus.com.au/wp-content/uploads/2024/07/TR-51-FIJI06-Substantiation-of-Australias-Requirements-for-Devitalisation-of-Taro-Imports-v1.0-FINAL.pdf"
+  },
+  {
+    "id": "rbf-beli-banknote-2012",
+    "name": "Reserve Bank of Fiji, Features of the New Flora and Fauna Banknote Designs, 2012",
+    "role": "Identifies a beli pictured on the $10 note as Lever's goby and places it in fast freshwater streams.",
+    "href": "https://www.rbf.gov.fj/wp-content/uploads/2012/12/Press-Release-No.-37-Fijis-New-Flora-and-Fauna-Design-Banknotes-and-Coins-Officially-Unveiled-by-His-Excellency-the-President-Ratu-Epeli-Nailatikau.pdf"
+  },
+  {
+    "id": "likuliku-fiji-bird-list",
+    "name": "Likuliku Lagoon Resort, Malolo Island flora and fauna bird observations",
+    "role": "Lists Belo as reef heron Egretta sacra and Bici as banded rail Gallirallus philippensis.",
+    "href": "https://likulikulagoon.com/flora-fauna/"
+  },
+  {
+    "id": "naturefiji-belo-dravu-2020",
+    "name": "NatureFiji-MareqetiViti, Birds in Fiji's Forests: Belo Dravu, 2020",
+    "role": "Identifies belo dravu as Egretta sacra and describes reef and inland-stream habitats.",
+    "href": "https://www.naturefiji.org/birds-in-fijis-forests-belo-dravu/"
+  },
+  {
+    "id": "usp-cassava-bila-study",
+    "name": "University of the South Pacific, A Study on Cyanide Levels in Cassava and its Products",
+    "role": "Documents a Fijian preparation of bila from soaked cassava, coconut, sugar and leaf wrapping.",
+    "href": "https://repository.usp.ac.fj/id/eprint/4852/1/Report-_Cyanide_in_Cassava_and_Cassava_Products2.pdf"
+  },
+  {
+    "id": "fijitimes-bitu-bilibili-2026",
+    "name": "The Fiji Times, Discovering Fiji: Keeping culture afloat, 2026",
+    "role": "Explicitly calls bitu bamboo and describes its place in Naitasiri raft-making knowledge.",
+    "href": "https://www.fijitimes.com.fj/discovering-fiji-i-keeping-culture-afloat/"
+  },
+  {
+    "id": "viti-va-reader",
+    "name": "Na Viti Va (Viti_4.pdf)",
+    "role": "Local Fijian reader/curriculum evidence; exact page and review required"
+  },
+  {
+    "id": "fujieda-kobayashi-2013-fijian-house",
+    "name": "Fujieda and Kobayashi, The Potential of Fijian Traditional Housing to Cope with Natural Disasters in Rural Fiji (2013)",
+    "role": "Table 2 and section 5.2.2 name parts of a traditional house built with Cautata carpenters; local spellings and construction can vary.",
+    "href": "https://repository.kulib.kyoto-u.ac.jp/dspace/bitstream/2433/173637/1/JDR_8%281%29_18.pdf"
+  },
+  {
+    "id": "usp-fiji-cawaki-2015",
+    "name": "University of the South Pacific, Chilled Sea Urchin Progress Report",
+    "role": "Pairs cawaki with Tripneustes gratilla and describes gonad harvest and sale in Fiji.",
+    "href": "https://repository.usp.ac.fj/8622/1/JL_Chilled_Sea_Urchin_Progress_Report_Final.pdf"
+  },
+  {
+    "id": "wwf-fiji-marine-ecoregion-molluscs",
+    "name": "WWF, Setting Priorities for Marine Conservation in the Fiji Islands Marine Ecoregion",
+    "role": "Pairs kaikoso with Anadara cornea, madrali with Nerita polita, and sigawale with Atactodea striata.",
+    "href": "https://rsis.ramsar.org/RISapp/files/38105685/documents/FJ2331_lit171016.pdf"
+  },
+  {
+    "id": "fiji-fisheries-1988-nonfish-seafood",
+    "name": "Fiji Ministry of Primary Industries, 1988 Annual Report, non-fish seafood table",
+    "role": "Records mana among Fiji crustaceans and pairs madrali with Nerita polita.",
+    "href": "https://openjicareport.jica.go.jp/pdf/10845352_02.pdf"
+  },
+  {
+    "id": "usp-fiji-seagrapes-2012",
+    "name": "University of the South Pacific, Seagrapes post-harvest and value addition in Fiji",
+    "role": "Pairs nama with Caulerpa racemosa and discusses its harvest and sale in Fiji.",
+    "href": "https://repository.usp.ac.fj/id/eprint/5647/1/Value_adding_and_supply_chain_development_for_fisheries_and_aquaculture_products_in_Fiji_Samoa_and_Tonga-seagrapes_post-harvest_and_value_addition_in_Fiji-progress_report.pdf"
+  }
+]
