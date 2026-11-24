@@ -307,14 +307,68 @@ var weaveTex=canvasTex(256,256,function(g,w,h){
   for(var y=0;y<8;y++)for(var x=0;x<8;x++){g.fillStyle=(x+y)%2?'#a87c4c':'#c99e68';g.fillRect(x*32,y*32,32,32);g.fillStyle='rgba(60,35,15,.18)';g.fillRect(x*32,y*32,32,3);g.fillRect(x*32,y*32,3,32);}
 },3,1.4);
 var thatchTex=canvasTex(256,256,function(g,w,h){
-  g.fillStyle='#c8a35f';g.fillRect(0,0,w,h);
-  for(var i=0;i<340;i++){var x=Math.random()*w;g.strokeStyle='rgba('+(120+Math.random()*70|0)+','+(85+Math.random()*45|0)+',30,.55)';g.beginPath();g.moveTo(x,0);g.lineTo(x+(Math.random()*8-4),h);g.stroke();}
-  g.fillStyle='rgba(90,60,20,.28)';for(var y=28;y<h;y+=32)g.fillRect(0,y,w,5);
+  g.fillStyle='#b98f4e';g.fillRect(0,0,w,h);
+  /* gasau (reed) thatch — layered courses of bundled reeds, tied in rows along the roof */
+  var rows=5, rh=h/rows;
+  for(var r=0;r<rows;r++){
+    var y0=r*rh;
+    var grad=g.createLinearGradient(0,y0,0,y0+rh);
+    grad.addColorStop(0,'#d3ac67'); grad.addColorStop(0.72,'#c39a55'); grad.addColorStop(1,'#997339');
+    g.fillStyle=grad; g.fillRect(0,y0,w,rh);
+    for(var i=0;i<100;i++){
+      var x=Math.random()*w, tone=Math.random();
+      g.strokeStyle= tone>0.62 ? 'rgba(236,202,134,.65)' : (tone>0.3 ? 'rgba(140,102,48,.55)' : 'rgba(102,72,29,.62)');
+      g.lineWidth= tone>0.72 ? 2 : 1;
+      g.beginPath(); g.moveTo(x,y0+1); g.lineTo(x+(Math.random()*4-2), y0+rh-1); g.stroke();
+    }
+    /* bundled reed ends — short vertical ticks clustered in handfuls */
+    g.fillStyle='rgba(80,54,18,.4)';
+    for(var bx=3;bx<w;bx+=11){ g.fillRect(bx, y0+rh-8, 1.6, 6); }
+    /* frayed lower edge of each course */
+    g.fillStyle='rgba(90,62,22,.38)';
+    for(var fx=0;fx<w;fx+=5){ g.fillRect(fx, y0+rh-3-Math.random()*3, 3, 3+Math.random()*3); }
+    g.fillStyle='rgba(70,45,14,.5)'; g.fillRect(0,y0+rh-2,w,2);
+    /* the tie row that lashes the course to the rafters */
+    g.fillStyle='rgba(62,40,16,.88)'; g.fillRect(0,y0,w,3);
+    g.fillStyle='rgba(219,182,118,.95)';
+    for(var tx=6;tx<w;tx+=16){ g.fillRect(tx,y0,3,3); }
+  }
 },4,2);
 var matTex=canvasTex(256,256,function(g,w,h){
-  var cols=['#e8d9b0','#5e1f26','#e8d9b0','#0f3d3e'];
-  for(var y=0;y<16;y++)for(var x=0;x<16;x++){g.fillStyle=cols[(x+y)%4===0?1:(x%4===0?3:0)];if((x+y)%2)g.fillStyle=(x+y)%8===0?'#7a2e35':'#dcc99c';g.fillRect(x*16,y*16,16,16);g.strokeStyle='rgba(80,55,25,.25)';g.strokeRect(x*16,y*16,16,16);}
-},2,2);
+  /* woven pandanus mat (ibe) — true over–under weave, fibre striations,
+     a dyed diamond pattern worked into the field, and a patterned border */
+  g.fillStyle='#d9c08f'; g.fillRect(0,0,w,h);
+  var cell=16;
+  for(var y=0;y<h/cell;y++)for(var x=0;x<w/cell;x++){
+    var over=(x+y)%2===0;
+    g.fillStyle= over ? '#e3cd9e' : '#c9ab74';
+    g.fillRect(x*cell,y*cell,cell,cell);
+    /* fibre lines run along the strip that is on top */
+    g.strokeStyle='rgba(112,80,38,.35)'; g.lineWidth=1;
+    for(var ln=4;ln<cell;ln+=4){
+      g.beginPath();
+      if(over){ g.moveTo(x*cell+1,y*cell+ln); g.lineTo(x*cell+cell-1,y*cell+ln); }
+      else{ g.moveTo(x*cell+ln,y*cell+1); g.lineTo(x*cell+ln,y*cell+cell-1); }
+      g.stroke();
+    }
+    g.strokeStyle='rgba(84,58,24,.4)'; g.strokeRect(x*cell+0.5,y*cell+0.5,cell-1,cell-1);
+  }
+  /* dyed pattern — a row of dark diamonds through the middle, woven in, not printed on */
+  function diamond(cx,cy,s,col){
+    g.fillStyle=col;
+    g.beginPath(); g.moveTo(cx,cy-s); g.lineTo(cx+s,cy); g.lineTo(cx,cy+s); g.lineTo(cx-s,cy); g.closePath(); g.fill();
+    g.fillStyle='#e3cd9e';
+    g.beginPath(); g.moveTo(cx,cy-s*0.45); g.lineTo(cx+s*0.45,cy); g.lineTo(cx,cy+s*0.45); g.lineTo(cx-s*0.45,cy); g.closePath(); g.fill();
+    g.fillStyle=col; g.fillRect(cx-2,cy-2,4,4);
+  }
+  for(var dx=0;dx<4;dx++) diamond(40+dx*58, h/2, 17, dx%2 ? '#5e1f26' : '#2e2013');
+  for(var sx=0;sx<8;sx++){ g.fillStyle= sx%2 ? '#5e1f26' : '#0f3d3e'; g.fillRect(24+sx*26, 52, 9, 9); g.fillRect(24+sx*26, h-61, 9, 9); }
+  /* border — two dark woven bands with a light checker between them */
+  g.fillStyle='#3a2812'; g.fillRect(0,0,w,10); g.fillRect(0,h-10,w,10); g.fillRect(0,0,10,h); g.fillRect(w-10,0,10,h);
+  g.fillStyle='#5e1f26'; g.fillRect(0,14,w,7); g.fillRect(0,h-21,w,7); g.fillRect(14,0,7,h); g.fillRect(w-21,0,7,h);
+  for(var bx=0;bx<w;bx+=16){ g.fillStyle=(bx/16)%2 ? '#e3cd9e' : '#3a2812'; g.fillRect(bx,24,8,5); g.fillRect(bx,h-29,8,5); }
+  for(var by=0;by<h;by+=16){ g.fillStyle=(by/16)%2 ? '#3a2812' : '#e3cd9e'; g.fillRect(24,by,5,8); g.fillRect(w-29,by,5,8); }
+},1,1);
 
 /* ---------- ground & setting ---------- */
 var ground=new THREE.Mesh(new THREE.CircleGeometry(30,48), mat(0x8aa860,1));
@@ -338,13 +392,38 @@ bure.add(box(5.7,0.22,3.9, mat(0x6e4a26,0.9), 0,0.11,0)); /* base frame */
 /* doorway — dark inset + lintel */
 bure.add(box(1.0,1.55,0.08, mat(0x241610,0.95), 0,0.82,1.83));
 bure.add(box(1.25,0.14,0.14, mat(0x4a2f18,0.9), 0,1.66,1.86));
-/* posts with magimagi lashing */
-var postMat=mat(0x5d3d20,0.9), lashMat=mat(0x2e2013,0.95);
+/* posts with magimagi lashing — pale coconut sennit cord, wound and crossed
+   where each post meets the wall plate, so the joins read clearly */
+var postMat=mat(0x5d3d20,0.9), lashMat=mat(0xc7a165,1), lashDark=mat(0x8a6a3c,1);
+var beamMat=mat(0x6e4a26,0.9);
+/* wall plates the posts are lashed to (front and back) */
+[-1.72,1.72].forEach(function(z){
+  var plate=cyl(0.07,0.07,5.45, beamMat, 0,2.04,z); plate.rotation.z=Math.PI/2; bure.add(plate);
+});
+function lashPost(x,z,front){
+  /* tight horizontal wraps around post + plate */
+  for(var i=0;i<4;i++){
+    var t=new THREE.Mesh(new THREE.TorusGeometry(0.125,0.032,6,12), i%2?lashDark:lashMat);
+    t.position.set(x,1.9-i*0.1,z); t.rotation.x=Math.PI/2; t.castShadow=true; bure.add(t);
+  }
+  /* the diagonal cross-bind over the wraps — the signature magimagi X */
+  var zo=z+(front?0.13:-0.13);
+  [-0.62,0.62].forEach(function(rz){
+    var d=cyl(0.026,0.026,0.42, lashMat, x,1.74,zo); d.rotation.z=rz; bure.add(d);
+  });
+  var wrap2=new THREE.Mesh(new THREE.TorusGeometry(0.12,0.028,6,12), lashMat);
+  wrap2.position.set(x,0.32,z); wrap2.rotation.x=Math.PI/2; bure.add(wrap2);
+}
 [[-2.62,-1.72],[2.62,-1.72],[-2.62,1.72],[2.62,1.72],[0,-1.72],[0,1.72]].forEach(function(p){
   bure.add(cyl(0.09,0.11,2.15, postMat, p[0],1.07,p[1]));
-  for(var i=0;i<3;i++){var t=new THREE.Mesh(new THREE.TorusGeometry(0.115,0.028,6,12),lashMat);t.position.set(p[0],1.78-i*0.11,p[1]);t.rotation.x=Math.PI/2;t.castShadow=true;bure.add(t);}
-  /* diagonal cross-lashing hint */
-  var d=cyl(0.02,0.02,0.34,lashMat,p[0],1.62,p[1]); d.rotation.z=0.7; bure.add(d);
+  lashPost(p[0],p[1], p[1]>0);
+});
+/* corner posts get a second cross-bind where the side plate turns the corner */
+[[-2.62,-1.72],[2.62,-1.72],[-2.62,1.72],[2.62,1.72]].forEach(function(p){
+  var xo=p[0]+(p[0]>0?0.13:-0.13);
+  [-0.62,0.62].forEach(function(rx){
+    var d=cyl(0.024,0.024,0.4, lashDark, xo,1.74,p[1]); d.rotation.x=rx; bure.add(d);
+  });
 });
 /* steep thatched roof: two slabs + gable ends + ridge */
 var roofMat=new THREE.MeshStandardMaterial({map:thatchTex,roughness:1});
@@ -355,8 +434,14 @@ var gableShape=new THREE.Shape(); gableShape.moveTo(-1.8,0); gableShape.lineTo(1
 var gableGeo=new THREE.ExtrudeGeometry(gableShape,{depth:0.12,bevelEnabled:false});
 [-2.66,2.54].forEach(function(x){var g=new THREE.Mesh(gableGeo,wallMat);g.rotation.y=Math.PI/2;g.position.set(x,2.0,-0.06);g.castShadow=true;bure.add(g);});
 var ridge=cyl(0.09,0.09,6.7, mat(0x8a652f,1), 0,4.02,0); ridge.rotation.z=Math.PI/2; bure.add(ridge);
-/* ridge lashing bands */
-for(var rx=-3;rx<=3;rx+=1.0){var band=new THREE.Mesh(new THREE.TorusGeometry(0.12,0.03,6,10),lashMat);band.position.set(rx,4.02,0);band.rotation.y=Math.PI/2;bure.add(band);}
+/* ridge lashing bands — magimagi binds the ridge pole down over the thatch */
+for(var rx=-3;rx<=3;rx+=0.75){var band=new THREE.Mesh(new THREE.TorusGeometry(0.135,0.04,6,10),(Math.round(rx*4)%2)?lashDark:lashMat);band.position.set(rx,4.02,0);band.rotation.y=Math.PI/2;band.castShadow=true;bure.add(band);}
+/* eave bindings — short cords tying the thatch edge down to the wall plates */
+[-1,1].forEach(function(side){
+  for(var ex=-2.4;ex<=2.4;ex+=1.2){
+    var eb=cyl(0.024,0.024,0.5, lashMat, ex,2.16,side*1.86); eb.rotation.x=side*0.8; bure.add(eb);
+  }
+});
 
 /* ---------- corrugated iron houses — a real village is a MIX: bure + small iron houses ---------- */
 /* Walls AND roof are corrugated iron sheet — the classic village iron house.
@@ -367,13 +452,25 @@ var ironWallTex=canvasTex(256,256,function(g,w,h){
   /* horizontal sheet seam + screw dots */
   g.fillStyle='rgba(0,0,0,.28)';g.fillRect(0,128,w,3);
   g.fillStyle='rgba(40,40,40,.55)';for(var sx=7;sx<w;sx+=28){g.beginPath();g.arc(sx,124,2,0,6.3);g.fill();g.beginPath();g.arc(sx,136,2,0,6.3);g.fill();g.beginPath();g.arc(sx,10,2,0,6.3);g.fill();g.beginPath();g.arc(sx,246,2,0,6.3);g.fill();}
-  /* faint rust streaks running down from seams */
-  for(var r=0;r<7;r++){var rx=Math.random()*w;var rg=g.createLinearGradient(0,120,0,256);rg.addColorStop(0,'rgba(150,80,40,.20)');rg.addColorStop(1,'rgba(150,80,40,0)');g.fillStyle=rg;g.fillRect(rx,120,3,90+Math.random()*50);}
+  /* rust streaks — bleeding down from the seam line and screw heads, heavier near the ground */
+  for(var r=0;r<12;r++){var rx=Math.random()*w;var rg=g.createLinearGradient(0,118,0,256);rg.addColorStop(0,'rgba(146,74,32,.42)');rg.addColorStop(0.55,'rgba(150,80,40,.22)');rg.addColorStop(1,'rgba(150,80,40,0)');g.fillStyle=rg;g.fillRect(rx,118,2.5+Math.random()*2.5,95+Math.random()*45);}
+  for(var r3=0;r3<5;r3++){var rx3=7+Math.floor(Math.random()*9)*28;var rg3=g.createLinearGradient(0,8,0,120);rg3.addColorStop(0,'rgba(146,74,32,.34)');rg3.addColorStop(1,'rgba(150,80,40,0)');g.fillStyle=rg3;g.fillRect(rx3-1,8,3,60+Math.random()*55);}
+  /* rust bloom patches + weathered bottom edge where rain splashes back */
+  for(var rp=0;rp<7;rp++){var px=Math.random()*w,py=150+Math.random()*90;var prg=g.createRadialGradient(px,py,1,px,py,9+Math.random()*13);prg.addColorStop(0,'rgba(138,68,28,.4)');prg.addColorStop(1,'rgba(138,68,28,0)');g.fillStyle=prg;g.beginPath();g.arc(px,py,24,0,6.3);g.fill();}
+  var bg=g.createLinearGradient(0,226,0,256);bg.addColorStop(0,'rgba(120,62,26,0)');bg.addColorStop(1,'rgba(120,62,26,.45)');g.fillStyle=bg;g.fillRect(0,226,w,30);
+  /* dull weather grime in the corrugation valleys */
+  g.fillStyle='rgba(70,66,58,.13)';for(var vx=11;vx<w;vx+=14)g.fillRect(vx,0,3,h);
 },4,1.4);
 var corrTex=canvasTex(256,256,function(g,w,h){
   g.fillStyle='#d7dbdc';g.fillRect(0,0,w,h);
-  for(var x=0;x<w;x+=16){var gr=g.createLinearGradient(x,0,x+16,0);gr.addColorStop(0,'rgba(0,0,0,.26)');gr.addColorStop(0.5,'rgba(255,255,255,.6)');gr.addColorStop(1,'rgba(0,0,0,.22)');g.fillStyle=gr;g.fillRect(x,0,16,h);}
-  for(var r2=0;r2<5;r2++){var rx2=Math.random()*w;g.fillStyle='rgba(150,80,40,.14)';g.fillRect(rx2,0,4,h);}
+  for(var x=0;x<w;x+=16){var gr=g.createLinearGradient(x,0,x+16,0);gr.addColorStop(0,'rgba(0,0,0,.30)');gr.addColorStop(0.5,'rgba(255,255,255,.62)');gr.addColorStop(1,'rgba(0,0,0,.26)');g.fillStyle=gr;g.fillRect(x,0,16,h);}
+  /* rust runs down the corrugation valleys, pooling toward the eave edge */
+  for(var r2=0;r2<11;r2++){var rx2=2+Math.floor(Math.random()*16)*16;var rg2=g.createLinearGradient(0,0,0,h);rg2.addColorStop(0,'rgba(146,74,32,.12)');rg2.addColorStop(0.7,'rgba(146,74,32,.34)');rg2.addColorStop(1,'rgba(130,60,24,.5)');g.fillStyle=rg2;g.fillRect(rx2,Math.random()*40,4.5,h);}
+  /* rust bloom around fixing screws + patch blooms on the sheet */
+  g.fillStyle='rgba(60,50,45,.6)';for(var sx2=8;sx2<w;sx2+=32){g.beginPath();g.arc(sx2,26,2,0,6.3);g.fill();g.beginPath();g.arc(sx2,230,2,0,6.3);g.fill();}
+  for(var rp2=0;rp2<6;rp2++){var qx=Math.random()*w,qy=Math.random()*h;var qg=g.createRadialGradient(qx,qy,1,qx,qy,10+Math.random()*15);qg.addColorStop(0,'rgba(138,68,28,.38)');qg.addColorStop(1,'rgba(138,68,28,0)');g.fillStyle=qg;g.beginPath();g.arc(qx,qy,26,0,6.3);g.fill();}
+  /* sun-dulled streaks so the iron reads weathered, not new */
+  g.fillStyle='rgba(105,100,88,.12)';for(var dx2=0;dx2<w;dx2+=32)g.fillRect(dx2+13,0,3,h);
 },3,1);
 function makeTinyHouse(px,pz,ry,wallColor,roofColor,accent){
   var g=new THREE.Group(); g.position.set(px,0,pz); g.rotation.y=ry; scene.add(g);
@@ -430,6 +527,16 @@ for(var f=0;f<3;f++){
     new THREE.MeshStandardMaterial({color:flameCols[f],emissive:flameCols[f],emissiveIntensity:1.6,roughness:0.4,transparent:true,opacity:0.92}));
   fm.position.set((f-1)*0.13,0.62, (f%2)*0.1-0.05); fireGroup.add(fm); flames.push(fm);
 }
+/* glowing ember bed between the logs + a soft warm halo (one sprite — no extra lights) */
+var emberMat=new THREE.MeshStandardMaterial({color:0xd9541e,emissive:0xff5a00,emissiveIntensity:1.7,roughness:0.65});
+var embers=[];
+for(var ei=0;ei<9;ei++){
+  var em=new THREE.Mesh(new THREE.SphereGeometry(0.05+ (ei%3)*0.016,7,6), emberMat);
+  var ea=ei/9*Math.PI*2; em.position.set(Math.cos(ea)*0.3*(0.4+(ei%4)*0.2),0.2,Math.sin(ea)*0.3*(0.4+(ei%3)*0.25));
+  em.scale.y=0.55; fireGroup.add(em); embers.push(em);
+}
+var fireGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:softSprite(),color:0xff9a3d,transparent:true,opacity:0.3,depthWrite:false}));
+fireGlow.position.set(0,0.72,0); fireGlow.scale.set(2.7,2.1,1); fireGroup.add(fireGlow);
 /* cooking pot — lathe profile, on stones over fire */
 var potPts=[]; [[0.02,0],[0.34,0.02],[0.5,0.14],[0.56,0.34],[0.52,0.52],[0.44,0.6],[0.47,0.64]].forEach(function(p){potPts.push(new THREE.Vector2(p[0],p[1]));});
 var pot=new THREE.Mesh(new THREE.LatheGeometry(potPts,22), new THREE.MeshStandardMaterial({color:0x2f2d2b,roughness:0.55,metalness:0.55}));
@@ -481,7 +588,7 @@ wtop.rotation.x=-Math.PI/2; wtop.position.y=0.8; waterGroup.add(wtop);
 var dipper=cyl(0.09,0.07,0.09, mat(0x8a5a28,0.8), 0.18,0.87,0.1,10); waterGroup.add(dipper);
 waterGroup.add(box(0.9,0.09,0.9, mat(0x6e4a26,0.9), 0,0.045,0)); /* low stand */
 
-/* ---------- trees: palms + broadleaf + hibiscus ---------- */
+/* ---------- trees: palms + breadfruit + hibiscus ---------- */
 var sway=[];
 function palm(x,z,s,lean){
   var g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(s||1); scene.add(g);
@@ -506,23 +613,69 @@ function palm(x,z,s,lean){
   return g;
 }
 palm(7.6,-3.4,1.05,0.5); palm(-8.2,-0.6,0.9,-0.4); palm(5.2,6.8,0.8,0.3); palm(-6.4,6.4,1.0,-0.55);
-function broadleaf(x,z,s){
+/* breadfruit tree (uto) — straight trunk, spreading branches, big deeply-lobed
+   glossy leaves and round green fruit hanging beneath the canopy */
+var bfLeafShape=new THREE.Shape();
+(function(){
+  /* one lobed leaf outline: pointed lobes cut into both sides of a long blade */
+  var pts=[[0,0],[0.16,0.1],[0.07,0.2],[0.24,0.3],[0.1,0.42],[0.27,0.55],[0.11,0.66],[0.2,0.82],[0,1.0],
+           [-0.2,0.82],[-0.11,0.66],[-0.27,0.55],[-0.1,0.42],[-0.24,0.3],[-0.07,0.2],[-0.16,0.1]];
+  bfLeafShape.moveTo(pts[0][0],pts[0][1]);
+  for(var i=1;i<pts.length;i++) bfLeafShape.lineTo(pts[i][0],pts[i][1]);
+  bfLeafShape.lineTo(pts[0][0],pts[0][1]);
+})();
+var bfLeafGeo=new THREE.ShapeGeometry(bfLeafShape);
+var bfLeafMats=[mat(0x2f6b24,0.75),mat(0x3a7a2a,0.75),mat(0x27601f,0.75)];
+bfLeafMats.forEach(function(m){ m.side=THREE.DoubleSide; });
+function breadfruit(x,z,s){
   var g=new THREE.Group(); g.position.set(x,0,z); g.scale.setScalar(s); scene.add(g);
-  g.add(cyl(0.2,0.3,2.6, mat(0x5d3d20,1), 0,1.3,0,9));
-  [[0,3.6,0,1.5],[0.9,3.1,0.3,1.05],[-0.85,3.2,-0.2,1.1],[0.2,3.0,-0.8,0.9]].forEach(function(b){
-    var c=new THREE.Mesh(new THREE.IcosahedronGeometry(b[3],1), mat(0x3f6d27,0.95)); c.position.set(b[0],b[1],b[2]); c.castShadow=true; g.add(c);
+  var bark=mat(0x6b4e30,1);
+  g.add(cyl(0.17,0.3,2.9, bark, 0,1.45,0,9));
+  /* spreading branches */
+  [[0.75,0.25,0.5],[-0.7,0.4,-0.45],[0.1,-0.75,0.62],[-0.3,0.8,-0.6]].forEach(function(b){
+    var br=cyl(0.06,0.1,1.5, bark, b[0]*0.55,3.15,b[1]*0.55,7);
+    br.rotation.z=b[0]*0.85; br.rotation.x=-b[1]*0.85; g.add(br);
+  });
+  /* canopy — a soft crown mass under the leaves, so the tree reads full */
+  [[0,3.9,0,1.35],[0.85,3.5,0.35,0.95],[-0.8,3.55,-0.3,1.0],[0.15,3.45,-0.85,0.85]].forEach(function(b){
+    var c=new THREE.Mesh(new THREE.IcosahedronGeometry(b[3],1), mat(0x2c5c21,0.95)); c.position.set(b[0],b[1],b[2]); c.castShadow=true; g.add(c);
+  });
+  /* the unmistakable lobed leaves, held out around the crown */
+  for(var lf=0;lf<11;lf++){
+    var a=lf/11*Math.PI*2 + (lf%3)*0.22;
+    var leaf=new THREE.Mesh(bfLeafGeo, bfLeafMats[lf%3]);
+    var r=1.15+(lf%3)*0.3;
+    leaf.position.set(Math.cos(a)*r, 3.75+((lf*7)%5)*0.16-0.3, Math.sin(a)*r);
+    leaf.scale.setScalar(1.05+(lf%4)*0.14);
+    leaf.rotation.set(-0.7-(lf%3)*0.22, a+Math.PI/2, 0.15);
+    leaf.castShadow=true; g.add(leaf);
+  }
+  /* round breadfruit hanging under the canopy on short stems */
+  [[0.55,2.95,0.4],[-0.5,3.05,-0.35],[0.15,2.9,-0.6],[-0.15,3.1,0.62],[0.7,3.2,-0.15]].forEach(function(f,i){
+    var stem=cyl(0.02,0.02,0.22, bark, f[0],f[1]+0.2,f[2],5); g.add(stem);
+    var fr=new THREE.Mesh(new THREE.SphereGeometry(0.17+(i%3)*0.025,9,7), mat(i%2?0x93b34c:0x86a83f,0.85));
+    fr.position.set(f[0],f[1],f[2]); fr.scale.y=1.12; fr.castShadow=true; g.add(fr);
   });
   sway.push({g:g,ph:Math.random()*6,whole:true}); return g;
 }
-broadleaf(-8.6,-5.2,1.15); broadleaf(9.2,2.8,0.95); broadleaf(2.2,-7.6,1.05);
+breadfruit(-8.6,-5.2,1.15); breadfruit(9.2,2.8,0.95); breadfruit(2.2,-7.6,1.05);
 function hibiscus(x,z){
   var g=new THREE.Group(); g.position.set(x,0,z); scene.add(g);
-  var bush=new THREE.Mesh(new THREE.IcosahedronGeometry(0.55,1), mat(0x38662a,0.95)); bush.position.y=0.5; bush.castShadow=true; g.add(bush);
-  var cols=[0xd93a4e,0xe86a8a,0xd93a4e,0xf2a03d,0xd93a4e];
-  for(var i=0;i<6;i++){
+  var bush=new THREE.Mesh(new THREE.IcosahedronGeometry(0.58,1), mat(0x38662a,0.95)); bush.position.y=0.5; bush.castShadow=true; g.add(bush);
+  var bush2=new THREE.Mesh(new THREE.IcosahedronGeometry(0.4,1), mat(0x2f5c24,0.95)); bush2.position.set(0.32,0.34,0.2); bush2.castShadow=true; g.add(bush2);
+  var cols=[0xd93a4e,0xe86a8a,0xd93a4e,0xf2a03d,0xd93a4e,0xe84a5f];
+  for(var i=0;i<8;i++){
     var fl=new THREE.Group();
-    for(var pt=0;pt<5;pt++){var petal=new THREE.Mesh(new THREE.SphereGeometry(0.075,8,6), mat(cols[i%5],0.6));petal.scale.set(1,0.35,1);petal.position.set(Math.cos(pt/5*6.28)*0.06,0,Math.sin(pt/5*6.28)*0.06);fl.add(petal);}
-    var a=i*1.1; fl.position.set(Math.cos(a)*0.48,0.55+ (i%3)*0.16,Math.sin(a)*0.48); g.add(fl);
+    /* five open petals, a pale throat, and the long stamen column hibiscus is known by */
+    for(var pt=0;pt<5;pt++){var petal=new THREE.Mesh(new THREE.SphereGeometry(0.105,8,6), mat(cols[i%6],0.55));petal.scale.set(1.15,0.3,1);petal.position.set(Math.cos(pt/5*6.28)*0.085,0,Math.sin(pt/5*6.28)*0.085);petal.rotation.y=-pt/5*6.28;fl.add(petal);}
+    var throat=new THREE.Mesh(new THREE.SphereGeometry(0.05,8,6), mat(0xf6e3b4,0.5)); throat.scale.y=0.5; fl.add(throat);
+    var stam=cyl(0.012,0.012,0.17, mat(0xf2c14e,0.5), 0,0.02,0.1,5); stam.rotation.x=1.1; fl.add(stam);
+    var tip=new THREE.Mesh(new THREE.SphereGeometry(0.028,7,6), mat(0xf2c14e,0.5)); tip.position.set(0,0.055,0.17); fl.add(tip);
+    var a=i*0.83; fl.position.set(Math.cos(a)*0.5,0.52+ (i%3)*0.17,Math.sin(a)*0.5);
+    fl.rotation.set(0.5+ (i%2)*0.3, -a, 0); fl.castShadow=true; g.add(fl);
+    /* a tight bud beside the open flowers */
+    var bud=new THREE.Mesh(new THREE.SphereGeometry(0.05,7,6), mat(cols[(i+2)%6],0.6)); bud.scale.set(0.75,1.35,0.75);
+    bud.position.set(Math.cos(a+0.5)*0.44,0.42+(i%2)*0.14,Math.sin(a+0.5)*0.44); g.add(bud);
   } return g;
 }
 hibiscus(-1.2,-3.9); hibiscus(3.9,-1.7); hibiscus(-4.9,2.9); hibiscus(6.3,4.4);
@@ -606,6 +759,8 @@ var scoreEl=document.getElementById('score'), barFill=document.getElementById('b
 function setFire(lit){
   game.fireOut=!lit;
   flames.forEach(function(f){f.visible=lit;});
+  embers.forEach(function(e){e.visible=lit;});
+  fireGlow.visible=lit;
   smoke.material.opacity=lit?0.34:0.07; steam.material.opacity=lit?0.4:0.1;
   fireMsg.textContent=lit?'':'The fire has gone quiet. That happens in village life too — tap the Firewood Stack or the Open Fire to relight it, then try Say again.';
 }
@@ -870,9 +1025,12 @@ function animate(){
       if(k>=1) fly=null; }
     flames.forEach(function(fm,i){ var s=reduced?1:1+Math.sin(t*11+i*2.1)*0.16+Math.sin(t*23+i)*0.07; fm.scale.set(s,1+Math.sin(t*9+i)*0.2,s); fm.rotation.y=t*(0.6+i*0.2); });
     fireLight.intensity=game.fireOut?0.6:(game.complete?22:16)+Math.sin(t*13)*3+Math.sin(t*29)*1.6;
+    /* embers breathe and the warm halo shimmers with the flames */
+    emberMat.emissiveIntensity=game.fireOut?0.15:1.55+Math.sin(t*7.3)*0.35+Math.sin(t*17.7)*0.2;
+    if(fireGlow.visible){ fireGlow.material.opacity=0.26+Math.sin(t*11)*0.05+Math.sin(t*23)*0.03; var gs2=2.7+Math.sin(t*9)*0.14; fireGlow.scale.set(gs2,gs2*0.78,1); }
     /* smoke rise */
     var pa=smokeGeo.attributes.position;
-    for(var i=0;i<SN;i++){ var y=pa.getY(i)+dt*(0.45+sSeed[i]*0.3); if(y>6.4)y=1.25; pa.setY(i,y); pa.setX(i,2.6+Math.sin(t*0.7+sSeed[i]*9)*0.22+ (y-1.2)*0.14); }
+    for(var i=0;i<SN;i++){ var y=pa.getY(i)+dt*(0.45+sSeed[i]*0.3); if(y>6.4)y=1.25; pa.setY(i,y); pa.setX(i,2.6+Math.sin(t*0.7+sSeed[i]*9)*0.22+ (y-1.2)*0.3); pa.setZ(i,2.2+Math.cos(t*0.5+sSeed[i]*7)*0.1+(y-1.2)*0.07); }
     pa.needsUpdate=true;
     var sa=steamGeo.attributes.position;
     for(var j=0;j<8;j++){ var yy=sa.getY(j)+dt*0.5; if(yy>2.1)yy=1.12; sa.setY(j,yy); }
